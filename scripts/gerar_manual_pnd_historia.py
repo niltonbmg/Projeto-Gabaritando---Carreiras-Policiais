@@ -3598,6 +3598,406 @@ ANALISES = {
         },
     },
 
+    46: {
+        "tema": "Vygotsky, patrimônio e formação de conceitos",
+        "subtema": "Conceitos espontâneos e científicos",
+        "habilidade_bncc": "EF06HI04, EM13CHS502",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão dos conceitos de VYGOTSKY: aquisição SOCIAL dos conceitos + "
+            "distinção entre conceitos ESPONTÂNEOS e CIENTÍFICOS, que se interferem MUTUAMENTE. As "
+            "demais opções ora individualizam (A), ora naturalizam biologicamente (D), ora hipostasiam "
+            "tradição (C)."
+        ),
+        "como_banca_pensou": (
+            "A banca combina Vygotsky com patrimônio: os conceitos culturais são construídos socialmente. "
+            "A resposta afirma diretamente essa perspectiva."
+        ),
+        "resolucao": [
+            "Descarte A: 'apenas individualmente' contradiz Vygotsky.",
+            "Descarte C: 'distante das influências emocionais' apaga a dimensão afetiva.",
+            "Descarte D: 'aspecto biológico é mais decisivo' inverte a chave sociocultural.",
+            "Marque B: aquisição social + estágios + espontâneos/científicos.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Vygotsky é sociointeracionista; conceitos não são apenas individuais."),
+            "B": ("CORRETA", "Aquisição social + espontâneos vs. científicos = Vygotsky."),
+            "C": ("ERRADA", "Vygotsky não separa cognição de emoção."),
+            "D": ("ERRADA", "Prevalência do biológico é piagetiano/inatista, não vygotskyano."),
+        },
+        "fundamentacao": [
+            "VYGOTSKY, Lev S. Pensamento e linguagem. São Paulo: Martins Fontes, 2008.",
+            "VYGOTSKY, Lev S. A formação social da mente. São Paulo: Martins Fontes, 1991.",
+            "OLIVEIRA, Marta Kohl. Vygotsky: aprendizado e desenvolvimento – um processo sócio-histórico. São Paulo: Scipione, 2010.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "Vygotsky (2008) distingue CONCEITOS ESPONTÂNEOS (formados na experiência cotidiana) e "
+            "CONCEITOS CIENTÍFICOS (mediados pela escola e pela linguagem sistematizada), que se "
+            "interferem MUTUAMENTE. A Zona de Desenvolvimento Proximal (ZDP) descreve a distância entre "
+            "o que o sujeito faz sozinho e o que faz com mediação. Aprendizagem PRECEDE desenvolvimento. "
+            "Aplicado ao ensino de História: partir dos conceitos espontâneos dos estudantes sobre "
+            "patrimônio para construir conceitos científicos (patrimônio material, imaterial, natural, "
+            "digital)."
+        ),
+        "padroes_banca": (
+            "O INEP cobra pareamento entre teoria (autor) e prática pedagógica."
+        ),
+        "pegadinhas": [
+            "Confundir Vygotsky com Piaget (biologia).",
+            "Isolar cognição de afetividade.",
+            "Individualizar a construção conceitual.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar 'desenvolvimento' a biologia."
+        ),
+        "dica_estrategica": (
+            "Vygotsky = mediação + ZDP + espontâneos/científicos."
+        ),
+        "variacao": (
+            "(Estilo INEP) Segundo Vygotsky, aprendizagem e desenvolvimento estão em qual relação?\n"
+            "A) desenvolvimento precede aprendizagem;\n"
+            "B) aprendizagem impulsiona o desenvolvimento;\n"
+            "C) são independentes; D) são idênticos. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A ZDP se define como:\n"
+            "A) o que a criança faz sozinha; B) a distância entre o real e o potencial mediado; "
+            "C) memorização; D) instinto. → B",
+            "Q2. Conceitos espontâneos em Vygotsky:\n"
+            "A) surgem na experiência cotidiana; B) são inatos; "
+            "C) são apenas escolares; D) inexistem. → A",
+            "Q3. Marta Kohl de Oliveira é referência para:\n"
+            "A) Vygotsky no Brasil; B) Piaget; C) Skinner; D) Freud. → A",
+        ],
+        "resumo": {
+            "regra": "Vygotsky = aquisição social + espontâneos vs. científicos + ZDP.",
+            "excecoes": "Biologia importa, mas não é fator PRINCIPAL.",
+            "palavra_chave": "Social + mediação + científicos vs. espontâneos.",
+            "artigo": "VYGOTSKY (2008; 1991); OLIVEIRA (2010).",
+            "mnemonico": "Z.S.E.C.: ZDP, Social, Espontâneos vs. Científicos.",
+        },
+    },
+
+    47: {
+        "tema": "Patrimônio imaterial – arte Kusiwa Wajãpi",
+        "subtema": "Patrimônio como manifestação dinâmica do cotidiano",
+        "habilidade_bncc": "EF06HI08, EM13CHS502; Res. IPHAN 001/2006",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "O item cobra a noção de PATRIMÔNIO IMATERIAL como manifestação DINÂMICA (Convenção UNESCO "
+            "2003, Decreto 3.551/2000): vivo, praticado, em constante recriação. As demais alternativas "
+            "hipostasiam (A: descontextualizam), universalizam (C: símbolos universais) ou imobilizam "
+            "(D: imutabilidade)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a diferença entre patrimônio material (fixo) e imaterial (vivo, dinâmico). "
+            "Palavras-veneno: 'imutabilidade', 'universal', 'independente do contexto'."
+        ),
+        "resolucao": [
+            "Descarte A: 'independente do contexto' apaga o sentido cultural.",
+            "Descarte C: 'símbolos universais' contradiz especificidade Wajãpi.",
+            "Descarte D: 'imutabilidade' contradiz dinamismo do imaterial.",
+            "Marque B: manifestação dinâmica do cotidiano.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Descontextualizar apaga o sentido cultural."),
+            "B": ("CORRETA", "Patrimônio imaterial = dinâmico + cotidiano (Convenção UNESCO 2003)."),
+            "C": ("ERRADA", "Universalização desconhece a especificidade Wajãpi."),
+            "D": ("ERRADA", "'Imutabilidade' contradiz o dinamismo constitutivo."),
+        },
+        "fundamentacao": [
+            "UNESCO. Convenção para a Salvaguarda do Patrimônio Cultural Imaterial. Paris, 2003.",
+            "BRASIL. Decreto nº 3.551, de 4 de agosto de 2000. Institui o Registro de Bens Culturais de Natureza Imaterial.",
+            "IPHAN. Dossiê Arte Kusiwa. Brasília: IPHAN, 2002.",
+            "GONÇALVES, José Reginaldo Santos. Antropologia dos objetos: coleções, museus e patrimônios. Rio de Janeiro: IPHAN, 2007.",
+        ],
+        "teoria": (
+            "PATRIMÔNIO CULTURAL IMATERIAL (Convenção UNESCO, 2003; Decreto 3.551/2000) reúne práticas, "
+            "representações, expressões, conhecimentos e técnicas transmitidos entre gerações. A arte "
+            "Kusiwa dos Wajãpi (Amapá) foi o primeiro registro brasileiro reconhecido pela UNESCO (2003) "
+            "como Obra-Prima do Patrimônio Oral e Imaterial da Humanidade. É patrimônio VIVO: recriado, "
+            "atualizado, praticado."
+        ),
+        "padroes_banca": (
+            "O INEP cobra o conceito de patrimônio imaterial como dinâmico e contextual."
+        ),
+        "pegadinhas": [
+            "Trocar imaterial por 'imutável'.",
+            "Universalizar culturas específicas.",
+            "Descontextualizar patrimônio.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar patrimônio a 'tradição fixa'."
+        ),
+        "dica_estrategica": (
+            "Patrimônio imaterial = VIVO + DINÂMICO + CONTEXTUAL."
+        ),
+        "variacao": (
+            "(Estilo INEP) O Decreto 3.551/2000 instituiu:\n"
+            "A) o Registro de Bens Imateriais; B) o Tombamento; C) o SNC; D) a Lei Rouanet. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. A Convenção da UNESCO sobre Patrimônio Imaterial é de:\n"
+            "A) 1988; B) 2003; C) 1972; D) 2010. → B",
+            "Q2. A arte Kusiwa é do povo:\n"
+            "A) Yanomami; B) Wajãpi; C) Guarani; D) Kayapó. → B",
+            "Q3. Patrimônio imaterial é:\n"
+            "A) fixo; B) vivo, praticado, recriado; C) apenas oral; D) apenas indígena. → B",
+        ],
+        "resumo": {
+            "regra": "Imaterial = manifestação viva, dinâmica, contextual.",
+            "excecoes": "Elementos podem cristalizar-se em registros documentais.",
+            "palavra_chave": "Dinâmico + cotidiano + contextual.",
+            "artigo": "Decreto 3.551/2000; Convenção UNESCO 2003.",
+            "mnemonico": "V.D.C.: Vivo, Dinâmico, Contextual.",
+        },
+    },
+
+    48: {
+        "tema": "Mapeamento cultural do território + avaliação processual",
+        "subtema": "Portfólio como avaliação processual",
+        "habilidade_bncc": "EF06HI08, EM13CHS502",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a articulação entre OBJETIVO (identificar práticas culturais como sistemas de "
+            "saberes que articulam memória, identidade e vida) e METODOLOGIA de AVALIAÇÃO PROCESSUAL "
+            "(portfólio ao longo da sequência)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra pareamento OBJETIVO + INSTRUMENTO. Distratores mudam o objetivo, o instrumento "
+            "ou o momento da avaliação."
+        ),
+        "resolucao": [
+            "Descarte B: 'observação de dificuldades' é diagnóstico, não sistema de saberes.",
+            "Descarte C: 'domínio teórico prévio' é diagnóstica, não processual.",
+            "Descarte D: 'padrões tradicionais' contradiz a proposta.",
+            "Marque A: sistemas de saberes + portfólio processual.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Objetivo (saberes que articulam memória, identidade e modos de vida) + portfólio processual."),
+            "B": ("ERRADA", "Foco em 'dificuldades conceituais' descaracteriza a proposta cultural."),
+            "C": ("ERRADA", "'Domínio teórico prévio' + relatório final = diagnóstica + somativa, não processual."),
+            "D": ("ERRADA", "'Padrões tradicionais' contradiz a proposta interdisciplinar e crítica."),
+        },
+        "fundamentacao": [
+            "VILLAS BOAS, Benigna Maria de Freitas. Portfólio, avaliação e trabalho pedagógico. Campinas: Papirus, 2004.",
+            "PERRENOUD, Philippe. Avaliação: da excelência à regulação. Porto Alegre: Artmed, 1999.",
+            "HALL, Stuart. A identidade cultural na pós-modernidade. Rio de Janeiro: DP&A, 2006.",
+            "IPHAN. Dossiê Arte Kusiwa. Brasília: IPHAN, 2002.",
+        ],
+        "teoria": (
+            "PORTFÓLIO é instrumento privilegiado de avaliação processual (Villas Boas, 2004): permite "
+            "acompanhar o desenvolvimento do estudante ao longo da sequência didática. No ensino de "
+            "História, articula-se ao mapeamento cultural, ao reconhecimento de saberes locais e às "
+            "identidades culturais (Hall, 2006)."
+        ),
+        "padroes_banca": (
+            "O INEP cobra pareamento OBJETIVO + INSTRUMENTO + MOMENTO da avaliação."
+        ),
+        "pegadinhas": [
+            "Confundir portfólio com relatório final.",
+            "Reduzir avaliação processual a diagnóstica.",
+            "Priorizar dificuldades sobre saberes.",
+        ],
+        "erros_comuns": (
+            "Marcar C por 'relatório' parecer processual."
+        ),
+        "dica_estrategica": (
+            "Processual = acompanha o processo (portfólio, diários, produções contínuas)."
+        ),
+        "variacao": (
+            "(Estilo INEP) O portfólio, segundo Villas Boas (2004), é:\n"
+            "A) somativo por natureza; B) instrumento de avaliação processual e formativa; "
+            "C) apenas classificatório; D) igual à prova. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Mapeamento cultural do território mobiliza:\n"
+            "A) saberes locais e memórias; B) apenas dados econômicos; C) só geografia física; D) só linguística. → A",
+            "Q2. Stuart Hall discute:\n"
+            "A) identidades fluidas; B) essencialismo; C) neutralidade; D) universalismo abstrato. → A",
+            "Q3. Villas Boas (2004) é referência para:\n"
+            "A) portfólio na avaliação; B) alfabetização; C) matemática financeira; D) gestão escolar. → A",
+        ],
+        "resumo": {
+            "regra": "Objetivo cultural + portfólio processual = coerência avaliativa.",
+            "excecoes": "Portfólio pode combinar-se com outros instrumentos.",
+            "palavra_chave": "Sistemas de saberes + portfólio + processual.",
+            "artigo": "VILLAS BOAS (2004); PERRENOUD (1999).",
+            "mnemonico": "P.S.M.: Portfólio, Saberes, Memória.",
+        },
+    },
+
+    49: {
+        "tema": "Cabanagem (1835-1840) e formação do Estado nacional",
+        "subtema": "Revoltas do período regencial e resistência popular",
+        "habilidade_bncc": "EF08HI09, EM13CHS103",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa (iconográfica)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "A Cabanagem foi uma das mais violentas revoltas populares do período regencial, envolvendo "
+            "indígenas, mestiços e escravizados no Grão-Pará. A aquarela mostra ASSALTO DOS CABANOS AO "
+            "TREM — cena de RESISTÊNCIA POPULAR. As demais alternativas invertem o sentido histórico."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra o reconhecimento da Cabanagem como movimento popular, distinguindo-o das "
+            "narrativas tradicionais elitistas."
+        ),
+        "resolucao": [
+            "Reconheça: aquarela mostra cabanos em assalto — cena popular.",
+            "Descarte B: elite guiando o povo contradiz a natureza do movimento.",
+            "Descarte C: camponeses rezando em frente à igreja não caracteriza a Cabanagem.",
+            "Descarte D: 'concordância generalizada' apaga o conflito.",
+            "Marque A: resistência popular.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Cabanagem = resistência popular no processo de formação do Estado nacional."),
+            "B": ("ERRADA", "A elite não conduzia o movimento; ao contrário, era combatida por ele."),
+            "C": ("ERRADA", "Camponeses rezando não é a cena da Cabanagem."),
+            "D": ("ERRADA", "Não houve 'concordância generalizada'; havia conflito com o clero."),
+        },
+        "fundamentacao": [
+            "REIS, João José. Rebelião escrava no Brasil: a história do levante dos malês em 1835. São Paulo: Cia. das Letras, 2003.",
+            "DI PAOLO, Pasquale. Cabanagem: a revolução popular da Amazônia. Belém: Cejup, 1990.",
+            "BASILE, Marcello Otávio N. de C. Revoltas regenciais na Corte: o movimento das carochinhas. Rio de Janeiro: FGV, 2001.",
+            "FRAGOSO, João; MARTINS, Ilmar; JANCSÓ, István (org.). O Brasil colonial (várias edições).",
+        ],
+        "teoria": (
+            "A CABANAGEM (1835-1840) foi revolta popular no Grão-Pará contra as elites regenciais, "
+            "envolvendo cabanos (populares que viviam em cabanas), indígenas e negros. Foi violentamente "
+            "reprimida, com milhares de mortos. Integra o ciclo de revoltas regenciais (Balaiada, Malês, "
+            "Farroupilha, Sabinada). Di Paolo (1990) sistematiza a interpretação como revolução popular."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a leitura crítica de revoltas populares no período regencial."
+        ),
+        "pegadinhas": [
+            "Colocar a elite como condutora.",
+            "Confundir com movimentos religiosos.",
+            "Suavizar o conflito.",
+        ],
+        "erros_comuns": (
+            "Marcar B por hábito de ver revoltas como 'lideradas por elites'."
+        ),
+        "dica_estrategica": (
+            "Revoltas regenciais = protagonismo popular + tensões federativas."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Cabanagem ocorreu na região:\n"
+            "A) Sul; B) Nordeste sertanejo; C) Grão-Pará (Amazônia); D) Minas Gerais. Gabarito: C."
+        ),
+        "minisimulado": [
+            "Q1. As revoltas regenciais incluem:\n"
+            "A) Balaiada, Malês, Farroupilha, Sabinada, Cabanagem; B) apenas Farroupilha; "
+            "C) apenas Malês; D) nenhuma delas. → A",
+            "Q2. A Revolta dos Malês (1835) foi:\n"
+            "A) mineira; B) baiana, de africanos muçulmanos escravizados; C) paulista; D) gaúcha. → B",
+            "Q3. João José Reis é referência para:\n"
+            "A) escravidão e Malês; B) Renascimento; C) Iluminismo; D) Reforma. → A",
+        ],
+        "resumo": {
+            "regra": "Cabanagem = revolta popular no Grão-Pará (1835-40).",
+            "excecoes": "Interpretações antigas atribuíam-na a elites; historiografia recente inverte.",
+            "palavra_chave": "Resistência popular + Estado nacional.",
+            "artigo": "DI PAOLO (1990); BASILE (2001).",
+            "mnemonico": "CABANOS: Camadas populares Amazônicas Batalhando A Nova Ordem Social.",
+        },
+    },
+
+    50: {
+        "tema": "Mulheres e Antiguidade africana (Egito, Núbia)",
+        "subtema": "Realeza feminina e divisão do trabalho",
+        "habilidade_bncc": "EF06HI09, EM13CHS502",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Média-alta",
+        "justificativa_classificacao": (
+            "A pergunta cobra o que os textos afirmam sobre mulheres na Antiguidade africana. "
+            "A afirmação central é: MULHERES DESEMPENHARAM FUNÇÕES DE DESTAQUE (realeza feminina, "
+            "sacerdócio, trabalho especializado). As demais reduzem, subalternizam ou biologizam."
+        ),
+        "como_banca_pensou": (
+            "O INEP quer combater estereótipos de submissão universal, mostrando protagonismo feminino "
+            "na Antiguidade africana."
+        ),
+        "resolucao": [
+            "Descarte B: 'funções homogêneas' contradiz a diversidade descrita.",
+            "Descarte C: 'limitada participação política' contradiz a realeza feminina egípcia.",
+            "Descarte D: 'subalternas em razão da coloração' é essencialismo.",
+            "Marque A: destaque em várias funções.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Mulheres desempenharam funções de destaque (realeza, sacerdócio, trabalho especializado)."),
+            "B": ("ERRADA", "Não eram homogêneas — havia diversidade."),
+            "C": ("ERRADA", "Havia realeza feminina; participação política existia."),
+            "D": ("ERRADA", "Cor na iconografia egípcia é convenção estética, não hierarquia de subalternidade."),
+        },
+        "fundamentacao": [
+            "REDE, Marcelo. Egito Antigo. São Paulo: Companhia das Letras, 2017.",
+            "SILVA, Alberto da Costa e. A enxada e a lança: a África antes dos portugueses. 4. ed. Rio de Janeiro: Nova Fronteira, 2011.",
+            "TYLDESLEY, Joyce. Crônicas das rainhas do Egito. Londres: Thames & Hudson, 2006.",
+            "UNESCO. História geral da África, Vol. II: África antiga. Brasília: UNESCO, 2010.",
+        ],
+        "teoria": (
+            "A Antiguidade africana (Egito, Núbia, Etiópia, Cartago, reinos subsaarianos) apresenta "
+            "protagonismo feminino em várias esferas: realeza (Hatshepsut, Nefertari, Cleópatra, "
+            "candaces de Meroé), sacerdócio, comércio. Alberto da Costa e Silva (2011) e a UNESCO (2010) "
+            "sistematizam a história africana em bases não eurocêntricas. Tyldesley (2006) discute as "
+            "rainhas do Egito."
+        ),
+        "padroes_banca": (
+            "O INEP cobra desconstrução de estereótipos de submissão feminina universal e da imagem "
+            "monolítica da África."
+        ),
+        "pegadinhas": [
+            "Homogeneizar as culturas.",
+            "Biologizar a cor da pele.",
+            "Reduzir a política a masculino.",
+        ],
+        "erros_comuns": (
+            "Marcar C por hábito de ver 'religião' como esfera feminina."
+        ),
+        "dica_estrategica": (
+            "África antiga = protagonismo político e social feminino em várias culturas."
+        ),
+        "variacao": (
+            "(Estilo INEP) Hatshepsut, faraó do Egito, governou:\n"
+            "A) o Novo Império; B) o Antigo Reino apenas; C) a Núbia; D) Cartago. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Alberto da Costa e Silva (2011) sistematiza:\n"
+            "A) a África antes dos portugueses; B) a Idade Média europeia; C) o Renascimento italiano; D) o Iluminismo. → A",
+            "Q2. As candaces eram:\n"
+            "A) rainhas do reino de Meroé/Núbia; B) escravizadas no Egito; C) rainhas gregas; D) sacerdotisas incas. → A",
+            "Q3. A História Geral da África, da UNESCO, reúne:\n"
+            "A) 3 volumes; B) 8 volumes; C) 20 volumes; D) 15 volumes. → B",
+        ],
+        "resumo": {
+            "regra": "Antiguidade africana = protagonismo feminino em várias esferas.",
+            "excecoes": "Havia hierarquias, mas sem homogeneização universal.",
+            "palavra_chave": "Destaque + realeza + sacerdócio.",
+            "artigo": "COSTA E SILVA (2011); UNESCO (2010); TYLDESLEY (2006).",
+            "mnemonico": "H.C.N.: Hatshepsut, Candaces, Núbia.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -4053,7 +4453,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 9 (Q01 a Q45)",
+        "3. Análise completa – LOTES 1 a 10 (Q01 a Q50)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -4091,14 +4491,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 9 (Q01 a Q45)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 10 (Q01 a Q50)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 46)):
+    for num in list(range(1, 51)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -4218,7 +4618,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-9")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-10")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -4279,7 +4679,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 9 (Q01 a Q45)",
+              "3. Análise completa – LOTES 1 a 10 (Q01 a Q50)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -4318,7 +4718,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 9 (Q01 a Q45)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 10 (Q01 a Q50)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -4327,7 +4727,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 46)):
+    for num in list(range(1, 51)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -4422,7 +4822,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-9", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-10", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
