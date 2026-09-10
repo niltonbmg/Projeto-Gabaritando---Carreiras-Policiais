@@ -1934,6 +1934,444 @@ ANALISES = {
         },
     },
 
+    26: {
+        "tema": "Educação inclusiva – exclusão, segregação, integração e inclusão",
+        "subtema": "Corresponsabilidade docente e Libras (Sassaki)",
+        "habilidade_bncc": "Lei 13.146/2015 (LBI); Decreto 5.626/2005; DCN Educação Especial",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a distinção entre INTEGRAÇÃO (o estudante é 'colocado' na turma, mas com "
+            "mediação individual sem transformação do currículo/aula) e INCLUSÃO (professor e escola "
+            "assumem corresponsabilidade). O caso descrito — intérprete atuando SEM a participação do "
+            "professor regente — configura INTEGRAÇÃO, não inclusão."
+        ),
+        "como_banca_pensou": (
+            "A banca aplica o modelo de Sassaki: EXCLUSÃO (estudante fora), SEGREGAÇÃO (em turma "
+            "separada), INTEGRAÇÃO (na turma, adaptação individual) e INCLUSÃO (transformação da escola). "
+            "O intérprete assumir o lugar do professor caracteriza INTEGRAÇÃO."
+        ),
+        "resolucao": [
+            "Fixe: intérprete atua SEM o professor regente → mediação individual.",
+            "Descarte A: 'exclusão' pressupõe estar FORA da escola.",
+            "Descarte B: 'segregação' pressupõe turma/escola SEPARADA.",
+            "Descarte C: 'inclusão' exigiria corresponsabilidade docente e transformação da aula.",
+            "Marque D: 'integração' — relação individual, sem transformação sistêmica.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Não há exclusão; o estudante está na sala."),
+            "B": ("ERRADA", "Não há segregação; a turma é regular."),
+            "C": ("ERRADA", "Sem corresponsabilidade docente e sem transformação pedagógica, não há inclusão."),
+            "D": ("CORRETA", "Mediação individual pelo intérprete, sem envolvimento do professor = integração (Sassaki)."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 13.146, de 6 de julho de 2015. Lei Brasileira de Inclusão da Pessoa com Deficiência (Estatuto da Pessoa com Deficiência). DOU, Brasília, 7 jul. 2015.",
+            "BRASIL. Decreto nº 5.626, de 22 de dezembro de 2005. Regulamenta a Lei nº 10.436/2002 (Libras). DOU, 23 dez. 2005.",
+            "SASSAKI, Romeu K. Inclusão: construindo uma sociedade para todos. 8. ed. Rio de Janeiro: WVA, 2010.",
+            "MANTOAN, Maria Teresa Eglér. Inclusão escolar: o que é? por quê? como fazer? São Paulo: Moderna, 2015.",
+            "BRASIL. Ministério da Educação. Política Nacional de Educação Especial na Perspectiva da Educação Inclusiva. Brasília: MEC, 2008.",
+        ],
+        "teoria": (
+            "Sassaki (2010) distingue quatro estágios: (1) EXCLUSÃO — pessoa fora da escola; (2) SEGREGAÇÃO — em "
+            "instituições especializadas apartadas; (3) INTEGRAÇÃO — na escola regular, mas com adaptação "
+            "individual e responsabilidade do próprio estudante; (4) INCLUSÃO — a ESCOLA se transforma para "
+            "receber todos, com corresponsabilidade docente, currículo acessível e mediação compartilhada. "
+            "A LBI (Lei 13.146/2015) e a Política Nacional de Educação Especial (2008) instituem o paradigma "
+            "inclusivo. O Decreto 5.626/2005 garante Libras como primeira língua da pessoa surda. Mantoan "
+            "(2015) reforça: inclusão exige ROMPIMENTO com o modelo homogeneizador."
+        ),
+        "padroes_banca": (
+            "O INEP cobra sempre a diferença INTEGRAÇÃO x INCLUSÃO. A pegadinha é achar que 'ter intérprete' "
+            "já basta para inclusão — não basta se o docente se ausenta pedagogicamente."
+        ),
+        "pegadinhas": [
+            "Confundir integração com inclusão.",
+            "Achar que presença física do estudante = inclusão.",
+            "Terceirizar a responsabilidade pedagógica para o intérprete.",
+        ],
+        "erros_comuns": (
+            "Marcar C por ver a presença do estudante na aula como sinônimo de inclusão."
+        ),
+        "dica_estrategica": (
+            "Inclusão = escola muda; integração = estudante se adapta. O intérprete é APOIO, não substituto docente."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Lei nº 13.146/2015 (LBI) prevê que:\n"
+            "A) escolas especiais substituem a escola regular;\n"
+            "B) a inclusão é dever da rede regular de ensino, com apoios especializados;\n"
+            "C) intérpretes substituem professores;\n"
+            "D) a família deve prover mediação. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O Decreto 5.626/2005 garante Libras como:\n"
+            "A) segunda língua obrigatória; B) primeira língua da pessoa surda; "
+            "C) opcional na EB; D) restrita ao EM. → B",
+            "Q2. Mantoan (2015) associa inclusão a:\n"
+            "A) padronização; B) transformação estrutural da escola; C) individualização; D) segregação disfarçada. → B",
+            "Q3. O termo 'atendimento educacional especializado' (AEE) refere-se a:\n"
+            "A) escola substitutiva; B) apoio complementar/suplementar; "
+            "C) substituição do professor; D) currículo isolado. → B",
+        ],
+        "resumo": {
+            "regra": "Inclusão = escola muda; integração = estudante se adapta.",
+            "excecoes": "AEE é apoio, não substituição da aula regular.",
+            "palavra_chave": "Corresponsabilidade docente.",
+            "artigo": "Lei 13.146/2015; Dec. 5.626/2005; PNEE-EI (2008).",
+            "mnemonico": "ESSI: Exclusão, Segregação, Integração, Inclusão (progressão Sassaki).",
+        },
+    },
+
+    27: {
+        "tema": "Letramento científico e vacinação",
+        "subtema": "Projeto interdisciplinar + feira de ciências",
+        "habilidade_bncc": "BNCC – competências gerais 2 e 7; PNI",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a proposta pedagógica que MELHOR promove letramento científico: investigação "
+            "com dados + interdisciplinaridade + socialização com a comunidade. A alternativa B satisfaz "
+            "todos esses critérios; as demais são parciais."
+        ),
+        "como_banca_pensou": (
+            "O INEP contrapõe projeto INVESTIGATIVO INTERDISCIPLINAR (B) a atividades pontuais: "
+            "levantamento (A), roda de conversa (C) e distribuição de materiais (D). Todas são válidas, "
+            "mas a que melhor promove letramento científico é a B."
+        ),
+        "resolucao": [
+            "Fixe a chave: letramento científico exige INVESTIGAÇÃO + DADOS + APRESENTAÇÃO PÚBLICA.",
+            "Descarte A: levantamento familiar é etapa, não projeto.",
+            "Descarte C: 'escolha das melhores vacinas' é redação problemática (as vacinas do PNI não são 'escolhidas' pelo indivíduo).",
+            "Descarte D: acesso passivo a materiais informativos não constitui investigação.",
+            "Marque B: projeto interdisciplinar + investigação de dados + feira de ciências = letramento científico pleno.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Levantamento familiar é etapa preliminar, não caracteriza projeto de letramento científico."),
+            "B": ("CORRETA", "Projeto interdisciplinar + dados científicos + feira com a comunidade = letramento científico completo."),
+            "C": ("ERRADA", "Reduz o tema a 'escolher vacinas', o que fragiliza a compreensão do PNI."),
+            "D": ("ERRADA", "Recepção passiva de materiais não promove protagonismo investigativo."),
+        },
+        "fundamentacao": [
+            "BRASIL. Programa Nacional de Imunizações – PNI. Ministério da Saúde. Brasília, [s.d.].",
+            "SASSERON, L. H.; CARVALHO, A. M. P. Alfabetização científica: uma revisão bibliográfica. Investigações em Ensino de Ciências, v. 16, n. 1, 2011.",
+            "CACHAPUZ, António et al. A necessária renovação do ensino das ciências. São Paulo: Cortez, 2005.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "O PNI é um dos programas de imunização mais robustos do mundo, criado em 1973. A queda "
+            "recente da cobertura vacinal — associada à desinformação — traz de volta doenças "
+            "previamente controladas. Escola tem papel-chave no LETRAMENTO CIENTÍFICO: capacitar "
+            "estudantes a compreender, aplicar e comunicar conhecimentos científicos (Sasseron & "
+            "Carvalho, 2011). Projetos interdisciplinares + investigação com dados + socialização "
+            "pública são caminhos privilegiados (Cachapuz et al., 2005)."
+        ),
+        "padroes_banca": (
+            "O INEP cobra articulação INVESTIGAÇÃO + COMUNIDADE. Palavras-veneno: 'escolha individual' "
+            "de vacinas, materiais informativos passivos, atividades sem coleta de dados."
+        ),
+        "pegadinhas": [
+            "Confundir letramento com informação.",
+            "Reduzir a projeto a uma única disciplina.",
+            "Tratar vacinação como escolha individual.",
+        ],
+        "erros_comuns": (
+            "Marcar C por parecer democrática — mas 'escolha das melhores vacinas' expressa má compreensão."
+        ),
+        "dica_estrategica": (
+            "Letramento científico = INVESTIGAR + INTERPRETAR + COMUNICAR. Prefira projetos interdisciplinares."
+        ),
+        "variacao": (
+            "(Estilo INEP) Cachapuz et al. (2005) defendem que o ensino de ciências deve:\n"
+            "A) manter-se apenas conteudista;\n"
+            "B) articular investigação, contextos e formação cidadã;\n"
+            "C) restringir-se a experimentos didáticos;\n"
+            "D) suprimir o debate público. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O PNI foi criado em:\n"
+            "A) 1988; B) 1973; C) 1960; D) 2005. → B",
+            "Q2. Letramento científico envolve:\n"
+            "A) apenas memorização; B) compreensão, aplicação e crítica do conhecimento científico; "
+            "C) só experimentos; D) memorização e transcrição. → B",
+            "Q3. Feira de ciências pode servir para:\n"
+            "A) socializar investigações com a comunidade; B) somente competir; "
+            "C) selecionar melhores alunos; D) apresentar apenas resultados prontos. → A",
+        ],
+        "resumo": {
+            "regra": "Letramento científico = investigar dados + comunicar publicamente.",
+            "excecoes": "Materiais informativos e rodas de conversa complementam, sem esgotar.",
+            "palavra_chave": "Investigação + interdisciplinar + comunidade.",
+            "artigo": "PNI/Ministério da Saúde; SASSERON & CARVALHO (2011).",
+            "mnemonico": "3 I's do letramento: Investigar, Interpretar, Interagir com a comunidade.",
+        },
+    },
+
+    28: {
+        "tema": "Equidade de gênero e ciência",
+        "subtema": "Sub-representação feminina nas exatas",
+        "habilidade_bncc": "BNCC – competências gerais 6, 8 e 9; Convenção sobre a Eliminação da Discriminação",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a proposta pedagógica que enfrente a sub-representação feminina em exatas. "
+            "A resposta é ANALISAR os dados para promover INVESTIGAÇÕES sobre as causas — perspectiva "
+            "crítica e afirmativa. As demais reforçam meritocracia (A), determinismo biológico (C) ou "
+            "reduzem à competição (D)."
+        ),
+        "como_banca_pensou": (
+            "O INEP cobra a crítica ao meritocratismo e ao essencialismo de gênero. Só B propõe investigação "
+            "das causas ESTRUTURAIS."
+        ),
+        "resolucao": [
+            "Descarte A: 'meritocracia' oculta as desigualdades históricas.",
+            "Descarte C: 'aptidões naturais' = essencialismo biológico, superado.",
+            "Descarte D: competição não enfrenta o problema.",
+            "Marque B: analisar dados + investigar causas = ação crítica e afirmativa.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Meritocracia mascara desigualdades estruturais de gênero."),
+            "B": ("CORRETA", "Analisar dados e investigar causas materializa a educação para equidade de gênero."),
+            "C": ("ERRADA", "Essencialismo biológico é epistemologicamente insustentável."),
+            "D": ("ERRADA", "Competição não enfrenta a sub-representação estrutural."),
+        },
+        "fundamentacao": [
+            "SCHIEBINGER, Londa. O feminismo mudou a ciência? Bauru: EDUSC, 2001.",
+            "BRASIL. Ministério da Educação. Meninas e mulheres nas ciências. Brasília: MEC/UNESCO, 2020.",
+            "ORGANIZAÇÃO DAS NAÇÕES UNIDAS. ODS 5 – Igualdade de Gênero. Agenda 2030. Nova York: ONU, 2015.",
+            "LOURO, Guacira Lopes. Gênero, sexualidade e educação. 16. ed. Petrópolis: Vozes, 2014.",
+            "BRASIL. Lei nº 9.394/1996 (LDB), art. 3º (princípios).",
+        ],
+        "teoria": (
+            "A ausência das mulheres nas ciências exatas resulta de PROCESSOS HISTÓRICOS de exclusão — "
+            "não de 'aptidões naturais'. Schiebinger (2001) analisa como o gênero atravessa a produção "
+            "científica. Louro (2014) discute a construção social do gênero na escola. O ODS 5 (igualdade "
+            "de gênero) orienta políticas educacionais. A LDB (art. 3º) prevê igualdade de condições para "
+            "acesso e permanência. Ação pedagógica crítica: coletar dados, investigar causas, propor "
+            "intervenção afirmativa."
+        ),
+        "padroes_banca": (
+            "O INEP contrapõe visão crítica x meritocracia x essencialismo biológico."
+        ),
+        "pegadinhas": [
+            "Marcar A por 'neutralidade' soar positiva.",
+            "Aceitar 'aptidões naturais'.",
+            "Reduzir enfrentamento à competição.",
+        ],
+        "erros_comuns": (
+            "Marcar D por hábito escolar de valorizar olimpíadas."
+        ),
+        "dica_estrategica": (
+            "Equidade de gênero = investigar causas estruturais + ação afirmativa. Rejeite meritocracia + biologismo."
+        ),
+        "variacao": (
+            "(Estilo INEP) Louro (2014) argumenta que gênero na escola é:\n"
+            "A) fenômeno biológico fixo;\n"
+            "B) construção social atravessada por práticas pedagógicas e curriculares;\n"
+            "C) irrelevante para a aprendizagem;\n"
+            "D) restrito à educação sexual. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Schiebinger (2001) discute:\n"
+            "A) neutralidade da ciência; B) impacto do feminismo sobre a ciência; "
+            "C) darwinismo; D) genética. → B",
+            "Q2. O ODS 5 trata de:\n"
+            "A) educação; B) igualdade de gênero; C) fome; D) energia. → B",
+            "Q3. Meritocracia, na perspectiva crítica, é:\n"
+            "A) neutra; B) mecanismo que naturaliza desigualdades históricas; "
+            "C) sinônimo de justiça; D) mera técnica de avaliação. → B",
+        ],
+        "resumo": {
+            "regra": "Enfrentar a sub-representação exige análise de dados + intervenção afirmativa.",
+            "excecoes": "Olimpíadas e competições podem coexistir, se combinadas com políticas afirmativas.",
+            "palavra_chave": "Investigação estrutural + equidade.",
+            "artigo": "LDB art. 3º; ODS 5.",
+            "mnemonico": "IEA: Investigar, Enfrentar (causas), Afirmar (direitos).",
+        },
+    },
+
+    29: {
+        "tema": "Racismo religioso e Educação (Wanderson Nascimento)",
+        "subtema": "Religiões de matriz africana e violência simbólica",
+        "habilidade_bncc": "Lei 10.639/03; DCN Educação Escolar Quilombola; BNCC – competência 6",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede a ação que enfrenta o RACISMO RELIGIOSO na escola. A resposta A afirma que a "
+            "abordagem da religião e cultura iorubanas permite refletir sobre VIOLÊNCIAS MATERIAIS E "
+            "SIMBÓLICAS — expressão coerente com o texto de Wanderson Nascimento."
+        ),
+        "como_banca_pensou": (
+            "A banca contrapõe uma abordagem CRÍTICA e AFIRMATIVA (A) a visões assimilacionistas (B: "
+            "'identidade comum'), laicistas mal-fundamentadas (C: escola só para 'conhecimento geral') "
+            "e legalistas equivocadas (D: 'lei sobre iorubana e indígena' — que não existe nessa forma)."
+        ),
+        "resolucao": [
+            "Descarte B: 'identidade comum a todos' apaga diferenças — assimilacionismo.",
+            "Descarte C: 'ambiente escolar como espaço de convívio religioso distancia-se' — falso; escola pública laica não impede abordar religiões.",
+            "Descarte D: não há 'lei que trate do ensino da história iorubana e indígena' — Lei 11.645/08 trata de História e Cultura Afro-Brasileira e Indígena, e o 'ensino religioso' NÃO é obrigatório para o estudante.",
+            "Marque A: reflexão sobre violências materiais e simbólicas.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Aborda religiões de matriz africana como forma de identificar e enfrentar violências simbólicas e materiais do racismo religioso."),
+            "B": ("ERRADA", "'Identidade comum a todos' apaga a diferença e reforça assimilacionismo."),
+            "C": ("ERRADA", "Ensino laico não implica silenciamento sobre culturas religiosas — implica pluralismo."),
+            "D": ("ERRADA", "Enunciado normativo impreciso; a lei é a 10.639/03 e 11.645/08, e o ensino religioso é facultativo ao estudante."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 10.639, de 9 de janeiro de 2003. Altera a LDB. DOU, 10 jan. 2003.",
+            "BRASIL. Lei nº 11.645, de 10 de março de 2008. Altera a LDB, incluindo história e cultura indígena. DOU, 11 mar. 2008.",
+            "NASCIMENTO, Wanderson Flor do. As religiões de matrizes africanas, resistência e contexto escolar: entre encruzilhadas. In: Memórias do Baobá II. Fortaleza: UFC, 2017.",
+            "MIRANDA, Cláudia; RIASCOS, Fanny; MELÉNDEZ, Juliana (org.). Pedagogia decolonial e educação antirracista. Belo Horizonte: Autêntica, 2019.",
+            "BRASIL. Constituição da República Federativa do Brasil de 1988, art. 5º, VI e VIII (liberdade religiosa).",
+        ],
+        "teoria": (
+            "O RACISMO RELIGIOSO é uma modalidade de racismo dirigida a religiões de matriz africana e "
+            "afro-brasileira (candomblé, umbanda, xambá etc.). Manifesta-se como intolerância, ataques a "
+            "terreiros, silenciamento no currículo e estigmatização. A resposta pedagógica é ABORDAR "
+            "AFIRMATIVAMENTE essas religiões, à luz das Leis 10.639/03 e 11.645/08 e do art. 5º, VI e "
+            "VIII da CF/88 (liberdade religiosa). Wanderson Nascimento (2017) propõe pensar a escola a "
+            "partir das encruzilhadas — dos deuses do movimento (Exu, Ogum) — como signos de negociação, "
+            "pluralidade e resistência."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a distinção entre enfrentamento crítico do racismo religioso vs. assimilacionismo."
+        ),
+        "pegadinhas": [
+            "Confundir 'laicidade' com apagamento de religiões afro-brasileiras.",
+            "Aceitar 'identidade comum' como afirmação de igualdade.",
+            "Assumir que existe 'lei sobre ensino da história iorubana'.",
+        ],
+        "erros_comuns": (
+            "Marcar B pela linguagem 'identitária'."
+        ),
+        "dica_estrategica": (
+            "Enfrentamento antirracista + laicidade plural: abordar as religiões afrodescendentes reconhecendo diferenças."
+        ),
+        "variacao": (
+            "(Estilo INEP) A CF/88, art. 5º, VI, garante:\n"
+            "A) liberdade religiosa;\n"
+            "B) monopólio católico;\n"
+            "C) proibição de manifestações religiosas em público;\n"
+            "D) laicismo como ateísmo estatal. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Racismo religioso é:\n"
+            "A) proteção da liberdade religiosa; B) modalidade de racismo contra religiões de matriz africana; "
+            "C) laicidade; D) neutralidade. → B",
+            "Q2. A Lei 10.639/03 obriga o ensino de:\n"
+            "A) filosofia; B) história e cultura afro-brasileira e africana; "
+            "C) apenas sociologia; D) apenas religião. → B",
+            "Q3. Wanderson Nascimento (2017) mobiliza os signos de:\n"
+            "A) Zeus e Hera; B) Exu e Ogum (panteão iorubano); C) Anúbis e Ísis; D) Odin e Thor. → B",
+        ],
+        "resumo": {
+            "regra": "Escola combate racismo religioso pela ABORDAGEM AFIRMATIVA das religiões afrodescendentes.",
+            "excecoes": "Ensino religioso é facultativo para o estudante (LDB, art. 33).",
+            "palavra_chave": "Reconhecimento + violência simbólica + pluralidade.",
+            "artigo": "CF/88 art. 5º, VI; Lei 10.639/03; Res. CNE/CP 1/2004.",
+            "mnemonico": "3 R's antirracismo religioso: Reconhecer, Recusar (a estigmatização), Reafirmar (a diferença).",
+        },
+    },
+
+    30: {
+        "tema": "Ações afirmativas – Lei 12.711/2012 (revisão de 2023)",
+        "subtema": "PNEDH e conquista democrática",
+        "habilidade_bncc": "BNCC – competências 6, 9, 10; PNEDH (2007)",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "O item cobra a leitura das ações afirmativas como CONQUISTA DEMOCRÁTICA resultante da "
+            "mobilização social. A alternativa B é a única que expressa essa dimensão histórica; as "
+            "demais desconectam da história (A), atribuem falsa neutralidade à mídia (C) ou apresentam "
+            "uma garantia excessiva (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra o vínculo entre AÇÕES AFIRMATIVAS e MOBILIZAÇÃO SOCIAL, especialmente do "
+            "Movimento Negro. Palavras-veneno: 'desvinculadas do processo histórico', 'neutralidade da "
+            "mídia', 'garantia da superação' (a lei é meio, não fim)."
+        ),
+        "resolucao": [
+            "Fixe: Lei 12.711/2012 = conquista da mobilização social.",
+            "Descarte A: 'desvinculadas do processo histórico' contradiz a origem da lei.",
+            "Descarte C: mídia NÃO é neutra em relação ao racismo.",
+            "Descarte D: cotas mitigam, mas não 'garantem a superação' da discriminação.",
+            "Marque B: conquista democrática decorrente da mobilização social.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Ações afirmativas emergem da história do Movimento Negro; não são desvinculadas."),
+            "B": ("CORRETA", "Reflete a origem e o sentido histórico das cotas — luta democrática e mobilização social."),
+            "C": ("ERRADA", "Mídia não é neutra: reproduz e enquadra o debate."),
+            "D": ("ERRADA", "Cotas mitigam desigualdade, mas não são garantia absoluta de superação."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 12.711, de 29 de agosto de 2012. Dispõe sobre o ingresso nas universidades federais e nas instituições federais de ensino técnico de nível médio. DOU, Brasília, 30 ago. 2012.",
+            "BRASIL. Lei nº 14.723, de 13 de novembro de 2023. Altera a Lei nº 12.711/2012. DOU, Brasília, 14 nov. 2023.",
+            "BRASIL. Comitê Nacional de Educação em Direitos Humanos. Plano Nacional de Educação em Direitos Humanos. Brasília: SEDH/MEC, 2007.",
+            "GOMES, Nilma Lino. O movimento negro educador. Petrópolis: Vozes, 2017.",
+            "SUPREMO TRIBUNAL FEDERAL. ADPF 186. Rel. Min. Ricardo Lewandowski, j. 26/4/2012.",
+        ],
+        "teoria": (
+            "A Lei 12.711/2012 (Lei de Cotas) resulta da mobilização histórica do Movimento Negro no Brasil "
+            "(Gomes, 2017) e de organizações estudantis. Sua constitucionalidade foi reafirmada pelo STF "
+            "(ADPF 186, 2012). Em 2023, a Lei 14.723 revisou o dispositivo, mantendo e aprimorando as "
+            "cotas para pretos, pardos, indígenas, quilombolas e pessoas com deficiência. O PNEDH (2007) "
+            "orienta a educação em direitos humanos. Ações afirmativas são REPARATÓRIAS e "
+            "DEMOCRATIZANTES — mitigam, mas não esgotam o enfrentamento do racismo estrutural."
+        ),
+        "padroes_banca": (
+            "O INEP alinha alternativas corretas ao vocabulário 'mobilização social', 'conquista democrática', "
+            "'reparação histórica'."
+        ),
+        "pegadinhas": [
+            "Achar que cotas 'garantem' superação — mitigam.",
+            "Aceitar 'neutralidade da mídia'.",
+            "Desvincular a lei de seu contexto histórico.",
+        ],
+        "erros_comuns": (
+            "Marcar D por 'discriminação racial' soar como pauta correta — mas a formulação 'garantia' é imprecisa."
+        ),
+        "dica_estrategica": (
+            "Cotas = conquista democrática, mobilização, reparação. Nunca 'garantia absoluta'."
+        ),
+        "variacao": (
+            "(Estilo INEP) O STF, na ADPF 186 (2012), decidiu que:\n"
+            "A) cotas raciais são inconstitucionais;\n"
+            "B) cotas raciais são compatíveis com a CF/88 como ações afirmativas;\n"
+            "C) cotas apenas socioeconômicas; D) cotas apenas para indígenas. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A Lei 12.711/2012 destina cotas em universidades federais para:\n"
+            "A) apenas alto rendimento; B) pretos, pardos, indígenas, quilombolas, PcD e egressos de escolas públicas; "
+            "C) apenas mulheres; D) apenas idosos. → B",
+            "Q2. O Movimento Negro, segundo Gomes (2017), é:\n"
+            "A) educador da sociedade; B) irrelevante; C) apenas cultural; D) apenas político. → A",
+            "Q3. O PNEDH (2007) contempla:\n"
+            "A) apenas educação básica; B) educação básica, superior, mídia, servidores públicos; "
+            "C) apenas EM; D) apenas EJA. → B",
+        ],
+        "resumo": {
+            "regra": "Cotas são conquistas democráticas da mobilização social; mitigam desigualdade histórica.",
+            "excecoes": "Não são solução única; devem articular-se com políticas de permanência.",
+            "palavra_chave": "Mobilização social + conquista democrática.",
+            "artigo": "Lei 12.711/2012; Lei 14.723/2023; STF ADPF 186/2012.",
+            "mnemonico": "MDR: Mobilização, Democracia, Reparação.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -2389,7 +2827,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 5 (Q01 a Q25)",
+        "3. Análise completa – LOTES 1 a 6 (Q01 a Q30)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -2427,14 +2865,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 5 (Q01 a Q25)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 6 (Q01 a Q30)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 26)):
+    for num in list(range(1, 31)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -2554,7 +2992,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-5")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-6")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -2615,7 +3053,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 5 (Q01 a Q25)",
+              "3. Análise completa – LOTES 1 a 6 (Q01 a Q30)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -2654,7 +3092,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 5 (Q01 a Q25)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 6 (Q01 a Q30)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -2663,7 +3101,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 26)):
+    for num in list(range(1, 31)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -2758,7 +3196,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-5", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-6", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
