@@ -4393,6 +4393,401 @@ ANALISES = {
         },
     },
 
+    56: {
+        "tema": "Cheikh Anta Diop – África no berço da civilização",
+        "subtema": "Mediterrâneo antigo e crítica ao eurocentrismo",
+        "habilidade_bncc": "EF06HI09, EM13CHS502",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o reconhecimento da contribuição AFRICANA (egípcia) à ciência antiga, "
+            "especialmente a MEDICINA. As demais alternativas invertem a cronologia ou naturalizam "
+            "hierarquias eurocêntricas."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a leitura DECOLONIAL de Diop: rejeitar o mito grego como origem única e "
+            "reconhecer contribuições africanas."
+        ),
+        "resolucao": [
+            "Descarte A: democracia ateniense era exceção limitada, não modelo mediterrânico universal.",
+            "Descarte C: 'pensamento grego oriundo do islâmico' anacronismo (islamismo surge no séc. VII).",
+            "Descarte D: 'gregos ensinaram matemática aos egípcios para pirâmides' inverte a cronologia.",
+            "Marque B: medicina egípcia com técnicas cirúrgicas e conhecimento anatômico.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Democracia ateniense era exceção; nem Roma nem Egito a adotaram."),
+            "B": ("CORRETA", "Medicina egípcia é reconhecida como uma das mais avançadas da Antiguidade."),
+            "C": ("ERRADA", "Anacronismo: islamismo é do séc. VII, posterior à filosofia grega."),
+            "D": ("ERRADA", "Inversão cronológica: pirâmides são anteriores à matemática grega."),
+        },
+        "fundamentacao": [
+            "DIOP, Cheikh Anta. Nações negras e culturas. Petrópolis: Vozes, 2025.",
+            "BERNAL, Martin. Atena negra. Rio de Janeiro: Record, 2005.",
+            "UNESCO. História geral da África. Brasília: UNESCO, 2010.",
+            "REDE, Marcelo. Egito Antigo. São Paulo: Companhia das Letras, 2017.",
+        ],
+        "teoria": (
+            "Cheikh Anta Diop (senegalês) e Martin Bernal desafiaram narrativas eurocêntricas ao "
+            "reafirmar contribuições africanas (Egito) à Antiguidade Clássica. A medicina egípcia é "
+            "documentada em papiros (Ebers, Edwin Smith), com técnicas cirúrgicas, farmacologia e "
+            "conhecimento anatômico avançados. A Lei 10.639/03 estimula essa perspectiva no ensino "
+            "básico."
+        ),
+        "padroes_banca": (
+            "O INEP cobra decolonialidade da história antiga; palavras-veneno = anacronismos e inversões."
+        ),
+        "pegadinhas": [
+            "Anacronismo com o islã antes do séc. VII.",
+            "Inversão de origens gregas x egípcias.",
+            "Aceitar 'democracia' como modelo universal antigo.",
+        ],
+        "erros_comuns": (
+            "Marcar A por hábito eurocêntrico de idealizar a democracia ateniense."
+        ),
+        "dica_estrategica": (
+            "Em Diop/decolonialidade, prefira alternativas que reconheçam PROTAGONISMO africano."
+        ),
+        "variacao": (
+            "(Estilo INEP) Martin Bernal, em 'Atena Negra' (2005), argumenta que:\n"
+            "A) a Grécia clássica é totalmente autóctone;\n"
+            "B) muitas raízes gregas devem ser buscadas na África e no Levante;\n"
+            "C) o Egito é irrelevante para a Grécia; D) só o Império Romano importa. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Papiro de Edwin Smith é fonte para:\n"
+            "A) medicina egípcia; B) música grega; C) filosofia islâmica; D) direito romano. → A",
+            "Q2. Cheikh Anta Diop era:\n"
+            "A) senegalês; B) francês; C) grego; D) estadunidense. → A",
+            "Q3. Islamismo surge:\n"
+            "A) séc. VII; B) séc. II a.C.; C) séc. XV; D) séc. XX. → A",
+        ],
+        "resumo": {
+            "regra": "Antiguidade mediterrânica = trocas Egito-Grécia-Levante.",
+            "excecoes": "Cada polo tinha especificidades culturais.",
+            "palavra_chave": "Medicina egípcia + decolonial.",
+            "artigo": "DIOP; BERNAL; UNESCO (2010).",
+            "mnemonico": "D.M.E.: Diop, Medicina, Egito.",
+        },
+    },
+
+    57: {
+        "tema": "Uberização e discurso da autonomia",
+        "subtema": "Precarização do trabalho no capitalismo digital",
+        "habilidade_bncc": "EM13CHS502, EM13CHS303",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a identificação do NOVO DISCURSO ideológico (liberdade e autonomia) que "
+            "MASCARA a precarização. As demais opções reproduzem esse discurso (B, D) ou reduzem à "
+            "dependência digital (A)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra o entendimento CRÍTICO da uberização como ideologia (Antunes)."
+        ),
+        "resolucao": [
+            "Descarte A: 'dependência digital' é sintoma, não cerne ideológico.",
+            "Descarte B: 'autoemprego como solução' repete o discurso do capital.",
+            "Descarte D: 'aperfeiçoamento' banaliza a exploração.",
+            "Marque C: discurso de liberdade/autonomia mascara mecanismos de exploração.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Reduz à técnica; o problema é ideológico."),
+            "B": ("ERRADA", "'Solução' expressa o próprio discurso enganoso."),
+            "C": ("CORRETA", "Nomeia a ideologia: liberdade e autonomia como narrativa que mascara exploração."),
+            "D": ("ERRADA", "'Complementar renda' minimiza a nova morfologia do trabalho."),
+        },
+        "fundamentacao": [
+            "ANTUNES, Ricardo. O privilégio da servidão: o novo proletariado de serviços na era digital. São Paulo: Boitempo, 2018.",
+            "ANTUNES, Ricardo (org.). Riqueza e miséria do trabalho no Brasil IV: trabalho digital, autogestão e expropriação da vida. São Paulo: Boitempo, 2019.",
+            "ABÍLIO, Ludmila. Uberização: do empreendedorismo para o autogerenciamento subordinado. Psicoperspectivas, v. 18, n. 3, 2019.",
+            "ARAÚJO, J. N. G. Neoliberalismo e horizontes da precarização do trabalho. Cadernos de Psicologia Social do Trabalho, n. 1, 2020.",
+        ],
+        "teoria": (
+            "A UBERIZAÇÃO (Abílio, 2019) descreve o modelo de trabalho por plataformas em que o "
+            "trabalhador assume os riscos (equipamentos, horário, saúde) sob discurso de 'autonomia'. "
+            "Antunes (2018) situa esse fenômeno na 'nova morfologia do trabalho' — precarização, "
+            "informalidade, adoecimento. Discursos como 'seja seu próprio patrão' funcionam como IDEOLOGIA."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a leitura ideológica do trabalho digital."
+        ),
+        "pegadinhas": [
+            "Aceitar o discurso ideológico da autonomia.",
+            "Reduzir a técnica.",
+            "Confundir informalidade com liberdade.",
+        ],
+        "erros_comuns": (
+            "Marcar D pela banalização."
+        ),
+        "dica_estrategica": (
+            "Precarização digital = ideologia + exploração encoberta."
+        ),
+        "variacao": (
+            "(Estilo INEP) Abílio (2019) chama a uberização de:\n"
+            "A) empreendedorismo emancipador;\n"
+            "B) autogerenciamento subordinado;\n"
+            "C) socialismo digital; D) fim do trabalho. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Antunes (2018) fala em:\n"
+            "A) proletariado de serviços na era digital; B) volta ao taylorismo puro; "
+            "C) fim do capitalismo; D) sociedade sem trabalho. → A",
+            "Q2. O termo 'toyotismo' descreve:\n"
+            "A) modelo japonês flexível de produção; B) modelo alemão; C) modelo escravista; D) modelo taylorista. → A",
+            "Q3. A reforma trabalhista brasileira de 2017:\n"
+            "A) ampliou direitos; B) flexibilizou relações de trabalho; C) instituiu FGTS; D) fundou o INSS. → B",
+        ],
+        "resumo": {
+            "regra": "Uberização mascara exploração sob discurso de autonomia.",
+            "excecoes": "Alguns trabalhadores encontram nichos, mas em geral há perda de direitos.",
+            "palavra_chave": "Autonomia ideológica + precarização real.",
+            "artigo": "ANTUNES (2018); ABÍLIO (2019).",
+            "mnemonico": "A.M.E.: Autonomia (ilusória) Mascara Exploração.",
+        },
+    },
+
+    58: {
+        "tema": "Neoliberalismo e flexibilização da legislação social",
+        "subtema": "Reformas trabalhistas e desmonte",
+        "habilidade_bncc": "EM13CHS502, EM13CHS303",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o pareamento POLÍTICA/IDEOLOGIA + MEDIDA. A crise da sociedade salarial + "
+            "flexibilização = NEOLIBERALISMO + FLEXIBILIZAÇÃO DA LEGISLAÇÃO."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a articulação teórico-histórica entre neoliberalismo e reformas trabalhistas."
+        ),
+        "resolucao": [
+            "Descarte A: keynesianismo protege direitos; oposto do cenário.",
+            "Descarte B: monetarismo é MEDIDA (política monetária), não caracteriza o cenário social.",
+            "Descarte D: desenvolvimentismo é diferente do cenário.",
+            "Marque C: neoliberalismo + flexibilização da legislação social.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Keynesianismo protege direitos; contradiz o cenário."),
+            "B": ("ERRADA", "Monetarismo é conceito diverso; refere-se a política monetária, não à flexibilização social."),
+            "C": ("CORRETA", "Neoliberalismo é o marco ideológico da flexibilização da legislação trabalhista."),
+            "D": ("ERRADA", "Desenvolvimentismo pressupõe Estado ativo; oposto do cenário."),
+        },
+        "fundamentacao": [
+            "ANDERSON, Perry. Balanço do neoliberalismo. In: SADER, E.; GENTILI, P. (org.). Pós-neoliberalismo: as políticas sociais e o Estado democrático. Rio de Janeiro: Paz e Terra, 1995.",
+            "HARVEY, David. O neoliberalismo: história e implicações. São Paulo: Loyola, 2008.",
+            "SADER, Emir. A vingança da história. São Paulo: Boitempo, 2003.",
+            "BRASIL. Lei nº 13.467, de 13 de julho de 2017. Reforma trabalhista.",
+        ],
+        "teoria": (
+            "NEOLIBERALISMO (Harvey, 2008) é a resposta capitalista à crise dos anos 1970. Suas "
+            "medidas incluem privatização, desregulamentação, flexibilização trabalhista, redução do "
+            "Estado social. No Brasil, a Reforma Trabalhista (Lei 13.467/2017) exemplifica a flexibilização "
+            "da legislação social."
+        ),
+        "padroes_banca": (
+            "O INEP cobra pareamento ideologia-medida."
+        ),
+        "pegadinhas": [
+            "Confundir keynesianismo com neoliberalismo.",
+            "Achar que monetarismo = flexibilização.",
+            "Confundir neoliberalismo com desenvolvimentismo.",
+        ],
+        "erros_comuns": (
+            "Marcar B por conhecer 'monetarismo' vagamente."
+        ),
+        "dica_estrategica": (
+            "Neoliberalismo = flexibilização + desregulação + Estado mínimo."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Reforma Trabalhista brasileira (2017):\n"
+            "A) reforçou o Estado protetor;\n"
+            "B) flexibilizou direitos e possibilitou terceirização irrestrita;\n"
+            "C) instituiu o CLT; D) proibiu jornada parcial. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Harvey (2008) define neoliberalismo como:\n"
+            "A) política monetária; B) projeto de classe para restaurar o poder do capital; "
+            "C) fase do socialismo; D) fim do capitalismo. → B",
+            "Q2. Anderson (1995) discute:\n"
+            "A) balanço do neoliberalismo; B) o feudalismo; C) a Revolução Francesa; D) o Iluminismo. → A",
+            "Q3. Desenvolvimentismo brasileiro é associado a:\n"
+            "A) JK; B) Collor; C) Temer; D) Sarney. → A",
+        ],
+        "resumo": {
+            "regra": "Neoliberalismo = flexibilização + desregulação.",
+            "excecoes": "Existem correntes internas (ordoliberalismo, ultraliberalismo).",
+            "palavra_chave": "Neoliberalismo + flexibilização.",
+            "artigo": "HARVEY (2008); ANDERSON (1995).",
+            "mnemonico": "N.F.L.: Neoliberalismo + Flexibilização + Legislação.",
+        },
+    },
+
+    59: {
+        "tema": "Ditaduras latino-americanas e endividamento externo",
+        "subtema": "Anos 1970 e capital estrangeiro",
+        "habilidade_bncc": "EM13CHS303, EM13CHS604",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra as consequências das políticas econômicas das ditaduras latino-americanas nos "
+            "anos 1970: DEPENDÊNCIA de capital estrangeiro + endividamento externo (crise da dívida). "
+            "As demais opções remetem a políticas de outros períodos."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão da crise da dívida latino-americana e do 'milagre econômico' "
+            "brasileiro."
+        ),
+        "resolucao": [
+            "Descarte A: âncora cambial + controle inflacionário = anos 1990.",
+            "Descarte B: planificação da produção doméstica ≠ ditaduras liberalizantes latino-americanas.",
+            "Descarte D: desvalorização cambial + empréstimos baratos não corresponde à realidade.",
+            "Marque C: dependência de capital estrangeiro + endividamento externo = anos 1970.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Âncora cambial é dos anos 1990 (Plano Real, Cavallo)."),
+            "B": ("ERRADA", "Planificação é conceito de economia socialista."),
+            "C": ("CORRETA", "Ditaduras dos anos 1970 tomaram empréstimos externos maciços, gerando a crise da dívida."),
+            "D": ("ERRADA", "Não foi desvalorização, e os empréstimos ficaram caros com a subida dos juros nos EUA."),
+        },
+        "fundamentacao": [
+            "GALEANO, Eduardo. As veias abertas da América Latina. Porto Alegre: L&PM, 2010.",
+            "FIORI, José Luís. Sistema mundial e América Latina. Petrópolis: Vozes, 1999.",
+            "BATISTA JR., Paulo Nogueira. Da crise internacional à moratória brasileira. Rio de Janeiro: Paz e Terra, 1988.",
+            "CANO, Wilson. América Latina: notas sobre a crise atual. Economia e Sociedade, v. 18, n. 3, 2009.",
+        ],
+        "teoria": (
+            "Nos anos 1970, ditaduras latino-americanas (Brasil, Argentina, Chile, Uruguai) adotaram "
+            "modelos de desenvolvimento baseados em ENDIVIDAMENTO EXTERNO — os 'petrodólares' abundantes "
+            "eram emprestados a juros baixos. Em 1979, o choque Volcker (subida abrupta dos juros "
+            "norte-americanos) desencadeou a CRISE DA DÍVIDA (1982), levando à 'década perdida'."
+        ),
+        "padroes_banca": (
+            "O INEP cobra articulação política + economia + história latino-americana."
+        ),
+        "pegadinhas": [
+            "Confundir com Plano Real (1994).",
+            "Confundir com planificação socialista.",
+            "Achar que a dívida se manteve barata.",
+        ],
+        "erros_comuns": (
+            "Marcar A por conhecer âncora cambial."
+        ),
+        "dica_estrategica": (
+            "Anos 1970 = 'milagre' + endividamento externo + colapso pós-1979."
+        ),
+        "variacao": (
+            "(Estilo INEP) O 'choque Volcker' (1979) consistiu em:\n"
+            "A) queda dos preços do petróleo;\n"
+            "B) elevação dos juros pelo Fed dos EUA, desencadeando a crise da dívida;\n"
+            "C) fim de Bretton Woods; D) criação da OMC. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A 'década perdida' latino-americana refere-se a:\n"
+            "A) 1980-1990; B) 1970; C) 1990; D) 2000. → A",
+            "Q2. Galeano (2010) analisa:\n"
+            "A) as veias abertas da América Latina; B) o Renascimento; C) o Iluminismo; D) a Guerra dos Cem Anos. → A",
+            "Q3. O Plano Real foi implementado em:\n"
+            "A) 1994; B) 1988; C) 2000; D) 1985. → A",
+        ],
+        "resumo": {
+            "regra": "Anos 1970: crescimento + endividamento externo; anos 1980: crise da dívida.",
+            "excecoes": "Alguns países passaram por processos específicos (Cuba socialista).",
+            "palavra_chave": "Capital estrangeiro + endividamento.",
+            "artigo": "FIORI (1999); BATISTA JR. (1988).",
+            "mnemonico": "C.E.E.: Capital Externo + Endividamento.",
+        },
+    },
+
+    60: {
+        "tema": "Palestina/Israel e diversidade de narrativas",
+        "subtema": "Autonomia + comparação de fontes",
+        "habilidade_bncc": "EM13CHS603, EM13CHS604",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede a estratégia que promove AUTONOMIA + DIVERSIDADE DE NARRATIVAS. A resposta A "
+            "articula versões oficiais e subalternizadas."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a superação da narrativa única em conflitos complexos."
+        ),
+        "resolucao": [
+            "Descarte B: priorizar 'tradição ocidental' e descartar 'discursos identitários' é excludente.",
+            "Descarte C: 'estabilidade' como critério esconde a violência.",
+            "Descarte D: 'factual e cronológico' reduz criticidade.",
+            "Marque A: comparação de versões oficiais e subalternizadas.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Autonomia crítica = comparar versões oficiais e subalternizadas."),
+            "B": ("ERRADA", "Prioridade à tradição ocidental é excludente."),
+            "C": ("ERRADA", "'Estabilidade' esconde violações."),
+            "D": ("ERRADA", "Factual/cronológico reduz o crítico."),
+        },
+        "fundamentacao": [
+            "SAID, Edward. Orientalismo. São Paulo: Cia. das Letras, 2007.",
+            "PAPPÉ, Ilan. A limpeza étnica da Palestina. São Paulo: Sundermann, 2016.",
+            "MASALHA, Nur. A Palestina: quatro mil anos de história. São Paulo: Elefante, 2022.",
+            "ONU. Resolução 181 (II), 29 de novembro de 1947. Plano de Partilha da Palestina.",
+        ],
+        "teoria": (
+            "O CONFLITO PALESTINA-ISRAEL exige o trabalho pedagógico com MÚLTIPLAS NARRATIVAS. Said "
+            "(2007) discute o orientalismo; Pappé (2016) e Masalha (2022) apresentam a história "
+            "palestina. A ONU (Res. 181/1947) estabeleceu a partilha, seguida da Nakba (1948). "
+            "Direitos humanos e diversidade de narrativas são chaves para autonomia crítica."
+        ),
+        "padroes_banca": (
+            "O INEP cobra pluralismo e crítica de fontes em temas geopolíticos sensíveis."
+        ),
+        "pegadinhas": [
+            "Priorizar narrativa ocidental.",
+            "Achar que 'estabilidade' explica conflito.",
+            "Reduzir a datas.",
+        ],
+        "erros_comuns": (
+            "Marcar D pela ilusão de 'objetividade cronológica'."
+        ),
+        "dica_estrategica": (
+            "Conflitos complexos = múltiplas narrativas + direitos humanos."
+        ),
+        "variacao": (
+            "(Estilo INEP) Edward Said, em 'Orientalismo' (2007), argumenta que:\n"
+            "A) o Oriente é objeto neutro;\n"
+            "B) o 'Oriente' é uma construção ocidental que serve à dominação colonial;\n"
+            "C) o Ocidente é irrelevante; D) o Egito não interessa. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A Nakba (1948) refere-se a:\n"
+            "A) fundação de Israel e êxodo palestino; B) queda de Constantinopla; "
+            "C) Revolução Iraniana; D) Guerra do Vietnã. → A",
+            "Q2. A ONU aprovou a partilha em:\n"
+            "A) 1947; B) 1918; C) 1945; D) 1967. → A",
+            "Q3. Ilan Pappé é:\n"
+            "A) historiador israelense crítico da política de seu país; B) presidente palestino; "
+            "C) diplomata árabe; D) jornalista turco. → A",
+        ],
+        "resumo": {
+            "regra": "Autonomia crítica = confrontar narrativas oficiais e subalternizadas.",
+            "excecoes": "Cronologia é importante, mas insuficiente.",
+            "palavra_chave": "Narrativas plurais + direitos humanos.",
+            "artigo": "SAID (2007); PAPPÉ (2016).",
+            "mnemonico": "N.P.D.: Narrativas Plurais + Direitos humanos.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -4848,7 +5243,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 11 (Q01 a Q55)",
+        "3. Análise completa – LOTES 1 a 12 (Q01 a Q60)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -4886,14 +5281,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 11 (Q01 a Q55)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 12 (Q01 a Q60)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 56)):
+    for num in list(range(1, 61)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -5013,7 +5408,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-11")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-12")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -5074,7 +5469,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 11 (Q01 a Q55)",
+              "3. Análise completa – LOTES 1 a 12 (Q01 a Q60)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -5113,7 +5508,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 11 (Q01 a Q55)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 12 (Q01 a Q60)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -5122,7 +5517,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 56)):
+    for num in list(range(1, 61)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -5217,7 +5612,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-11", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-12", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
