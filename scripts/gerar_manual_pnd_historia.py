@@ -1074,6 +1074,437 @@ ANALISES = {
         },
     },
 
+    16: {
+        "tema": "Educação escolar quilombola e Inventário Cultural",
+        "subtema": "Colaboração escola–comunidade e PPP",
+        "habilidade_bncc": "Res. CNE/CEB 8/2012 – DCN da Educação Escolar Quilombola; BNCC – competências 6 e 9",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão da Educação Escolar Quilombola como articulação entre escola e "
+            "comunidade, valorizando saberes, rituais e memórias locais. A única alternativa que expressa "
+            "essa perspectiva é C: reconhecer ritos significativos para a comunidade."
+        ),
+        "como_banca_pensou": (
+            "A banca contrapõe uma abordagem NORMATIZANTE/URBANOCÊNTRICA (A, B, D) à perspectiva "
+            "COMUNITÁRIA e afroreferenciada (C). As DCN da Educação Escolar Quilombola exigem partir dos "
+            "saberes da comunidade, e não impor conteúdos externos."
+        ),
+        "resolucao": [
+            "Reconheça a chave: escola quilombola + colaboração com a comunidade + Inventário Cultural.",
+            "Descarte A: 'normatizar saberes' inverte a relação — impõe forma escolar sobre saber comunitário.",
+            "Descarte B: 'festividades contemporâneas para renovar princípios' desconsidera a festa tradicional citada.",
+            "Descarte D: 'produtos industrializados' rompe com a lógica comunitária.",
+            "Marque C: reconhecer ritos significativos da comunidade durante a organização da festa = intervenção afinada com as DCN quilombolas.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Normatizar saberes escolariza indevidamente o conhecimento comunitário."),
+            "B": ("ERRADA", "Substitui a festa tradicional por 'festividades contemporâneas'."),
+            "C": ("CORRETA", "Reconhecer ritos da comunidade durante a festa articula PPP, currículo e territorialidade quilombola."),
+            "D": ("ERRADA", "Produtos industrializados descaracterizam a economia e a cultura comunitária."),
+        },
+        "fundamentacao": [
+            "BRASIL. Conselho Nacional de Educação. Resolução CNE/CEB nº 8, de 20 de novembro de 2012. Institui as DCN para a Educação Escolar Quilombola na Educação Básica.",
+            "BRASIL. Decreto nº 6.040, de 7 de fevereiro de 2007. Política Nacional de Desenvolvimento Sustentável dos Povos e Comunidades Tradicionais.",
+            "GOMES, Nilma Lino. O movimento negro educador. Petrópolis: Vozes, 2017.",
+            "IPHAN. Inventário Nacional de Referências Culturais – INRC: manual de aplicação. Brasília: IPHAN, 2000.",
+        ],
+        "teoria": (
+            "A EDUCAÇÃO ESCOLAR QUILOMBOLA (Res. CNE/CEB 8/2012) reconhece a especificidade histórica, "
+            "cultural, social e territorial das comunidades remanescentes de quilombos. Princípios: "
+            "PARTICIPAÇÃO COMUNITÁRIA na gestão e no currículo, RESPEITO AOS SABERES tradicionais, "
+            "ARTICULAÇÃO com o PPP e com o Inventário Nacional de Referências Culturais (INRC – IPHAN, 2000). "
+            "Gomes (2017) discute o movimento negro como educador e a EEQ como resposta ao racismo estrutural. "
+            "A festa do padroeiro é oportunidade pedagógica privilegiada — desde que seus rituais sejam RECONHECIDOS "
+            "e não substituídos por formatos escolares urbanocêntricos."
+        ),
+        "padroes_banca": (
+            "O INEP contrapõe abordagem urbanocêntrica/normatizante vs. abordagem comunitária/afroreferenciada."
+        ),
+        "pegadinhas": [
+            "Confundir 'normatizar' com 'sistematizar'.",
+            "Achar que 'renovar princípios' é sinal de modernidade.",
+            "Marcar D por associar 'feira' a evento pedagógico.",
+        ],
+        "erros_comuns": (
+            "Marcar B por soar aggiornado. Na EEQ, o eixo é reconhecer o já existente, não introduzir 'novo'."
+        ),
+        "dica_estrategica": (
+            "Em item sobre EEQ, prefira alternativas com RECONHECIMENTO + PARTICIPAÇÃO + TERRITÓRIO."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Resolução CNE/CEB nº 8/2012 institui:\n"
+            "A) BNCC; B) DCN da Educação Escolar Quilombola; C) Lei do Ensino Religioso; "
+            "D) DCN Indígena. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O INRC (IPHAN, 2000) é usado para:\n"
+            "A) construir prédios; B) identificar e registrar referências culturais; "
+            "C) planejar cidades; D) tributar comércio. → B",
+            "Q2. A EEQ tem como princípio:\n"
+            "A) homogeneização nacional; B) participação da comunidade quilombola; "
+            "C) currículo urbano; D) redução da autonomia. → B",
+            "Q3. 'O movimento negro educador' é obra de:\n"
+            "A) Freire; B) Gomes; C) Saviani; D) Piaget. → B",
+        ],
+        "resumo": {
+            "regra": "EEQ = escola articulada à comunidade quilombola; reconhecer, não normatizar.",
+            "excecoes": "Sistematizações são bem-vindas, desde que não substituam a fala da comunidade.",
+            "palavra_chave": "Reconhecimento + território + PPP.",
+            "artigo": "Res. CNE/CEB 8/2012; Decreto 6.040/2007.",
+            "mnemonico": "3 R's da EEQ: Reconhecer, Ritualizar (juntos), Registrar.",
+        },
+    },
+
+    17: {
+        "tema": "Currículo moldado (Gimeno Sacristán)",
+        "subtema": "Currículo como construção social + professor mediador",
+        "habilidade_bncc": "BNCC; DCN – Formação Docente; Teoria do Currículo",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a definição de CURRÍCULO MOLDADO em Gimeno Sacristán (2000). O currículo moldado "
+            "articula-se ao nível prático, situado — construção social mediada pelo professor. Alternativas "
+            "erradas atribuem-lhe traços neutros (B), executores (C) ou reduzem a produto (D)."
+        ),
+        "como_banca_pensou": (
+            "A pegadinha é o 'currículo apresentado' (materiais didáticos) e 'currículo prescrito' (normativo) "
+            "serem confundidos com o moldado. O MOLDADO é interpretação e apropriação PELO(A) PROFESSOR(A) — "
+            "logo, exige agência docente."
+        ),
+        "resolucao": [
+            "Fixe Gimeno Sacristán (2000): prescrito → apresentado → moldado → em ação → avaliado.",
+            "Reconheça: MOLDADO é resultado da agência do docente na interpretação/adaptação.",
+            "Descarte B: 'neutro' + 'condutor de referenciais' nega a agência do docente.",
+            "Descarte C: 'executor do apresentado' é o inverso do moldado.",
+            "Descarte D: 'produto' esvazia a natureza processual do currículo.",
+            "Marque A: 'construção social' + 'mediador' = essência do currículo moldado.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Currículo moldado = construção social + professor mediador (Gimeno Sacristán, 2000)."),
+            "B": ("ERRADA", "Currículo não é neutro; docente não é apenas condutor."),
+            "C": ("ERRADA", "Ser 'executor' é o modelo tecnicista, criticado pelo autor."),
+            "D": ("ERRADA", "Reduzir a produto ignora a dimensão processual e situada."),
+        },
+        "fundamentacao": [
+            "GIMENO SACRISTÁN, José. O currículo: uma reflexão sobre a prática. 3. ed. Porto Alegre: Artmed, 2000.",
+            "APPLE, Michael W. Ideologia e currículo. 3. ed. Porto Alegre: Artmed, 2006.",
+            "SILVA, Tomaz Tadeu. Documentos de identidade: uma introdução às teorias de currículo. 3. ed. Belo Horizonte: Autêntica, 2010.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "GIMENO SACRISTÁN (2000) propõe cinco níveis de objetivação do currículo: (1) PRESCRITO "
+            "(normativo — BNCC, DCNs); (2) APRESENTADO (materiais didáticos, livros); (3) MOLDADO (pelo(a) "
+            "professor(a) em sua interpretação e planejamento); (4) EM AÇÃO (na sala de aula); (5) AVALIADO. "
+            "O MOLDADO é o nível-chave da agência docente: articula o prescrito, o apresentado e o contexto "
+            "escolar em decisões didáticas. Apple (2006) reforça que o currículo é campo de disputa "
+            "ideológica; Silva (2010) sistematiza teorias tradicional, crítica e pós-crítica."
+        ),
+        "padroes_banca": (
+            "O INEP costuma cobrar Gimeno em item que oferece definições diferentes por alternativa. "
+            "A resposta correta sempre reafirma a AGÊNCIA docente."
+        ),
+        "pegadinhas": [
+            "Confundir moldado com apresentado (livro didático).",
+            "Confundir moldado com prescrito (BNCC).",
+            "Achar que docente é 'executor'.",
+        ],
+        "erros_comuns": (
+            "Marcam C por parecer que 'seguir a BNCC' é positivo. É preciso lembrar que MOLDAR ≠ EXECUTAR."
+        ),
+        "dica_estrategica": (
+            "Currículo moldado = docente MEDIA. Alternativa correta terá MEDIADOR, CONSTRUTOR, INTÉRPRETE."
+        ),
+        "variacao": (
+            "(Estilo INEP) Em Gimeno Sacristán (2000), o currículo EM AÇÃO refere-se ao:\n"
+            "A) documento normativo; B) livro didático; C) planejamento do docente; "
+            "D) desenrolar concreto das aulas em sala.\n"
+            "Gabarito: D."
+        ),
+        "minisimulado": [
+            "Q1. Apple (2006) inscreve o currículo no debate:\n"
+            "A) tecnicista puro; B) ideológico e político; C) esotérico; D) individual apenas. → B",
+            "Q2. Tomaz Tadeu Silva sistematiza teorias:\n"
+            "A) tradicional, crítica e pós-crítica; B) apenas positivistas; C) só freireana; D) só pós-modernas. → A",
+            "Q3. Os 5 níveis de Gimeno Sacristán são:\n"
+            "A) prescrito, apresentado, moldado, em ação e avaliado; B) livre, controlado, misto, oral, escrito; "
+            "C) público, privado, terceirizado, digital, remoto; D) infantil, EF, EM, EJA, EPT. → A",
+        ],
+        "resumo": {
+            "regra": "Currículo moldado = agência docente, construção social.",
+            "excecoes": "Executar prescrições sem interpretar contradiz o conceito.",
+            "palavra_chave": "Construção social + mediação docente.",
+            "artigo": "GIMENO SACRISTÁN (2000).",
+            "mnemonico": "PAMAA: Prescrito → Apresentado → Moldado → Ação → Avaliado.",
+        },
+    },
+
+    18: {
+        "tema": "Teoria crítica de currículo (Tomaz Tadeu da Silva)",
+        "subtema": "Currículo e reprodução das desigualdades",
+        "habilidade_bncc": "Teoria do currículo; DCN – Formação Docente",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede a estratégia pedagógica alinhada à TEORIA CRÍTICA de currículo — foco em RELAÇÕES DE "
+            "PODER, DESIGUALDADES e IDEOLOGIA. Apenas A (pesquisa de campo sobre violência no entorno) "
+            "materializa essa perspectiva pela investigação da realidade concreta."
+        ),
+        "como_banca_pensou": (
+            "A banca contrasta a teoria crítica (Apple, Giroux, Freire) com estratégias reprodutivas (C: "
+            "leitura + exercícios) ou apenas informativas (B, D). A palavra-chave é ENFRENTAMENTO — "
+            "reflexo direto da teoria crítica."
+        ),
+        "resolucao": [
+            "Reconheça: teoria crítica = investigação da realidade + análise de poder + enfrentamento.",
+            "Descarte C: 'leitura + lista de exercícios' remete à teoria tradicional.",
+            "Descarte B: 'resumo + seminário' é raso; não caracteriza pesquisa crítica.",
+            "Descarte D: 'exibição + palestras sobre bullying' é informativo, não crítico-transformador.",
+            "Marque A: pesquisa de campo + discussão sobre violência = investigação da realidade + práxis.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Pesquisa de campo sobre violência no entorno mobiliza a realidade concreta e o enfrentamento — cerne da teoria crítica."),
+            "B": ("ERRADA", "Resumo + seminário não constituem, por si, análise crítica."),
+            "C": ("ERRADA", "Estratégia típica da teoria tradicional (transmissão + verificação)."),
+            "D": ("ERRADA", "Documentário + palestra são informativos; não têm a dimensão investigativa."),
+        },
+        "fundamentacao": [
+            "SILVA, Tomaz Tadeu. Documentos de identidade: uma introdução às teorias de currículo. 3. ed. Belo Horizonte: Autêntica, 2010.",
+            "APPLE, Michael W. Ideologia e currículo. Porto Alegre: Artmed, 2006.",
+            "GIROUX, Henry. Teoria crítica e resistência em educação. Petrópolis: Vozes, 1986.",
+            "FREIRE, Paulo. Pedagogia do oprimido. Rio de Janeiro: Paz e Terra, 1987.",
+        ],
+        "teoria": (
+            "As TEORIAS DO CURRÍCULO (Silva, 2010) se organizam em três grandes vertentes: (1) TRADICIONAIS "
+            "(Bobbitt, Tyler): eficiência, neutralidade, mensuração; (2) CRÍTICAS (Apple, Giroux, Freire): "
+            "poder, ideologia, desigualdade, práxis emancipatória; (3) PÓS-CRÍTICAS (Silva, Corazza): "
+            "discurso, cultura, identidades, subjetividades, diferenças. A teoria crítica valoriza a INVESTIGAÇÃO "
+            "DA REALIDADE, o desvelamento das relações de poder e a PRÁXIS TRANSFORMADORA — daí a pesquisa "
+            "de campo sobre violência ser exemplo típico."
+        ),
+        "padroes_banca": (
+            "O INEP costuma pedir pareamento entre teoria e prática pedagógica. Cuidado para não confundir "
+            "'crítica' com 'pós-crítica'."
+        ),
+        "pegadinhas": [
+            "Confundir crítica com pós-crítica.",
+            "Achar que 'documentário sobre bullying' é crítica.",
+            "Marcar seminário + resumo por parecer acadêmico.",
+        ],
+        "erros_comuns": (
+            "Marcam D por associar 'palestra sobre bullying' com pauta social. A teoria crítica exige "
+            "INVESTIGAÇÃO PRÓPRIA + PRÁXIS."
+        ),
+        "dica_estrategica": (
+            "Crítica → pesquisa + poder + realidade + práxis. Pós-crítica → identidades + discurso + diferença."
+        ),
+        "variacao": (
+            "(Estilo INEP) A perspectiva PÓS-CRÍTICA do currículo (Silva, 2010) enfatiza:\n"
+            "A) eficiência e neutralidade;\n"
+            "B) construção discursiva das identidades, das subjetividades e das diferenças;\n"
+            "C) apenas desigualdade econômica;\n"
+            "D) currículo como lista de conteúdos.\n"
+            "Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A teoria tradicional do currículo (Bobbitt, Tyler) enfatiza:\n"
+            "A) eficiência e mensuração; B) identidades; C) poder; D) diferença. → A",
+            "Q2. Giroux (1986) tematiza:\n"
+            "A) teoria tradicional; B) teoria crítica e resistência; C) filosofia analítica; "
+            "D) pós-estruturalismo puro. → B",
+            "Q3. Apple (2006) enfatiza que o currículo é:\n"
+            "A) técnico; B) neutro; C) ideológico e político; D) universal. → C",
+        ],
+        "resumo": {
+            "regra": "Crítica = poder, ideologia, práxis; investigação da realidade.",
+            "excecoes": "Não confundir com pós-crítica (discurso, identidade).",
+            "palavra_chave": "Pesquisa de campo + enfrentamento.",
+            "artigo": "SILVA (2010); APPLE (2006); GIROUX (1986).",
+            "mnemonico": "3 P's críticos: Poder, Práxis, Pesquisa da realidade.",
+        },
+    },
+
+    19: {
+        "tema": "Diálogo entre conhecimentos científicos e tradicionais",
+        "subtema": "Ailton Krenak e a decolonialidade",
+        "habilidade_bncc": "BNCC – competência geral 1 (conhecimentos historicamente construídos)",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Krenak critica narrativas GLOBALIZANTES/SUPERFICIAIS que apagam os conhecimentos tradicionais. "
+            "A leitura pedagógica coerente é INTEGRAR conhecimentos científicos e tradicionais em pé de "
+            "igualdade — sem eurocentrismo nem subordinação."
+        ),
+        "como_banca_pensou": (
+            "As alternativas testam a compreensão de que INTEGRAR ≠ subordinar. A e B mantêm um saber como "
+            "hegemônico sobre o outro. D subordina o tradicional. Só C afirma INTEGRAÇÃO simétrica."
+        ),
+        "resolucao": [
+            "Fixe a chave krenakiana: pluralidade epistêmica, sem hierarquia.",
+            "Descarte A: 'eurocêntrica dos tradicionais' subordina o tradicional ao científico europeu.",
+            "Descarte B: 'hegemônica dos científicos' — mesma lógica invertida.",
+            "Descarte D: 'subordinados' — explícita hierarquização.",
+            "Marque C: 'integrados' = diálogo simétrico.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Eurocentrismo perpetua a hierarquia denunciada por Krenak."),
+            "B": ("ERRADA", "Hegemonia científica sobre saberes tradicionais mantém a assimetria."),
+            "C": ("CORRETA", "Integração simétrica entre científicos e tradicionais reflete a proposta krenakiana."),
+            "D": ("ERRADA", "Subordinação = antítese da pluralidade epistêmica."),
+        },
+        "fundamentacao": [
+            "KRENAK, Ailton. Ideias para adiar o fim do mundo. São Paulo: Companhia das Letras, 2019.",
+            "KRENAK, Ailton. A vida não é útil. São Paulo: Companhia das Letras, 2020.",
+            "SANTOS, Boaventura de Sousa. Descolonizar o saber, reinventar o poder. Lisboa: Almedina, 2010.",
+            "BRASIL. Lei nº 11.645, de 10 de março de 2008. Altera a LDB. DOU, 11 mar. 2008.",
+        ],
+        "teoria": (
+            "Krenak, um dos mais importantes pensadores indígenas contemporâneos, denuncia a "
+            "universalização de uma narrativa moderno-colonial e defende a pluralidade de mundos. Dialoga "
+            "com Boaventura de Sousa Santos (ecologia de saberes), com o pensamento decolonial (Quijano, "
+            "Mignolo) e com Davi Kopenawa. Na educação, isso implica INTEGRAR os conhecimentos científicos "
+            "aos tradicionais SEM subordinar nenhum ao outro — um princípio pedagógico decolonial."
+        ),
+        "padroes_banca": (
+            "O INEP tende a colocar 'INTEGRAR' na alternativa correta e usar 'subordinar' ou 'eurocêntrico' "
+            "como palavras-veneno."
+        ),
+        "pegadinhas": [
+            "Achar que 'integrar' = 'traduzir para o científico'.",
+            "Marcar A por parecer que 'científico primeiro' é 'objetivo'.",
+            "Confundir hegemonia com hierarquia epistêmica legítima.",
+        ],
+        "erros_comuns": (
+            "Marcam A por hábito acadêmico eurocêntrico. Krenak REJEITA essa hierarquia."
+        ),
+        "dica_estrategica": (
+            "Em item sobre Krenak/decolonialidade, escolha a alternativa que NÃO hierarquiza saberes."
+        ),
+        "variacao": (
+            "(Estilo INEP) Boaventura de Sousa Santos (2010) propõe a:\n"
+            "A) hierarquia epistêmica ocidental;\n"
+            "B) 'ecologia de saberes' — diálogo horizontal entre saberes;\n"
+            "C) supremacia da ciência positivista;\n"
+            "D) fim das universidades. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Davi Kopenawa é autor de:\n"
+            "A) A queda do céu; B) O alienista; C) Vidas secas; D) Casa-grande & senzala. → A",
+            "Q2. Krenak, em 'A vida não é útil' (2020), critica:\n"
+            "A) a arte indígena; B) a lógica utilitarista/produtivista; C) a educação básica; "
+            "D) a filosofia grega. → B",
+            "Q3. O pensamento decolonial (Quijano, Mignolo) rejeita:\n"
+            "A) diálogo intercultural; B) colonialidade do saber e do poder; "
+            "C) povos originários; D) pluralismo epistêmico. → B",
+        ],
+        "resumo": {
+            "regra": "Integrar saberes = diálogo horizontal, sem subordinação.",
+            "excecoes": "Cada saber tem seus critérios internos de validação, respeitados no diálogo.",
+            "palavra_chave": "Integração + horizontalidade + decolonialidade.",
+            "artigo": "KRENAK (2019); SANTOS (2010).",
+            "mnemonico": "S.I.M.: Saberes Integrados, MundosPlurais.",
+        },
+    },
+
+    20: {
+        "tema": "Cinemas africanos e Lei 10.639/03",
+        "subtema": "Critérios de seleção antirracistas",
+        "habilidade_bncc": "Lei 10.639/03; BNCC; DCN Relações Étnico-Raciais",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra critérios de seleção fílmica que ROMPAM com estereótipos coloniais. A correta é C: "
+            "filmes que reconheçam variadas formas de expressão dos povos africanos, subjetividades e "
+            "questões sociais."
+        ),
+        "como_banca_pensou": (
+            "A banca oferece três estereótipos coloniais (A – natureza selvagem; B – familiaridade "
+            "eurocêntrica; D – narrativa da colonização com viés urbanocêntrico) e uma alternativa "
+            "afirmativa (C)."
+        ),
+        "resolucao": [
+            "Reconheça a chave da Lei 10.639/03: superar estereótipos, valorizar culturas africanas em sua diversidade.",
+            "Descarte A: 'espaços físicos e vida animal selvagem' = imaginário colonial safári.",
+            "Descarte B: 'familiaridade com narrativas europeias e americanas' anula a especificidade africana.",
+            "Descarte D: 'estereótipos da colonização' é o oposto do que se deve mostrar.",
+            "Marque C: variadas expressões, subjetividades e questões sociais dos povos africanos.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Reduz a África à natureza selvagem — estereótipo colonial."),
+            "B": ("ERRADA", "Impõe padrão eurocêntrico/estadunidense à leitura das produções africanas."),
+            "C": ("CORRETA", "Reconhece diversidade cultural, subjetividade e agência dos povos africanos."),
+            "D": ("ERRADA", "Reforçar estereótipos contradiz a Lei 10.639/03."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 10.639, de 9 de janeiro de 2003. Altera a LDB, incluindo História e Cultura Afro-Brasileira. DOU, Brasília, 10 jan. 2003.",
+            "BRASIL. Conselho Nacional de Educação. Resolução CNE/CP nº 1, de 17 de junho de 2004. Institui as DCN para a Educação das Relações Étnico-Raciais e para o Ensino de História e Cultura Afro-Brasileira e Africana.",
+            "MUNANGA, Kabengele. Superando o racismo na escola. 2. ed. Brasília: MEC/SECAD, 2005.",
+            "GOMES, Nilma Lino. O movimento negro educador. Petrópolis: Vozes, 2017.",
+            "DIAWARA, Manthia. African Film: new forms of aesthetics and politics. Munich: Prestel, 2010.",
+        ],
+        "teoria": (
+            "O cinema africano pós-1960 (Sembène, Cissé, Mambéty, Diop-Mambéty, Sissako) constrói uma "
+            "estética e uma política de auto-representação, contrapondo-se ao olhar colonial. Autores como "
+            "Manthia Diawara analisam essa produção como afirmação estética-política dos povos africanos. "
+            "A Lei 10.639/03 e as DCNs para as relações étnico-raciais (Res. CNE/CP 1/2004) exigem "
+            "AFIRMAR essa diversidade cultural, subjetividade e questões sociais — SEM naturalização, "
+            "exotização ou familiarização eurocêntrica."
+        ),
+        "padroes_banca": (
+            "O INEP contrapõe estereótipos coloniais a critérios afirmativos, testando a apropriação da Lei 10.639/03."
+        ),
+        "pegadinhas": [
+            "Naturalizar a África como natureza selvagem.",
+            "Buscar 'familiaridade' com narrativas ocidentais.",
+            "Reforçar estereótipos como pretexto de crítica.",
+        ],
+        "erros_comuns": (
+            "Marcam A por hábito de associar África a fauna."
+        ),
+        "dica_estrategica": (
+            "Em item sobre África e Lei 10.639/03, prefira alternativas que digam DIVERSIDADE, SUBJETIVIDADE, "
+            "AGÊNCIA, AUTO-REPRESENTAÇÃO."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Res. CNE/CP nº 1/2004 institui:\n"
+            "A) BNCC; B) DCN das Relações Étnico-Raciais e ensino de História e Cultura Afro-Brasileira e Africana; "
+            "C) DCN da EJA; D) DCN do Ensino Religioso. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Ousmane Sembène é conhecido como:\n"
+            "A) fundador do cinema africano; B) filósofo alemão; C) romancista europeu; "
+            "D) sociólogo estadunidense. → A",
+            "Q2. Munanga (2005) organiza a obra:\n"
+            "A) A Casa-grande; B) Superando o racismo na escola; C) O código do trabalho; "
+            "D) Manual da BNCC. → B",
+            "Q3. A Lei 10.639/03 obriga o ensino de:\n"
+            "A) História e cultura afro-brasileira e africana; B) Filosofia; C) Sociologia; "
+            "D) Empreendedorismo. → A",
+        ],
+        "resumo": {
+            "regra": "Cinemas africanos = auto-representação + diversidade + agência.",
+            "excecoes": "Estereótipos coloniais podem ser objeto de DESCONSTRUÇÃO, não de reprodução.",
+            "palavra_chave": "Diversidade + subjetividade + questões sociais.",
+            "artigo": "Lei 10.639/03; Res. CNE/CP 1/2004.",
+            "mnemonico": "AAA africano: Auto-representar, Afirmar, Analisar.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -1529,7 +1960,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 3 (Q01 a Q15)",
+        "3. Análise completa – LOTES 1 a 4 (Q01 a Q20)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -1567,14 +1998,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 3 (Q01 a Q15)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 4 (Q01 a Q20)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
+    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -1694,7 +2125,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-3")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-4")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -1755,7 +2186,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 3 (Q01 a Q15)",
+              "3. Análise completa – LOTES 1 a 4 (Q01 a Q20)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -1794,7 +2225,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 3 (Q01 a Q15)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 4 (Q01 a Q20)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -1803,7 +2234,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
+    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -1898,7 +2329,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-3", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-4", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
