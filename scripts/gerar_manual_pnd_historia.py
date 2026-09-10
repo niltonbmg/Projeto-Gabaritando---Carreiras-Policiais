@@ -3998,6 +3998,401 @@ ANALISES = {
         },
     },
 
+    51: {
+        "tema": "Cosmologia do Egito Antigo e didática crítica",
+        "subtema": "Leitura de fontes + debate coletivo",
+        "habilidade_bncc": "EF06HI09, EM13CHS502",
+        "gabarito": "D",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Média",
+        "justificativa_classificacao": (
+            "Item cobra a proposta pedagógica que promova AUTONOMIA + PENSAMENTO CRÍTICO. Descarta "
+            "atividades transmissivas (A: transcrição), reprodutivas (B: 'reproduzir' cosmologia; C: "
+            "'reproduções da vida') e prefere LEITURA + DEBATE + CONSULTA A FONTES DIVERSAS (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca contrasta abordagem CRÍTICA (leitura + debate + fontes diversas) com abordagens "
+            "TRANSMISSIVAS/REPRODUTIVAS."
+        ),
+        "resolucao": [
+            "Descarte A: transcrição valoriza memorização, não crítica.",
+            "Descarte B: 'reproduzir' cosmologia como 'experiências vividas' é ingênuo.",
+            "Descarte C: 'reproduções da vida' + descrição sem crítica.",
+            "Marque D: leitura + debate + fontes diversas = autonomia crítica.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Transcrição é atividade reprodutiva."),
+            "B": ("ERRADA", "'Reproduzir experiências religiosas' é anacronismo."),
+            "C": ("ERRADA", "'Fontes como reproduções da vida' é positivismo ingênuo."),
+            "D": ("CORRETA", "Leitura crítica + debate + fontes distintas = autonomia e crítica."),
+        },
+        "fundamentacao": [
+            "CARDOSO, Ciro Flamarion. Deuses, múmias e ziggurats. Porto Alegre: EdiPUCRS, 1999.",
+            "SALES, José das Candeias. Poder e iconografia no antigo Egipto. Lisboa: Livros Horizonte, 2008.",
+            "SCHMIDT, Maria Auxiliadora; CAINELLI, Marlene. Ensinar História. São Paulo: Scipione, 2018.",
+            "REDE, Marcelo. Egito Antigo. São Paulo: Cia. das Letras, 2017.",
+        ],
+        "teoria": (
+            "Ensinar História com autonomia crítica exige mobilizar FONTES DIVERSAS (imagéticas, textuais, "
+            "materiais) e submetê-las ao debate coletivo. Schmidt & Cainelli (2018) discutem estratégias "
+            "de didática da História que rompem com transmissão passiva. Cardoso (1999) fornece base "
+            "comparativa para religiões antigas."
+        ),
+        "padroes_banca": (
+            "O INEP contrasta transmissivo vs. crítico-investigativo."
+        ),
+        "pegadinhas": [
+            "Confundir descrição com crítica.",
+            "Achar que 'audiovisual' automaticamente é crítico.",
+            "Reduzir aula a transcrição.",
+        ],
+        "erros_comuns": (
+            "Marcar B por 'visualização' soar boa."
+        ),
+        "dica_estrategica": (
+            "Autonomia crítica = leitura + debate + confronto de fontes."
+        ),
+        "variacao": (
+            "(Estilo INEP) O uso de fontes diversas em aula de História visa:\n"
+            "A) uniformizar interpretações; B) confrontar perspectivas e desenvolver crítica; "
+            "C) memorizar datas; D) transcrever. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Ramsés II reinou em qual dinastia?\n"
+            "A) XIX; B) X; C) V; D) I. → A",
+            "Q2. Abu Simbel é:\n"
+            "A) templo egípcio na Baixa Núbia; B) cidade grega; C) romana; D) mesopotâmica. → A",
+            "Q3. Cardoso (1999) compara religiões:\n"
+            "A) apenas gregas; B) do Egito e Mesopotâmia; C) do Império Romano; D) do Japão medieval. → B",
+        ],
+        "resumo": {
+            "regra": "Aula crítica = leitura + debate + fontes diversas.",
+            "excecoes": "Transcrição pode servir de fixação após crítica.",
+            "palavra_chave": "Debate + confronto de fontes.",
+            "artigo": "SCHMIDT & CAINELLI (2018); CARDOSO (1999).",
+            "mnemonico": "L.D.C.: Ler, Debater, Confrontar fontes.",
+        },
+    },
+
+    52: {
+        "tema": "Nazifascismo e extrema-direita (passado-presente)",
+        "subtema": "Xenofobia, violência e ataques à democracia",
+        "habilidade_bncc": "EF09HI17, EM13CHS604",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a comparação HISTÓRICA entre extrema-direita entreguerras e atual. A resposta "
+            "articula aspectos comuns: xenofobia, violência e ataques à democracia. As demais reduzem, "
+            "distorcem ou negam continuidades."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão de PERMANÊNCIAS e MUDANÇAS. Palavras-veneno: 'origem na América "
+            "do Norte' (A), 'fim do socialismo desmontou anticomunismo' (D)."
+        ),
+        "resolucao": [
+            "Descarte A: nazifascismo é europeu, não norte-americano.",
+            "Descarte C: extrema-direita atual mantém conservadorismo moral, não só econômico.",
+            "Descarte D: anticomunismo persiste, mesmo após fim da URSS.",
+            "Marque B: xenofobia + violência + ataques à democracia.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Origem europeia (Itália, Alemanha), não América do Norte."),
+            "B": ("CORRETA", "Xenofobia, violência e antidemocracia são aspectos comuns entre os períodos."),
+            "C": ("ERRADA", "Conservadorismo moral persiste; não apenas 'liberalismo'."),
+            "D": ("ERRADA", "Anticomunismo continua estruturando discursos da extrema-direita."),
+        },
+        "fundamentacao": [
+            "PAXTON, Robert. A anatomia do fascismo. São Paulo: Paz e Terra, 2007.",
+            "STANLEY, Jason. Como funciona o fascismo. Porto Alegre: L&PM, 2018.",
+            "TRAVERSO, Enzo. As novas faces do fascismo. Belo Horizonte: Autêntica, 2021.",
+            "HOBSBAWM, Eric. Era dos extremos. São Paulo: Cia. das Letras, 1995.",
+        ],
+        "teoria": (
+            "O FASCISMO histórico (Mussolini, 1922; Hitler, 1933) e a EXTREMA-DIREITA contemporânea "
+            "compartilham traços: nacionalismo excludente, xenofobia, misoginia, antipluralismo, "
+            "violência política, ataques à democracia liberal, culto ao líder. Paxton (2007), Stanley "
+            "(2018) e Traverso (2021) fornecem grades comparativas. Não há identidade absoluta, mas "
+            "família de fenômenos com aparições recorrentes."
+        ),
+        "padroes_banca": (
+            "O INEP cobra história como recurso crítico para o presente."
+        ),
+        "pegadinhas": [
+            "Reduzir origem à América do Norte.",
+            "Achar que fascismo é só passado.",
+            "Separar economia de moralidade.",
+        ],
+        "erros_comuns": (
+            "Marcar D por lembrar do fim da URSS."
+        ),
+        "dica_estrategica": (
+            "Extrema-direita = xenofobia + antidemocracia (transversais)."
+        ),
+        "variacao": (
+            "(Estilo INEP) Stanley (2018) identifica no fascismo:\n"
+            "A) diálogo democrático; B) mito de um passado glorioso + hierarquia + vitimização; "
+            "C) valorização da alteridade; D) pluralismo institucional. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Mussolini chegou ao poder em:\n"
+            "A) 1917; B) 1922; C) 1933; D) 1945. → B",
+            "Q2. A Marcha sobre Roma foi em:\n"
+            "A) 1922; B) 1919; C) 1930; D) 1943. → A",
+            "Q3. Hobsbawm chamou o século XX de:\n"
+            "A) Era dos extremos; B) Século doce; C) Belle Époque; D) Século breve. → A (também 'século breve')",
+        ],
+        "resumo": {
+            "regra": "Fascismo/extrema-direita = xenofobia + antidemocracia + culto ao líder.",
+            "excecoes": "Contextos e formas variam entre décadas.",
+            "palavra_chave": "Xenofobia + antidemocracia.",
+            "artigo": "PAXTON (2007); STANLEY (2018); TRAVERSO (2021).",
+            "mnemonico": "XVA: Xenofobia, Violência, Ataques à democracia.",
+        },
+    },
+
+    53: {
+        "tema": "Guerra da Coreia + Guerra Fria + fontes midiáticas",
+        "subtema": "Intencionalidade do jornal e disputa geopolítica",
+        "habilidade_bncc": "EF09HI25, EM13CHS604",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a análise crítica do editorial (1953): intencionalidade da fonte + interesses "
+            "ocidentais (manter colonialismo/imperialismo) + interesses da China (superar dominação "
+            "imperialista, apoiando movimentos anticoloniais)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra crítica de fonte midiática + geopolítica da Guerra Fria + descolonização."
+        ),
+        "resolucao": [
+            "Descarte A: 'defesa do protecionismo' + 'livre-cambismo' não são o eixo da questão.",
+            "Descarte B: fonte é editorial, não neutro; 'liberdade de expressão' é impreciso.",
+            "Descarte C: 'veracidade da informação' não é a categoria; 'globalização comercial' anacrônica.",
+            "Marque D: intencionalidade + sobrevida do colonialismo + superação da dominação imperialista.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Não é sobre protecionismo/livre-cambismo."),
+            "B": ("ERRADA", "'Tipologia' é raso; a chave é a intencionalidade."),
+            "C": ("ERRADA", "Não se trata de veracidade nem de globalização."),
+            "D": ("CORRETA", "Intencionalidade da fonte + colonialismo/imperialismo em disputa."),
+        },
+        "fundamentacao": [
+            "HOBSBAWM, Eric. Era dos extremos. São Paulo: Cia. das Letras, 1995.",
+            "WESTAD, Odd Arne. A Guerra Fria: uma nova história. Rio de Janeiro: Zahar, 2018.",
+            "VIZENTINI, Paulo Fagundes. Guerra da Coreia. São Paulo: Saraiva, 2013.",
+            "BURKE, Peter (org.). A escrita da história: novas perspectivas. São Paulo: UNESP, 1992.",
+        ],
+        "teoria": (
+            "A GUERRA DA COREIA (1950-1953) foi o primeiro grande conflito quente da Guerra Fria. "
+            "Envolveu EUA (via ONU), China e URSS. A Indochina francesa era outra frente, com apoio "
+            "chinês ao Vietminh. O editorial expressa uma leitura ocidental que revela intencionalidade "
+            "geopolítica. Crítica de fonte midiática é competência essencial no ensino de História "
+            "contemporânea."
+        ),
+        "padroes_banca": (
+            "O INEP cobra crítica de fonte midiática articulada à Guerra Fria/descolonização."
+        ),
+        "pegadinhas": [
+            "Achar que jornal é neutro.",
+            "Desconectar Coreia de Indochina.",
+            "Anacronizar com 'globalização'.",
+        ],
+        "erros_comuns": (
+            "Marcar B por confundir 'tipologia' com 'crítica'."
+        ),
+        "dica_estrategica": (
+            "Editorial = intencionalidade + posição ideológica."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Guerra da Coreia terminou com:\n"
+            "A) rendição total do Norte; B) armistício (1953) mantendo divisão no paralelo 38; "
+            "C) reunificação; D) vitória chinesa completa. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O Vietminh:\n"
+            "A) lutava contra os franceses no norte da Indochina; B) apoiou os EUA; C) era anti-URSS; D) invadiu a China. → A",
+            "Q2. Westad (2018) reinterpreta:\n"
+            "A) apenas a URSS; B) a Guerra Fria como fenômeno global e descolonial; C) só a China; D) só os EUA. → B",
+            "Q3. Editorial jornalístico é fonte:\n"
+            "A) neutra; B) opinativa/intencional; C) só literária; D) somente iconográfica. → B",
+        ],
+        "resumo": {
+            "regra": "Fontes midiáticas exigem crítica de intencionalidade.",
+            "excecoes": "Notícia informativa difere de editorial opinativo.",
+            "palavra_chave": "Intencionalidade + colonialismo.",
+            "artigo": "HOBSBAWM (1995); WESTAD (2018).",
+            "mnemonico": "I.C.I.: Intencionalidade, Colonialismo, Imperialismo.",
+        },
+    },
+
+    54: {
+        "tema": "Interseccionalidade e literatura no ensino de História",
+        "subtema": "'Um defeito de cor' e protagonismo de mulheres negras",
+        "habilidade_bncc": "EF08HI19, EF09HI13, EM13CHS502",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a finalidade da sequência: VALORIZAR o PROTAGONISMO de mulheres negras na luta "
+            "pela liberdade. Distratores confundem ficção com fonte oficial (B), 'criticar' o significado "
+            "familiar (C — incoerente) ou denunciar 'usos da mídia' (D — não é o foco)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a leitura AFIRMATIVA e INTERSECCIONAL do uso de literatura afro-brasileira "
+            "para valorizar protagonismos silenciados."
+        ),
+        "resolucao": [
+            "Descarte B: ficção NÃO é 'fonte oficial'.",
+            "Descarte C: 'criticar significado familiar da diáspora' é incoerente.",
+            "Descarte D: 'denunciar usos da mídia' desloca o foco.",
+            "Marque A: valorizar protagonismo de mulheres negras.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Literatura de Ana Maria Gonçalves + interseccionalidade = valorizar mulheres negras na luta."),
+            "B": ("ERRADA", "Ficção é fonte literária, não 'oficial'."),
+            "C": ("ERRADA", "Formulação incoerente."),
+            "D": ("ERRADA", "Não é sobre mídia."),
+        },
+        "fundamentacao": [
+            "GONÇALVES, Ana Maria. Um defeito de cor. Rio de Janeiro: Record, 2006.",
+            "CRENSHAW, Kimberlé. Documento para o encontro de especialistas em aspectos da discriminação racial relativos ao gênero. Revista Estudos Feministas, v. 10, n. 1, 2002.",
+            "COLLINS, Patricia Hill. Pensamento feminista negro. São Paulo: Boitempo, 2019.",
+            "REIS, João José. Rebelião escrava no Brasil: os malês. São Paulo: Cia. das Letras, 2003.",
+        ],
+        "teoria": (
+            "INTERSECCIONALIDADE (Crenshaw, 1989; Collins) analisa como raça, gênero e classe se "
+            "articulam. A literatura de Ana Maria Gonçalves (2006) sobre Luísa Mahin/Kehinde permite "
+            "trabalhar essa perspectiva no ensino de História. Combatendo silenciamentos históricos, "
+            "literatura ficcional é fonte legítima quando lida criticamente."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a articulação LITERATURA + INTERSECCIONALIDADE + PROTAGONISMO."
+        ),
+        "pegadinhas": [
+            "Confundir literatura com fonte oficial.",
+            "Sugerir 'crítica' à diáspora.",
+            "Descentrar da mulher negra.",
+        ],
+        "erros_comuns": (
+            "Marcar B por associar 'oficial' a legitimidade."
+        ),
+        "dica_estrategica": (
+            "Interseccionalidade + literatura = protagonismo de vozes silenciadas."
+        ),
+        "variacao": (
+            "(Estilo INEP) Interseccionalidade foi formulada por:\n"
+            "A) Kimberlé Crenshaw (1989);\n"
+            "B) Foucault; C) Weber; D) Bourdieu. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Luísa Mahin foi:\n"
+            "A) figura ligada à Revolta dos Malês em Salvador (1835); B) rainha egípcia; "
+            "C) escritora modernista; D) política contemporânea. → A",
+            "Q2. Ana Maria Gonçalves escreveu:\n"
+            "A) Um defeito de cor; B) Ponciá Vicêncio; C) Torto Arado; D) Canção para ninar menino grande. → A",
+            "Q3. Patricia Hill Collins tematiza:\n"
+            "A) pensamento feminista negro; B) direito romano; C) micro-história; D) demografia colonial. → A",
+        ],
+        "resumo": {
+            "regra": "Literatura afro-brasileira = fonte para protagonismo de mulheres negras.",
+            "excecoes": "Cotejar com fontes históricas para contextualização.",
+            "palavra_chave": "Protagonismo + interseccionalidade.",
+            "artigo": "CRENSHAW (2002); COLLINS (2019).",
+            "mnemonico": "P.I.L.: Protagonismo + Interseccionalidade + Literatura.",
+        },
+    },
+
+    55: {
+        "tema": "Quilombo (Beatriz Nascimento) e educação antirracista",
+        "subtema": "Ancestralidade e prática interdisciplinar",
+        "habilidade_bncc": "EF08HI21, EM13CHS502; Lei 10.639/03",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Prática (interdisciplinar)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o par PRÁTICA INTERDISCIPLINAR + CONCEITO DE QUILOMBO. A resposta D articula "
+            "ENTREVISTA COM LÍDERES COMUNITÁRIOS (metodologia dialógica) + espaço de resistência com "
+            "base na ANCESTRALIDADE e VISÃO COLETIVA — expressando o conceito de Beatriz Nascimento."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra fidelidade ao pensamento de Beatriz Nascimento: quilombo como fenômeno vivo, "
+            "político, cultural, ancestral — e prática pedagógica coerente."
+        ),
+        "resolucao": [
+            "Descarte A: 'independência do Brasil' desloca o conceito.",
+            "Descarte B: 'concentra experiências no passado colonial' contradiz o quilombo vivo.",
+            "Descarte C: 'retorno à África' desloca (existiram movimentos, mas não é o conceito de quilombo).",
+            "Marque D: entrevista com líderes + ancestralidade + visão coletiva.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Quilombo não visava independência do Brasil."),
+            "B": ("ERRADA", "Beatriz Nascimento afirma quilombo VIVO, não apenas passado colonial."),
+            "C": ("ERRADA", "'Retorno à África' era uma proposta específica (Marcus Garvey), não o conceito de quilombo."),
+            "D": ("CORRETA", "Método dialógico (entrevistas) + quilombo como resistência ancestral e coletiva."),
+        },
+        "fundamentacao": [
+            "NASCIMENTO, Beatriz. Uma história feita por mãos negras. Rio de Janeiro: Zahar, 2021.",
+            "MOURA, Clóvis. Os quilombos e a rebelião negra. São Paulo: Brasiliense, 1981.",
+            "GOMES, Flávio dos Santos. História, protesto e cultura política no Brasil escravista. Rio de Janeiro: Mauad, 2003.",
+            "BRASIL. Decreto nº 4.887, de 20 de novembro de 2003. Regulamenta a titulação de terras quilombolas.",
+        ],
+        "teoria": (
+            "Beatriz Nascimento (1942-1995), historiadora negra pioneira, refundou o conceito de QUILOMBO "
+            "como categoria histórica, política e cultural viva — não apenas 'refúgio' escravista. "
+            "Aquilombar-se é ATO POLÍTICO contemporâneo. Movimento Quilombola Nacional articula-se com "
+            "CF/88 (art. 68 ADCT) e Decreto 4.887/2003. Práticas educativas interdisciplinares dialogam "
+            "com comunidades tradicionais."
+        ),
+        "padroes_banca": (
+            "O INEP cobra fidelidade ao pensamento de Nascimento e afinidade entre método dialógico e "
+            "conteúdo."
+        ),
+        "pegadinhas": [
+            "Confundir quilombo com 'retorno à África'.",
+            "Fixar quilombo no passado.",
+            "Reduzir a mapa.",
+        ],
+        "erros_comuns": (
+            "Marcar B por associar quilombo apenas ao período colonial."
+        ),
+        "dica_estrategica": (
+            "Beatriz Nascimento = quilombo vivo + resistência ancestral + coletividade."
+        ),
+        "variacao": (
+            "(Estilo INEP) O art. 68 do ADCT reconhece:\n"
+            "A) direito à terra dos remanescentes de quilombos;\n"
+            "B) apenas o INSS; C) o serviço militar; D) o Poder Judiciário. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Aquilombar-se é:\n"
+            "A) fugir; B) reconstruir espaços de vida, ancestralidade e resistência; "
+            "C) migrar economicamente; D) aliar-se à elite. → B",
+            "Q2. Clóvis Moura escreveu:\n"
+            "A) Os quilombos e a rebelião negra; B) Casa-Grande & Senzala; C) Raízes do Brasil; D) Formação do Brasil Contemporâneo. → A",
+            "Q3. Decreto 4.887/2003:\n"
+            "A) regulamenta titulação quilombola; B) instituiu a BNCC; C) criou o SUS; D) regulamentou a Constituição de 1824. → A",
+        ],
+        "resumo": {
+            "regra": "Quilombo (Nascimento) = ancestralidade + coletividade + resistência viva.",
+            "excecoes": "Contexto histórico varia, mas o núcleo político-cultural permanece.",
+            "palavra_chave": "Ancestralidade + coletividade + resistência.",
+            "artigo": "CF/88 art. 68 ADCT; Decreto 4.887/2003.",
+            "mnemonico": "A.R.C.: Ancestralidade, Resistência, Coletividade.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -4453,7 +4848,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 10 (Q01 a Q50)",
+        "3. Análise completa – LOTES 1 a 11 (Q01 a Q55)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -4491,14 +4886,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 10 (Q01 a Q50)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 11 (Q01 a Q55)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 51)):
+    for num in list(range(1, 56)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -4618,7 +5013,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-10")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-11")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -4679,7 +5074,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 10 (Q01 a Q50)",
+              "3. Análise completa – LOTES 1 a 11 (Q01 a Q55)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -4718,7 +5113,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 10 (Q01 a Q50)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 11 (Q01 a Q55)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -4727,7 +5122,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 51)):
+    for num in list(range(1, 56)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -4822,7 +5217,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-10", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-11", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
