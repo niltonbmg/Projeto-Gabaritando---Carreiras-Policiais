@@ -4788,6 +4788,391 @@ ANALISES = {
         },
     },
 
+    61: {
+        "tema": "Palestina/Israel - disputa por legitimidade internacional",
+        "subtema": "Narrativas em conflitos armados",
+        "habilidade_bncc": "EM13CHS604, EM13CHS603",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o OBJETIVO COMUM das partes ao descrever o conflito: legitimidade internacional. "
+            "Ambas buscam apoio da comunidade internacional. As demais opções são incorretas ou "
+            "estereotipadas."
+        ),
+        "como_banca_pensou": (
+            "A banca destaca a disputa por LEGITIMIDADE como estratégia comum a Estados em conflito."
+        ),
+        "resolucao": [
+            "Descarte A: nenhuma das partes rejeita totalmente a via militar.",
+            "Descarte C: 'terroristas' é qualificação usada de forma parcial nas narrativas.",
+            "Descarte D: financiamento existe, mas não é objetivo COMUM central.",
+            "Marque B: legitimidade internacional.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Nenhuma das partes rejeita in totum soluções militares."),
+            "B": ("CORRETA", "Ambas disputam apoio e reconhecimento internacional."),
+            "C": ("ERRADA", "'Militantes terroristas' é qualificação parcial e estereotipada."),
+            "D": ("ERRADA", "Financiamento é meio; legitimidade é o eixo simbólico da disputa."),
+        },
+        "fundamentacao": [
+            "PAPPÉ, Ilan. A limpeza étnica da Palestina. São Paulo: Sundermann, 2016.",
+            "MASALHA, Nur. A Palestina: quatro mil anos de história. São Paulo: Elefante, 2022.",
+            "ONU. Resoluções sobre a Palestina (Res. 181/1947; 242/1967; 338/1973; 2334/2016).",
+            "SAID, Edward. A questão da Palestina. São Paulo: UNESP, 2012.",
+        ],
+        "teoria": (
+            "Nos conflitos internacionais contemporâneos, a batalha por LEGITIMIDADE é tão importante "
+            "quanto a militar. Envolve narrativas, mídia, diplomacia, decisões da ONU, tribunais "
+            "internacionais (TPI, CIJ). Ambas as partes no conflito Palestina-Israel buscam converter "
+            "sua causa em causa universal, mobilizando aliados, ativistas, mídia global."
+        ),
+        "padroes_banca": (
+            "O INEP cobra leitura crítica de narrativas em disputa."
+        ),
+        "pegadinhas": [
+            "Aceitar qualificações unilaterais.",
+            "Reduzir tudo a financiamento.",
+            "Ignorar a dimensão simbólica.",
+        ],
+        "erros_comuns": (
+            "Marcar C por reproduzir estereótipos."
+        ),
+        "dica_estrategica": (
+            "Conflitos = disputa por legitimidade + narrativas + fontes plurais."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Resolução 242 (1967) da ONU exige:\n"
+            "A) retirada de Israel dos territórios ocupados na Guerra dos Seis Dias;\n"
+            "B) fim da ONU; C) invasão do Líbano; D) apenas cessar-fogo unilateral. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. A ONU foi fundada em:\n"
+            "A) 1945; B) 1918; C) 1955; D) 1970. → A",
+            "Q2. A OLP (Organização para a Libertação da Palestina) foi criada em:\n"
+            "A) 1964; B) 1973; C) 1948; D) 1980. → A",
+            "Q3. Said (2012) analisa:\n"
+            "A) a questão da Palestina; B) a Grécia Antiga; C) o Iluminismo; D) o feudalismo. → A",
+        ],
+        "resumo": {
+            "regra": "Conflito = disputa por legitimidade + reconhecimento internacional.",
+            "excecoes": "Legitimidade não substitui direitos humanos.",
+            "palavra_chave": "Legitimidade internacional.",
+            "artigo": "SAID (2012); ONU Res. 181, 242, 2334.",
+            "mnemonico": "L.I.: Legitimidade Internacional.",
+        },
+    },
+
+    62: {
+        "tema": "Imprensa negra brasileira – O Clarim d'Alvorada",
+        "subtema": "Mobilização coletiva e Congresso da Mocidade Negra",
+        "habilidade_bncc": "EF09HI13, EM13CHS502",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a caracterização da IMPRENSA NEGRA e do Congresso da Mocidade Negra (1929) "
+            "como MOBILIZAÇÃO COLETIVA. As demais alternativas restringem a sentenças (A), eleições "
+            "(C) ou universidade (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra o reconhecimento da IMPRENSA NEGRA como espaço de organização coletiva."
+        ),
+        "resolucao": [
+            "Descarte A: não se trata de disputa judicial.",
+            "Descarte C: não é sobre eleições.",
+            "Descarte D: universidade estava fora do alcance de maioria negra em 1929.",
+            "Marque B: mobilização coletiva por interesses comuns.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Não é dimensão jurídica principal."),
+            "B": ("CORRETA", "Congresso da Mocidade Negra expressa mobilização coletiva pela dignidade e cidadania."),
+            "C": ("ERRADA", "Não é sobre representação eleitoral."),
+            "D": ("ERRADA", "Universidade era barreira para a maioria."),
+        },
+        "fundamentacao": [
+            "GOMES, Flávio dos Santos. Negros e política (1888-1937). Rio de Janeiro: Jorge Zahar, 2005.",
+            "DOMINGUES, Petrônio. Movimento negro brasileiro: alguns apontamentos históricos. Tempo, v. 12, n. 23, 2007.",
+            "SEMOG, Éle. Frente Negra Brasileira: depoimentos. São Paulo: Lorosae, 1998.",
+            "PEREIRA, Amilcar Araujo. O mundo negro: relações raciais e a constituição do movimento negro contemporâneo no Brasil. Rio de Janeiro: Pallas, 2013.",
+        ],
+        "teoria": (
+            "A IMPRENSA NEGRA (jornais como O Clarim d'Alvorada, Getulino, A Voz da Raça) foi central "
+            "para a mobilização política negra no pós-abolição. O 1º Congresso da Mocidade Negra (1929) "
+            "foi seguido pela Frente Negra Brasileira (1931-1937). Gomes (2005) e Domingues (2007) "
+            "sistematizam o campo."
+        ),
+        "padroes_banca": (
+            "O INEP cobra o reconhecimento da agência negra na Primeira República."
+        ),
+        "pegadinhas": [
+            "Reduzir a mobilização a eleições.",
+            "Confundir imprensa negra com jornal comercial.",
+            "Achar que universidade era acessível.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar 'intelectuais' a universidade."
+        ),
+        "dica_estrategica": (
+            "Imprensa negra = mobilização coletiva + dignidade."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Frente Negra Brasileira foi:\n"
+            "A) partido negro (1931-1937);\n"
+            "B) sindicato pesqueiro; C) grupo religioso; D) associação esportiva. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Petrônio Domingues (2007) sistematiza:\n"
+            "A) história do movimento negro brasileiro; B) história econômica; C) micro-história; D) filosofia. → A",
+            "Q2. A Frente Negra Brasileira foi criada em:\n"
+            "A) 1888; B) 1931; C) 1978; D) 2003. → B",
+            "Q3. O Movimento Negro Unificado (MNU) foi criado em:\n"
+            "A) 1978; B) 1888; C) 1937; D) 2003. → A",
+        ],
+        "resumo": {
+            "regra": "Imprensa negra = agência política + mobilização coletiva.",
+            "excecoes": "Nem toda ação era coordenada; havia grupos concorrentes.",
+            "palavra_chave": "Mobilização coletiva + interesses comuns.",
+            "artigo": "GOMES (2005); DOMINGUES (2007).",
+            "mnemonico": "I.N.M.: Imprensa Negra + Mobilização.",
+        },
+    },
+
+    63: {
+        "tema": "Diretório Pombalino (1755) e imposição linguística",
+        "subtema": "Interpretação de fonte colonial + pesquisa documental",
+        "habilidade_bncc": "EF07HI09, EM13CHS502; Lei 11.645/08",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a interpretação da fonte (Diretório Pombalino) como IMPOSIÇÃO linguística que "
+            "fragilizava culturas indígenas + metodologia adequada (pesquisa documental). Alternativas "
+            "erradas amenizam ou desvirtuam."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a leitura CRÍTICA e DESCOLONIAL da fonte."
+        ),
+        "resolucao": [
+            "Descarte B: 'facilitar comunicação com missionários' apaga a violência.",
+            "Descarte C: 'convivência equilibrada' é falso; a fonte proíbe línguas nativas.",
+            "Descarte D: 'fortalecer comércio' não é o objetivo do Diretório.",
+            "Marque A: fragilizar línguas e culturas para forçar submissão + pesquisa documental.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Diretório Pombalino impôs o português para enfraquecer culturas indígenas; método = pesquisa documental."),
+            "B": ("ERRADA", "Não é 'facilitar'; é impor a norma colonial."),
+            "C": ("ERRADA", "Não há 'convivência equilibrada' — há proibição."),
+            "D": ("ERRADA", "Comércio não é o objetivo do Diretório."),
+        },
+        "fundamentacao": [
+            "CUNHA, Manuela Carneiro da (org.). História dos índios no Brasil. São Paulo: Cia. das Letras, 1992.",
+            "ALMEIDA, Rita Heloísa de. O Diretório dos Índios: um projeto de 'civilização' no Brasil do século XVIII. Brasília: UnB, 1997.",
+            "MONTEIRO, John Manuel. Negros da terra: índios e bandeirantes nas origens de São Paulo. São Paulo: Cia. das Letras, 1994.",
+            "BRASIL. Lei nº 11.645/2008.",
+        ],
+        "teoria": (
+            "O DIRETÓRIO POMBALINO (1755-1758), elaborado por Mendonça Furtado e Marquês de Pombal, "
+            "extinguiu as missões jesuíticas e impôs o português como língua obrigatória, "
+            "ao lado de outras medidas assimilacionistas (casamentos interétnicos, europeização). Foi "
+            "instrumento central do etnocídio colonial. Almeida (1997) e Cunha (1992) analisam."
+        ),
+        "padroes_banca": (
+            "O INEP cobra leitura descolonial de fontes coloniais."
+        ),
+        "pegadinhas": [
+            "Amenizar imposição para 'convivência'.",
+            "Achar que é sobre comércio.",
+            "Reduzir à religião.",
+        ],
+        "erros_comuns": (
+            "Marcar B por 'facilitar' soar boa."
+        ),
+        "dica_estrategica": (
+            "Fontes coloniais = leitura descolonial + crítica ao etnocentrismo."
+        ),
+        "variacao": (
+            "(Estilo INEP) O Diretório Pombalino foi:\n"
+            "A) instrumento assimilacionista contra povos indígenas;\n"
+            "B) proteção jesuítica; C) plano socialista; D) reforma agrária. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Marquês de Pombal ministrou D. José I, no séc.:\n"
+            "A) XVI; B) XVII; C) XVIII; D) XIX. → C",
+            "Q2. Cunha (1992) organiza:\n"
+            "A) História dos Índios no Brasil; B) O Alienista; C) Casa-Grande & Senzala; D) Formação do Brasil Contemporâneo. → A",
+            "Q3. Monteiro (1994) analisa:\n"
+            "A) escravização indígena em SP; B) direito europeu; C) Revolução Francesa; D) genealogia. → A",
+        ],
+        "resumo": {
+            "regra": "Diretório Pombalino = imposição linguística + etnocídio.",
+            "excecoes": "Algumas comunidades preservaram línguas resistindo.",
+            "palavra_chave": "Imposição + submissão colonial.",
+            "artigo": "ALMEIDA (1997); CUNHA (1992).",
+            "mnemonico": "P.O.M.B.: Pombal + Obrigatoriedade da Modificação linguística de Base.",
+        },
+    },
+
+    64: {
+        "tema": "Etnocídio e sociodiversidade indígena",
+        "subtema": "Presente das línguas indígenas + Diretório",
+        "habilidade_bncc": "EF07HI09, EM13CHS502; Lei 11.645/08",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a leitura POSITIVA: sociodiversidade indígena atual (306 povos, 274 línguas). "
+            "As demais lançam narrativas de 'desaparecimento' (B), 'assimilacionismo permanente' (C — "
+            "meia-verdade) ou 'ineficácia da resistência' (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra reconhecimento da RESISTÊNCIA e DIVERSIDADE indígena atual."
+        ),
+        "resolucao": [
+            "Descarte B: 'desaparecimento' contradiz a persistência.",
+            "Descarte C: assimilacionismo é REAL, mas a atividade quer mostrar RESISTÊNCIA e diversidade.",
+            "Descarte D: 'ineficácia da resistência' contradiz a persistência.",
+            "Marque A: reconhecimento da sociodiversidade indígena no presente.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Levantamento contemporâneo mostra a persistência e sociodiversidade indígena."),
+            "B": ("ERRADA", "Povos indígenas não desapareceram."),
+            "C": ("ERRADA", "Assimilacionismo persiste, mas o foco da atividade é a sociodiversidade."),
+            "D": ("ERRADA", "A resistência foi eficaz em preservar identidades."),
+        },
+        "fundamentacao": [
+            "IBGE. Censo Demográfico 2022 – Indígenas. Rio de Janeiro: IBGE, 2023.",
+            "CUNHA, Manuela Carneiro da (org.). História dos índios no Brasil. São Paulo: Cia. das Letras, 1992.",
+            "FUNAI. Povos indígenas no Brasil. Brasília, [s.d.].",
+            "ISA. Povos Indígenas no Brasil (site).",
+        ],
+        "teoria": (
+            "O Censo IBGE 2022 identificou 1,7 milhão de indígenas no Brasil, mais de 300 povos e cerca "
+            "de 270 línguas. Apesar de séculos de etnocídio e assimilacionismo, a sociodiversidade "
+            "indígena é fato do presente."
+        ),
+        "padroes_banca": (
+            "O INEP cobra afirmação da PERSISTÊNCIA e da DIVERSIDADE indígena."
+        ),
+        "pegadinhas": [
+            "Aceitar 'desaparecimento'.",
+            "Confundir assimilação com destruição total.",
+            "Reduzir resistência à falência.",
+        ],
+        "erros_comuns": (
+            "Marcar C por meia-verdade."
+        ),
+        "dica_estrategica": (
+            "Presente = sociodiversidade indígena."
+        ),
+        "variacao": (
+            "(Estilo INEP) O Censo IBGE 2022:\n"
+            "A) confirmou a sociodiversidade indígena; B) declarou extinção dos povos originários; "
+            "C) reduziu a 5 povos; D) aboliu a categoria indígena. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. A FUNAI foi criada em:\n"
+            "A) 1967; B) 1988; C) 1500; D) 2016. → A",
+            "Q2. Em 2023, a Funai passou a ser Fundação Nacional dos:\n"
+            "A) Povos Indígenas; B) Índios (nome anterior); C) Recursos; D) Museus. → A",
+            "Q3. O ISA é:\n"
+            "A) Instituto Socioambiental (ONG que documenta povos indígenas);\n"
+            "B) Instituto Superior Agronômico; C) Instituto de Sociologia Aplicada; D) órgão do MEC. → A",
+        ],
+        "resumo": {
+            "regra": "Presente = sociodiversidade indígena viva.",
+            "excecoes": "Assimilacionismo persiste como ameaça.",
+            "palavra_chave": "Sociodiversidade + presente.",
+            "artigo": "IBGE Censo 2022; CUNHA (1992).",
+            "mnemonico": "S.P.V.: Sociodiversidade + Presente + Vitalidade.",
+        },
+    },
+
+    65: {
+        "tema": "Mídias digitais e ensino do imperialismo",
+        "subtema": "HQs como produção estudantil investigativa",
+        "habilidade_bncc": "EF09HI16, EM13CHS603",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o par ANÁLISE + PRODUÇÃO como estratégia investigativa. A resposta B combina "
+            "análise de fontes + mídias digitais + produção autoral (HQs). As demais são transmissivas "
+            "(A: fichamento tradicional; C: reproduzir; D: memorização)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra postura investigativa + protagonismo estudantil."
+        ),
+        "resolucao": [
+            "Descarte A: 'textos tradicionais + fichamento' = ensino transmissivo.",
+            "Descarte C: 'reproduzir narrativas' contradiz postura crítica.",
+            "Descarte D: memorização não é investigativa.",
+            "Marque B: análise + produção de HQs = investigação com autoria.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Modelo tradicional, não investigativo."),
+            "B": ("CORRETA", "Análise + produção autoral (HQs) = postura investigativa e protagonismo."),
+            "C": ("ERRADA", "'Reproduzir narrativas' contradiz a chave crítica."),
+            "D": ("ERRADA", "Memorização não é investigação."),
+        },
+        "fundamentacao": [
+            "SCHMIDT, Maria Auxiliadora; CAINELLI, Marlene. Ensinar História. São Paulo: Scipione, 2018.",
+            "SAID, Edward. Cultura e imperialismo. São Paulo: Cia. das Letras, 2011.",
+            "MOSCOSO PANDO, María. Ms. Marvel and Postcolonial Representation. Journal of Popular Culture, v. 57, n. 4, 2024.",
+            "HOBSBAWM, Eric. A era dos impérios. Rio de Janeiro: Paz e Terra, 2014.",
+        ],
+        "teoria": (
+            "Mídias digitais e audiovisuais (séries, filmes, HQs) são fontes históricas legítimas se "
+            "analisadas criticamente. Said (2011) mostra como culturas coloniais e anticoloniais "
+            "disputam narrativas. Produção estudantil autoral (HQs) fortalece a apropriação crítica do "
+            "conhecimento."
+        ),
+        "padroes_banca": (
+            "O INEP cobra estratégias investigativas + autoria estudantil."
+        ),
+        "pegadinhas": [
+            "Reduzir aula a fichamento.",
+            "Confundir 'reproduzir' com 'analisar'.",
+            "Achar que memorização é investigação.",
+        ],
+        "erros_comuns": (
+            "Marcar A por hábito acadêmico do fichamento."
+        ),
+        "dica_estrategica": (
+            "Investigativo = analisar + produzir + socializar."
+        ),
+        "variacao": (
+            "(Estilo INEP) A partição da Índia (1947) resultou em:\n"
+            "A) criação de Índia e Paquistão + deslocamentos massivos;\n"
+            "B) unificação do sul-asiático; C) fim do imperialismo britânico global; D) criação da União Soviética. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Gandhi liderou a independência da:\n"
+            "A) Índia; B) China; C) África do Sul (após); D) Japão. → A (foi ativo na África do Sul também)",
+            "Q2. Hobsbawm chama o período 1875-1914 de:\n"
+            "A) Era dos Impérios; B) Belle Époque exclusiva; C) Era das Revoluções; D) Era do Capital. → A",
+            "Q3. Said (2011) discute:\n"
+            "A) cultura e imperialismo; B) Iluminismo; C) Reforma; D) feudalismo. → A",
+        ],
+        "resumo": {
+            "regra": "Postura investigativa = análise crítica + autoria estudantil.",
+            "excecoes": "Aulas expositivas complementam, sem substituir.",
+            "palavra_chave": "Análise + produção autoral.",
+            "artigo": "SCHMIDT & CAINELLI (2018); SAID (2011).",
+            "mnemonico": "A.P.S.: Analisar + Produzir + Socializar.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -5243,7 +5628,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 12 (Q01 a Q60)",
+        "3. Análise completa – LOTES 1 a 13 (Q01 a Q65)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -5281,14 +5666,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 12 (Q01 a Q60)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 13 (Q01 a Q65)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 61)):
+    for num in list(range(1, 66)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -5408,7 +5793,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-12")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-13")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -5469,7 +5854,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 12 (Q01 a Q60)",
+              "3. Análise completa – LOTES 1 a 13 (Q01 a Q65)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -5508,7 +5893,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 12 (Q01 a Q60)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 13 (Q01 a Q65)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -5517,7 +5902,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 61)):
+    for num in list(range(1, 66)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -5612,7 +5997,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-12", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-13", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
