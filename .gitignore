@@ -1,0 +1,5 @@
+saidas/*.pdf
+saidas/*.docx
+downloads/
+__pycache__/
+*.pyc
