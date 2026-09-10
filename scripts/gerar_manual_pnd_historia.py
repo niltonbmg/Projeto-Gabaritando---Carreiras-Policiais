@@ -3196,6 +3196,408 @@ ANALISES = {
         },
     },
 
+    41: {
+        "tema": "Metodologia iconográfica no ensino de História",
+        "subtema": "Mulheres nas cidades medievais + fonte imagética",
+        "habilidade_bncc": "EF06HI11, EM13CHS101",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Média",
+        "justificativa_classificacao": (
+            "Item cobra a metodologia adequada para articular fonte imagética + texto acadêmico. A "
+            "metodologia é ICONOGRÁFICA (análise da imagem em seu contexto histórico). Distratores usam "
+            "termos aproximados (semiótica, formalista, comparativa) que não descrevem exatamente o "
+            "trabalho pedagógico proposto."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra o vocabulário técnico da didática da História. A iconografia (Panofsky) "
+            "analisa imagens historicamente, discernindo temas, motivos e significados."
+        ),
+        "resolucao": [
+            "Reconheça: fonte imagética + texto acadêmico para desmontar estereótipo.",
+            "Descarte A: 'semiótica' analisa signos, mas não é o termo usual na didática da História para esse par.",
+            "Descarte C: 'formalista' foca na forma; não é o caso.",
+            "Descarte D: 'comparativa' pressupõe comparação entre duas fontes semelhantes.",
+            "Marque B: iconográfica.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Semiótica é campo mais amplo de análise de signos, não a metodologia específica aqui."),
+            "B": ("CORRETA", "A metodologia iconográfica analisa imagens em seu contexto histórico (Panofsky, Burke)."),
+            "C": ("ERRADA", "Formalismo foca em forma, não em significado histórico."),
+            "D": ("ERRADA", "Comparativa exige duas fontes de mesma natureza."),
+        },
+        "fundamentacao": [
+            "PANOFSKY, Erwin. Significado nas artes visuais. São Paulo: Perspectiva, 1979.",
+            "BURKE, Peter. Testemunha ocular: história e imagem. Bauru: EDUSC, 2004.",
+            "FEDERICI, Silvia. Calibã e a bruxa: mulheres, corpo e acumulação primitiva. São Paulo: Elefante, 2017.",
+            "BITTENCOURT, Circe. Ensino de história: fundamentos e métodos. 4. ed. São Paulo: Cortez, 2011.",
+        ],
+        "teoria": (
+            "ICONOGRAFIA (Panofsky, 1979) é o estudo de temas, motivos e significados nas imagens; "
+            "ICONOLOGIA vai além, articulando a imagem ao contexto cultural. Burke (2004) discute como "
+            "usar imagens como fonte histórica. Bittencourt (2011) trata da didática das fontes no ensino "
+            "de História. Federici (2017) desmonta o mito das mulheres medievais restritas ao espaço "
+            "privado — no ensino, isso combate estereótipos de gênero."
+        ),
+        "padroes_banca": (
+            "O INEP cobra vocabulário técnico da didática."
+        ),
+        "pegadinhas": [
+            "Confundir iconografia com semiótica.",
+            "Achar que 'comparativa' basta.",
+            "Reduzir imagem à ilustração.",
+        ],
+        "erros_comuns": (
+            "Marcar A por 'semiótica' soar erudito."
+        ),
+        "dica_estrategica": (
+            "Imagem + contexto histórico = iconografia."
+        ),
+        "variacao": (
+            "(Estilo INEP) Panofsky (1979) sistematiza a análise de imagens em três níveis:\n"
+            "A) sintático, semântico, pragmático;\n"
+            "B) pré-iconográfico, iconográfico, iconológico;\n"
+            "C) estético, ético, epistemológico;\n"
+            "D) formal, funcional, ideológico. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Peter Burke, em 'Testemunha ocular' (2004), discute:\n"
+            "A) fontes hemerográficas; B) imagens como fontes históricas; "
+            "C) fontes orais; D) fontes materiais. → B",
+            "Q2. Federici (2017) recusa o mito de:\n"
+            "A) idade média = domesticidade feminina absoluta; B) burguesia como classe hegemônica; "
+            "C) Renascimento como neutro; D) Iluminismo como emancipatório. → A",
+            "Q3. Bittencourt (2011) trata de:\n"
+            "A) matemática; B) ensino de história; C) química; D) genética. → B",
+        ],
+        "resumo": {
+            "regra": "Iconografia = análise de imagem histórica em contexto.",
+            "excecoes": "Iconologia estende para o contexto cultural amplo.",
+            "palavra_chave": "Imagem + significado histórico.",
+            "artigo": "PANOFSKY (1979); BURKE (2004).",
+            "mnemonico": "I.I.I.: Imagem + Ícone + Interpretação.",
+        },
+    },
+
+    42: {
+        "tema": "Reforma Protestante e Contrarreforma",
+        "subtema": "Século XVI - convulsões religiosas",
+        "habilidade_bncc": "EF07HI06, EM13CHS502",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "O massacre da noite de São Bartolomeu (1572) e a caça às bruxas na Europa moderna remetem "
+            "à REFORMA PROTESTANTE e CONTRARREFORMA — momentos de intensa disputa religiosa. As demais "
+            "opções deslocam para períodos ou fenômenos diversos."
+        ),
+        "como_banca_pensou": (
+            "A banca pede reconhecimento cronológico + temático das obras. Distratores oferecem eventos "
+            "de outros períodos (Cruzadas medievais, Revolução Gloriosa, Revoltas Camponesas medievais)."
+        ),
+        "resolucao": [
+            "Fixe: massacre de São Bartolomeu (1572, católicos vs. protestantes) + queima de menonita (Reforma radical) = século XVI.",
+            "Descarte B: Inquisição e revoltas camponesas são amplos; a expressão específica é Reforma + Contrarreforma.",
+            "Descarte C: Cruzadas e Guerra dos Cem Anos são medievais.",
+            "Descarte D: Revolução Gloriosa (1688) é séc. XVII.",
+            "Marque A: Reforma Protestante + Contrarreforma.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Reforma + Contrarreforma explicam o massacre de S. Bartolomeu (1572) e a repressão a menonitas."),
+            "B": ("ERRADA", "Inquisição é permanente e mais ampla; a expressão específica é Reforma."),
+            "C": ("ERRADA", "Cruzadas (séc. XI-XIII) e Guerras dos Cem Anos/das Rosas são medievais."),
+            "D": ("ERRADA", "Revolução Gloriosa é 1688; deslocamento cronológico."),
+        },
+        "fundamentacao": [
+            "DELUMEAU, Jean. Nascimento e afirmação da Reforma. São Paulo: Pioneira, 1989.",
+            "DELUMEAU, Jean. História do medo no Ocidente 1300-1800. São Paulo: Cia. das Letras, 1989.",
+            "GINZBURG, Carlo. O queijo e os vermes. São Paulo: Cia. das Letras, 1987.",
+            "HILL, Christopher. O mundo de ponta-cabeça. São Paulo: Cia. das Letras, 1987.",
+        ],
+        "teoria": (
+            "A REFORMA PROTESTANTE (1517, Lutero) e a CONTRARREFORMA CATÓLICA (Concílio de Trento, "
+            "1545-1563) reconfiguraram a Europa, gerando GUERRAS DE RELIGIÃO (França 1562-1598, "
+            "Alemanha 1618-1648). O massacre da noite de São Bartolomeu (24 ago. 1572, Paris) é episódio "
+            "emblemático. Delumeau (1989) e Ginzburg (1987) são referências. Federici (2017) enfatiza "
+            "que a caça às bruxas foi paralela à acumulação primitiva."
+        ),
+        "padroes_banca": (
+            "O INEP cobra cronologia e articulação temática de eventos europeus."
+        ),
+        "pegadinhas": [
+            "Confundir Reforma com Cruzadas.",
+            "Colocar Revolução Gloriosa no séc. XVI.",
+            "Reduzir a 'Inquisição' amplamente.",
+        ],
+        "erros_comuns": (
+            "Marcar B por associar Inquisição a caça às bruxas — a chave é o CONTEXTO reformista."
+        ),
+        "dica_estrategica": (
+            "Reforma + Contrarreforma = eixo dos conflitos religiosos do séc. XVI."
+        ),
+        "variacao": (
+            "(Estilo INEP) O Concílio de Trento (1545-1563):\n"
+            "A) fundou o protestantismo; B) foi resposta contrarreformista da Igreja Católica; "
+            "C) aboliu a Inquisição; D) definiu a Reforma Anglicana. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A Paz de Augsburgo (1555) reconheceu:\n"
+            "A) cuius regio, eius religio; B) tolerância universal; "
+            "C) apenas catolicismo; D) só protestantismo. → A",
+            "Q2. O massacre de S. Bartolomeu ocorreu em:\n"
+            "A) Paris, 1572; B) Roma, 1500; C) Genebra, 1600; D) Wittenberg, 1517. → A",
+            "Q3. Ginzburg (1987) analisa em 'O queijo e os vermes':\n"
+            "A) inquisição e cultura popular; B) direito romano; C) economia industrial; D) arte moderna. → A",
+        ],
+        "resumo": {
+            "regra": "Séc. XVI = Reforma + Contrarreforma + guerras religiosas.",
+            "excecoes": "Diferentes reformas (luterana, calvinista, anglicana, radical) coexistem.",
+            "palavra_chave": "Reforma + Contrarreforma.",
+            "artigo": "DELUMEAU (1989); GINZBURG (1987).",
+            "mnemonico": "RC-XVI: Reforma-Contrarreforma no século XVI.",
+        },
+    },
+
+    43: {
+        "tema": "Reforma Protestante - propaganda visual (Contrarreforma)",
+        "subtema": "Imagem como arma na disputa religiosa",
+        "habilidade_bncc": "EF07HI06, EM13CHS502",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa (iconográfica)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Média-alta",
+        "justificativa_classificacao": (
+            "Gravura de Leipzig, 1535, associando Lutero ao diabo — típica DEMONIZAÇÃO produzida pela "
+            "Contrarreforma. Alternativas erradas invertem (A: exaltação), suavizam (C: humanismo) ou "
+            "descontextualizam (D: sem clero)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra leitura iconográfica em contexto: quem produz a imagem e para quê. Uma "
+            "imagem que associa Lutero ao diabo só faz sentido como propaganda contrarreformista."
+        ),
+        "resolucao": [
+            "Descarte A: exaltar Lutero ao lado do diabo é contraditório para os luteranos.",
+            "Descarte C: humanismo renascentista não usaria demonização.",
+            "Descarte D: 'sem envolvimento eclesiástico' é falso; a produção é clerical.",
+            "Marque B: demonização produzida pela Contrarreforma.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Lutero ao lado do diabo não pode ser exaltação."),
+            "B": ("CORRETA", "Demonização típica da propaganda visual contrarreformista."),
+            "C": ("ERRADA", "Humanismo renascentista não usaria essa forma de propaganda."),
+            "D": ("ERRADA", "Reforma teve intensa disputa eclesiástica; nunca 'sem clero'."),
+        },
+        "fundamentacao": [
+            "SCRIBNER, Robert. For the Sake of Simple Folk: Popular Propaganda for the German Reformation. Cambridge: Cambridge University Press, 1981.",
+            "BURKE, Peter. Testemunha ocular. Bauru: EDUSC, 2004.",
+            "DELUMEAU, Jean. História do medo no Ocidente. São Paulo: Cia. das Letras, 1989.",
+        ],
+        "teoria": (
+            "A propaganda visual foi arma central da disputa Reforma/Contrarreforma. Scribner (1981) "
+            "mostra como panfletos e gravuras alcançavam a população não alfabetizada. Ambos os lados "
+            "produziram demonizações — Lutero como diabo, Papa como Anticristo — em técnicas iconográficas "
+            "sofisticadas."
+        ),
+        "padroes_banca": (
+            "O INEP cobra leitura contextualizada de imagens do período."
+        ),
+        "pegadinhas": [
+            "Interpretar Lutero+diabo como exaltação.",
+            "Achar que humanismo produz demonização.",
+            "Suprimir o clero na Reforma.",
+        ],
+        "erros_comuns": (
+            "Marcar A por lembrar de Lutero como reformador virtuoso."
+        ),
+        "dica_estrategica": (
+            "Sempre leia a imagem em seu CONTEXTO de produção e RECEPÇÃO."
+        ),
+        "variacao": (
+            "(Estilo INEP) Panfletos com o Papa como Anticristo eram propaganda:\n"
+            "A) contrarreformista; B) protestante; C) humanista renascentista; D) medieval. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Scribner (1981) discute:\n"
+            "A) propaganda popular da Reforma; B) economia agrária; C) Renascimento italiano; D) filologia. → A",
+            "Q2. A imprensa de Gutenberg foi decisiva para:\n"
+            "A) Reforma; B) Cruzadas; C) Feudalismo; D) Revolução Industrial imediata. → A",
+            "Q3. Concílio de Trento (1545-63):\n"
+            "A) fundou o protestantismo; B) reafirmou dogmas católicos + arte contrarreformista; "
+            "C) integrou luteranos; D) instituiu a Inquisição pela primeira vez. → B",
+        ],
+        "resumo": {
+            "regra": "Imagens do séc. XVI = arma na disputa Reforma/Contrarreforma.",
+            "excecoes": "Nem toda imagem religiosa é propaganda direta.",
+            "palavra_chave": "Demonização + propaganda visual.",
+            "artigo": "SCRIBNER (1981); BURKE (2004).",
+            "mnemonico": "P.C.R.: Propaganda + Contrarreforma + (D)emonização.",
+        },
+    },
+
+    44: {
+        "tema": "História local e literatura",
+        "subtema": "Cora Coralina, cidade e história",
+        "habilidade_bncc": "EF07HI17, EF09HI22, EM13CHS502",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Média-alta",
+        "justificativa_classificacao": (
+            "Item cobra a articulação HISTÓRIA LOCAL + LITERATURA como forma de despertar SENSO "
+            "INVESTIGATIVO e articular local/global. A alternativa D é a única que expressa essa "
+            "perspectiva; A subordina à historiografia oficial, B restringe a grandes cidades, C submete "
+            "à história política tradicional."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão de HISTÓRIA LOCAL como caminho didático — não como "
+            "subalternidade à historiografia consagrada."
+        ),
+        "resolucao": [
+            "Descarte A: 'para dar validade ao trabalho' subordina à historiografia oficial.",
+            "Descarte B: 'grandes cidades' contradiz a proposta local.",
+            "Descarte C: 'convenções tradicionais' contradiz a inovação didática.",
+            "Marque D: local e geral se aproximam e distanciam = história local como investigação.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Subordina o local à historiografia consagrada."),
+            "B": ("ERRADA", "Recorta a análise a grandes cidades."),
+            "C": ("ERRADA", "Submissão à história política tradicional."),
+            "D": ("CORRETA", "Articula local e global; desperta senso investigativo — coerente com a proposta de história local."),
+        },
+        "fundamentacao": [
+            "SAMUEL, Raphael. Historia popular y teoria socialista. Barcelona: Crítica, 1984.",
+            "SCHMIDT, Maria Auxiliadora; CAINELLI, Marlene. Ensinar História. 3. ed. São Paulo: Scipione, 2018.",
+            "CORA CORALINA. Poemas dos becos de Goiás e estórias mais. São Paulo: Global, 2006.",
+            "BURKE, Peter. A escrita da história: novas perspectivas. São Paulo: UNESP, 1992.",
+        ],
+        "teoria": (
+            "A HISTÓRIA LOCAL, herdeira da micro-história italiana (Ginzburg, Levi) e da história vista "
+            "de baixo (Thompson, Samuel), articula local e global sem hierarquia. Schmidt & Cainelli "
+            "(2018) sistematizam sua didática. A literatura é fonte legítima para o ensino de História, "
+            "especialmente para trabalhar sensibilidades e representações do cotidiano."
+        ),
+        "padroes_banca": (
+            "O INEP prefere alternativas que ARTICULAM local/global e valorizam senso investigativo."
+        ),
+        "pegadinhas": [
+            "Subordinar local ao geral.",
+            "Restringir a 'grandes cidades'.",
+            "Ver literatura como fonte 'inferior'.",
+        ],
+        "erros_comuns": (
+            "Marcar A por parecer que 'inscrever na historiografia' é bom."
+        ),
+        "dica_estrategica": (
+            "História local = articulação, não subordinação. Preserve o investigativo."
+        ),
+        "variacao": (
+            "(Estilo INEP) Schmidt & Cainelli (2018) associam ensino de História local a:\n"
+            "A) memorização de datas; B) investigação, patrimônio e articulação com o global; "
+            "C) história política clássica; D) crítica ao trabalho docente. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Ginzburg praticou:\n"
+            "A) micro-história italiana; B) macro-história econômica; C) sociologia rural; D) filosofia analítica. → A",
+            "Q2. Cora Coralina, poeta goiana, tematiza:\n"
+            "A) o cotidiano e as ruas de Goiás; B) o cotidiano de Nova York; C) as guerras mundiais; D) a alta política brasileira. → A",
+            "Q3. Literatura como fonte histórica:\n"
+            "A) é ilegítima; B) exige leitura crítica dos contextos; C) só serve à filologia; D) é neutra. → B",
+        ],
+        "resumo": {
+            "regra": "História local articula local e global sem hierarquia.",
+            "excecoes": "Não confundir com 'localismo' isolacionista.",
+            "palavra_chave": "Investigação + articulação local/global.",
+            "artigo": "SCHMIDT & CAINELLI (2018); BURKE (1992).",
+            "mnemonico": "L.G.I.: Local, Global, Investigativo.",
+        },
+    },
+
+    45: {
+        "tema": "Avaliação diagnóstica em ensino de História",
+        "subtema": "Representações prévias dos estudantes",
+        "habilidade_bncc": "EM13CHS603; DCN Formação Docente",
+        "gabarito": "D",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a definição de AVALIAÇÃO DIAGNÓSTICA: estudante expõe suas representações "
+            "PRÉVIAS antes do início do conteúdo. As demais confundem com somativa (A: 'final do "
+            "semestre'), com intervenção ideológica (B), ou com processual (C)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a definição clássica de diagnóstica: OCORRE ANTES do conteúdo; identifica "
+            "representações e conhecimentos prévios."
+        ),
+        "resolucao": [
+            "Descarte A: 'ao final do semestre' = somativa.",
+            "Descarte B: 'alterar discurso ideológico' + 'promover notas depois' = confuso e somativo.",
+            "Descarte C: 'durante o processo' = formativa.",
+            "Marque D: expor representações prévias ANTES do próximo conteúdo = diagnóstica.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "'Final do semestre' caracteriza avaliação somativa."),
+            "B": ("ERRADA", "Formulação confusa; sugere manipulação ideológica."),
+            "C": ("ERRADA", "'Durante o processo' é formativa, não diagnóstica."),
+            "D": ("CORRETA", "Estudante expõe representações prévias ANTES do conteúdo → diagnóstica."),
+        },
+        "fundamentacao": [
+            "PERRENOUD, Philippe. Avaliação: da excelência à regulação. Porto Alegre: Artmed, 1999.",
+            "HOFFMANN, Jussara. Avaliação mediadora. Porto Alegre: Mediação, 2014.",
+            "LUCKESI, Cipriano C. Avaliação da aprendizagem escolar. São Paulo: Cortez, 2011.",
+            "SCHMIDT, Maria Auxiliadora; CAINELLI, Marlene. Ensinar História. São Paulo: Scipione, 2018.",
+        ],
+        "teoria": (
+            "AVALIAÇÃO DIAGNÓSTICA identifica conhecimentos e representações prévias, orientando o "
+            "planejamento antes do conteúdo. No ensino de História, Schmidt & Cainelli (2018) enfatizam a "
+            "importância das PROTONARRATIVAS dos estudantes — narrativas iniciais sobre o passado — como "
+            "ponto de partida para a construção do conhecimento histórico."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a tríade DIAGNÓSTICA-FORMATIVA-SOMATIVA em múltiplos contextos."
+        ),
+        "pegadinhas": [
+            "Confundir diagnóstica com formativa.",
+            "Confundir diagnóstica com somativa.",
+            "Interpretar diagnóstica como manipulação ideológica.",
+        ],
+        "erros_comuns": (
+            "Marcar C por 'representações' aparecerem na formativa também — mas 'durante' é palavra-chave."
+        ),
+        "dica_estrategica": (
+            "Diagnóstica = ANTES. Formativa = DURANTE. Somativa = DEPOIS."
+        ),
+        "variacao": (
+            "(Estilo INEP) Protonarrativas históricas (Rüsen; Schmidt) referem-se a:\n"
+            "A) narrativas dos historiadores profissionais;\n"
+            "B) narrativas iniciais dos estudantes sobre o passado;\n"
+            "C) documentários; D) ficção histórica. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Avaliação somativa:\n"
+            "A) identifica prévios; B) regula o processo; C) certifica ao final; D) constrói ativa. → C",
+            "Q2. Schmidt & Cainelli (2018) valorizam:\n"
+            "A) apenas memorização de datas; B) protonarrativas e consciência histórica; "
+            "C) só livros didáticos; D) apenas efemérides. → B",
+            "Q3. Jussara Hoffmann chama a formativa de:\n"
+            "A) classificatória; B) mediadora; C) supletiva; D) somativa disfarçada. → B",
+        ],
+        "resumo": {
+            "regra": "Diagnóstica = expor representações prévias ANTES do conteúdo.",
+            "excecoes": "Instrumentos podem coincidir (rodas, questionários); a intenção define a função.",
+            "palavra_chave": "Prévios + representações.",
+            "artigo": "PERRENOUD (1999); SCHMIDT & CAINELLI (2018).",
+            "mnemonico": "Diagnóstica = DEC (Descubro o que Eu Conheço) antes do C (Conteúdo).",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -3651,7 +4053,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 8 (Q01 a Q40)",
+        "3. Análise completa – LOTES 1 a 9 (Q01 a Q45)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -3689,14 +4091,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 8 (Q01 a Q40)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 9 (Q01 a Q45)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 41)):
+    for num in list(range(1, 46)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -3816,7 +4218,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-8")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-9")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -3877,7 +4279,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 8 (Q01 a Q40)",
+              "3. Análise completa – LOTES 1 a 9 (Q01 a Q45)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -3916,7 +4318,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 8 (Q01 a Q40)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 9 (Q01 a Q45)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -3925,7 +4327,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 41)):
+    for num in list(range(1, 46)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -4020,7 +4422,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-8", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-9", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
