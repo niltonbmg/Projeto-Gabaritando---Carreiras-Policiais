@@ -2785,6 +2785,417 @@ ANALISES = {
         },
     },
 
+    36: {
+        "tema": "História oral como metodologia (Verena Alberti; Portelli)",
+        "subtema": "Conflito, memória e temporalidades",
+        "habilidade_bncc": "EF08HI27, EM13CHS603",
+        "gabarito": "D",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão de que a HISTÓRIA ORAL é uma metodologia que reconhece o conflito, a "
+            "seletividade e a memória subjetiva como constitutivos das fontes. As demais alternativas "
+            "desconhecem essa dimensão (busca de coincidência, oposição a audiovisual, subordinação ao "
+            "documento escrito)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão da história oral como METODOLOGIA CRÍTICA que trabalha COM o "
+            "conflito e a subjetividade, e não CONTRA eles."
+        ),
+        "resolucao": [
+            "Descarte A: 'coincidência' de relatos é ilusão positivista.",
+            "Descarte B: recursos audiovisuais não distorcem — ampliam.",
+            "Descarte C: relatos orais NÃO são complemento subalterno a documentos escritos.",
+            "Marque D: conflito + memória = essência da história oral.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Buscar 'coincidência' contradiz a natureza plural da memória."),
+            "B": ("ERRADA", "Audiovisual é linguagem legítima da história oral contemporânea."),
+            "C": ("ERRADA", "Relatos orais são fontes com estatuto próprio, não meros complementos."),
+            "D": ("CORRETA", "Relatos são atravessados por memórias, permitindo o trabalho com conflito e diferença."),
+        },
+        "fundamentacao": [
+            "ALBERTI, Verena. Manual de história oral. 3. ed. Rio de Janeiro: FGV, 2005.",
+            "PORTELLI, Alessandro. História oral como arte da escuta. São Paulo: Letra e Voz, 2016.",
+            "MEIHY, José Carlos Sebe Bom. Manual de história oral. 5. ed. São Paulo: Loyola, 2005.",
+            "POLLAK, Michael. Memória, esquecimento, silêncio. Estudos Históricos, v. 2, n. 3, 1989.",
+        ],
+        "teoria": (
+            "A HISTÓRIA ORAL (Alberti, 2005; Meihy, 2005; Portelli, 2016) é metodologia de pesquisa e "
+            "trabalho pedagógico que valoriza o testemunho, a subjetividade e a memória. Portelli enfatiza "
+            "que a 'diferença' — os erros, os silêncios, os conflitos — é o que a torna epistemologicamente "
+            "valiosa. Pollak (1989) discute memórias hegemônicas e subterrâneas. Na sala de aula, a "
+            "história oral aproxima o passado da experiência dos estudantes e permite trabalhar temporalidades "
+            "diversas."
+        ),
+        "padroes_banca": (
+            "O INEP cobra ampliar a compreensão da história oral para além do 'reforço' do documento escrito."
+        ),
+        "pegadinhas": [
+            "Buscar 'verdade única' nos relatos.",
+            "Reduzir oral ao complemento do escrito.",
+            "Negar valor a audiovisual.",
+        ],
+        "erros_comuns": (
+            "Marcar C por hierarquizar documento escrito."
+        ),
+        "dica_estrategica": (
+            "História oral = conflito + subjetividade + memória. Aceite o dissenso."
+        ),
+        "variacao": (
+            "(Estilo INEP) Portelli (2016) define a história oral como 'arte da escuta' porque:\n"
+            "A) prioriza a técnica de gravação;\n"
+            "B) escuta atentamente a diferença, a dúvida e o silêncio como partes da memória;\n"
+            "C) reduz o relato à transcrição literal;\n"
+            "D) exclui a subjetividade. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Verena Alberti é referência para:\n"
+            "A) história oral no Brasil; B) genealogia; C) numismática; D) paleografia. → A",
+            "Q2. Meihy (2005) discute a história oral em modalidades:\n"
+            "A) histórias de vida, temáticas e tradições orais; B) apenas biografias; "
+            "C) apenas censo; D) apenas ficção. → A",
+            "Q3. Pollak (1989) fala em memórias:\n"
+            "A) hegemônicas e subterrâneas; B) simuladas e virtuais; C) tácitas e ostensivas; D) fixas e móveis. → A",
+        ],
+        "resumo": {
+            "regra": "História oral trabalha com conflito e memória; não busca coincidência.",
+            "excecoes": "Sistematização é válida, desde que respeite as versões.",
+            "palavra_chave": "Conflito + memória + escuta.",
+            "artigo": "ALBERTI (2005); PORTELLI (2016); MEIHY (2005).",
+            "mnemonico": "3 T's da HO: Testemunho, Temporalidade, Trabalho com conflito.",
+        },
+    },
+
+    37: {
+        "tema": "Intolerância religiosa – história das religiões afro-brasileiras",
+        "subtema": "Ensino de História e Lei 10.639/03",
+        "habilidade_bncc": "EF08HI19, EM13CHS502; Lei 10.639/03",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a abordagem correta: apresentar a HISTÓRIA das religiões de matriz africana, o "
+            "conceito de PLURALIDADE religiosa e a GARANTIA LEGAL de suas práticas. As demais são "
+            "negacionistas (A), assimilacionistas (C) ou generalistas (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca contrapõe abordagem afirmativa (B) a três desvios: legalismo restritivo (A), "
+            "assimilação ao cristianismo (C) e generalização do 'conflito religioso' (D)."
+        ),
+        "resolucao": [
+            "Descarte A: 'sem respaldo legal' contradiz a Constituição.",
+            "Descarte C: 'adequação a princípios cristãos' é assimilacionismo cristocêntrico.",
+            "Descarte D: 'grupos extremistas' desloca o tema.",
+            "Marque B: história + pluralidade + garantia legal.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Todas as religiões têm respaldo legal (CF/88, art. 5º, VI)."),
+            "B": ("CORRETA", "História + pluralidade + garantia legal = abordagem afirmativa."),
+            "C": ("ERRADA", "'Adequar-se a princípios cristãos' é cristocentrismo, contrário à liberdade religiosa."),
+            "D": ("ERRADA", "Generaliza o tema para 'terrorismo', desviando do foco."),
+        },
+        "fundamentacao": [
+            "BRASIL. Constituição da República Federativa do Brasil de 1988, art. 5º, VI e VIII.",
+            "BRASIL. Lei nº 10.639, de 9 de janeiro de 2003.",
+            "SILVA, Vagner Gonçalves da (org.). Intolerância religiosa: impactos do neopentecostalismo no campo religioso afro-brasileiro. São Paulo: Edusp, 2007.",
+            "PRANDI, Reginaldo. Mitologia dos orixás. São Paulo: Companhia das Letras, 2001.",
+        ],
+        "teoria": (
+            "As religiões de matriz africana (candomblé, umbanda, xambá etc.) integram a formação cultural "
+            "brasileira desde o período colonial. A CF/88 garante liberdade religiosa. A Lei 10.639/03 "
+            "obriga o ensino da história e cultura afro-brasileira. Silva (2007) e Prandi (2001) são "
+            "referências centrais para o tema. Enfrentar a intolerância religiosa exige apresentação "
+            "AFIRMATIVA e HISTORICAMENTE fundamentada."
+        ),
+        "padroes_banca": (
+            "O INEP contrapõe abordagem afirmativa a assimilacionismos, cristocentrismos e legalismos."
+        ),
+        "pegadinhas": [
+            "Aceitar 'religiões não oficiais' — todas são livres.",
+            "Cristocentrismo disfarçado.",
+            "Generalização para 'terrorismo'.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar 'conflitos' a boa aula. Desloca o tema."
+        ),
+        "dica_estrategica": (
+            "Prefira alternativas com HISTÓRIA + PLURALIDADE + LEGALIDADE + CRÍTICA CONTEXTUALIZADA."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Lei 10.639/03 tornou obrigatório o ensino de:\n"
+            "A) apenas de ciências; B) História e Cultura Afro-Brasileira; "
+            "C) apenas de sociologia; D) só de artes. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Prandi (2001) é referência para:\n"
+            "A) mitologia dos orixás; B) astronomia; C) geologia; D) química. → A",
+            "Q2. Vagner Silva (2007) analisa:\n"
+            "A) intolerância religiosa e neopentecostalismo; B) história econômica; "
+            "C) romantismo; D) sociologia rural. → A",
+            "Q3. A CF/88, art. 5º, garante:\n"
+            "A) monopólio católico; B) liberdade religiosa; C) proibição de manifestações; D) ateísmo. → B",
+        ],
+        "resumo": {
+            "regra": "Religiões afro-brasileiras: história + pluralidade + legalidade.",
+            "excecoes": "Ensino religioso é facultativo ao estudante.",
+            "palavra_chave": "Pluralidade + garantia legal.",
+            "artigo": "CF/88 art. 5º, VI; Lei 10.639/03.",
+            "mnemonico": "H.P.L.: História, Pluralidade, Legalidade.",
+        },
+    },
+
+    38: {
+        "tema": "Ensino de história afro-brasileira – enfrentamento crítico ao racismo religioso",
+        "subtema": "Lei 10.639/03 – interpretação correta",
+        "habilidade_bncc": "EF08HI19, EM13CHS502",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede a JUSTIFICATIVA correta para a inclusão da história afro-brasileira. A resposta é "
+            "VALORIZAR + ENFRENTAR racismo e intolerância de forma CRÍTICA e CONTEXTUALIZADA. "
+            "Alternativa A tem uma palavra-veneno ('superioridade cultural'); B afirma que intolerância "
+            "seria 'liberdade de expressão' (falso); D propõe iniciar em práticas religiosas (fora do "
+            "escopo escolar público)."
+        ),
+        "como_banca_pensou": (
+            "O INEP quer que o candidato reconheça a Lei 10.639/03 como valorização E enfrentamento, "
+            "sem essencialismo ('superioridade cultural')."
+        ),
+        "resolucao": [
+            "Descarte A: 'afirmar sua superioridade cultural' é essencialismo invertido, incorreto.",
+            "Descarte B: chamar intolerância de 'liberdade de expressão' é violação de direitos.",
+            "Descarte D: 'iniciar em práticas religiosas' extrapola a escola pública laica.",
+            "Marque C: valorizar + enfrentar de forma crítica e contextualizada.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "'Superioridade cultural' é essencialismo, não crítica antirracista."),
+            "B": ("ERRADA", "Intolerância NÃO é liberdade de expressão — é violação de direitos."),
+            "C": ("CORRETA", "Valorizar + enfrentar crítica e contextualizadamente = fórmula da Lei 10.639/03 e das DCN das relações étnico-raciais."),
+            "D": ("ERRADA", "Escola pública laica não inicia estudantes em práticas religiosas."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 10.639, de 9 de janeiro de 2003.",
+            "BRASIL. Conselho Nacional de Educação. Resolução CNE/CP nº 1, de 17 de junho de 2004.",
+            "GOMES, Nilma Lino. O movimento negro educador. Petrópolis: Vozes, 2017.",
+            "MUNANGA, Kabengele. Superando o racismo na escola. 2. ed. Brasília: MEC/SECAD, 2005.",
+        ],
+        "teoria": (
+            "A Lei 10.639/03 e a Res. CNE/CP 1/2004 estabelecem o ensino de História e Cultura "
+            "Afro-Brasileira e Africana como política antirracista. Não se trata de 'inverter' hierarquias "
+            "(afirmar superioridade), mas de VALORIZAR e ENFRENTAR o racismo. Munanga (2005) e Gomes "
+            "(2017) sistematizam a política."
+        ),
+        "padroes_banca": (
+            "O INEP costuma cobrar interpretações precisas de leis. Cuidado com 'superioridade'."
+        ),
+        "pegadinhas": [
+            "Confundir enfrentamento com essencialismo invertido.",
+            "Legitimar intolerância como 'liberdade'.",
+            "Achar que escola pública faz iniciação religiosa.",
+        ],
+        "erros_comuns": (
+            "Marcar A por parecer 'valorizar de mais' — mas 'superioridade' é palavra-veneno."
+        ),
+        "dica_estrategica": (
+            "Antirracismo = valorização + enfrentamento crítico. Nunca hierarquia invertida."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Res. CNE/CP nº 1/2004 institui:\n"
+            "A) BNCC; B) DCN Relações Étnico-Raciais; C) DCN Educação Infantil; D) LDB. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A Lei 10.639/03 se articula com a:\n"
+            "A) Lei 11.645/08 (história indígena); B) Lei 12.711/12; C) Lei 13.146/15; D) Lei 9.394/96. → A",
+            "Q2. Munanga (2005) organiza o tema:\n"
+            "A) superando o racismo na escola; B) história agrária; C) demografia; D) ecologia. → A",
+            "Q3. Antirracismo pedagógico exige:\n"
+            "A) hierarquizar culturas; B) valorizar e enfrentar racismo contextualizadamente; "
+            "C) invisibilizar diferenças; D) neutralidade absoluta. → B",
+        ],
+        "resumo": {
+            "regra": "Antirracismo = valorização crítica + enfrentamento contextualizado.",
+            "excecoes": "Nenhuma cultura é superior; todas são diversas e dialogam.",
+            "palavra_chave": "Valorizar + enfrentar + crítica.",
+            "artigo": "Lei 10.639/03; Res. CNE/CP 1/2004.",
+            "mnemonico": "VEC: Valorizar + Enfrentar + Contextualizar.",
+        },
+    },
+
+    39: {
+        "tema": "Ditaduras do Cone Sul e interdisciplinaridade",
+        "subtema": "Operação Condor, resistência e direitos humanos",
+        "habilidade_bncc": "EF09HI24, EM13CHS604",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Prática (interdisciplinar)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra articulação com outra disciplina e um objetivo COERENTE com os textos-base "
+            "(Argentina + Chile, avós, netos sequestrados, golpe de 1973). A resposta é LÍNGUA "
+            "PORTUGUESA + identificar repressão e violação de direitos humanos (leitura crítica de "
+            "reportagens)."
+        ),
+        "como_banca_pensou": (
+            "A banca contrapõe integrações plausíveis: Filosofia + resistência (B), Sociologia + grupos "
+            "opositores violentos (C, formulação problemática), Geografia + instituições antidemocráticas "
+            "(D, incoerente). A única articulação PLENAMENTE coerente com o material (reportagens) e o "
+            "objetivo (identificar violações) é A."
+        ),
+        "resolucao": [
+            "Reconheça: textos são REPORTAGENS jornalísticas.",
+            "Descarte B: 'protestos pacíficos' é reducionista.",
+            "Descarte C: 'grupos opositores violentos' distorce (a violência vinha do Estado).",
+            "Descarte D: 'Geografia + instituições antidemocráticas' não é articulação coerente.",
+            "Marque A: LP + identificar repressão e violação de DH.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Leitura crítica das reportagens (LP) + identificação da repressão e das violações de DH."),
+            "B": ("ERRADA", "Reduz a resistência a 'protestos pacíficos', apagando a complexidade."),
+            "C": ("ERRADA", "Sugere que os opositores eram os violentos — inversão histórica."),
+            "D": ("ERRADA", "Geografia não é o campo mais coerente para o material dado."),
+        },
+        "fundamentacao": [
+            "COMISSÃO NACIONAL DA VERDADE. Relatório – Vol. I. Brasília, 2014.",
+            "PADRÓS, Enrique Serra. Como el Uruguay no hay… Terror de Estado e segurança nacional. Porto Alegre: UFRGS, 2005.",
+            "DINGES, John. Os anos do Condor: uma década de terrorismo internacional no Cone Sul. São Paulo: Cia. das Letras, 2005.",
+            "BRASIL. Lei nº 12.528, de 18 de novembro de 2011. Cria a Comissão Nacional da Verdade.",
+        ],
+        "teoria": (
+            "A OPERAÇÃO CONDOR (1975-1983) foi uma articulação entre as ditaduras militares de Argentina, "
+            "Chile, Brasil, Bolívia, Paraguai e Uruguai para reprimir opositores, com desaparecimentos, "
+            "torturas e sequestros de crianças. Dinges (2005) e Padrós (2005) são referências. O trabalho "
+            "das Avós da Praça de Maio, na Argentina, é exemplo de resistência memorial e jurídica. "
+            "Trabalhar essas ditaduras interdisciplinarmente amplia a compreensão do autoritarismo latino-"
+            "americano."
+        ),
+        "padroes_banca": (
+            "O INEP contrapõe objetivo coerente + disciplina adequada. Palavras-veneno: 'protestos pacíficos', "
+            "'grupos opositores violentos', 'apenas geografia'."
+        ),
+        "pegadinhas": [
+            "Reduzir resistência a 'protestos pacíficos'.",
+            "Inverter quem exerce a violência.",
+            "Escolher disciplina desconectada do material.",
+        ],
+        "erros_comuns": (
+            "Marcar B por 'protestos' soar bom — mas apaga a repressão."
+        ),
+        "dica_estrategica": (
+            "Interdisciplinaridade só funciona se disciplina e objetivo forem coerentes com a fonte."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Operação Condor articulou-se com o objetivo de:\n"
+            "A) integrar economicamente o Mercosul; B) reprimir opositores das ditaduras do Cone Sul; "
+            "C) financiar a educação; D) proteger direitos humanos. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Salvador Allende foi deposto em:\n"
+            "A) 11 set. 1973; B) 1 abr. 1964; C) 24 mar. 1976; D) 1985. → A",
+            "Q2. As Avós da Praça de Maio buscam:\n"
+            "A) netos sequestrados durante a ditadura argentina; B) prêmios literários; "
+            "C) medalhas olímpicas; D) reforma agrária. → A",
+            "Q3. A CNV foi criada pela:\n"
+            "A) Lei 12.528/2011; B) Lei 8.069/90; C) Lei 9.394/96; D) Lei 6.815/80. → A",
+        ],
+        "resumo": {
+            "regra": "Ditaduras do Cone Sul = repressão estatal, resistência plural, direitos humanos.",
+            "excecoes": "Cada país teve dinâmicas próprias, mas articuladas pela Condor.",
+            "palavra_chave": "Repressão + violação de DH.",
+            "artigo": "Lei 12.528/2011; CNV (2014).",
+            "mnemonico": "CONDOR: Coordenação Repressiva Internacional do Cone Sul.",
+        },
+    },
+
+    40: {
+        "tema": "Exílio e resistência no Cone Sul – 'O Eternauta'",
+        "subtema": "Quadrinhos, memória e solidariedade internacional",
+        "habilidade_bncc": "EF09HI24, EF08HI19",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra atividade coerente com o tema (exílio e resistência às ditaduras). A alternativa "
+            "C — cartas simulando exílio político — é a única que preserva o teor histórico. As demais "
+            "são deslocamentos: migração voluntária (A), turismo (B), remoção urbana ambiental (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca contrapõe abordagem histórica correta a distorções banalizantes (turismo, migração "
+            "voluntária)."
+        ),
+        "resolucao": [
+            "Reconheça: tema é EXÍLIO POLÍTICO e RESISTÊNCIA às ditaduras.",
+            "Descarte A: migração voluntária por emprego apaga o exílio.",
+            "Descarte B: turismo é banalização.",
+            "Descarte D: remoção urbana ambiental não é exílio político.",
+            "Marque C: cartas simulando comunicação entre exilados e familiares.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Migração voluntária não é exílio político."),
+            "B": ("ERRADA", "Turismo banaliza o tema."),
+            "C": ("CORRETA", "Cartas de exilados = atividade coerente com o teor histórico."),
+            "D": ("ERRADA", "'Remoção urbana ambiental' não é o tema."),
+        },
+        "fundamentacao": [
+            "OESTERHELD, Héctor G. O eternauta. São Paulo: Martins Fontes, 2011.",
+            "SEIXAS, Ivan et al. Exílio e retorno: brasileiros na diáspora política. São Paulo: Intermeios, 2018.",
+            "ROLLEMBERG, Denise. Exílio: entre raízes e radares. Rio de Janeiro: Record, 1999.",
+            "CNV. Relatório. Brasília, 2014.",
+        ],
+        "teoria": (
+            "O EXÍLIO foi experiência coletiva de milhares de latino-americanos durante as ditaduras. "
+            "Rollemberg (1999) sistematiza o exílio brasileiro. 'O Eternauta' de Héctor Oesterheld (autor "
+            "argentino desaparecido pela ditadura) é HQ de ficção científica que se tornou metáfora "
+            "poderosa da resistência. Trabalhar cartas simuladas mobiliza empatia histórica (Rüsen) e "
+            "consciência dos direitos humanos."
+        ),
+        "padroes_banca": (
+            "O INEP contrasta abordagem histórico-crítica a banalizações."
+        ),
+        "pegadinhas": [
+            "Confundir exílio com migração voluntária.",
+            "Banalizar com turismo.",
+            "Reduzir a política habitacional.",
+        ],
+        "erros_comuns": (
+            "Marcar A por 'migrante sul-americano' — mas é exílio POLÍTICO."
+        ),
+        "dica_estrategica": (
+            "Em atividade sobre ditaduras, preserve a especificidade política do tema."
+        ),
+        "variacao": (
+            "(Estilo INEP) Héctor Oesterheld, autor de 'O Eternauta':\n"
+            "A) foi vítima da ditadura argentina; B) morreu de causas naturais em 2000; "
+            "C) fugiu para os EUA; D) apoiou Videla. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Rollemberg (1999) discute:\n"
+            "A) exílio brasileiro; B) demografia; C) micro-história; D) numismática. → A",
+            "Q2. Empatia histórica (Rüsen) refere-se a:\n"
+            "A) memorização; B) imaginar a experiência do outro no passado; "
+            "C) transcrever fontes; D) datar eventos. → B",
+            "Q3. HQs podem ser fontes históricas legítimas?\n"
+            "A) Não; B) Sim, tratadas criticamente; C) Só se documentárias; D) Só em ciências. → B",
+        ],
+        "resumo": {
+            "regra": "Trabalhar exílio = experiências políticas concretas.",
+            "excecoes": "Migrações econômicas coexistem, mas não são exílio político.",
+            "palavra_chave": "Exílio + solidariedade internacional.",
+            "artigo": "ROLLEMBERG (1999); CNV (2014).",
+            "mnemonico": "E.S.I.: Exílio, Solidariedade, Internacionalismo.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -3240,7 +3651,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 7 (Q01 a Q35)",
+        "3. Análise completa – LOTES 1 a 8 (Q01 a Q40)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -3278,14 +3689,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 7 (Q01 a Q35)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 8 (Q01 a Q40)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 36)):
+    for num in list(range(1, 41)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -3405,7 +3816,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-7")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-8")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -3466,7 +3877,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 7 (Q01 a Q35)",
+              "3. Análise completa – LOTES 1 a 8 (Q01 a Q40)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -3505,7 +3916,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 7 (Q01 a Q35)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 8 (Q01 a Q40)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -3514,7 +3925,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 36)):
+    for num in list(range(1, 41)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -3609,7 +4020,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-7", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-8", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
