@@ -2372,6 +2372,419 @@ ANALISES = {
         },
     },
 
+    31: {
+        "tema": "Relatório Figueiredo, Ditadura Militar e povos indígenas",
+        "subtema": "Ensino de História e Comissão Nacional da Verdade",
+        "habilidade_bncc": "EM13CHS103, EM13CHS604; Lei 11.645/08",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Prática (didática da História)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta (História do Brasil recente)",
+        "justificativa_classificacao": (
+            "Item cobra o par METODOLOGIA ATIVA + OBJETIVO didático coerente com a fonte. A resposta D "
+            "(debate + evidenciar divergências e violações de DH) é a única que preserva a natureza "
+            "denunciativa do relatório."
+        ),
+        "como_banca_pensou": (
+            "A banca combina fonte histórica polêmica (Relatório Figueiredo) com escolha didática. A "
+            "alternativa correta articula participação ativa (debate) + objetivo crítico coerente com o "
+            "conteúdo (violações de direitos humanos)."
+        ),
+        "resolucao": [
+            "Reconheça: relatório denuncia violência estatal contra povos indígenas na Ditadura.",
+            "Descarte A: 'igualdade jurídica' contradiz a realidade da Ditadura e o teor do relatório.",
+            "Descarte B: 'aula expositiva' não é participação ativa; 'manipulação' é leitura reducionista.",
+            "Descarte C: 'falsificação do documento' contradiz a autenticidade histórica reconhecida.",
+            "Marque D: debate + evidenciar divergências e violações de direitos humanos.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Descreve a Ditadura como igualitária — inverte a realidade histórica."),
+            "B": ("ERRADA", "Aula expositiva não é metodologia ativa; interpretação reducionista da fonte."),
+            "C": ("ERRADA", "Nega a autenticidade histórica do relatório."),
+            "D": ("CORRETA", "Debate + evidenciar violações de direitos humanos = objetivo coerente com o teor da fonte."),
+        },
+        "fundamentacao": [
+            "COMISSÃO NACIONAL DA VERDADE. Relatório. Vol. II, texto 5: Violações de direitos humanos dos povos indígenas. Brasília: CNV, 2014.",
+            "FIGUEIREDO, Jáder de. Relatório Figueiredo. Ministério do Interior, Brasília, 1968.",
+            "MPF – 6ª Câmara de Coordenação e Revisão. Crimes da ditadura militar contra povos indígenas. Brasília: MPF, 2022.",
+            "BRASIL. Lei nº 11.645, de 10 de março de 2008. Altera a LDB. DOU, 11 mar. 2008.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "O RELATÓRIO FIGUEIREDO (1968), produzido pelo procurador Jáder de Figueiredo, documentou "
+            "violações graves contra povos indígenas — expulsões, tortura, chacinas, escravização, ligadas "
+            "a fazendeiros e agentes do Serviço de Proteção aos Índios (SPI). Desaparecido por décadas, "
+            "foi redescoberto em 2012 no Museu do Índio (RJ) e integrou os trabalhos da Comissão Nacional "
+            "da Verdade. É fonte essencial para o ensino da Ditadura em diálogo com a Lei 11.645/08 e "
+            "com o direito à memória. A didática ativa (debate, roda de conversa, pesquisa em fontes) "
+            "articula o passado à responsabilidade cidadã presente."
+        ),
+        "padroes_banca": (
+            "O INEP usa fontes documentais recentes (CNV, MPF) para questões de História do Brasil "
+            "contemporâneo. A alternativa correta preserva o TEOR da fonte."
+        ),
+        "pegadinhas": [
+            "Aceitar 'aula expositiva' como ativa.",
+            "Confundir 'sumiço' do relatório com 'falsificação'.",
+            "Suavizar a Ditadura como 'igualitária'.",
+        ],
+        "erros_comuns": (
+            "Marcar B por associar 'documento manipulado' a crítica de fonte, sem observar que a "
+            "metodologia é expositiva."
+        ),
+        "dica_estrategica": (
+            "Em item com fonte histórica sensível, prefira metodologia ATIVA (debate, roda, seminário) + "
+            "objetivo COERENTE com o teor documental."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Comissão Nacional da Verdade (Lei 12.528/2011) tem por objetivo:\n"
+            "A) apagar registros; B) examinar e esclarecer graves violações de direitos humanos entre "
+            "1946 e 1988; C) redigir a Constituição; D) impedir arquivamento judicial. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O Relatório Figueiredo foi elaborado em:\n"
+            "A) 1968; B) 1888; C) 1930; D) 2012. → A",
+            "Q2. O SPI foi substituído pela:\n"
+            "A) FUNAI (Fundação Nacional dos Povos Indígenas), em 1967; B) ANAI; C) SESAI; D) FIOCRUZ. → A",
+            "Q3. A Lei 11.645/08 obriga o ensino de:\n"
+            "A) filosofia; B) história e cultura afro-brasileira E indígena; C) sociologia; "
+            "D) apenas ciências. → B",
+        ],
+        "resumo": {
+            "regra": "Fontes históricas sensíveis + metodologia ativa + objetivo coerente com o teor.",
+            "excecoes": "Aula expositiva pode contextualizar, mas não é participação ativa.",
+            "palavra_chave": "Debate + violações de DH.",
+            "artigo": "CNV (2014); Lei 11.645/08.",
+            "mnemonico": "F.I.G.: Fonte Investigada, Grupo em debate.",
+        },
+    },
+
+    32: {
+        "tema": "Ditadura Militar + povos originários (Relatório Figueiredo)",
+        "subtema": "Repressão, resistência e ensino de história",
+        "habilidade_bncc": "EM13CHS103, EM13CHS604; Lei 11.645/08",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o OBJETIVO didático de motivação inicial a partir do Relatório Figueiredo. A "
+            "resposta articula IMPACTO DA DITADURA sobre povos originários + PROCESSOS DE REPRESSÃO E "
+            "RESISTÊNCIA."
+        ),
+        "como_banca_pensou": (
+            "A banca oferece leituras distorcidas (A: 'avanço do comunismo entre povos originários'; C: "
+            "reduzir violência à Marcha da Família; D: 'acordos protecionistas' com mineradores) e uma "
+            "leitura correta (B)."
+        ),
+        "resolucao": [
+            "Reconheça o objetivo: motivação para tema (Ditadura + povos indígenas).",
+            "Descarte A: 'avanço do comunismo entre povos originários' é caricatura anticomunista.",
+            "Descarte C: Marcha da Família é fenômeno urbano de classe média, sem correlação direta com violência aos indígenas.",
+            "Descarte D: não houve 'acordos protecionistas' — houve espoliação.",
+            "Marque B: impacto da Ditadura sobre povos originários + repressão e resistência.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Anticomunismo caricatural, sem base histórica."),
+            "B": ("CORRETA", "Objetivo alinhado ao Relatório: violações + resistência dos povos originários."),
+            "C": ("ERRADA", "Marcha da Família não motivou a violência a indígenas."),
+            "D": ("ERRADA", "Historiograficamente falso: houve espoliação, não 'acordos protecionistas'."),
+        },
+        "fundamentacao": [
+            "COMISSÃO NACIONAL DA VERDADE. Relatório – Vol. II, texto 5 (povos indígenas). Brasília, 2014.",
+            "CUNHA, Manuela Carneiro da (org.). História dos índios no Brasil. São Paulo: Cia. das Letras, 1992.",
+            "GAGLIARDI, José Mauro. O indígena e a República. São Paulo: Hucitec, 1989.",
+            "MPF. Crimes da ditadura militar contra povos indígenas. Brasília, 2022.",
+        ],
+        "teoria": (
+            "Durante a Ditadura, os povos originários foram vítimas de espoliação territorial e violência "
+            "sistemática, especialmente em obras faraônicas (Transamazônica, hidrelétricas) e no avanço "
+            "agropecuário. A CNV documentou milhares de mortes de indígenas. O Relatório Figueiredo é "
+            "peça-chave para compreender o SPI (Serviço de Proteção aos Índios), que foi extinto em 1967 "
+            "após o escândalo do relatório, dando origem à FUNAI."
+        ),
+        "padroes_banca": (
+            "O INEP alinha alternativas erradas a narrativas anticomunistas caricatas ou a inversões "
+            "historiográficas."
+        ),
+        "pegadinhas": [
+            "Aceitar 'avanço do comunismo entre povos originários' como leitura.",
+            "Confundir Marcha da Família com política indigenista.",
+            "Inventar 'acordos protecionistas' inexistentes.",
+        ],
+        "erros_comuns": (
+            "Marcar A por lembrar do contexto Guerra Fria; mas o relatório trata de violações concretas, "
+            "não do 'comunismo'."
+        ),
+        "dica_estrategica": (
+            "Em itens sobre Ditadura + povos originários, prefira leituras que articulem VIOLAÇÃO, "
+            "ESPOLIAÇÃO e RESISTÊNCIA."
+        ),
+        "variacao": (
+            "(Estilo INEP) O SPI foi substituído pela FUNAI em:\n"
+            "A) 1988; B) 1930; C) 1967; D) 2012. Gabarito: C."
+        ),
+        "minisimulado": [
+            "Q1. A Transamazônica, construída na Ditadura, teve como consequência:\n"
+            "A) integração pacífica; B) violência contra povos indígenas e desmatamento; "
+            "C) sem impacto; D) reflorestamento. → B",
+            "Q2. Manuela Carneiro da Cunha (1992) editou:\n"
+            "A) História dos Índios no Brasil; B) O Livro Verde; C) O Aleijadinho; D) O Alienista. → A",
+            "Q3. A CNV entregou seu relatório final em:\n"
+            "A) 2010; B) 2012; C) 2014; D) 2020. → C",
+        ],
+        "resumo": {
+            "regra": "Ditadura + povos originários = violência sistemática, não anticomunismo genérico.",
+            "excecoes": "Havia diversidade interna nas políticas, mas a tônica é a espoliação.",
+            "palavra_chave": "Repressão + resistência + povos originários.",
+            "artigo": "CNV (2014); Lei 12.528/11.",
+            "mnemonico": "FIGUEIREDO = FI (força indígena) + GUERRA (contra) + REDO (revelado após décadas).",
+        },
+    },
+
+    33: {
+        "tema": "Fonte memorialística – Mércia Albuquerque",
+        "subtema": "Diários como fonte e teoria da História",
+        "habilidade_bncc": "EM13CHS101, EM13CHS603",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Teórica (crítica das fontes)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a CLASSIFICAÇÃO da fonte — o diário de Mércia é MEMORIALÍSTICO e reconstitui "
+            "EXPERIÊNCIAS INDIVIDUAIS. As demais atribuem-lhe naturezas incorretas (oral, oficial, "
+            "hemerográfica)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a tipologia clássica das fontes: oral, memorialística (autobiografia/diário), "
+            "oficial (administrativa), hemerográfica (imprensa)."
+        ),
+        "resolucao": [
+            "Reconheça: 'Diários 1973-74' → fonte memorialística/autobiográfica.",
+            "Descarte A: 'oral' — o texto é escrito, não transcrição de oralidade.",
+            "Descarte C: 'oficial' — diário privado, não documento administrativo.",
+            "Descarte D: 'hemerográfica' — não é jornal/periódico.",
+            "Marque B: memorialística + reconstituir experiências individuais.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Fonte escrita, não oral."),
+            "B": ("CORRETA", "Diário = fonte memorialística que reconstitui experiências individuais."),
+            "C": ("ERRADA", "Não é documento oficial administrativo."),
+            "D": ("ERRADA", "Não é fonte de imprensa."),
+        },
+        "fundamentacao": [
+            "GOMES, Angela de Castro (org.). Escrita de si, escrita da História. Rio de Janeiro: FGV, 2004.",
+            "LEJEUNE, Philippe. O pacto autobiográfico: de Rousseau à internet. Belo Horizonte: UFMG, 2014.",
+            "BLOCH, Marc. Apologia da história ou o ofício de historiador. Rio de Janeiro: Zahar, 2001.",
+            "LE GOFF, Jacques. História e memória. 5. ed. Campinas: Unicamp, 2003.",
+        ],
+        "teoria": (
+            "Fontes memorialísticas (diários, memórias, autobiografias) são muito utilizadas em História "
+            "do Tempo Presente. Angela de Castro Gomes (2004) sistematiza a 'escrita de si' como território "
+            "historiográfico. Lejeune (2014) define o PACTO AUTOBIOGRÁFICO. A crítica de fontes distingue "
+            "subjetividade (aspecto epistemológico legítimo) de mera opinião. Le Goff (2003) discute a "
+            "MEMÓRIA como campo de disputa histórica."
+        ),
+        "padroes_banca": (
+            "O INEP cobra tipologia das fontes com atenção à ADEQUAÇÃO didática do uso."
+        ),
+        "pegadinhas": [
+            "Confundir memorialístico com oral.",
+            "Confundir diário com documento oficial.",
+            "Reduzir subjetividade à opinião.",
+        ],
+        "erros_comuns": (
+            "Marcar A por associar 'testemunho' com 'oral'."
+        ),
+        "dica_estrategica": (
+            "Fonte escrita em primeira pessoa = memorialística/autobiográfica."
+        ),
+        "variacao": (
+            "(Estilo INEP) Fontes de imprensa (jornais, revistas) são classificadas como:\n"
+            "A) memorialísticas; B) hemerográficas; C) iconográficas; D) orais. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Lejeune (2014) formulou:\n"
+            "A) o pacto autobiográfico; B) o hipertexto; C) a psicanálise; D) o positivismo. → A",
+            "Q2. Angela de Castro Gomes é referência para:\n"
+            "A) história oral no Brasil; B) escrita de si; C) filologia; D) demografia histórica. → B",
+            "Q3. Marc Bloch é referência para:\n"
+            "A) Annales; B) positivismo; C) marxismo ortodoxo; D) micro-história italiana. → A",
+        ],
+        "resumo": {
+            "regra": "Diário = fonte memorialística/autobiográfica.",
+            "excecoes": "Diários podem conter elementos hemerográficos (recortes) ou oficiais (anexos).",
+            "palavra_chave": "Experiências individuais + escrita de si.",
+            "artigo": "GOMES (2004); LEJEUNE (2014); LE GOFF (2003).",
+            "mnemonico": "M.E.M.: Memorial + Experiência + Mercadoria narrativa (do sujeito).",
+        },
+    },
+
+    34: {
+        "tema": "Ensino de História com fonte memorialística – resistência política",
+        "subtema": "Diários femininos e Ditadura Militar",
+        "habilidade_bncc": "EF09HI21, EM13CHS603; Lei 12.528/11 (CNV)",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a coerência entre OBJETIVO (identificar resistências políticas) e METODOLOGIA "
+            "(análise de fontes literárias/memorialísticas). O diário de Mércia expressa RESISTÊNCIA "
+            "FEMININA à Ditadura."
+        ),
+        "como_banca_pensou": (
+            "A banca contrasta objetivos coerentes vs. deslocados. A resposta B é a única que preserva a "
+            "natureza da fonte (memorialística/literária) e o TEOR (resistência política)."
+        ),
+        "resolucao": [
+            "Descarte A: 'produção de texto argumentativo' desloca a fonte para um exercício sem análise crítica.",
+            "Descarte C: 'expressões culturais' generaliza demais; a fonte é sobre resistência política.",
+            "Descarte D: 'grupos da luta armada' não é o foco do diário.",
+            "Marque B: resistências políticas + análise de fontes literárias.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Texto argumentativo é atividade, não análise crítica de fonte."),
+            "B": ("CORRETA", "Objetivo (resistências políticas) + metodologia (análise de fontes literárias) coerentes com a natureza do diário."),
+            "C": ("ERRADA", "Diário não é fonte prioritariamente sobre 'expressões culturais' amplas."),
+            "D": ("ERRADA", "Mércia era advogada, não integrante de grupo armado; o foco é a resistência jurídica e política."),
+        },
+        "fundamentacao": [
+            "COLLING, Ana Maria. A resistência da mulher à ditadura militar no Brasil. Rio de Janeiro: Rosa dos Tempos, 1997.",
+            "COMISSÃO NACIONAL DA VERDADE. Relatório – Vol. III (mortos e desaparecidos). Brasília, 2014.",
+            "SCOTT, Joan W. Gênero: uma categoria útil de análise histórica. Educação e Realidade, v. 20, n. 2, 1995.",
+            "PERROT, Michelle. Minha história das mulheres. São Paulo: Contexto, 2007.",
+        ],
+        "teoria": (
+            "As mulheres foram protagonistas da resistência à Ditadura Militar, atuando em partidos, "
+            "comitês de familiares, defesa jurídica e organizações da sociedade civil. Colling (1997) e a "
+            "CNV (2014) documentam essa participação. Scott (1995) fornece o conceito de GÊNERO como "
+            "categoria histórica; Perrot (2007) organiza a história das mulheres. A memória de Mércia "
+            "Albuquerque exemplifica a intersecção entre gênero, direito e resistência política."
+        ),
+        "padroes_banca": (
+            "O INEP costuma cobrar coerência OBJETIVO + METODOLOGIA + NATUREZA DA FONTE."
+        ),
+        "pegadinhas": [
+            "Confundir resistência política com luta armada.",
+            "Reduzir fonte memorialística a exercício de escrita.",
+            "Generalizar para 'expressões culturais'.",
+        ],
+        "erros_comuns": (
+            "Marcar A por parecer razoável 'texto argumentativo', sem observar a metodologia própria da fonte."
+        ),
+        "dica_estrategica": (
+            "Objetivo + método sempre COERENTES com a natureza da fonte."
+        ),
+        "variacao": (
+            "(Estilo INEP) Segundo Joan Scott (1995), gênero é:\n"
+            "A) sinônimo de sexo biológico;\n"
+            "B) categoria útil de análise histórica que evidencia relações de poder;\n"
+            "C) fase histórica única; D) apenas fator cultural. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Michelle Perrot é referência para:\n"
+            "A) História das Mulheres; B) Positivismo; C) Semiótica; D) Micro-história italiana. → A",
+            "Q2. A CNV publicou seu relatório final em:\n"
+            "A) 2010; B) 2014; C) 2016; D) 2018. → B",
+            "Q3. Fontes literárias/memorialísticas exigem:\n"
+            "A) leitura acrítica; B) crítica interna e externa; C) neutralidade absoluta; D) transcrição literal. → B",
+        ],
+        "resumo": {
+            "regra": "Objetivo + método = natureza da fonte. Diário = resistência memorialística.",
+            "excecoes": "Fontes memorialísticas podem articular-se a outras (oficiais, hemerográficas).",
+            "palavra_chave": "Resistência + fontes literárias.",
+            "artigo": "COLLING (1997); CNV (2014); SCOTT (1995).",
+            "mnemonico": "R.E.M.: Resistência, Escrita de si, Memória.",
+        },
+    },
+
+    35: {
+        "tema": "Representações históricas, memória e identidade",
+        "subtema": "'Narradores de Javé' e disputas pelo passado",
+        "habilidade_bncc": "EM13CHS101, EM13CHS202",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão de que o filme expressa REPRESENTAÇÕES HISTÓRICAS como campo de "
+            "DISPUTA e criações identitárias. As demais alternativas ou negam a disputa (A: converter "
+            "oral em escrito valida) ou reduzem à oposição individual-social (B) ou à ciência (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca mobiliza Chartier e história cultural: as REPRESENTAÇÕES lutam por hegemonia. "
+            "A resposta correta explicita disputa + identidades."
+        ),
+        "resolucao": [
+            "Reconheça: filme trata de versões, memórias e territorialidade.",
+            "Descarte A: 'converter oral para escrito valida' apaga a oralidade.",
+            "Descarte B: oposição individual x social é reducionista.",
+            "Descarte D: 'subjetividade questionada' desconhece o valor epistêmico das representações.",
+            "Marque C: representações históricas como objeto de disputa e criações identitárias.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Converter oralidade para escrita hierarquiza indevidamente."),
+            "B": ("ERRADA", "Individual x social não é a chave do filme."),
+            "C": ("CORRETA", "Representações históricas como campo de disputa e criação identitária."),
+            "D": ("ERRADA", "Subjetividade é constitutiva da produção histórica, não sua negação."),
+        },
+        "fundamentacao": [
+            "CHARTIER, Roger. A história cultural: entre práticas e representações. Lisboa: Difel, 1990.",
+            "HALL, Stuart. A identidade cultural na pós-modernidade. Rio de Janeiro: DP&A, 2006.",
+            "HALBWACHS, Maurice. A memória coletiva. São Paulo: Centauro, 2006.",
+            "POLLAK, Michael. Memória, esquecimento, silêncio. Estudos Históricos, v. 2, n. 3, 1989.",
+        ],
+        "teoria": (
+            "Chartier (1990) define REPRESENTAÇÕES como esquemas com que os grupos constroem o mundo, "
+            "sempre em disputa. Hall (2006) explora identidades em contextos pós-modernos. Halbwachs "
+            "(2006) mostra que a memória é coletiva; Pollak (1989) destaca as memórias subterrâneas, "
+            "esquecimentos e silêncios. O filme 'Narradores de Javé' (Eliane Caffé, 2003) é usado com "
+            "frequência para pensar oralidade, memória, patrimônio e disputas territoriais."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a linha da HISTÓRIA CULTURAL. Palavras-chave: representação, disputa, identidade."
+        ),
+        "pegadinhas": [
+            "Hierarquizar oralidade e escrita.",
+            "Reduzir disputa a individual/social.",
+            "Negar a subjetividade.",
+        ],
+        "erros_comuns": (
+            "Marcar A por associar 'registro escrito' a validação — mas o filme mostra o inverso."
+        ),
+        "dica_estrategica": (
+            "História cultural = REPRESENTAÇÃO + DISPUTA + IDENTIDADE."
+        ),
+        "variacao": (
+            "(Estilo INEP) Chartier (1990) define representações como:\n"
+            "A) reflexos passivos da realidade;\n"
+            "B) esquemas em disputa pela construção de sentido;\n"
+            "C) apenas conteúdos científicos;\n"
+            "D) apenas literatura. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Stuart Hall discute:\n"
+            "A) identidade fixa; B) identidades culturais fluidas na pós-modernidade; C) neutralidade; D) essencialismo. → B",
+            "Q2. Halbwachs cunhou o conceito de:\n"
+            "A) memória coletiva; B) memória seletiva; C) memória de trabalho; D) memória sensorial. → A",
+            "Q3. Pollak (1989) chama de 'memórias subterrâneas':\n"
+            "A) as oficiais; B) as silenciadas pela memória hegemônica; C) as escritas; D) as institucionais. → B",
+        ],
+        "resumo": {
+            "regra": "História cultural = representações em disputa + identidades.",
+            "excecoes": "Fontes orais e escritas dialogam, não se hierarquizam.",
+            "palavra_chave": "Representação + disputa + identidade.",
+            "artigo": "CHARTIER (1990); HALL (2006); POLLAK (1989).",
+            "mnemonico": "R.D.I.: Representação, Disputa, Identidade.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -2827,7 +3240,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 6 (Q01 a Q30)",
+        "3. Análise completa – LOTES 1 a 7 (Q01 a Q35)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -2865,14 +3278,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 6 (Q01 a Q30)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 7 (Q01 a Q35)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 31)):
+    for num in list(range(1, 36)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -2992,7 +3405,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-6")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-7")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -3053,7 +3466,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 6 (Q01 a Q30)",
+              "3. Análise completa – LOTES 1 a 7 (Q01 a Q35)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -3092,7 +3505,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 6 (Q01 a Q30)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 7 (Q01 a Q35)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -3101,7 +3514,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 31)):
+    for num in list(range(1, 36)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -3196,7 +3609,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-6", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-7", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
