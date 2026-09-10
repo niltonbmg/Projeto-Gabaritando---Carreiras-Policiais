@@ -159,6 +159,469 @@ ANALISES = {
         },
     },
 
+    6: {
+        "tema": "Paulo Freire e sequência didática crítica em Educação Ambiental",
+        "subtema": "Levantamento do entorno + problematização + intervenção",
+        "habilidade_bncc": "BNCC – competências gerais 7 e 10; TCT Educação Ambiental",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Prática (planejamento freireano)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede a sequência didática que EXPRESSE a perspectiva freireana. Freire propõe partir da "
+            "realidade concreta (tema gerador), problematizar, sistematizar conceitos e retornar à prática "
+            "transformadora. Alternativas incorretas misturam Freire com Ausubel (subsunçores), Vigotski (ZDP) "
+            "e abordagens transmissivas."
+        ),
+        "como_banca_pensou": (
+            "O INEP contrasta a matriz freireana com outras teorias da aprendizagem. O par 'levantamento do "
+            "entorno + problematização + análise crítica' é a assinatura de Freire. As demais opções trocam "
+            "propositalmente o vocabulário: 'subsunçores' (Ausubel), 'ZDP' (Vigotski), 'modelo de estufa' "
+            "(experimentalismo)."
+        ),
+        "resolucao": [
+            "Reconheça a marca freireana: partir do CONTEXTO REAL do estudante (entorno, comunidade).",
+            "Descarte B: usa 'modelo de estufa' e 'fixação' — abordagem tecnicista/comportamentalista.",
+            "Descarte C: 'organizar os subsunçores' é ANCORAGEM PRÉVIA de Ausubel, não Freire.",
+            "Descarte D: 'Zona de Desenvolvimento Proximal' é Vigotski.",
+            "Marque A: levantamento do entorno + conceitos escolares que ajudam a compreender + aplicação crítica (COP30/rap) — sequência freireana clássica.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Ordem freireana: leitura de mundo → problematização → sistematização → retorno crítico à realidade (Freire, 1996; 2000)."),
+            "B": ("ERRADA", "Vídeo + modelo de estufa + 'fixação' remetem ao ensino tecnicista, não à pedagogia libertadora."),
+            "C": ("ERRADA", "'Subsunçores' é conceito da Aprendizagem Significativa de Ausubel; não descreve Freire."),
+            "D": ("ERRADA", "'Zona de Desenvolvimento Proximal' é conceito de Vigotski (sociointeracionismo), não de Freire."),
+        },
+        "fundamentacao": [
+            "FREIRE, Paulo. Pedagogia do oprimido. 17. ed. Rio de Janeiro: Paz e Terra, 1987.",
+            "FREIRE, Paulo. Pedagogia da autonomia: saberes necessários à prática educativa. São Paulo: Paz e Terra, 1996.",
+            "AUSUBEL, David P. Aquisição e retenção de conhecimentos: uma perspectiva cognitiva. Lisboa: Plátano, 2003.",
+            "VYGOTSKY, Lev S. A formação social da mente. São Paulo: Martins Fontes, 1991.",
+            "BRASIL. Lei nº 9.795, de 27 de abril de 1999. Política Nacional de Educação Ambiental. DOU, Brasília, 28 abr. 1999.",
+        ],
+        "teoria": (
+            "A pedagogia freireana articula LEITURA DE MUNDO (contexto e experiência do educando) → "
+            "PROBLEMATIZAÇÃO (temas geradores) → SISTEMATIZAÇÃO (conceitos científicos) → PRÁXIS "
+            "(ação transformadora sobre a realidade). O ponto de partida é sempre a realidade concreta do "
+            "educando, jamais um conteúdo isolado. Ausubel (subsunçores), Vigotski (ZDP, mediação) e "
+            "abordagens tecnicistas têm outros marcos teóricos e não devem ser confundidos com Freire, "
+            "embora possam DIALOGAR com sua perspectiva. Em Educação Ambiental, Freire dialoga com Loureiro "
+            "(EA crítica) e com a noção de 'sujeitos ecológicos' de Carvalho."
+        ),
+        "padroes_banca": (
+            "O INEP frequentemente distribui matrizes teóricas diferentes por alternativa. A pegadinha é "
+            "escolher a que descreve uma boa prática, mesmo que não seja aquela pedida. Aqui, TODAS "
+            "podem ser boas em contextos próprios; a correta é a que é FREIREANA."
+        ),
+        "pegadinhas": [
+            "Confundir Freire com Ausubel (subsunçores) — clássico em prova docente.",
+            "Trocar Freire por Vigotski (ZDP).",
+            "Achar que 'exibir vídeo + fixação' é atividade crítica.",
+        ],
+        "erros_comuns": (
+            "Muitos candidatos marcam C por 'subsunçores' soar sofisticado, ou D pela ZDP ser popular. "
+            "Erram por não observar a base epistemológica pedida (Freire)."
+        ),
+        "dica_estrategica": (
+            "Assinatura freireana em prova: LEITURA DE MUNDO + PROBLEMATIZAÇÃO + PRÁXIS. Se aparecem "
+            "'subsunçores', 'ZDP' ou 'fixação de conteúdo' → NÃO é Freire."
+        ),
+        "variacao": (
+            "(Estilo INEP) Segundo a pedagogia freireana, a construção do conhecimento na Educação Básica "
+            "parte de:\n"
+            "A) organizadores prévios elaborados pelo professor (subsunçores);\n"
+            "B) exercícios de repetição para fixar conteúdos;\n"
+            "C) temas geradores extraídos da realidade dos educandos, com problematização crítica;\n"
+            "D) prescrições curriculares detalhadas, controladas pelo sistema.\n"
+            "Gabarito: C."
+        ),
+        "minisimulado": [
+            "Q1. 'Ninguém educa ninguém, ninguém educa a si mesmo, os homens se educam entre si, mediatizados pelo mundo' é frase-síntese de:\n"
+            "A) Ausubel; B) Vigotski; C) Freire; D) Piaget. → C",
+            "Q2. A Zona de Desenvolvimento Proximal foi teorizada por:\n"
+            "A) Freire; B) Ausubel; C) Piaget; D) Vigotski. → D",
+            "Q3. Subsunçores, na aprendizagem significativa, são:\n"
+            "A) conceitos prévios que ancoram novos conhecimentos; B) atividades de fixação; C) temas geradores; D) mediações sociais. → A",
+        ],
+        "resumo": {
+            "regra": "Freire = leitura de mundo + problematização + práxis; sempre parte do contexto concreto.",
+            "excecoes": "Ausubel = subsunçores; Vigotski = ZDP; Piaget = estágios; Skinner = comportamentalismo — não confundir.",
+            "palavra_chave": "Contexto → Problematização → Práxis.",
+            "artigo": "FREIRE, P. (1987; 1996).",
+            "mnemonico": "3 P's freireanos: Partir do real, Problematizar, Praxear.",
+        },
+    },
+
+    7: {
+        "tema": "Metodologias Ativas e inclusão digital",
+        "subtema": "Jogos desplugados como resposta à desigualdade de acesso",
+        "habilidade_bncc": "BNCC – competências gerais 4 e 5 (comunicação, cultura digital)",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item combina METODOLOGIAS ATIVAS + DESIGUALDADE DE ACESSO À INTERNET. A resposta deve conciliar "
+            "PROTAGONISMO ESTUDANTIL com INCLUSÃO — condições que apenas os JOGOS DESPLUGADOS atendem."
+        ),
+        "como_banca_pensou": (
+            "O INEP cria um cenário em que 60% dos estudantes não têm internet. Alternativas que dependem de "
+            "'dispositivos móveis' ou de 'plataforma digital' EXCLUEM esses estudantes. Metodologia ativa "
+            "não é sinônimo de 'digital'. A resposta é a única que conjuga PROTAGONISMO + BAIXO CUSTO + "
+            "SOCIALIZAÇÃO."
+        ),
+        "resolucao": [
+            "Grife o dado do IBGE: 60% sem acesso à internet.",
+            "Descarte A: 'aula expositiva + exercícios de múltipla escolha' é ensino transmissivo, não ativo.",
+            "Descarte C: leitura + avaliação é modelo tradicional.",
+            "Descarte D: 'gamificada com dispositivos móveis' contradiz o cenário de exclusão apontado.",
+            "Marque B: JOGOS DESPLUGADOS mantêm a metodologia ativa SEM depender de tecnologia digital, e permitem SOCIALIZAÇÃO em plenária.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Aula expositiva não é metodologia ativa."),
+            "B": ("CORRETA", "Jogos desplugados (sem plataforma digital) preservam o protagonismo e superam a barreira do acesso à internet."),
+            "C": ("ERRADA", "Modelo tradicional (leitura + avaliação); não é ativo."),
+            "D": ("ERRADA", "Dependência de dispositivos móveis reproduz a exclusão apontada no enunciado."),
+        },
+        "fundamentacao": [
+            "IBGE. Pesquisa Nacional por Amostra de Domicílios Contínua – TIC. Rio de Janeiro: IBGE, 2023.",
+            "MORAN, José Manuel. Metodologias ativas para uma educação inovadora. Porto Alegre: Penso, 2018.",
+            "BACICH, Lilian; MORAN, José (org.). Metodologias ativas para uma educação inovadora. Porto Alegre: Penso, 2018.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "METODOLOGIAS ATIVAS são estratégias em que o(a) estudante ocupa papel central na construção do "
+            "conhecimento — problematização, sala de aula invertida, aprendizagem baseada em problemas (PBL), "
+            "gamificação, ensino híbrido, rotação por estações. A digitalização é UMA das linguagens, mas não "
+            "condição necessária: existem versões 'DESPLUGADAS' (unplugged) — jogos analógicos, dinâmicas, "
+            "estações sem tela. Diante da desigualdade digital (60% sem internet, IBGE 2023), a inclusão "
+            "escolar exige planejamentos que NÃO PRESSUPONHAM dispositivos individuais. O conceito de "
+            "'letramento digital crítico' inclui refletir sobre o próprio acesso."
+        ),
+        "padroes_banca": (
+            "O INEP usa dados IBGE para calibrar o cenário. A alternativa correta costuma responder à "
+            "restrição objetiva imposta pelo enunciado, e não à 'moda didática' geral."
+        ),
+        "pegadinhas": [
+            "Confundir metodologia ativa com 'tecnologia digital'.",
+            "Escolher gamificação por parecer inovadora, ignorando a exclusão.",
+            "Achar que aula expositiva com múltipla escolha é ativa.",
+        ],
+        "erros_comuns": (
+            "Marcar D por preconceito de que 'ativo = com tela'. O correto é reconhecer que o desplugado "
+            "atende ao contexto de desigualdade."
+        ),
+        "dica_estrategica": (
+            "Quando o enunciado apresentar desigualdade digital, elimine imediatamente as alternativas "
+            "que dependam de acesso a dispositivos/plataformas."
+        ),
+        "variacao": (
+            "(Estilo INEP) Considere uma turma da Educação Básica em contexto de vulnerabilidade digital. "
+            "Uma prática pedagógica alinhada às Metodologias Ativas e inclusiva é:\n"
+            "A) sala de aula invertida integralmente por streaming;\n"
+            "B) aprendizagem baseada em projetos com materiais analógicos e rodízio de estações;\n"
+            "C) prova online com tempo cronometrado;\n"
+            "D) aula 100% assíncrona por aplicativo. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. São exemplos de metodologias ativas, EXCETO:\n"
+            "A) sala de aula invertida; B) PBL; C) aula expositiva com dizer o conteúdo; D) rotação por estações. → C",
+            "Q2. Letramento digital crítico envolve:\n"
+            "A) apenas usar apps; B) refletir sobre acesso, uso e implicações sociotécnicas; C) memorizar comandos; "
+            "D) programar em Python. → B",
+            "Q3. Desplugadas são atividades:\n"
+            "A) exclusivamente digitais; B) sem uso de dispositivos, com dinâmicas analógicas; "
+            "C) híbridas com apps; D) online. → B",
+        ],
+        "resumo": {
+            "regra": "Metodologia ativa ≠ metodologia digital; a atividade pode ser desplugada.",
+            "excecoes": "Em contextos com acesso pleno, o digital amplia possibilidades.",
+            "palavra_chave": "Protagonismo + Inclusão.",
+            "artigo": "IBGE (2023); BACICH & MORAN (2018).",
+            "mnemonico": "MADE = Metodologia Ativa DEsplugada quando falta acesso.",
+        },
+    },
+
+    8: {
+        "tema": "Educação do Campo – princípios formativos",
+        "subtema": "Resolução CEB/CNE nº 1/2002 e movimentos sociais",
+        "habilidade_bncc": "DCN da Educação do Campo; BNCC – competência geral 9",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Teórica / Legislação",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o princípio da Educação do Campo: reconhecer o campo como LUGAR DE VIDA, TRABALHO "
+            "E LUTA, historicamente marcado por um modelo de desenvolvimento exploratório. As demais "
+            "alternativas invertem esse sentido (subordinam o campo ao urbano ou opõem-se ao currículo)."
+        ),
+        "como_banca_pensou": (
+            "O INEP quer distinguir Educação do Campo (fora da lógica urbanocêntrica, ligada a movimentos "
+            "sociais como o MST) de simples 'educação rural'. A alternativa correta articula "
+            "RECONHECIMENTO + HISTORICIDADE + CRÍTICA ao modelo exploratório."
+        ),
+        "resolucao": [
+            "Descarte A: 'subordinar' o campo à história urbana contraria o próprio princípio da EdoC.",
+            "Descarte B: 'que contrariam o currículo instituído' é reducionista; a EdoC constrói currículo próprio.",
+            "Descarte C: 'desconsiderar saberes urbanos' opõe indevidamente campo e cidade.",
+            "Marque D: reconhecer o campo como lugar de vida e produção com histórico de projeto exploratório = princípio da EdoC.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Subordinação = o oposto da EdoC, que reivindica autonomia epistêmica e curricular."),
+            "B": ("ERRADA", "A EdoC não busca 'contrariar' o currículo, mas construir outro, próprio, dialogando com o urbano."),
+            "C": ("ERRADA", "Não se trata de desconsiderar saberes urbanos, mas de reconhecer os saberes do campo."),
+            "D": ("CORRETA", "Fórmula-síntese da EdoC: campo como lugar de vida, trabalho, cultura e luta, historicamente atravessado por modelo desenvolvimentista/agroexportador."),
+        },
+        "fundamentacao": [
+            "BRASIL. Resolução CEB/CNE nº 1, de 3 de abril de 2002. Institui Diretrizes Operacionais para a Educação Básica nas Escolas do Campo. DOU, Brasília, 9 abr. 2002.",
+            "BRASIL. Decreto nº 7.352, de 4 de novembro de 2010. Dispõe sobre a política de educação do campo e o PRONERA. DOU, Brasília, 5 nov. 2010.",
+            "CALDART, Roseli Salete. Sobre educação do campo. In: SANTOS, C. (org.). Por uma Educação do Campo. 4. ed. Brasília: INCRA/MDA, 2011.",
+            "ARROYO, Miguel G.; CALDART, Roseli; MOLINA, Mônica (org.). Por uma educação do campo. 4. ed. Petrópolis: Vozes, 2009.",
+        ],
+        "teoria": (
+            "A EDUCAÇÃO DO CAMPO (EdoC) surge nos anos 1990 vinculada aos movimentos sociais do campo "
+            "(especialmente o MST) e às Conferências Nacionais 'Por uma Educação Básica do Campo' (1998 e "
+            "2004). Ela se contrapõe à 'educação rural', historicamente marcada por currículos urbanocêntricos, "
+            "escolas precárias e desvalorização do trabalho camponês. A Resolução CEB/CNE nº 1/2002 e o "
+            "Decreto 7.352/2010 institucionalizam a EdoC como política pública. Princípios: (1) o campo como "
+            "lugar de vida, produção e cultura; (2) formação docente específica (Licenciatura em Educação do "
+            "Campo — LEdoC); (3) alternância pedagógica (Tempo-Escola/Tempo-Comunidade); (4) currículo "
+            "integrado ao trabalho e à cultura camponesa; (5) diálogo com povos indígenas, quilombolas, "
+            "ribeirinhos e assentados."
+        ),
+        "padroes_banca": (
+            "O INEP costuma opor 'educação RURAL' (imposta, urbanocêntrica) a 'educação DO CAMPO' "
+            "(construída com sujeitos do campo). Alternativas erradas mantêm marcas do primeiro."
+        ),
+        "pegadinhas": [
+            "Confundir 'do campo' com 'no campo' (esta é apenas geográfica).",
+            "Reduzir EdoC à agricultura, ignorando cultura e política.",
+            "Achar que EdoC ignora o urbano — na verdade, dialoga.",
+        ],
+        "erros_comuns": (
+            "Marcar C por associar campo a trabalho, sem perceber que a alternativa opõe indevidamente "
+            "campo e cidade. Também marcar B por parecer 'crítico'."
+        ),
+        "dica_estrategica": (
+            "Em item sobre EdoC, procure alternativas que combinem: SUJEITOS DO CAMPO + RECONHECIMENTO + "
+            "HISTÓRIA + DIÁLOGO COM MOVIMENTOS SOCIAIS."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Licenciatura em Educação do Campo (LEdoC), oferecida por universidades públicas, "
+            "adota como metodologia estruturante a:\n"
+            "A) formação a distância exclusiva;\n"
+            "B) alternância entre Tempo-Escola e Tempo-Comunidade;\n"
+            "C) formação urbanocêntrica com estágio pontual;\n"
+            "D) transposição do currículo urbano.\n"
+            "Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O PRONERA (Programa Nacional de Educação na Reforma Agrária) foi criado para atender:\n"
+            "A) estudantes urbanos; B) povos do campo, assentados e acampados; C) escolas técnicas privadas; "
+            "D) universidades particulares. → B",
+            "Q2. Arroyo, Caldart e Molina defendem a educação do campo como:\n"
+            "A) apêndice da rural; B) direito dos sujeitos do campo à educação que reconheça sua vida e trabalho; "
+            "C) projeto urbanocêntrico; D) política de mercado. → B",
+            "Q3. Resolução CEB/CNE nº 1/2002 institui:\n"
+            "A) BNCC; B) Diretrizes Operacionais para a Educação Básica nas Escolas do Campo; "
+            "C) Piso do magistério; D) Fundeb. → B",
+        ],
+        "resumo": {
+            "regra": "EdoC = educação DO campo, COM os sujeitos do campo, contra a lógica urbanocêntrica.",
+            "excecoes": "Escolas 'no campo' podem não ser EdoC se reproduzirem currículo urbano.",
+            "palavra_chave": "Sujeitos do campo + alternância + movimentos sociais.",
+            "artigo": "Resolução CEB/CNE 1/2002; Decreto 7.352/2010.",
+            "mnemonico": "3 C's da EdoC: Campo, Comunidade, Contra-hegemonia.",
+        },
+    },
+
+    9: {
+        "tema": "Escola Nova no Brasil (anos 1920-1930)",
+        "subtema": "Escolanovismo e o Manifesto dos Pioneiros",
+        "habilidade_bncc": "História da Educação; DCN – Formação Docente",
+        "gabarito": "D",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta (história da educação)",
+        "justificativa_classificacao": (
+            "Item cobra a caracterização do ESCOLANOVISMO: pedagogia CENTRADA NO ALUNO, na experiência e no "
+            "interesse (Dewey, Anísio Teixeira, Fernando de Azevedo). Alternativas erradas atribuem-lhe "
+            "traços de outras pedagogias (tradicional, tecnicista, jesuítica)."
+        ),
+        "como_banca_pensou": (
+            "O INEP distribui uma pedagogia em cada alternativa: A (Tradicional/essencialista/professor no centro), "
+            "B (Tecnicista/eficiência/neutralidade), C (Jesuítica/catequese), D (Escolanovista, correta). "
+            "A pegadinha exige DOMÍNIO DA CRONOLOGIA das pedagogias brasileiras."
+        ),
+        "resolucao": [
+            "Fixe: Escola Nova = anos 1920-30, John Dewey nos EUA; no Brasil, Manifesto dos Pioneiros (1932).",
+            "Descarte A: 'essencialismo + professor no centro' descreve a Pedagogia Tradicional.",
+            "Descarte B: 'neutralidade + racionalidade + eficiência' descreve o Tecnicismo (1960-70).",
+            "Descarte C: 'português para indígenas + doutrina cristã' descreve a Pedagogia Jesuítica (séc. XVI-XVIII).",
+            "Marque D: vivências, estratégias e interesse do estudante = ESCOLA NOVA.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Descreve a Pedagogia Tradicional (professor no centro), rejeitada pelo escolanovismo."),
+            "B": ("ERRADA", "Descreve o Tecnicismo dos anos 1960-70, típico do regime militar."),
+            "C": ("ERRADA", "Descreve a educação jesuítica colonial (séc. XVI-XVIII), pré-escolanovista."),
+            "D": ("CORRETA", "Traços clássicos do escolanovismo: centralidade nas vivências, no interesse e nas estratégias de ensino ativas."),
+        },
+        "fundamentacao": [
+            "MANIFESTO DOS PIONEIROS DA EDUCAÇÃO NOVA (1932). In: XAVIER, Maria do Carmo (org.). Manifesto dos Pioneiros da Educação: um legado educacional em debate. Rio de Janeiro: FGV, 2004.",
+            "DEWEY, John. Democracia e educação. 3. ed. São Paulo: Companhia Editora Nacional, 1959.",
+            "SAVIANI, Dermeval. História das ideias pedagógicas no Brasil. 5. ed. Campinas: Autores Associados, 2019.",
+            "GHIRALDELLI JR., Paulo. História da educação brasileira. 5. ed. São Paulo: Cortez, 2015.",
+        ],
+        "teoria": (
+            "A ESCOLA NOVA (Escolanovismo) irrompe no Brasil nos anos 1920-30, tendo como marcos o "
+            "Manifesto dos Pioneiros da Educação Nova (1932) e figuras como Anísio Teixeira, Fernando de "
+            "Azevedo, Lourenço Filho e Cecília Meireles. Inspira-se em John Dewey (aprender fazendo, escola "
+            "democrática) e Édouard Claparède (educação centrada nos interesses da criança). Princípios: "
+            "centralidade do aluno, aprender pela experiência, valorização do trabalho em grupo, respeito às "
+            "individualidades, escola pública, laica, gratuita, obrigatória. Contrapõe-se à Pedagogia "
+            "Tradicional (professor no centro) e antecede as pedagogias Progressista Libertadora (Freire) e "
+            "Crítico-Social dos Conteúdos (Saviani, Libâneo). Foi antecipatória da LDB de 1961."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a cronologia das pedagogias brasileiras. É comum item apresentar traços em cada "
+            "alternativa e pedir para associar corretamente."
+        ),
+        "pegadinhas": [
+            "Confundir Escola Nova (progressista) com Escola Tradicional (essencialista).",
+            "Confundir Escolanovismo com Tecnicismo (ambos falam de método, mas com bases opostas).",
+            "Deslocar cronologicamente para o Império ou Colônia.",
+        ],
+        "erros_comuns": (
+            "Marcar B por 'racionalidade' soar moderno, sem perceber que é Tecnicismo. Ou marcar A por "
+            "confusão sobre 'centralidade'."
+        ),
+        "dica_estrategica": (
+            "Memorize a linha do tempo das pedagogias brasileiras: Jesuítica (col.) → Pombalina (1759) → "
+            "Positivista (1900) → Escola Nova (1920-30) → Tecnicismo (1960-70) → Libertadora (1980) → "
+            "Crítico-social (1980+) → Construtivismo (1990+) → BNCC (2018)."
+        ),
+        "variacao": (
+            "(Estilo INEP) O Manifesto dos Pioneiros da Educação Nova (1932) defendeu:\n"
+            "A) escola confessional e privada;\n"
+            "B) escola pública, laica, gratuita, obrigatória e centrada no estudante;\n"
+            "C) escola tecnicista com ênfase em eficiência;\n"
+            "D) educação exclusivamente doméstica.\n"
+            "Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Anísio Teixeira defendia:\n"
+            "A) escola dual e elitista; B) escola pública democrática; C) tecnicismo; D) educação jesuítica. → B",
+            "Q2. A Pedagogia Tecnicista, dominante nos anos 1960-70, tinha como marca:\n"
+            "A) o aluno como centro; B) neutralidade, racionalidade e eficiência; C) o trabalho por temas geradores; "
+            "D) a centralidade da experiência coletiva. → B",
+            "Q3. Dewey é referência para:\n"
+            "A) Pedagogia Tradicional; B) Escola Nova; C) Pedagogia Jesuítica; D) Tecnicismo. → B",
+        ],
+        "resumo": {
+            "regra": "Escola Nova = aluno no centro, aprender pela experiência, escola pública, laica e democrática.",
+            "excecoes": "Não confundir com Tecnicismo (eficiência) nem com Tradicional (professor no centro).",
+            "palavra_chave": "Aluno + experiência + interesse.",
+            "artigo": "Manifesto dos Pioneiros (1932); DEWEY, J. (1959).",
+            "mnemonico": "'AAA' Escola Nova: Aluno-Ativo-Autônomo.",
+        },
+    },
+
+    10: {
+        "tema": "EJA, interdisciplinaridade e mundo do trabalho",
+        "subtema": "Integração currículo-vivência (Freire, Arroyo)",
+        "habilidade_bncc": "DCN da EJA; BNCC – competências gerais 6, 7 e 10",
+        "gabarito": "D",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática (análise de caso)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede a caracterização das ações pedagógicas descritas no texto-base (EJA + Estágio "
+            "Supervisionado). O caso mostra AÇÃO INTERDISCIPLINAR + INTEGRAÇÃO CURRÍCULO-VIVÊNCIAS + "
+            "REFLEXÃO SOBRE O MUNDO DO TRABALHO. A resposta é a alternativa que sintetiza esse tripé."
+        ),
+        "como_banca_pensou": (
+            "O INEP cobra a leitura da CENA PEDAGÓGICA. As alternativas erradas destacam APENAS UM aspecto "
+            "(conteúdos disciplinares, uma única área, metodologias inovadoras) — a correta agrega "
+            "'integração das vivências ao currículo' + 'reflexões sobre o mundo do trabalho'."
+        ),
+        "resolucao": [
+            "Identifique no texto: professor(a) de História + Língua Portuguesa + Matemática articulam-se.",
+            "Reconheça a marca: PARTIR DA VIVÊNCIA (motoristas de app, entregadores) para o CURRÍCULO.",
+            "Descarte A: 'priorizam conteúdos disciplinares' contradiz o caso.",
+            "Descarte B: 'enfatizam uma área' — o caso é interdisciplinar.",
+            "Descarte C: 'metodologias inovadoras' é vago; a chave é integração vivência-currículo.",
+            "Marque D: INTEGRAM VIVÊNCIAS + REFLEXÃO sobre o mundo do trabalho.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "As ações partem justamente das vivências, não dos conteúdos disciplinares isolados."),
+            "B": ("ERRADA", "Envolvem três áreas (História, LP, Matemática) — não uma única."),
+            "C": ("ERRADA", "'Metodologias inovadoras' é enunciado esvaziado; não expressa o cerne da cena."),
+            "D": ("CORRETA", "Síntese exata: vivências → currículo + reflexão sobre transformações do trabalho."),
+        },
+        "fundamentacao": [
+            "BRASIL. Conselho Nacional de Educação. Resolução CNE/CEB nº 1, de 5 de julho de 2000. Diretrizes Curriculares Nacionais para a EJA.",
+            "BRASIL. Conselho Nacional de Educação. Parecer CNE/CEB nº 11/2000 (Relator: Jamil Cury). Diretrizes Curriculares Nacionais para a EJA.",
+            "FREIRE, Paulo. Pedagogia do oprimido. 17. ed. Rio de Janeiro: Paz e Terra, 1987.",
+            "ARROYO, Miguel G. Currículo, território em disputa. Petrópolis: Vozes, 2011.",
+            "ANTUNES, Ricardo. O privilégio da servidão: o novo proletariado de serviços na era digital. São Paulo: Boitempo, 2018.",
+        ],
+        "teoria": (
+            "A Educação de Jovens e Adultos (EJA) tem, nas DCNs (Res. CNE/CEB 1/2000) e no Parecer CNE/CEB "
+            "11/2000, funções REPARADORA, EQUALIZADORA e QUALIFICADORA. O currículo deve articular-se ao "
+            "MUNDO DO TRABALHO e às experiências dos educandos, dialogando com Freire (temas geradores) e "
+            "Arroyo (currículo como território em disputa). O caso apresentado exemplifica a INTERDISCIPLI"
+            "NARIDADE (LP, Matemática, História) mobilizada a partir da uberização do trabalho (motoristas "
+            "de aplicativo, entregadores autônomos — Antunes, 2018), articulando cultura, letramentos e "
+            "cidadania."
+        ),
+        "padroes_banca": (
+            "O INEP frequentemente apresenta cenas pedagógicas e pede síntese conceitual. Alternativas "
+            "erradas tomam APENAS um ou outro aspecto isoladamente."
+        ),
+        "pegadinhas": [
+            "Marcar 'metodologias inovadoras' por soar bonito, sem substância.",
+            "Reduzir o caso a uma única área.",
+            "Ignorar a marca da EJA: vínculo com o mundo do trabalho.",
+        ],
+        "erros_comuns": (
+            "Marcam C por 'inovador' ou B por não perceberem a interdisciplinaridade descrita."
+        ),
+        "dica_estrategica": (
+            "Em cenas de EJA, priorize alternativas que citem MUNDO DO TRABALHO, VIVÊNCIAS, "
+            "INTERDISCIPLINARIDADE e CURRÍCULO INTEGRADO."
+        ),
+        "variacao": (
+            "(Estilo INEP) As DCNs para a EJA (Parecer CNE/CEB 11/2000) atribuem à modalidade as funções:\n"
+            "A) apenas suplementar e de aceleração;\n"
+            "B) reparadora, equalizadora e qualificadora;\n"
+            "C) tecnicista e mercadológica;\n"
+            "D) exclusivamente propedêutica.\n"
+            "Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A uberização do trabalho, discutida por Antunes (2018), refere-se a:\n"
+            "A) empregos formais estáveis; B) plataformização e precarização por aplicativos; "
+            "C) trabalho rural tradicional; D) trabalho público. → B",
+            "Q2. Interdisciplinaridade na EJA implica:\n"
+            "A) sobreposição de disciplinas; B) articulação entre saberes e vivências dos educandos; "
+            "C) fim das disciplinas; D) padronização metodológica. → B",
+            "Q3. 'Currículo, território em disputa' é obra de:\n"
+            "A) Freire; B) Vigotski; C) Arroyo; D) Saviani. → C",
+        ],
+        "resumo": {
+            "regra": "EJA integra VIVÊNCIAS + MUNDO DO TRABALHO + INTERDISCIPLINARIDADE ao currículo.",
+            "excecoes": "Não confundir com ensino supletivo puro (que apenas certifica).",
+            "palavra_chave": "Vivência + trabalho + interdisciplinar.",
+            "artigo": "Res. CNE/CEB 1/2000; Parecer CNE/CEB 11/2000.",
+            "mnemonico": "REQ: Reparadora, Equalizadora, Qualificadora.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -614,7 +1077,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTE 1 (Q01 a Q05)",
+        "3. Análise completa – LOTES 1 e 2 (Q01 a Q10)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -652,14 +1115,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTE 1 (Q01 a Q05)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 e 2 (Q01 a Q10)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in [1, 2, 3, 4, 5]:
+    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -779,7 +1242,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTE 1")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-2")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -840,7 +1303,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTE 1 (Q01 a Q05)",
+              "3. Análise completa – LOTES 1 e 2 (Q01 a Q10)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -879,7 +1342,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTE 1 (Q01 a Q05)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 e 2 (Q01 a Q10)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -888,7 +1351,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in [1, 2, 3, 4, 5]:
+    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -983,7 +1446,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTE 1", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-2", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
