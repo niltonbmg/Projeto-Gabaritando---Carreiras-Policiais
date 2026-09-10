@@ -1505,6 +1505,435 @@ ANALISES = {
         },
     },
 
+    21: {
+        "tema": "Gestão democrática e enfrentamento da precariedade",
+        "subtema": "Competências da escola vs. do poder público",
+        "habilidade_bncc": "LDB 9.394/96 (art. 14 – gestão democrática); Lei 13.005/14 (PNE); PNEDH",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática (competências)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a distinção entre o que COMPETE à escola (articular-se com o poder público) e o "
+            "que compete às autoridades executivas (obras). Alternativas B (instalar redes) e A (projeto "
+            "de solução) transferem à escola atribuições do Executivo; D (despoluir rio) desvia o foco."
+        ),
+        "como_banca_pensou": (
+            "O INEP quer que o(a) professor(a) reconheça que INFRAESTRUTURA ESCOLAR é dever do poder público "
+            "(LDB, PNE, ECA). À gestão escolar cabe DENUNCIAR, ARTICULAR-SE e MOBILIZAR — não substituir o Estado."
+        ),
+        "resolucao": [
+            "Reconheça a chave: competência da ESCOLA no enfrentamento estrutural.",
+            "Descarte A: 'elaborar projeto para solucionar' extrapola a competência escolar.",
+            "Descarte B: 'instalar redes de água e esgoto' é obra pública, não escolar.",
+            "Descarte D: 'despoluir rio' desloca o foco do problema real.",
+            "Marque C: articulação com autoridades competentes = ação política e institucional legítima da gestão escolar.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Escola pode diagnosticar, mas 'solucionar rede de água' foge da sua competência."),
+            "B": ("ERRADA", "Instalação de infraestrutura é atribuição do poder público executivo."),
+            "C": ("CORRETA", "Gestão escolar articulada com autoridades competentes = enfrentamento institucional coerente com a gestão democrática."),
+            "D": ("ERRADA", "Desloca o problema; não enfrenta a precariedade denunciada."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 9.394, de 20 de dezembro de 1996. LDB. DOU, 23 dez. 1996.",
+            "BRASIL. Lei nº 13.005, de 25 de junho de 2014. Aprova o Plano Nacional de Educação (2014-2024). DOU, 26 jun. 2014.",
+            "BRASIL. Lei nº 8.069, de 13 de julho de 1990. ECA. DOU, 16 jul. 1990.",
+            "BRASIL. Comitê Nacional de Educação em Direitos Humanos. Plano Nacional de Educação em Direitos Humanos. Brasília: SEDH/MEC, 2007.",
+            "PARO, Vitor H. Gestão democrática da escola pública. 4. ed. São Paulo: Cortez, 2016.",
+        ],
+        "teoria": (
+            "A GESTÃO DEMOCRÁTICA da escola pública (CF/88 art. 206, VI; LDB art. 14) implica participação "
+            "da comunidade escolar na definição do PPP e na articulação com o poder público. A "
+            "infraestrutura escolar é DIREITO garantido por LDB, PNE e ECA — e é ATRIBUIÇÃO do Executivo "
+            "provê-la. À escola cabe MOBILIZAR, DENUNCIAR e REIVINDICAR junto às autoridades competentes "
+            "(Executivo, Conselho Municipal/Estadual de Educação, Ministério Público, Defensoria). Paro (2016) "
+            "discute a gestão democrática como práxis coletiva."
+        ),
+        "padroes_banca": (
+            "O INEP costuma testar a distinção entre COMPETÊNCIA ESCOLAR e COMPETÊNCIA DO PODER PÚBLICO."
+        ),
+        "pegadinhas": [
+            "Achar que 'instalar redes' é ativismo escolar louvável.",
+            "Confundir 'diagnóstico' com 'solução'.",
+            "Perder o foco no problema apontado (infraestrutura, não rio).",
+        ],
+        "erros_comuns": (
+            "Marcar A por parecer que 'projeto' resolve — mas a escola não pode assumir obras públicas."
+        ),
+        "dica_estrategica": (
+            "Em item de gestão, prefira alternativas que ARTICULEM com o poder público, sem substituí-lo."
+        ),
+        "variacao": (
+            "(Estilo INEP) A gestão democrática, conforme o art. 14 da LDB, prevê:\n"
+            "A) escolha do diretor por indicação política;\n"
+            "B) participação da comunidade escolar na elaboração do PPP e nos conselhos escolares;\n"
+            "C) centralização das decisões na Secretaria;\n"
+            "D) autonomia irrestrita da direção. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O direito à educação inclui condições dignas de infraestrutura? "
+            "A) Não; B) Sim, previsto em LDB, ECA e PNE; C) Só em escolas privadas; D) Só em capitais. → B",
+            "Q2. Cabe à gestão escolar, diante de precariedade estrutural:\n"
+            "A) construir prédios; B) articular-se com autoridades competentes; C) transferir alunos; "
+            "D) desativar a escola. → B",
+            "Q3. Paro (2016) defende:\n"
+            "A) autoritarismo diretivo; B) gestão democrática como práxis coletiva; "
+            "C) privatização; D) neutralidade absoluta. → B",
+        ],
+        "resumo": {
+            "regra": "Escola articula-se com o poder público; não substitui o Estado em obras.",
+            "excecoes": "Ações emergenciais mínimas podem ser articuladas (ex.: filtros, materiais), sempre com poder público.",
+            "palavra_chave": "Articulação + gestão democrática.",
+            "artigo": "CF/88 art. 206; LDB art. 14; PNE (Lei 13.005/14).",
+            "mnemonico": "AAA da gestão: Articular, Advogar (pela escola), Acompanhar.",
+        },
+    },
+
+    22: {
+        "tema": "EJA – abordagem sistêmica (Almeida, 2016)",
+        "subtema": "Letramentos + experiências + intergeracionalidade",
+        "habilidade_bncc": "DCN EJA (Res. CNE/CEB 1/2000; Parecer 11/2000)",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão de que a abordagem SISTÊMICA da EJA a integra ao direito à educação "
+            "e à diversidade cultural. A alternativa C — projetos de letramento que integram experiências "
+            "de vida, trabalho, identidades culturais e vivências intergeracionais — é a única que "
+            "materializa essa concepção."
+        ),
+        "como_banca_pensou": (
+            "As demais alternativas expressam concepções RESTRITAS/SUPLETIVAS da EJA: profissionalização "
+            "isolada (A), apenas certificação (B), reprodução do ensino regular (D)."
+        ),
+        "resolucao": [
+            "Fixe a chave: SISTÊMICA = direito, cultura, política + integração com vida.",
+            "Descarte A: reduz EJA a preparação para o mercado.",
+            "Descarte B: reduz EJA à concessão de diplomas.",
+            "Descarte D: nivela EJA ao ensino regular, apagando sua especificidade.",
+            "Marque C: projetos de letramento + experiências + trabalho + cultura + intergeracional = abordagem sistêmica.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Reduz a EJA à profissionalização — concepção estreita, criticada por Almeida (2016)."),
+            "B": ("ERRADA", "Focar apenas em diploma é lógica supletiva, não sistêmica."),
+            "C": ("CORRETA", "Integra vida, trabalho, cultura e gerações — expressão da abordagem sistêmica."),
+            "D": ("ERRADA", "Reproduzir o ensino regular apaga a especificidade da EJA."),
+        },
+        "fundamentacao": [
+            "BRASIL. Conselho Nacional de Educação. Parecer CNE/CEB nº 11/2000. Diretrizes Curriculares Nacionais para a EJA (Relator: Jamil Cury).",
+            "BRASIL. Conselho Nacional de Educação. Resolução CNE/CEB nº 1, de 5 de julho de 2000. Institui as DCN da EJA.",
+            "FREIRE, Paulo. Pedagogia do oprimido. Rio de Janeiro: Paz e Terra, 1987.",
+            "SOARES, Magda. Letramento: um tema em três gêneros. 3. ed. Belo Horizonte: Autêntica, 2009.",
+            "ARROYO, Miguel G. Educação de jovens-adultos: um campo de direitos e de responsabilidade pública. In: SOARES, L. et al. (org.). Diálogos na Educação de Jovens e Adultos. Belo Horizonte: Autêntica, 2005.",
+        ],
+        "teoria": (
+            "A EJA é modalidade da Educação Básica com funções REPARADORA, EQUALIZADORA e QUALIFICADORA "
+            "(Parecer CNE/CEB 11/2000). A ABORDAGEM SISTÊMICA (Almeida, 2016) a insere na história do direito "
+            "à educação e supera a visão SUPLETIVA/MARGINAL. Freire (1987) e Arroyo (2005) reafirmam a EJA "
+            "como direito subjetivo e como espaço de leitura de mundo. Magda Soares (2009) fornece o conceito "
+            "de LETRAMENTO — práticas sociais de leitura e escrita ancoradas em contextos concretos. Um "
+            "PROJETO DE LETRAMENTO na EJA integra as experiências de vida ao currículo, articulando "
+            "trabalho, identidades e gerações."
+        ),
+        "padroes_banca": (
+            "O INEP tende a contrastar visão SISTÊMICA (crítica, plural, direito) vs. SUPLETIVA "
+            "(compensatória, certificatória, mercadológica)."
+        ),
+        "pegadinhas": [
+            "Marcar A por associar EJA a mercado de trabalho.",
+            "Marcar D por parecer 'garantir igualdade'.",
+            "Confundir sistêmica com padronizada.",
+        ],
+        "erros_comuns": (
+            "Escolher B por ser 'objetiva' — mas a lógica de diploma pertence à visão restrita."
+        ),
+        "dica_estrategica": (
+            "Sistêmica na EJA = LETRAMENTOS + VIDA + INTERGERACIONALIDADE. Rejeite reducionismos."
+        ),
+        "variacao": (
+            "(Estilo INEP) O Parecer CNE/CEB nº 11/2000, de Jamil Cury, atribui à EJA as funções:\n"
+            "A) apenas supletiva; B) reparadora, equalizadora e qualificadora; "
+            "C) só profissionalizante; D) só certificatória. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Segundo Magda Soares (2009), letramento é:\n"
+            "A) alfabetização técnica; B) práticas sociais de leitura e escrita em contextos; "
+            "C) datilografia; D) grafologia. → B",
+            "Q2. Arroyo (2005) situa a EJA no campo:\n"
+            "A) da caridade; B) do direito e da responsabilidade pública; "
+            "C) do mercado; D) do supletivo. → B",
+            "Q3. Cury (Parecer 11/2000) associa a EJA a:\n"
+            "A) mera aceleração; B) dívida social e direito humano; "
+            "C) treinamento em massa; D) educação privada. → B",
+        ],
+        "resumo": {
+            "regra": "EJA sistêmica = direito humano + letramentos + vida + diversidade.",
+            "excecoes": "Certificação e profissionalização compõem a EJA sem esgotá-la.",
+            "palavra_chave": "Letramentos + vida + intergeracional.",
+            "artigo": "Parecer/Res. CNE/CEB 11 e 1/2000; SOARES (2009).",
+            "mnemonico": "L.I.V. na EJA: Letramento, Intergeracional, Vivências.",
+        },
+    },
+
+    23: {
+        "tema": "Letramento científico",
+        "subtema": "Ciência, rigor metodológico e argumentação pública",
+        "habilidade_bncc": "BNCC – competências gerais 2 e 7 (conhecimento científico e argumentação)",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa (concepção de ciência)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão de que a ciência sustenta seus argumentos no RIGOR METODOLÓGICO e "
+            "no debate público. Alternativas erradas sustentam concepções negacionistas (C), individualistas "
+            "(B) ou o mito da neutralidade (D)."
+        ),
+        "como_banca_pensou": (
+            "O INEP cobra letramento científico crítico — nem cientificismo (D, neutralidade) nem "
+            "relativismo negacionista (B, C). A resposta afirma metodologia + publicidade + argumentação."
+        ),
+        "resolucao": [
+            "Descarte B: liberdade individual acima do coletivo → não expressa ciência.",
+            "Descarte C: refutar consenso 'por posicionamento individual' → negacionismo.",
+            "Descarte D: 'neutralidade' → mito positivista superado (Kuhn, Latour).",
+            "Marque A: rigor metodológico + argumentos publicamente apresentados = ciência como comunidade epistêmica.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "A ciência sustenta-se em método e argumentação pública, submetidos ao crivo da comunidade científica."),
+            "B": ("ERRADA", "Sobrepor liberdade individual ao coletivo desconsidera a natureza pública da ciência."),
+            "C": ("ERRADA", "Refutar resultados amplamente aceitos por opinião individual = negacionismo, não ciência."),
+            "D": ("ERRADA", "Neutralidade absoluta é mito positivista superado pela filosofia e sociologia da ciência."),
+        },
+        "fundamentacao": [
+            "SOUSA, L. Q.; ABREU, K. F. Análise de Estudos e Pesquisas sobre Letramento Científico. Cadernos Cajuína, n. 4, 2024.",
+            "KUHN, Thomas S. A estrutura das revoluções científicas. 13. ed. São Paulo: Perspectiva, 2018.",
+            "LATOUR, Bruno. Jamais fomos modernos. 3. ed. Rio de Janeiro: Editora 34, 2013.",
+            "SASSERON, Lúcia Helena; CARVALHO, Anna Maria P. Alfabetização científica: uma revisão bibliográfica. Investigações em Ensino de Ciências, v. 16, n. 1, 2011.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "LETRAMENTO CIENTÍFICO (Sasseron & Carvalho, 2011) é a capacidade de compreender, aplicar e "
+            "criticar o conhecimento científico em situações cotidianas — inclui compreender a NATUREZA DA "
+            "CIÊNCIA (rigor, método, consenso, revisão). A filosofia da ciência contemporânea (Kuhn, Latour, "
+            "Popper) mostra que ciência não é neutra: é atividade coletiva, provisória, submetida à revisão "
+            "por pares e ao debate público. Combater negacionismo exige diferenciar CIÊNCIA de OPINIÃO e "
+            "reconhecer o consenso científico como resultado de método, não de autoridade individual."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a diferença entre ciência (método + pareceres coletivos) e opinião (individual). "
+            "A alternativa correta enfatiza METODOLOGIA e PUBLICIDADE."
+        ),
+        "pegadinhas": [
+            "Confundir liberdade científica individual com relativismo.",
+            "Achar que ciência é neutra.",
+            "Legitimar refutação de consenso por opinião pessoal.",
+        ],
+        "erros_comuns": (
+            "Marcar D por hábito escolar do 'método científico neutro'. Kuhn e Latour ensinam o contrário."
+        ),
+        "dica_estrategica": (
+            "Ciência = método + comunidade + revisão por pares. Rejeite alternativas com 'neutralidade' ou "
+            "'refutação individual'."
+        ),
+        "variacao": (
+            "(Estilo INEP) Segundo Kuhn (2018), o desenvolvimento científico ocorre por:\n"
+            "A) acúmulo linear de fatos;\n"
+            "B) alternância entre ciência normal e revoluções (mudanças de paradigma);\n"
+            "C) genialidade individual desvinculada da comunidade;\n"
+            "D) neutralidade absoluta. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Latour (2013), em 'Jamais fomos modernos', argumenta que:\n"
+            "A) ciência é neutra; B) natureza e sociedade estão imbricadas; "
+            "C) o método científico é único; D) apenas humanistas fazem ciência. → B",
+            "Q2. Sasseron & Carvalho (2011) discutem:\n"
+            "A) escrita cursiva; B) alfabetização científica; C) filosofia analítica; D) educação bilíngue. → B",
+            "Q3. Negacionismo caracteriza-se por:\n"
+            "A) refutar consensos científicos por posições ideológicas individuais; "
+            "B) revisão por pares; C) publicações em periódicos; D) debates acadêmicos. → A",
+        ],
+        "resumo": {
+            "regra": "Ciência = método + argumentação pública + revisão por pares.",
+            "excecoes": "Revisões de paradigma ocorrem por evidência, não por opinião.",
+            "palavra_chave": "Rigor metodológico + comunidade.",
+            "artigo": "KUHN (2018); LATOUR (2013); SASSERON & CARVALHO (2011).",
+            "mnemonico": "MPRP: Método, Publicidade, Revisão por Pares.",
+        },
+    },
+
+    24: {
+        "tema": "Avaliação formativa (Perrenoud, Hoffmann, Luckesi)",
+        "subtema": "Devolutivas para aperfeiçoamento",
+        "habilidade_bncc": "Avaliação da aprendizagem – DCN Formação Docente",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica-prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a caracterização da avaliação FORMATIVA: ocorre DURANTE o processo, oferece "
+            "DEVOLUTIVAS e orienta o APERFEIÇOAMENTO. Diagnóstica (B, conhecimentos prévios) e somativa "
+            "(D, classificação) são funções diferentes."
+        ),
+        "como_banca_pensou": (
+            "O INEP distribui as três funções (diagnóstica, formativa, somativa) entre as alternativas e "
+            "adiciona um distrator inicial (A: início de ensino + lista de exercícios). A palavra-chave é "
+            "DEVOLUTIVA + APERFEIÇOAMENTO."
+        ),
+        "resolucao": [
+            "Fixe: FORMATIVA = ocorre durante, com feedback contínuo (Perrenoud).",
+            "Descarte A: início + lista = aula, não avaliação.",
+            "Descarte B: 'identificar conhecimentos prévios' = DIAGNÓSTICA.",
+            "Descarte D: 'classificar' = SOMATIVA.",
+            "Marque C: devolutivas + aperfeiçoamento = FORMATIVA.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "É uma atividade didática inicial, não caracteriza avaliação formativa."),
+            "B": ("ERRADA", "Avaliação DIAGNÓSTICA (conhecimentos prévios), não formativa."),
+            "C": ("CORRETA", "Devolutiva orientadora + aperfeiçoamento = avaliação formativa (Perrenoud)."),
+            "D": ("ERRADA", "Prova classificatória = avaliação SOMATIVA."),
+        },
+        "fundamentacao": [
+            "PERRENOUD, Philippe. Avaliação: da excelência à regulação das aprendizagens. Porto Alegre: Artmed, 1999.",
+            "HOFFMANN, Jussara. Avaliação mediadora. 34. ed. Porto Alegre: Mediação, 2014.",
+            "LUCKESI, Cipriano C. Avaliação da aprendizagem escolar. 22. ed. São Paulo: Cortez, 2011.",
+            "BLACK, Paul; WILIAM, Dylan. Assessment and Classroom Learning. Assessment in Education, v. 5, n. 1, 1998.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "A AVALIAÇÃO tem três funções principais: (1) DIAGNÓSTICA — no início, identifica saberes "
+            "prévios e necessidades; (2) FORMATIVA — durante o processo, oferece devolutivas contínuas "
+            "para REGULAR a aprendizagem (Perrenoud, 1999; Black & Wiliam, 1998); (3) SOMATIVA — ao final, "
+            "certifica resultados. Hoffmann (2014) defende a AVALIAÇÃO MEDIADORA como uma variante da "
+            "formativa. Luckesi (2011) distingue AVALIAÇÃO (diagnóstico + intervenção) de VERIFICAÇÃO "
+            "(mera medida). A BNCC valoriza a formativa como suporte à progressão das habilidades."
+        ),
+        "padroes_banca": (
+            "O INEP repete essa tríade em diferentes contextos. Palavras-chave da formativa: DEVOLUTIVA, "
+            "FEEDBACK, ACOMPANHAMENTO, APERFEIÇOAMENTO, REGULAÇÃO."
+        ),
+        "pegadinhas": [
+            "Achar que aula inicial é 'diagnóstica' — depende do que a intenção da atividade avalia.",
+            "Confundir formativa com somativa.",
+            "Reduzir formativa a nota de participação.",
+        ],
+        "erros_comuns": (
+            "Marcar B por parecer 'processual'; mas identificar prévios é DIAGNÓSTICA."
+        ),
+        "dica_estrategica": (
+            "Formativa = feedback + regulação DURANTE o processo. Diagnóstica = ANTES. Somativa = DEPOIS."
+        ),
+        "variacao": (
+            "(Estilo INEP) A avaliação DIAGNÓSTICA tem como finalidade:\n"
+            "A) certificar aprendizagens ao final; B) identificar conhecimentos prévios e necessidades; "
+            "C) classificar estudantes por notas; D) selecionar para vestibular. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Black & Wiliam (1998) demonstram que:\n"
+            "A) formativa é irrelevante; B) feedback formativo eleva a aprendizagem; "
+            "C) somativa é a única válida; D) diagnóstica não existe. → B",
+            "Q2. Luckesi (2011) diferencia:\n"
+            "A) verificação e avaliação; B) escola e família; C) ensino e aprendizagem; "
+            "D) livro e caderno. → A",
+            "Q3. Hoffmann (2014) chama a formativa de:\n"
+            "A) classificatória; B) mediadora; C) unilateral; D) somativa disfarçada. → B",
+        ],
+        "resumo": {
+            "regra": "Formativa = feedback contínuo para regular a aprendizagem.",
+            "excecoes": "A mesma atividade pode assumir função distinta segundo intenção do docente.",
+            "palavra_chave": "Devolutiva + aperfeiçoamento.",
+            "artigo": "PERRENOUD (1999); HOFFMANN (2014); LUCKESI (2011).",
+            "mnemonico": "DFS: Diagnóstica (antes), Formativa (durante), Somativa (depois).",
+        },
+    },
+
+    25: {
+        "tema": "Avaliações externas (Saeb/Ideb) e planejamento",
+        "subtema": "Uso pedagógico do Ideb – planejamento estratégico",
+        "habilidade_bncc": "DCN – Formação Docente; PNE (metas Ideb)",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica-prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede o uso PEDAGÓGICO dos resultados do Ideb. A resposta é DIRECIONAR O PLANEJAMENTO "
+            "DE FORMA ESTRATÉGICA (A). As demais representam desvios: reduzir currículo (B), focar "
+            "extracurricular (C), ou restringir a socioemocional (D)."
+        ),
+        "como_banca_pensou": (
+            "O INEP alerta contra o USO DISTORCIDO do Ideb (currículo pauperizado, 'teaching to the test'). "
+            "A alternativa correta afirma planejamento estratégico e integral."
+        ),
+        "resolucao": [
+            "Descarte B: 'reduzir áreas do currículo' é currículo pauperizado, criticado pela literatura.",
+            "Descarte C: 'conteúdos extracurriculares' desloca o foco.",
+            "Descarte D: 'apenas habilidades socioemocionais' é reducionista.",
+            "Marque A: direcionar o planejamento de forma estratégica = uso legítimo dos dados.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Uso legítimo do Ideb: planejamento estratégico da escola com foco em melhoria integral."),
+            "B": ("ERRADA", "Reduzir áreas do currículo é 'teaching to the test' — criticado pela literatura educacional."),
+            "C": ("ERRADA", "'Extracurricular' desloca o problema."),
+            "D": ("ERRADA", "Focalizar SOMENTE socioemocional negligencia áreas mensuradas pelo Saeb."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 13.005, de 25 de junho de 2014. Plano Nacional de Educação (2014-2024).",
+            "BRASIL. INEP. Sistema de Avaliação da Educação Básica – Saeb: documento técnico. Brasília: INEP, 2019.",
+            "FERNANDES, Reynaldo. Índice de Desenvolvimento da Educação Básica (Ideb). Brasília: INEP, 2007.",
+            "FREITAS, Luiz Carlos de. Os reformadores empresariais da educação. Educação & Sociedade, v. 33, n. 119, 2012.",
+        ],
+        "teoria": (
+            "O SAEB avalia proficiência em Língua Portuguesa e Matemática (com expansão para outras áreas), "
+            "e o IDEB (Fernandes, 2007) combina desempenho + fluxo escolar em um índice de 0 a 10. Metas do "
+            "PNE (Lei 13.005/14) balizam a política educacional. Do ponto de vista pedagógico, o Ideb deve "
+            "ser INSTRUMENTO de planejamento estratégico e não fim em si. Freitas (2012) alerta para os "
+            "'reformadores empresariais' que reduzem o currículo a áreas mensuradas — currículo pauperizado. "
+            "O uso emancipador do Ideb combina dados quantitativos com análise qualitativa do PPP."
+        ),
+        "padroes_banca": (
+            "O INEP distingue USO ESTRATÉGICO (correto) de USO DISTORCIDO (currículo pauperizado, "
+            "teaching to the test)."
+        ),
+        "pegadinhas": [
+            "Reduzir currículo = melhorar Ideb (falso).",
+            "Focar apenas socioemocional = fugir do desempenho cognitivo.",
+            "Confundir dado com destino.",
+        ],
+        "erros_comuns": (
+            "Marcar D por ver 'socioemocional' como moderno. Pode ser componente, não substituto."
+        ),
+        "dica_estrategica": (
+            "Ideb = dado para planejar; nunca para pauperizar currículo."
+        ),
+        "variacao": (
+            "(Estilo INEP) Segundo Freitas (2012), o principal risco dos 'reformadores empresariais' é:\n"
+            "A) ampliar currículo; B) pauperizar currículo por foco excessivo em métricas;\n"
+            "C) valorizar arte; D) fortalecer autonomia docente. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. O Ideb combina:\n"
+            "A) apenas fluxo; B) desempenho e fluxo escolar; C) apenas gastos; D) opinião docente. → B",
+            "Q2. O PNE 2014-2024 estabelece:\n"
+            "A) 5 metas; B) 20 metas educacionais; C) 50 metas; D) 100 metas. → B",
+            "Q3. 'Teaching to the test' consiste em:\n"
+            "A) ensinar apenas o que cai no teste; B) planejamento integral; "
+            "C) formação docente ampliada; D) alfabetização crítica. → A",
+        ],
+        "resumo": {
+            "regra": "Ideb orienta planejamento estratégico; não substitui currículo.",
+            "excecoes": "Escolas com fragilidade em LP/Mat precisam de foco, sem esvaziar outras áreas.",
+            "palavra_chave": "Planejamento estratégico integral.",
+            "artigo": "PNE (Lei 13.005/14); FERNANDES (2007); FREITAS (2012).",
+            "mnemonico": "Ideb = INSUMO, não destino.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -1960,7 +2389,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 4 (Q01 a Q20)",
+        "3. Análise completa – LOTES 1 a 5 (Q01 a Q25)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -1998,14 +2427,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 4 (Q01 a Q20)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 5 (Q01 a Q25)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
+    for num in list(range(1, 26)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -2125,7 +2554,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-4")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-5")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -2186,7 +2615,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 4 (Q01 a Q20)",
+              "3. Análise completa – LOTES 1 a 5 (Q01 a Q25)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -2225,7 +2654,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 4 (Q01 a Q20)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 5 (Q01 a Q25)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -2234,7 +2663,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]:
+    for num in list(range(1, 26)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -2329,7 +2758,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-4", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-5", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
