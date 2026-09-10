@@ -622,6 +622,458 @@ ANALISES = {
         },
     },
 
+    11: {
+        "tema": "Estágio Supervisionado como espaço de coformação",
+        "subtema": "Professor-supervisor como coformador (Pimenta & Lima)",
+        "habilidade_bncc": "DCN Formação Docente – Res. CNE/CP 2/2019; Lei 11.788/2008",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a concepção contemporânea de Estágio Supervisionado: espaço de FORMAÇÃO "
+            "COMPARTILHADA entre universidade, escola e estagiários, no qual o(a) professor(a) da escola "
+            "básica assume papel de COFORMADOR(A). As demais alternativas reduzem o estágio a "
+            "'aquisição/aplicação de conteúdos', visão superada pela literatura de formação docente."
+        ),
+        "como_banca_pensou": (
+            "O INEP quer distinguir o Estágio como PRÁXIS FORMATIVA (Pimenta & Lima) de visões instrumentais. "
+            "Palavras-veneno nas alternativas erradas: 'aquisição', 'aplicação', 'aquisição de tecnologias' — "
+            "todas apontam para modelo tecnicista/aplicacionista."
+        ),
+        "resolucao": [
+            "Reconheça a chave: 'espaço de' pede um SENTIDO conceitual de Estágio.",
+            "Descarte B: 'aquisição dos conteúdos' reduz o estágio a transmissão.",
+            "Descarte C: 'aquisição de novas tecnologias pelo supervisor' inverte a lógica formativa.",
+            "Descarte D: 'aplicação de conhecimentos do supervisor no cotidiano' é modelo aplicacionista.",
+            "Marque A: 'formação pedagógica que considera o professor-supervisor como COFORMADOR' — expressão consagrada em Pimenta & Lima.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Concepção contemporânea: escola como espaço de formação e docente da EB como coformador(a) dos estagiários (Pimenta & Lima, 2004)."),
+            "B": ("ERRADA", "'Aquisição de conteúdos' reduz o estágio ao ensino tradicional."),
+            "C": ("ERRADA", "Inverte a lógica: o estágio não visa 'aquisição' de tecnologias pelo supervisor."),
+            "D": ("ERRADA", "'Aplicação' é modelo aplicacionista, criticado pela literatura de formação docente (Tardif, Nóvoa)."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 11.788, de 25 de setembro de 2008. Dispõe sobre o estágio de estudantes. DOU, Brasília, 26 set. 2008.",
+            "BRASIL. Conselho Nacional de Educação. Resolução CNE/CP nº 2, de 20 de dezembro de 2019. Diretrizes Curriculares Nacionais para a Formação Inicial de Professores para a Educação Básica (BNC-Formação).",
+            "PIMENTA, Selma Garrido; LIMA, Maria do Socorro L. Estágio e docência. São Paulo: Cortez, 2004.",
+            "TARDIF, Maurice. Saberes docentes e formação profissional. Petrópolis: Vozes, 2002.",
+            "NÓVOA, António. Firmar a posição como professor, afirmar a profissão docente. Cadernos de Pesquisa, v. 47, n. 166, 2017.",
+        ],
+        "teoria": (
+            "O Estágio Supervisionado é regulado pela Lei 11.788/2008 e pelas DCNs da Formação Docente "
+            "(Res. CNE/CP 2/2019). A literatura (Pimenta & Lima, 2004) o define como PRÁXIS FORMATIVA — "
+            "articulação entre teoria e prática, pesquisa da própria docência e formação COMPARTILHADA entre "
+            "a universidade e a escola. O(a) professor(a) da Educação Básica que recebe estagiários é "
+            "COFORMADOR(A): não apenas 'observado(a)', mas coparticipante ativo(a) na formação. Tardif (2002) "
+            "fala em saberes da experiência; Nóvoa (2017), na 'entrada' do docente na profissão. Superam-se, "
+            "assim, visões aplicacionistas (praticar o que a universidade ensina) e imitativas (observar o "
+            "'bom professor')."
+        ),
+        "padroes_banca": (
+            "O INEP costuma opor visões contemporâneas (coformação, práxis) a modelos superados "
+            "(aplicacionismo, transmissão). A alternativa correta traz 'coformador', 'práxis' ou "
+            "'pesquisa da docência'."
+        ),
+        "pegadinhas": [
+            "Confundir estágio com 'aplicação de teoria' (modelo aplicacionista).",
+            "Reduzir o supervisor a 'observador' — ele é coformador.",
+            "Marcar 'aquisição de tecnologias' por soar atual.",
+        ],
+        "erros_comuns": (
+            "Marcar D por parecer razoável ('aplicar conhecimentos'). É o modelo mais criticado pela "
+            "literatura de formação docente."
+        ),
+        "dica_estrategica": (
+            "Em item sobre Estágio, prefira alternativas com COFORMAÇÃO, PRÁXIS, PESQUISA DA DOCÊNCIA. "
+            "Elimine as que usam APLICAÇÃO, AQUISIÇÃO, TRANSMISSÃO."
+        ),
+        "variacao": (
+            "(Estilo INEP) Segundo Pimenta e Lima (2004), o Estágio Supervisionado deve ser compreendido como:\n"
+            "A) mera aplicação de teorias aprendidas na universidade;\n"
+            "B) atividade prática desvinculada da pesquisa;\n"
+            "C) práxis formativa que articula teoria, prática e pesquisa da docência, em coformação escola-universidade;\n"
+            "D) observação passiva do bom professor.\n"
+            "Gabarito: C."
+        ),
+        "minisimulado": [
+            "Q1. A Lei 11.788/2008 dispõe sobre:\n"
+            "A) Piso salarial docente; B) Estágio de estudantes; C) BNCC; D) FUNDEB. → B",
+            "Q2. Tardif (2002) tematiza:\n"
+            "A) saberes docentes e formação profissional; B) BNCC; C) financiamento; D) avaliação em larga escala. → A",
+            "Q3. A Res. CNE/CP 2/2019 institui:\n"
+            "A) BNCC da EB; B) BNC-Formação de Professores; C) LDB; D) DCN da EJA. → B",
+        ],
+        "resumo": {
+            "regra": "Estágio = práxis formativa; docente da EB = coformador(a).",
+            "excecoes": "Modelos aplicacionistas e imitativos estão superados na literatura.",
+            "palavra_chave": "Coformação + práxis.",
+            "artigo": "Lei 11.788/2008; Res. CNE/CP 2/2019; PIMENTA & LIMA (2004).",
+            "mnemonico": "3 C's do Estágio: Coformação, Complexidade, Contexto.",
+        },
+    },
+
+    12: {
+        "tema": "Pedagogia de Projetos e ODS 12 (consumo responsável)",
+        "subtema": "Ação educativa que INTERVÉM concretamente",
+        "habilidade_bncc": "BNCC – competências gerais 7 e 10; TCT Educação Ambiental; ODS 12",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "O comando pede a ação que INTERVÉM CONCRETAMENTE no contexto escolar. A Pedagogia de Projetos "
+            "(Hernández, Dewey) exige AÇÃO + PROTAGONISMO + IMPACTO NO REAL — apenas a alternativa D oferece "
+            "isso (oficina + acompanhamento das mudanças)."
+        ),
+        "como_banca_pensou": (
+            "O INEP contrasta ações de PESQUISA/DIVULGAÇÃO (A, B, C) com ação de INTERVENÇÃO (D). "
+            "Só a alternativa D promove ATUAÇÃO na comunidade escolar + AVALIAÇÃO das mudanças reais."
+        ),
+        "resolucao": [
+            "Grife 'intervém CONCRETAMENTE'.",
+            "Descarte A: 'levantamento + divulgação em evento científico' = pesquisa, não intervenção.",
+            "Descarte B: 'mapear + elaborar redação' = registro, não intervenção.",
+            "Descarte C: 'pesquisar + analisar dados' = pesquisa.",
+            "Marque D: 'oficina de reaproveitamento + acompanhamento das mudanças' = INTERVENÇÃO REAL.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Divulgação em evento científico não constitui intervenção no contexto escolar."),
+            "B": ("ERRADA", "Mapeamento + redação são atividades reflexivas, sem alteração da realidade."),
+            "C": ("ERRADA", "Pesquisa estatística sem ação prática."),
+            "D": ("CORRETA", "Oficina + acompanhamento comportamental = intervenção concreta e avaliada."),
+        },
+        "fundamentacao": [
+            "HERNÁNDEZ, Fernando; VENTURA, Montserrat. A organização do currículo por projetos de trabalho. 5. ed. Porto Alegre: Artmed, 1998.",
+            "DEWEY, John. Experiência e educação. São Paulo: Companhia Editora Nacional, 1976.",
+            "ORGANIZAÇÃO DAS NAÇÕES UNIDAS. Agenda 2030 para o Desenvolvimento Sustentável – ODS 12: Consumo e Produção Responsáveis. Nova York: ONU, 2015.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "A Pedagogia de Projetos (Hernández & Ventura, 1998) organiza o currículo em torno de PROBLEMAS "
+            "DE INVESTIGAÇÃO REAIS, com etapas: problematização → planejamento → execução → sistematização "
+            "→ INTERVENÇÃO/SOCIALIZAÇÃO. Baseia-se em Dewey (aprender fazendo). O ODS 12 (Consumo e Produção "
+            "Responsáveis) da Agenda 2030 orienta ações escolares de reaproveitamento, compostagem e combate "
+            "ao desperdício alimentar. A BNCC incorpora tais temas como Temas Contemporâneos Transversais. "
+            "A INTERVENÇÃO é o momento em que o projeto DEIXA a esfera reflexiva e impacta a realidade."
+        ),
+        "padroes_banca": (
+            "O INEP tende a contrastar 'pesquisar/divulgar' vs. 'intervir/transformar'. Palavras-veneno: "
+            "'evento científico', 'redação', 'análise' — indicam etapa reflexiva, não intervenção."
+        ),
+        "pegadinhas": [
+            "Confundir pesquisa com intervenção.",
+            "Marcar A por 'evento científico' soar sofisticado.",
+            "Reduzir projeto a 'produto final escrito'.",
+        ],
+        "erros_comuns": (
+            "Marcar A porque 'levantamento + evento' parece completo, sem perceber que falta AÇÃO NA "
+            "REALIDADE."
+        ),
+        "dica_estrategica": (
+            "Em item sobre Pedagogia de Projetos e ODS, prefira alternativas com VERBOS DE AÇÃO "
+            "(oficina, mutirão, campanha, produção, acompanhamento) sobre verbos apenas COGNITIVOS "
+            "(pesquisar, mapear, redigir)."
+        ),
+        "variacao": (
+            "(Estilo INEP) O ODS 12 orienta escolas a promoverem:\n"
+            "A) consumo desmedido; B) produção industrial em massa; C) padrões de consumo e produção "
+            "sustentáveis, reduzindo desperdício; D) obsolescência programada.\n"
+            "Gabarito: C."
+        ),
+        "minisimulado": [
+            "Q1. A Pedagogia de Projetos, segundo Hernández & Ventura (1998), organiza o currículo por:\n"
+            "A) disciplinas isoladas; B) problemas reais de investigação; C) exames padronizados; "
+            "D) provas objetivas. → B",
+            "Q2. A Agenda 2030 possui:\n"
+            "A) 5 ODS; B) 10 ODS; C) 17 ODS; D) 30 ODS. → C",
+            "Q3. Dewey associa aprendizagem a:\n"
+            "A) memorização; B) experiência; C) autoritarismo; D) transmissão passiva. → B",
+        ],
+        "resumo": {
+            "regra": "Intervenção educativa transforma a realidade; pesquisa e divulgação são etapas, não fim.",
+            "excecoes": "Pesquisa pode ser fim em si em contextos científicos, mas o comando pediu 'intervenção'.",
+            "palavra_chave": "Ação + acompanhamento + mudança comportamental.",
+            "artigo": "ODS 12 (Agenda 2030); HERNÁNDEZ & VENTURA (1998).",
+            "mnemonico": "PPPIS: Problematizar, Planejar, Produzir, Intervir, Socializar.",
+        },
+    },
+
+    13: {
+        "tema": "Coerência procedimento-avaliação (perspectiva crítica)",
+        "subtema": "Consumo responsável / segurança alimentar",
+        "habilidade_bncc": "BNCC – competências gerais 4, 7 e 10",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Interpretativa (avaliação da aprendizagem)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item exige COERÊNCIA entre PROCEDIMENTO (perspectiva crítica, dialógica) e INSTRUMENTO DE "
+            "AVALIAÇÃO (que exija argumentação e posicionamento). A única que satisfaz ambos é C: DEBATE + "
+            "ARTIGO DE OPINIÃO."
+        ),
+        "como_banca_pensou": (
+            "O INEP cobra a articulação metodologia-avaliação. As demais alternativas são incoerentes: "
+            "roda de conversa avaliada por prova objetiva (A), banners avaliados por mapa mental (B), "
+            "questionário fechado avaliado por composteira (D — troca de foco)."
+        ),
+        "resolucao": [
+            "Fixe o critério: procedimento crítico → avaliação crítica coerente.",
+            "Descarte A: 'roda de conversa' é crítica, mas 'prova objetiva' é instrumento fechado — incoerência.",
+            "Descarte B: 'banners' e 'mapa mental' avaliam memorização, não posicionamento crítico.",
+            "Descarte D: 'questionário + montagem por manual técnico' é tecnicista, sem crítica.",
+            "Marque C: 'debate sobre insegurança alimentar + artigo de opinião' — ambos exigem argumentação crítica.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Roda de conversa (dialógica) é incoerente com prova objetiva (memorização)."),
+            "B": ("ERRADA", "Instrumentos de baixa densidade crítica; não avaliam posicionamento sobre consumo."),
+            "C": ("CORRETA", "Debate (posicionamento crítico) + artigo de opinião (argumentação) formam par coerente na perspectiva crítica."),
+            "D": ("ERRADA", "Manual técnico substitui reflexão crítica por reprodução procedural."),
+        },
+        "fundamentacao": [
+            "LUCKESI, Cipriano C. Avaliação da aprendizagem escolar: estudos e proposições. 22. ed. São Paulo: Cortez, 2011.",
+            "HOFFMANN, Jussara. Avaliação mediadora: uma prática em construção da pré-escola à universidade. 34. ed. Porto Alegre: Mediação, 2014.",
+            "FREIRE, Paulo. Pedagogia da autonomia. São Paulo: Paz e Terra, 1996.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "A perspectiva crítica da AVALIAÇÃO (Luckesi, Hoffmann) recusa a redução a testes objetivos "
+            "descontextualizados: a avaliação deve DIALOGAR com o procedimento e mensurar o desenvolvimento "
+            "de competências como argumentação, posicionamento, análise de dados e produção autoral. Freire "
+            "acrescenta a EXIGÊNCIA POLÍTICA da avaliação (não é neutra). O par DEBATE + ARTIGO DE OPINIÃO "
+            "é canônico em avaliação crítica, pois exige mobilização de fontes, elaboração de tese, uso de "
+            "argumentos e revisão coletiva — habilidades exigidas pela BNCC nas competências 4 (argumentação) "
+            "e 7 (autoria e responsabilidade)."
+        ),
+        "padroes_banca": (
+            "O INEP examina a COERÊNCIA metodologia-avaliação. Comum: apresentar procedimentos críticos "
+            "com instrumentos tecnicistas e ver se o candidato percebe a incoerência."
+        ),
+        "pegadinhas": [
+            "Achar que 'roda de conversa' + qualquer instrumento é crítico.",
+            "Confundir mapa mental com síntese crítica.",
+            "Reduzir avaliação a instrumentos fechados.",
+        ],
+        "erros_comuns": (
+            "Marcar A por a roda de conversa soar boa, sem perceber a incoerência da prova objetiva. "
+            "Ou D por 'composteira' parecer prático."
+        ),
+        "dica_estrategica": (
+            "Regra: em item de coerência procedimento-avaliação crítica, o instrumento deve exigir "
+            "POSICIONAMENTO/AUTORIA (debate, ensaio, artigo, seminário, projeto)."
+        ),
+        "variacao": (
+            "(Estilo INEP) Na perspectiva crítica, o instrumento de avaliação mais coerente com uma "
+            "sequência dialógica sobre direitos humanos é:\n"
+            "A) prova objetiva com 20 questões; B) júri simulado seguido de manifesto coletivo; "
+            "C) ditado de conceitos; D) preenchimento de lacunas.\n"
+            "Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Luckesi diferencia avaliação de:\n"
+            "A) verificação; B) mediação; C) diagnóstico; D) autoavaliação. → A",
+            "Q2. Jussara Hoffmann propõe a avaliação:\n"
+            "A) classificatória; B) mediadora; C) somativa exclusiva; D) padronizada. → B",
+            "Q3. O artigo de opinião como instrumento avalia principalmente:\n"
+            "A) memorização; B) argumentação e posicionamento; C) caligrafia; D) ortografia isolada. → B",
+        ],
+        "resumo": {
+            "regra": "Avaliação crítica pede instrumentos que exijam autoria e argumentação.",
+            "excecoes": "Instrumentos objetivos podem compor a avaliação, desde que combinados com autorais.",
+            "palavra_chave": "Debate + artigo de opinião.",
+            "artigo": "LUCKESI (2011); HOFFMANN (2014); FREIRE (1996).",
+            "mnemonico": "3 A's da avaliação crítica: Argumentar, Autorar, Agir.",
+        },
+    },
+
+    14: {
+        "tema": "Educação escolar indígena e memória social",
+        "subtema": "Daniel Munduruku, oralidade e Leis 10.639/03 e 11.645/08",
+        "habilidade_bncc": "BNCC – competências gerais 6 e 9; Lei 11.645/2008; DCN Educação Escolar Indígena",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item pede a prática coerente com a proposta pedagógica descrita — memória social, oralidade "
+            "e aprendizado pela experiência entre gerações. A resposta é a que MANTÉM a ORALIDADE e envolve "
+            "a comunidade em REGISTRO AUDIOVISUAL: vídeos com técnicas ancestrais e contemporâneas."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão de que a EDUCAÇÃO INDÍGENA e a valorização da ORALIDADE não devem "
+            "ser reduzidas a transcrições escritas ou pareceres de especialistas urbanos. O vídeo preserva "
+            "voz, ritmo, gesto — dimensões centrais da oralidade."
+        ),
+        "resolucao": [
+            "Reconheça a chave: memória social + oralidade + experiência intergeracional.",
+            "Descarte A: 'estudo de caso sobre uso urbano para VALIDAR práticas contemporâneas' subverte a lógica ancestral.",
+            "Descarte C: 'depoimentos de nutricionistas' desloca a autoridade da comunidade para especialistas urbanos.",
+            "Descarte D: 'transcrever' as falas reduz a oralidade à escrita — perde-se a dimensão sonora e performática.",
+            "Marque B: 'vídeos com a comunidade escolar registrando técnicas ancestrais e contemporâneas' — preserva a oralidade e articula gerações.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Inverte a lógica: as práticas ancestrais é que iluminam as contemporâneas, não o contrário."),
+            "B": ("CORRETA", "Vídeo preserva oralidade, gesto e ritmo; envolve a comunidade e articula ancestralidade e presente (Munduruku)."),
+            "C": ("ERRADA", "Substitui a autoridade da comunidade por especialistas urbanos — silenciamento epistêmico."),
+            "D": ("ERRADA", "Reduz a oralidade à transcrição, empobrecendo a proposta."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 11.645, de 10 de março de 2008. Altera a LDB para incluir a temática 'História e Cultura Afro-Brasileira e Indígena'. DOU, Brasília, 11 mar. 2008.",
+            "BRASIL. Conselho Nacional de Educação. Resolução CEB/CNE nº 5, de 22 de junho de 2012. DCN para a Educação Escolar Indígena na Educação Básica.",
+            "MUNDURUKU, Daniel. Meu vô Apolinário: um mergulho no rio da (minha) memória. São Paulo: Studio Nobel, 2005.",
+            "KRENAK, Ailton. Ideias para adiar o fim do mundo. São Paulo: Companhia das Letras, 2019.",
+            "BRASIL. Ministério da Educação. Base Nacional Comum Curricular. Brasília: MEC, 2018.",
+        ],
+        "teoria": (
+            "A EDUCAÇÃO ESCOLAR INDÍGENA (DCN – Res. CEB/CNE 5/2012) reconhece a especificidade, "
+            "diferenciação, interculturalidade e bilinguismo/multilinguismo dos processos formativos dos "
+            "povos originários. A Lei 11.645/2008 (que altera a 10.639/03) inclui História e Cultura "
+            "Indígena obrigatoriamente no currículo. Autores como Daniel Munduruku, Ailton Krenak e "
+            "Davi Kopenawa afirmam a ORALIDADE, a MEMÓRIA SOCIAL e a APRENDIZAGEM INTERGERACIONAL como "
+            "pilares epistêmicos. Práticas escolares devem valorizar essa dimensão — registros audiovisuais, "
+            "rodas de saberes, entrevistas com anciãos, produção compartilhada — em vez de traduzi-las "
+            "unicamente para a escrita ou submetê-las a validação externa."
+        ),
+        "padroes_banca": (
+            "O INEP tende a cobrar as Leis 10.639/03 e 11.645/08 em diálogo com práticas concretas. "
+            "Alternativas erradas costumam silenciar a comunidade ou traduzir a oralidade em escrita."
+        ),
+        "pegadinhas": [
+            "Achar que 'transcrever' é a única forma de registrar oralidade.",
+            "Confundir 'estudo de caso' com prática ancestral.",
+            "Substituir a comunidade por especialistas urbanos.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar academia a transcrição escrita. É preciso lembrar que a oralidade tem "
+            "valor epistêmico próprio."
+        ),
+        "dica_estrategica": (
+            "Em item sobre educação indígena, priorize alternativas que PRESERVEM a ORALIDADE, a "
+            "AUTORIDADE DA COMUNIDADE e a INTERGERACIONALIDADE. Rejeite as que reduzem a escrita ou a "
+            "validação externa."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Lei 11.645/2008 tornou obrigatório o ensino de:\n"
+            "A) apenas História Afro-Brasileira; B) História e Cultura Afro-Brasileira e Indígena; "
+            "C) apenas História Indígena; D) somente História da Europa. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. As DCN da Educação Escolar Indígena têm como princípios:\n"
+            "A) padronização nacional; B) especificidade, diferenciação, interculturalidade, bilinguismo; "
+            "C) urbanização; D) homogeneização. → B",
+            "Q2. Ailton Krenak, em 'Ideias para adiar o fim do mundo' (2019), critica:\n"
+            "A) a interculturalidade; B) a ideia de humanidade abstrata desligada da terra; "
+            "C) as línguas indígenas; D) as tradições orais. → B",
+            "Q3. Registrar a oralidade em vídeo:\n"
+            "A) empobrece a fonte; B) preserva voz, gesto e ritmo, dimensões constitutivas da oralidade; "
+            "C) substitui a comunidade; D) é irrelevante. → B",
+        ],
+        "resumo": {
+            "regra": "Educação indígena preserva oralidade + memória + autoridade da comunidade.",
+            "excecoes": "A escrita pode complementar, nunca substituir, a oralidade.",
+            "palavra_chave": "Oralidade + intergeracionalidade + comunidade.",
+            "artigo": "Lei 11.645/2008; Res. CEB/CNE 5/2012.",
+            "mnemonico": "3 O's: Ouvir, Observar, Organizar (memórias) com a comunidade.",
+        },
+    },
+
+    15: {
+        "tema": "Educação Ambiental crítica – limites do comportamentalismo",
+        "subtema": "Crítica ao 'consumo' e aos 'brindes por resíduos'",
+        "habilidade_bncc": "BNCC – competências gerais 7 e 10; TCT Educação Ambiental",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a leitura CRÍTICA das ações propostas. A dinâmica 'trocar resíduos por brindes' "
+            "REPRODUZ a lógica consumista — que é a RAIZ do problema ambiental. A Educação Ambiental "
+            "crítica (Loureiro, Layrargues) exige questionar a produção-consumo, não maquiar seus efeitos."
+        ),
+        "como_banca_pensou": (
+            "O INEP quer testar se o candidato distingue Educação Ambiental CRÍTICA (Loureiro) da "
+            "CONSERVACIONISTA/COMPORTAMENTAL. Alternativas B, C, D concedem virtudes às ações; A denuncia "
+            "a NORMALIZAÇÃO DO CONSUMO — o problema estrutural."
+        ),
+        "resolucao": [
+            "Reconheça a chave 'perspectiva CRÍTICA'.",
+            "Descarte B: 'mudança comportamental' é a marca da EA CONSERVACIONISTA, não crítica.",
+            "Descarte C: 'prejudicam catadores' é uma questão pontual, não a chave crítica pedida.",
+            "Descarte D: 'deslocar resíduos para outra área' é o oposto da preservação; e não é o eixo crítico central.",
+            "Marque A: 'normalizam o consumo e o acúmulo' — captura a crítica estrutural à raiz do problema.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Trocar resíduos por brindes REPRODUZ o ciclo de consumo, obscurecendo as causas estruturais dos resíduos."),
+            "B": ("ERRADA", "Mudança comportamental é objetivo da EA conservacionista, criticada pela perspectiva crítica."),
+            "C": ("ERRADA", "É uma possibilidade colateral, não a leitura crítica central pedida."),
+            "D": ("ERRADA", "'Preservam ao deslocar' é contradição — deslocar não é preservar."),
+        },
+        "fundamentacao": [
+            "LOUREIRO, Carlos Frederico B. Educação ambiental transformadora. Brasília: MMA, 2004.",
+            "LAYRARGUES, Philippe P.; LIMA, Gustavo F. C. As macrotendências político-pedagógicas da Educação Ambiental brasileira. Ambiente & Sociedade, v. 17, n. 1, 2014.",
+            "BRASIL. Lei nº 9.795, de 27 de abril de 1999. Política Nacional de Educação Ambiental. DOU, 28 abr. 1999.",
+            "GUATTARI, Félix. As três ecologias. Campinas: Papirus, 2001.",
+        ],
+        "teoria": (
+            "A Educação Ambiental brasileira tem, segundo Layrargues & Lima (2014), três macrotendências: "
+            "(1) CONSERVACIONISTA (mudança de comportamento individual, coleta seletiva, natureza intocada); "
+            "(2) PRAGMÁTICA (adaptações técnicas, mercado verde, ODS instrumental); (3) CRÍTICA "
+            "(transformadora, popular, articula ecologia + economia + política + cultura, questiona o "
+            "modelo de produção e consumo). Loureiro (2004) inscreve a EA na tradição da educação popular "
+            "freireana. Guattari (2001), em 'As três ecologias', articula ecologia ambiental, social e "
+            "mental. A crítica central: soluções individuais (trocar lixo por brindes) mascaram o problema "
+            "ESTRUTURAL — a lógica produtiva capitalista que gera resíduos em escala."
+        ),
+        "padroes_banca": (
+            "O INEP costuma opor abordagem CRÍTICA (transformação estrutural) vs. CONSERVACIONISTA "
+            "(mudança comportamental individual). A alternativa correta em geral CRITICA a mera "
+            "comportamentalização."
+        ),
+        "pegadinhas": [
+            "Achar que 'mudança comportamental' é sinal de EA crítica — é da conservacionista.",
+            "Confundir 'preservação' com deslocamento espacial dos resíduos.",
+            "Reduzir a crítica ao aspecto do catador (é um recorte, não a chave central).",
+        ],
+        "erros_comuns": (
+            "Marcar B por 'mudança comportamental' soar positiva. Na EA crítica, o comportamento individual "
+            "é INSUFICIENTE frente ao problema estrutural."
+        ),
+        "dica_estrategica": (
+            "Regra da EA crítica: sempre desconfie de soluções INDIVIDUAIS/COMPORTAMENTAIS. A EA crítica "
+            "pergunta pelas CAUSAS ESTRUTURAIS (produção, consumo, poder)."
+        ),
+        "variacao": (
+            "(Estilo INEP) Segundo Layrargues & Lima (2014), a macrotendência CRÍTICA da EA se caracteriza por:\n"
+            "A) mudança individual de comportamento;\n"
+            "B) questionar o modelo produtivo e propor transformação socioambiental estrutural;\n"
+            "C) foco em mercado verde;\n"
+            "D) proteção de espaços intocados.\n"
+            "Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A Política Nacional de EA foi instituída pela:\n"
+            "A) Lei 9.795/1999; B) Lei 12.187/2009; C) Lei 6.938/1981; D) Decreto 4.281/2002. → A",
+            "Q2. Guattari (2001) articula as ecologias:\n"
+            "A) ambiental, social, mental; B) urbana, rural, marinha; C) atlântica, pacífica, ártica; "
+            "D) econômica, política, jurídica. → A",
+            "Q3. Trocar resíduos por brindes é, sob a EA crítica:\n"
+            "A) transformador; B) suficiente; C) insuficiente e reforça a lógica consumista; D) obrigatório. → C",
+        ],
+        "resumo": {
+            "regra": "EA crítica critica soluções individuais e busca transformação estrutural.",
+            "excecoes": "Coleta seletiva ISOLADA é conservacionista; ligada a análise estrutural, pode integrar EA crítica.",
+            "palavra_chave": "Estrutural + transformadora + Freire-Loureiro.",
+            "artigo": "Lei 9.795/1999; LAYRARGUES & LIMA (2014); LOUREIRO (2004).",
+            "mnemonico": "Não é 'BRINDE por lixo' — é POLÍTICA por transformação.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -1077,7 +1529,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 e 2 (Q01 a Q10)",
+        "3. Análise completa – LOTES 1 a 3 (Q01 a Q15)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -1115,14 +1567,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 e 2 (Q01 a Q10)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 3 (Q01 a Q15)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -1242,7 +1694,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-2")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-3")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -1273,7 +1725,7 @@ def gerar_pdf(destino: Path):
         canvas.setFillColor(white)
         canvas.setFont("Helvetica", 8)
         canvas.drawCentredString(A4[0] / 2, 0.3 * cm,
-                                 f"Página {doc_.page}   •   Projeto Gabaritando   •   Citações ABNT NBR 6023")
+                                 f"Página {doc_.page}   •   Projeto Gabaritando")
         canvas.restoreState()
 
     styles = getSampleStyleSheet()
@@ -1303,7 +1755,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 e 2 (Q01 a Q10)",
+              "3. Análise completa – LOTES 1 a 3 (Q01 a Q15)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -1342,7 +1794,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 e 2 (Q01 a Q10)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 3 (Q01 a Q15)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -1351,7 +1803,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+    for num in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]:
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -1446,7 +1898,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-2", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-3", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
