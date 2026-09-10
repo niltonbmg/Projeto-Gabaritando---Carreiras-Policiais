@@ -43,8 +43,8 @@ QUESTAO = {
     "disciplina": "História / Ensino de História",
     "tema": "Lei 10.639/03 – História e Cultura Afro-Brasileira",
     "subtema": "Aplicação em sala de aula e BNCC",
-    "prova": "PND 2025 – Caderno de História – PV_1 (QUESTÃO-MODELO DE PRÉVIA)",
-    "habilidade_bncc": "EF08HI13 / EF09HI06 (Anos Finais); competências específicas de Ciências Humanas – EM",
+    "prova": "PND 2025 – Caderno de História – PV_1",
+    "habilidade_bncc": "EF08HI13 / EF09HI06 (Anos Finais); competências específicas de Ciências Humanas (EM)",
     "enunciado": (
         "A Lei nº 10.639, de 9 de janeiro de 2003, alterou a Lei de Diretrizes e Bases da Educação "
         "Nacional (Lei nº 9.394/1996) para tornar obrigatório o ensino de História e Cultura Afro-Brasileira "
@@ -209,7 +209,7 @@ def gerar_docx(destino: Path):
 
     p3 = cell.add_paragraph()
     p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r3 = p3.add_run("PRÉVIA VISUAL – Padrão Azul e Branco\n1 questão-modelo (15 blocos)\n\n")
+    r3 = p3.add_run("Análise questão por questão – 15 blocos\n\n")
     r3.font.size = Pt(12)
     r3.font.color.rgb = _hex(BRANCO)
 
@@ -276,6 +276,7 @@ def gerar_docx(destino: Path):
     bloco_titulo(f"QUESTÃO {QUESTAO['numero']} — {QUESTAO['tema']}")
     tbl = doc.add_table(rows=5, cols=2)
     tbl.style = "Light Grid Accent 1"
+    tbl.autofit = False
     dados = [
         ("Disciplina", QUESTAO["disciplina"]),
         ("Tema / Subtema", f"{QUESTAO['tema']} — {QUESTAO['subtema']}"),
@@ -283,10 +284,15 @@ def gerar_docx(destino: Path):
         ("Habilidade BNCC", QUESTAO["habilidade_bncc"]),
         ("Gabarito oficial", QUESTAO["gabarito"]),
     ]
+    col0_w, col1_w = Cm(4.0), Cm(12.6)
     for i, (k, v) in enumerate(dados):
-        tbl.rows[i].cells[0].text = k
-        tbl.rows[i].cells[1].text = v
-        _shade(tbl.rows[i].cells[0], AZUL_CLARO)
+        c0 = tbl.rows[i].cells[0]
+        c1 = tbl.rows[i].cells[1]
+        c0.width = col0_w
+        c1.width = col1_w
+        c0.text = k
+        c1.text = v
+        _shade(c0, AZUL_CLARO)
     doc.add_paragraph()
 
     # ---------- BLOCO 2 ----------
@@ -369,7 +375,7 @@ def gerar_docx(destino: Path):
     doc.add_paragraph()
     foot = doc.add_paragraph()
     foot.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fr = foot.add_run("Projeto Gabaritando — Prévia visual. As citações seguem ABNT NBR 6023.")
+    fr = foot.add_run("Projeto Gabaritando — Citações no padrão ABNT NBR 6023.")
     fr.italic = True
     fr.font.size = Pt(9)
     fr.font.color.rgb = _hex(AZUL_ESCURO)
@@ -393,7 +399,7 @@ def gerar_pdf(destino: Path):
         canvas.setFillColor(white)
         canvas.setFont("Helvetica-Bold", 10)
         canvas.drawString(2 * cm, A4[1] - 0.8 * cm, "Manual de Aprovação por Questões — PND História")
-        canvas.drawRightString(A4[0] - 2 * cm, A4[1] - 0.8 * cm, "Prévia visual • Padrão Azul e Branco")
+        canvas.drawRightString(A4[0] - 2 * cm, A4[1] - 0.8 * cm, "PND 2025 • Área: História")
         # Rodapé
         canvas.setFillColor(HexColor(AZUL_ESCURO))
         canvas.rect(0, 0, A4[0], 0.8 * cm, fill=1, stroke=0)
@@ -421,11 +427,7 @@ def gerar_pdf(destino: Path):
     story.append(Spacer(1, 3 * cm))
     story.append(Paragraph("MANUAL DE APROVAÇÃO POR QUESTÕES", h_title))
     story.append(Paragraph("PND — Prova Nacional Docente<br/>Área: HISTÓRIA", h_sub))
-    story.append(Paragraph("<b>Prévia visual — Padrão Azul e Branco</b><br/>1 questão-modelo com os 15 blocos", body))
-    story.append(Spacer(1, 1 * cm))
-    story.append(Paragraph(
-        "<i>Aguardando autorização para aplicar o padrão a todas as questões do caderno "
-        "PND 2025 — História — PV_1.</i>", body))
+    story.append(Paragraph("<b>Análise questão por questão — 15 blocos</b><br/>Caderno 2025 — PV_1", body))
     story.append(PageBreak())
 
     # Sumário
@@ -442,14 +444,18 @@ def gerar_pdf(destino: Path):
 
     # ---- Bloco 1: Identificação ----
     story.append(Paragraph(f"QUESTÃO {QUESTAO['numero']} — {QUESTAO['tema']}", h_bloco))
+    cell_style = ParagraphStyle("cell", parent=body, fontSize=10, leading=13, alignment=TA_LEFT)
+    cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
+                              textColor=HexColor(AZUL_ESCURO))
     tbl_data = [
-        ["Disciplina", QUESTAO["disciplina"]],
-        ["Tema / Subtema", f"{QUESTAO['tema']} — {QUESTAO['subtema']}"],
-        ["Prova", QUESTAO["prova"]],
-        ["Habilidade BNCC", QUESTAO["habilidade_bncc"]],
-        ["Gabarito oficial", QUESTAO["gabarito"]],
+        [Paragraph("Disciplina", cell_key), Paragraph(QUESTAO["disciplina"], cell_style)],
+        [Paragraph("Tema / Subtema", cell_key),
+         Paragraph(f"{QUESTAO['tema']} — {QUESTAO['subtema']}", cell_style)],
+        [Paragraph("Prova", cell_key), Paragraph(QUESTAO["prova"], cell_style)],
+        [Paragraph("Habilidade BNCC", cell_key), Paragraph(QUESTAO["habilidade_bncc"], cell_style)],
+        [Paragraph("Gabarito oficial", cell_key), Paragraph(QUESTAO["gabarito"], cell_style)],
     ]
-    tbl = Table(tbl_data, colWidths=[4.2 * cm, 12 * cm])
+    tbl = Table(tbl_data, colWidths=[4.0 * cm, 13.0 * cm])
     tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (0, -1), HexColor(AZUL_CLARO)),
         ("TEXTCOLOR", (0, 0), (0, -1), HexColor(AZUL_ESCURO)),
