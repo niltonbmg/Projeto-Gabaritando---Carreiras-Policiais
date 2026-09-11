@@ -5173,6 +5173,397 @@ ANALISES = {
         },
     },
 
+    66: {
+        "tema": "Guerra do Vietnã e resistência popular",
+        "subtema": "Táticas de guerrilha + apoio da população",
+        "habilidade_bncc": "EF09HI24, EM13CHS604",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a chave explicativa da resistência vietnamita: TÁTICAS ALTERNATIVAS + CONHECIMENTO "
+            "DO TERRITÓRIO + APOIO POPULAR. Distratores negam ou invertem esses fatores."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão de que impérios podem ser derrotados por resistências "
+            "assimétricas apoiadas em base social."
+        ),
+        "resolucao": [
+            "Descarte A: superioridade tecnológica dos EUA NÃO derrotou a resistência.",
+            "Descarte C: os vietnamitas não dependiam de 'armamentos pesados'.",
+            "Descarte D: houve apoio internacional (URSS, China, movimentos pacifistas).",
+            "Marque B: táticas alternativas + território + população.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Superioridade tecnológica dos EUA fracassou frente à resistência popular."),
+            "B": ("CORRETA", "Guerrilha, conhecimento do território e apoio popular explicam a resistência vietnamita."),
+            "C": ("ERRADA", "Vietnamitas mobilizavam armamento leve, não pesado."),
+            "D": ("ERRADA", "Havia apoio internacional (URSS, China, movimento antiguerra)."),
+        },
+        "fundamentacao": [
+            "HOBSBAWM, Eric. Era dos extremos. São Paulo: Cia. das Letras, 1995.",
+            "YOUNG, Marilyn. The Vietnam Wars: 1945-1990. Nova York: HarperCollins, 1991.",
+            "WESTAD, Odd Arne. A Guerra Fria: uma nova história. Rio de Janeiro: Zahar, 2018.",
+            "VIZENTINI, Paulo F. A Guerra do Vietnã. São Paulo: Ática, 2004.",
+        ],
+        "teoria": (
+            "A Guerra do Vietnã (1955-1975) demonstrou que superioridade tecnológica NÃO garante vitória "
+            "militar contra resistência apoiada popularmente. O Vietcong e o Vietnã do Norte, sob "
+            "liderança de Ho Chi Minh, empregaram guerrilha (túneis de Cu Chi), conhecimento do terreno "
+            "e mobilização camponesa para derrotar os EUA."
+        ),
+        "padroes_banca": (
+            "O INEP contrasta narrativa tecnicista da guerra vs. leitura social-política."
+        ),
+        "pegadinhas": [
+            "Achar que bomba explica tudo.",
+            "Ignorar o apoio popular.",
+            "Reduzir a fenômeno isolado.",
+        ],
+        "erros_comuns": (
+            "Marcar C por associar 'guerra' a 'armamento pesado'."
+        ),
+        "dica_estrategica": (
+            "Guerras assimétricas = território + população + tática."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Ofensiva do Tet (1968) foi:\n"
+            "A) vitória militar do Vietnã do Sul;\n"
+            "B) ofensiva coordenada do Vietcong que marcou virada política da guerra;\n"
+            "C) derrota total do Norte; D) ataque japonês. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Os EUA retiraram-se do Vietnã em:\n"
+            "A) 1954; B) 1973-1975; C) 1968; D) 1980. → B",
+            "Q2. Os túneis de Cu Chi eram:\n"
+            "A) fortificações vietcongues; B) monumentos religiosos; C) prisões americanas; D) minas de ouro. → A",
+            "Q3. Ho Chi Minh foi líder:\n"
+            "A) do Vietnã Norte (Viet Minh); B) do Camboja; C) da Coreia; D) do Laos. → A",
+        ],
+        "resumo": {
+            "regra": "Resistência assimétrica bem-sucedida = território + tática + apoio popular.",
+            "excecoes": "Superioridade tecnológica ainda pesa em batalhas convencionais.",
+            "palavra_chave": "Guerrilha + território + população.",
+            "artigo": "HOBSBAWM (1995); YOUNG (1991); VIZENTINI (2004).",
+            "mnemonico": "T.T.P.: Tática + Território + População.",
+        },
+    },
+
+    67: {
+        "tema": "Imperialismo asiático (séc. XIX-XX) e júri simulado",
+        "subtema": "Complexidade colonial + metodologia dialógica",
+        "habilidade_bncc": "EF08HI19, EM13CHS604",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra pareamento OBJETIVO + METODOLOGIA. A resposta A articula complexidade "
+            "(ocupação + exploração + tensões) + júri simulado (dialógico). Distratores amenizam "
+            "('consenso', 'harmônico', 'cordial')."
+        ),
+        "como_banca_pensou": (
+            "A banca contrasta abordagens críticas (complexidade + tensão) com narrativas amenizadoras."
+        ),
+        "resolucao": [
+            "Descarte B: 'consenso' e 'pacificação' apagam a violência colonial.",
+            "Descarte C: 'harmônico' contradiz a exploração.",
+            "Descarte D: 'cordialidade' apaga o conflito.",
+            "Marque A: complexidade + júri simulado.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Complexidade da ocupação e exploração + júri simulado como metodologia dialógica."),
+            "B": ("ERRADA", "Não houve consenso; a colonização foi violenta."),
+            "C": ("ERRADA", "'Harmonia' inverte a experiência histórica."),
+            "D": ("ERRADA", "'Cordialidade' oculta violações."),
+        },
+        "fundamentacao": [
+            "HOBSBAWM, Eric. A era dos impérios. Rio de Janeiro: Paz e Terra, 2014.",
+            "SAID, Edward. Orientalismo. São Paulo: Cia. das Letras, 2007.",
+            "ANDERSON, Benedict. Comunidades imaginadas. São Paulo: Cia. das Letras, 2008.",
+            "SCHMIDT, Maria Auxiliadora; CAINELLI, Marlene. Ensinar História. São Paulo: Scipione, 2018.",
+        ],
+        "teoria": (
+            "O IMPERIALISMO clássico (1875-1914) partilhou África e Ásia entre potências europeias. "
+            "Hobsbawm (2014) analisa o período; Said (2007) mostra a construção discursiva do 'oriental' "
+            "para justificar a dominação. Júris simulados em sala mobilizam papéis, argumentação e "
+            "posicionamento crítico dos estudantes."
+        ),
+        "padroes_banca": (
+            "O INEP cobra articulação COMPLEXIDADE + DIALOGICIDADE."
+        ),
+        "pegadinhas": [
+            "Amenizar violência colonial.",
+            "Confundir mural com posicionamento crítico.",
+            "Achar que mapa esgota o tema.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar 'mapear' a boa didática."
+        ),
+        "dica_estrategica": (
+            "Imperialismo = tensão + violência + resistência (nunca cordialidade)."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Conferência de Berlim (1884-1885):\n"
+            "A) partilhou a África entre potências europeias;\n"
+            "B) fim do imperialismo; C) libertou o Congo; D) fundou a ONU. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. A Guerra do Ópio (1839-1842):\n"
+            "A) forçou a China a abrir portos aos britânicos; B) expulsou os europeus; "
+            "C) unificou a Coreia; D) libertou Hong Kong. → A",
+            "Q2. Anderson (2008) descreve nações como:\n"
+            "A) comunidades imaginadas; B) sociedades naturais; C) unidades biológicas; D) unidades religiosas. → A",
+            "Q3. Said (2007) tematiza:\n"
+            "A) orientalismo como construção discursiva; B) marxismo puro; C) neoliberalismo; D) positivismo. → A",
+        ],
+        "resumo": {
+            "regra": "Imperialismo = ocupação + exploração + resistência.",
+            "excecoes": "Formas variam entre colonização direta, protetorado, esferas de influência.",
+            "palavra_chave": "Complexidade + tensão + júri.",
+            "artigo": "HOBSBAWM (2014); SAID (2007).",
+            "mnemonico": "C.O.E.: Complexidade, Ocupação, Exploração.",
+        },
+    },
+
+    68: {
+        "tema": "Guerra do Vietnã e Guerra Fria",
+        "subtema": "Disputas bipolares e blocos",
+        "habilidade_bncc": "EF09HI24, EM13CHS604",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o vínculo do Vietnã com a Guerra Fria: blocos capitalista e socialista financiavam "
+            "grupos conforme seus interesses. As demais alternativas cometem erros históricos (Big Stick, "
+            "URSS 'colonialista', FLN 'financiada pelos EUA')."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra articulação Guerra Fria + descolonização."
+        ),
+        "resolucao": [
+            "Descarte B: Big Stick é política estadunidense do início do séc. XX na América Latina.",
+            "Descarte C: URSS não era 'governo colonialista'; apoiava anticoloniais.",
+            "Descarte D: FLN foi frente vietnamita/argelina anticolonial, não pró-EUA.",
+            "Marque A: disputa entre blocos.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Ambos os blocos financiavam grupos conforme interesses geopolíticos."),
+            "B": ("ERRADA", "Big Stick é anterior e voltada à América Latina."),
+            "C": ("ERRADA", "URSS apoiava anticolonialismo, não era colonialista."),
+            "D": ("ERRADA", "A FLN vietnamita era anticolonial e não pró-EUA."),
+        },
+        "fundamentacao": [
+            "HOBSBAWM, Eric. Era dos extremos. São Paulo: Cia. das Letras, 1995.",
+            "WESTAD, Odd Arne. A Guerra Fria: uma nova história. Rio de Janeiro: Zahar, 2018.",
+            "VIZENTINI, Paulo F. A Guerra do Vietnã. São Paulo: Ática, 2004.",
+            "GADDIS, John L. História da Guerra Fria. Rio de Janeiro: Nova Fronteira, 2006.",
+        ],
+        "teoria": (
+            "A GUERRA FRIA estruturou-se em disputas bipolares (EUA x URSS) que atravessavam as guerras "
+            "de descolonização. No Vietnã, EUA apoiaram os franceses (1946-1954), depois o regime do "
+            "Vietnã do Sul; URSS e China apoiaram o Norte. A guerra articulou anticolonialismo, "
+            "nacionalismo, socialismo e disputa geopolítica."
+        ),
+        "padroes_banca": (
+            "O INEP cobra domínio dos conceitos-chave da Guerra Fria."
+        ),
+        "pegadinhas": [
+            "Confundir Big Stick com Doutrina Truman.",
+            "Chamar URSS de 'colonialista'.",
+            "Inverter alianças.",
+        ],
+        "erros_comuns": (
+            "Marcar D por não conhecer a FLN."
+        ),
+        "dica_estrategica": (
+            "Guerra Fria = disputa por hegemonia via clientes locais."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Doutrina Truman (1947):\n"
+            "A) contenção do comunismo;\n"
+            "B) fim da ONU; C) descolonização africana; D) unificação alemã. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Big Stick foi política de:\n"
+            "A) Theodore Roosevelt para América Latina; B) Truman para Ásia; "
+            "C) Reagan para África; D) Wilson para Europa. → A",
+            "Q2. A FLN argelina lutou contra:\n"
+            "A) França (independência); B) EUA; C) URSS; D) Alemanha. → A",
+            "Q3. Ho Chi Minh fundou o:\n"
+            "A) Viet Minh (1941); B) Kuomintang; C) Sino-japonês; D) EZLN. → A",
+        ],
+        "resumo": {
+            "regra": "Guerra Fria = disputa bipolar via clientes locais.",
+            "excecoes": "Não-alinhados (Bandung, 1955) tentavam via alternativa.",
+            "palavra_chave": "Blocos + interesses.",
+            "artigo": "HOBSBAWM (1995); WESTAD (2018).",
+            "mnemonico": "B.I.C.: Blocos, Interesses, Clientes.",
+        },
+    },
+
+    69: {
+        "tema": "Independência da Índia e avaliação processual",
+        "subtema": "Análise contínua de fontes múltiplas",
+        "habilidade_bncc": "EF09HI25, EM13CHS603",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra AVALIAÇÃO PROCESSUAL + tema da independência da Índia. A resposta D usa "
+            "análise de charges/documentos/mapas nas DIFERENTES etapas + articula com rivalidades "
+            "étnicas e interesses britânicos. Alternativas erradas concentram em um momento (fim, "
+            "início) ou desviam o tema (domínio francês)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra o entendimento de que processual = ao LONGO da sequência + tema coerente."
+        ),
+        "resolucao": [
+            "Descarte A: 'domínio francês' desvia (Índia foi britânica).",
+            "Descarte B: 'início' + lista de exercícios = diagnóstica.",
+            "Descarte C: 'final' + prova = somativa.",
+            "Marque D: análise contínua de múltiplas fontes = processual.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Índia foi britânica, não francesa."),
+            "B": ("ERRADA", "'Início' + lista = diagnóstica, não processual."),
+            "C": ("ERRADA", "'Final' + prova = somativa."),
+            "D": ("CORRETA", "Análise de fontes ao longo da sequência = processual."),
+        },
+        "fundamentacao": [
+            "PERRENOUD, Philippe. Avaliação: da excelência à regulação. Porto Alegre: Artmed, 1999.",
+            "GUHA, Ramachandra. Índia depois de Gandhi. São Paulo: Cia. das Letras, 2020.",
+            "CHAKRABARTY, Dipesh. Provincializando a Europa. Belo Horizonte: UFMG, 2019.",
+            "HOBSBAWM, Eric. Era dos extremos. São Paulo: Cia. das Letras, 1995.",
+        ],
+        "teoria": (
+            "A INDEPENDÊNCIA DA ÍNDIA (1947) resultou de longa mobilização (Gandhi, Nehru, Jinnah). A "
+            "partição em Índia e Paquistão gerou massacres com estimativas superiores a 1 milhão de "
+            "mortos e deslocamento de 15 milhões. Guha (2020) e Chakrabarty (2019) são referências. "
+            "Avaliação processual acompanha a construção do conhecimento em cada etapa."
+        ),
+        "padroes_banca": (
+            "O INEP cobra pareamento avaliação-tema."
+        ),
+        "pegadinhas": [
+            "Confundir Índia com Indochina francesa.",
+            "Concentrar avaliação em um só momento.",
+            "Achar que prova é 'processual'.",
+        ],
+        "erros_comuns": (
+            "Marcar C por associar 'documentário' a processo."
+        ),
+        "dica_estrategica": (
+            "Processual = ao LONGO da sequência + múltiplas fontes."
+        ),
+        "variacao": (
+            "(Estilo INEP) A partição de 1947:\n"
+            "A) unificou o sul-asiático;\n"
+            "B) criou Índia e Paquistão; C) libertou Bangladesh imediatamente; D) fundou a Índia socialista. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Bangladesh independente foi em:\n"
+            "A) 1947; B) 1971; C) 1965; D) 2000. → B",
+            "Q2. Chakrabarty (2019) propõe:\n"
+            "A) provincializar a Europa; B) universalizar Kant; C) esquecer a Índia; D) apenas nomeação. → A",
+            "Q3. Guha (2020) é referência para:\n"
+            "A) Índia contemporânea; B) Roma antiga; C) Renascimento italiano; D) Guerra do Peloponeso. → A",
+        ],
+        "resumo": {
+            "regra": "Avaliação processual = múltiplas etapas + fontes diversas.",
+            "excecoes": "Um instrumento pode compor várias etapas se ajustado.",
+            "palavra_chave": "Charges + documentos + mapas + etapas.",
+            "artigo": "PERRENOUD (1999).",
+            "mnemonico": "P.E.M.: Processual + Etapas + Múltiplas fontes.",
+        },
+    },
+
+    70: {
+        "tema": "Feminismo interseccional e Chica da Silva",
+        "subtema": "Continuidades das desigualdades de gênero",
+        "habilidade_bncc": "EF08HI19, EM13CHS502",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a leitura FEMINISTA INTERSECCIONAL: relações de poder persistem em novas formas. "
+            "As demais alternativas ora romantizam ('liberdade consagrada', 'rainha do lar'), ora "
+            "desconectam gênero de política."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão de que a desigualdade de gênero é histórica e persistente, "
+            "manifestando-se em interseccionalidade com raça e classe."
+        ),
+        "resolucao": [
+            "Descarte A: 'liberdade consagrada' desconhece desigualdades atuais.",
+            "Descarte C: 'rainha do lar' romantiza a divisão tradicional.",
+            "Descarte D: desconectar gênero de política é essencialismo.",
+            "Marque B: relações de poder persistem em intersecções.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Desigualdades atuais persistem; não há 'liberdade consagrada' plena."),
+            "B": ("CORRETA", "Formas conjugais mudam, mas relações de poder interseccionais persistem."),
+            "C": ("ERRADA", "'Rainha do lar' é essencialismo tradicional."),
+            "D": ("ERRADA", "Desconecta gênero de política."),
+        },
+        "fundamentacao": [
+            "FURTADO, Júnia Ferreira. Chica da Silva e o contratador de diamantes. São Paulo: Cia. das Letras, 2003.",
+            "CRENSHAW, Kimberlé. Documento para o encontro de especialistas em aspectos da discriminação racial relativos ao gênero. Revista Estudos Feministas, v. 10, n. 1, 2002.",
+            "COLLINS, Patricia Hill. Pensamento feminista negro. São Paulo: Boitempo, 2019.",
+            "SCOTT, Joan W. Gênero: uma categoria útil de análise histórica. Educação e Realidade, v. 20, n. 2, 1995.",
+        ],
+        "teoria": (
+            "A HISTORIOGRAFIA FEMINISTA (Scott, 1995; Perrot, 2007) e a INTERSECCIONALIDADE (Crenshaw, "
+            "2002; Collins, 2019) mostram que as desigualdades de gênero se articulam a raça, classe e "
+            "outros marcadores. O caso de Chica da Silva (Furtado, 2003) exemplifica a complexidade: "
+            "mulher negra alforriada que negociou dentro de um sistema patriarcal e escravista."
+        ),
+        "padroes_banca": (
+            "O INEP cobra leitura crítica e interseccional."
+        ),
+        "pegadinhas": [
+            "Achar que direitos = plenitude alcançada.",
+            "Romantizar 'lar' como poder feminino.",
+            "Desconectar corpo e política.",
+        ],
+        "erros_comuns": (
+            "Marcar A por otimismo ingênuo sobre direitos atuais."
+        ),
+        "dica_estrategica": (
+            "Feminismo interseccional = poder persiste em camadas + mudanças históricas."
+        ),
+        "variacao": (
+            "(Estilo INEP) Crenshaw (2002) formula:\n"
+            "A) interseccionalidade;\n"
+            "B) marxismo estruturalista; C) positivismo; D) fenomenologia. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Junia Furtado (2003) reescreve:\n"
+            "A) o mito sensualizado de Chica da Silva; B) a vida de Anita Garibaldi; "
+            "C) a biografia de Zumbi; D) a de Getúlio Vargas. → A",
+            "Q2. Collins (2019) discute:\n"
+            "A) pensamento feminista negro; B) direito romano; C) genealogia inca; D) micro-história europeia. → A",
+            "Q3. Scott (1995) trata gênero como:\n"
+            "A) sinônimo de biologia; B) categoria útil de análise histórica; C) mera cultura; D) irrelevante. → B",
+        ],
+        "resumo": {
+            "regra": "Interseccionalidade = raça + gênero + classe.",
+            "excecoes": "Direitos avançaram, mas desigualdades persistem.",
+            "palavra_chave": "Poder + intersecções + camadas.",
+            "artigo": "CRENSHAW (2002); COLLINS (2019); SCOTT (1995).",
+            "mnemonico": "R.G.C.: Raça, Gênero, Classe.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -5628,7 +6019,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 13 (Q01 a Q65)",
+        "3. Análise completa – LOTES 1 a 14 (Q01 a Q70)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -5666,14 +6057,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 13 (Q01 a Q65)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 14 (Q01 a Q70)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 66)):
+    for num in list(range(1, 71)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -5793,7 +6184,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-13")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-14")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -5854,7 +6245,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 13 (Q01 a Q65)",
+              "3. Análise completa – LOTES 1 a 14 (Q01 a Q70)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -5893,7 +6284,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 13 (Q01 a Q65)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 14 (Q01 a Q70)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -5902,7 +6293,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 66)):
+    for num in list(range(1, 71)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -5997,7 +6388,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-13", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-14", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
