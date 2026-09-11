@@ -6799,25 +6799,24 @@ def gerar_docx(destino: Path):
     # ---------- SUMÁRIO ----------
     bloco_titulo("SUMÁRIO")
     for txt in [
-        "1. Estrutura da prova e distribuição",
-        "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))",
-        "4. Índice completo das 80 questões (enunciado + alternativas)",
-        "5. Referências ABNT consolidadas",
+        "Estrutura da prova e distribuição",
+        "Padrão de análise (15 blocos)",
+        "Índice completo das 80 questões (enunciado + alternativas)",
+        "Referências ABNT consolidadas",
     ]:
-        doc.add_paragraph(txt, style="List Number")
+        doc.add_paragraph(txt, style="List Bullet")
     doc.add_page_break()
 
-    # ---------- 1. Estrutura ----------
-    bloco_titulo("1. ESTRUTURA DA PROVA")
+    # ---------- Estrutura ----------
+    bloco_titulo("ESTRUTURA DA PROVA")
     paragrafo("Caderno PND 2025 – História (Licenciatura) – TIPO 01 (PV_1):")
     paragrafo("• Formação Geral Docente: questões 01 a 30 (objetivas) + 1 questão discursiva")
     paragrafo("• Componente Específico da Área: questões 31 a 80 (objetivas)")
     paragrafo("• Questionário de Percepção da Prova: 09 questões objetivas (não conteudísticas)")
     paragrafo("Total de itens objetivos analisados neste manual: 80.")
 
-    # ---------- 2. Padrão ----------
-    bloco_titulo("2. PADRÃO DE ANÁLISE (15 BLOCOS)")
+    # ---------- Padrão ----------
+    bloco_titulo("PADRÃO DE ANÁLISE (15 BLOCOS)")
     for txt in [
         "1) Identificação (disciplina/tema/subtema/BNCC)",
         "2) Enunciado no padrão original",
@@ -6838,14 +6837,7 @@ def gerar_docx(destino: Path):
         doc.add_paragraph(txt, style="List Bullet")
     doc.add_page_break()
 
-    # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))")
-    doc.add_paragraph(
-        "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
-        "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
-        "do INEP para validação final."
-    )
-
+    # ---------- Análise por questão (sem cabeçalho de seção – conforme edição do usuário) ----------
     for num in list(range(1, 81)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
@@ -6945,11 +6937,10 @@ def gerar_docx(destino: Path):
 
     # ---------- 4. Índice completo ----------
     doc.add_page_break()
-    bloco_titulo("4. ÍNDICE COMPLETO – 80 QUESTÕES (ENUNCIADO + ALTERNATIVAS)")
+    bloco_titulo("ÍNDICE COMPLETO – 80 QUESTÕES (ENUNCIADO + ALTERNATIVAS)")
     doc.add_paragraph(
-        "Reprodução dos 80 itens objetivos do caderno (Formação Geral Docente + Componente "
-        "Específico – História), para consulta e para prosseguir com a análise em lotes "
-        "subsequentes (Q06 em diante)."
+        "Reprodução dos 80 itens objetivos do caderno (Formação Geral Docente + "
+        "Componente Específico – História), para consulta rápida."
     )
 
     for q in QUESTOES:
@@ -6966,7 +6957,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-16 – COMPLETO")
+    bloco_titulo("REFERÊNCIAS ABNT CONSOLIDADAS")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -7025,16 +7016,15 @@ def gerar_pdf(destino: Path):
 
     # Sumário
     story.append(Paragraph("SUMÁRIO", h_bloco))
-    for t in ["1. Estrutura da prova e distribuição",
-              "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))",
-              "4. Índice completo das 80 questões",
-              "5. Referências ABNT consolidadas"]:
+    for t in ["Estrutura da prova e distribuição",
+              "Padrão de análise (15 blocos)",
+              "Índice completo das 80 questões",
+              "Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
     story.append(PageBreak())
 
-    # 1. Estrutura
-    story.append(Paragraph("1. ESTRUTURA DA PROVA", h_bloco))
+    # Estrutura
+    story.append(Paragraph("ESTRUTURA DA PROVA", h_bloco))
     for t in [
         "Formação Geral Docente: questões 01 a 30 (objetivas) + 1 questão discursiva.",
         "Componente Específico da Área: questões 31 a 80 (objetivas).",
@@ -7043,8 +7033,8 @@ def gerar_pdf(destino: Path):
     ]:
         story.append(Paragraph("• " + t, body))
 
-    # 2. Padrão
-    story.append(Paragraph("2. PADRÃO DE ANÁLISE (15 BLOCOS)", h_bloco))
+    # Padrão
+    story.append(Paragraph("PADRÃO DE ANÁLISE (15 BLOCOS)", h_bloco))
     for t in [
         "1) Identificação (disciplina/tema/subtema/BNCC)",
         "2) Enunciado no padrão original",
@@ -7065,12 +7055,7 @@ def gerar_pdf(destino: Path):
         story.append(Paragraph(t, body))
     story.append(PageBreak())
 
-    # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))", h_bloco))
-    story.append(Paragraph(
-        "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
-        "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
-
+    # Análises por questão (sem cabeçalho de seção – conforme edição do usuário)
     cell_style = ParagraphStyle("cell", parent=body, fontSize=10, leading=13, alignment=TA_LEFT)
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
@@ -7157,7 +7142,7 @@ def gerar_pdf(destino: Path):
 
     # 4. Índice completo
     story.append(PageBreak())
-    story.append(Paragraph("4. ÍNDICE COMPLETO — 80 QUESTÕES (ENUNCIADO + ALTERNATIVAS)", h_bloco))
+    story.append(Paragraph("ÍNDICE COMPLETO — 80 QUESTÕES (ENUNCIADO + ALTERNATIVAS)", h_bloco))
     story.append(Paragraph(
         "Reprodução dos 80 itens objetivos do caderno (Formação Geral Docente + Componente "
         "Específico – História).", body))
@@ -7170,7 +7155,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-16 – COMPLETO", h_bloco))
+    story.append(Paragraph("REFERÊNCIAS ABNT CONSOLIDADAS", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
