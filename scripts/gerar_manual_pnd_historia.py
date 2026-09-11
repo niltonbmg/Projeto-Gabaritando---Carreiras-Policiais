@@ -5955,6 +5955,397 @@ ANALISES = {
         },
     },
 
+    76: {
+        "tema": "Negacionismo histórico e charge crítica",
+        "subtema": "Escravidão e revisionismos em redes sociais",
+        "habilidade_bncc": "EM13CHS603, EM13CHS502",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "A charge ironiza NEGACIONISMOS que manipulam fontes e ganham escala em redes sociais. As "
+            "demais alternativas atribuem à charge posturas positivas (crítica, valorização) que "
+            "estão fora do sentido irônico."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra reconhecer que a ironia da charge DENUNCIA — logo, seu alvo é o "
+            "negacionismo, não uma virtude."
+        ),
+        "resolucao": [
+            "Descarte A: 'usos críticos' seriam positivos; a charge critica algo negativo.",
+            "Descarte B: 'valorizar memórias silenciadas' é virtuoso, sem ironia.",
+            "Descarte D: 'novas leituras com fontes recentes' é neutro/positivo.",
+            "Marque C: negacionismos + manipulação + redes sociais.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "'Usos críticos' são positivos; a charge ironiza problema."),
+            "B": ("ERRADA", "'Valorizar memórias silenciadas' é finalidade virtuosa."),
+            "C": ("CORRETA", "Alvo da ironia: negacionismos apoiados em manipulação e redes sociais."),
+            "D": ("ERRADA", "'Novas leituras' com fontes recentes é neutro; não é o alvo da ironia."),
+        },
+        "fundamentacao": [
+            "TRAVERSO, Enzo. O passado, modos de usar. Lisboa: Unipop, 2012.",
+            "SCHWARCZ, Lilia. Sobre o autoritarismo brasileiro. São Paulo: Cia. das Letras, 2019.",
+            "REIS, João José. Rebelião escrava no Brasil. São Paulo: Cia. das Letras, 2003.",
+            "GONÇALVES E SILVA, Petronilha B. Aprender, ensinar e relações étnico-raciais no Brasil. Educação, v. 30, 2007.",
+        ],
+        "teoria": (
+            "Charges são fontes iconográficas com forte carga discursiva. Traverso (2012) analisa os "
+            "'usos públicos do passado'. Negacionismos sobre a escravidão brasileira (Nabuco já denunciava "
+            "no séc. XIX) reaparecem em redes sociais com manipulação seletiva de fontes."
+        ),
+        "padroes_banca": (
+            "O INEP cobra leitura irônica + identificação do alvo."
+        ),
+        "pegadinhas": [
+            "Confundir alvo da ironia com virtude.",
+            "Achar que 'novas leituras' é o alvo.",
+            "Reduzir charge a informação.",
+        ],
+        "erros_comuns": (
+            "Marcar A por associar 'crítica' a positividade."
+        ),
+        "dica_estrategica": (
+            "Ironia = crítica → o alvo é o problema, não a solução."
+        ),
+        "variacao": (
+            "(Estilo INEP) Negacionismo sobre a escravidão consiste em:\n"
+            "A) reconhecer a violência e reparar;\n"
+            "B) minimizar, relativizar ou negar dados históricos consolidados;\n"
+            "C) valorizar quilombos; D) publicar arquivos. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Charge é fonte:\n"
+            "A) neutra; B) discursiva, com posição; C) científica; D) apenas ilustrativa. → B",
+            "Q2. Traverso (2012) trata de:\n"
+            "A) usos do passado; B) direito romano; C) genética; D) filologia. → A",
+            "Q3. Redes sociais amplificam:\n"
+            "A) apenas ciência; B) inclusive negacionismos; C) só filantropia; D) só arte. → B",
+        ],
+        "resumo": {
+            "regra": "Charge irônica denuncia o problema; alvo = negativo.",
+            "excecoes": "Charges podem, em outros contextos, celebrar.",
+            "palavra_chave": "Negacionismo + manipulação + redes.",
+            "artigo": "TRAVERSO (2012).",
+            "mnemonico": "N.M.R.: Negacionismo + Manipulação + Redes sociais.",
+        },
+    },
+
+    77: {
+        "tema": "Escravidão transatlântica moderna",
+        "subtema": "Organização e lucro das potências europeias",
+        "habilidade_bncc": "EF07HI14, EM13CHS502; Lei 10.639/03",
+        "gabarito": "A",
+        "nivel": "Fácil-Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a leitura HISTORICAMENTE CORRETA: potências europeias ORGANIZARAM e LUCRARAM "
+            "com o tráfico. Alternativas erradas equivocam-se com a Antiguidade (B), invertem "
+            "responsabilidades (C, D)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a rejeição de teses revisionistas que 'africanizam' a culpa pela escravidão."
+        ),
+        "resolucao": [
+            "Descarte B: relacionar Antiguidade e escravidão transatlântica é anacronismo.",
+            "Descarte C: 'dinâmicas internas africanas' é a tese negacionista.",
+            "Descarte D: 'interesses culturais dos próprios africanos' inverte a responsabilidade.",
+            "Marque A: potências europeias organizaram e lucraram.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Estados europeus organizaram o tráfico como parte da acumulação capitalista."),
+            "B": ("ERRADA", "Servidão antiga difere estruturalmente do escravismo moderno."),
+            "C": ("ERRADA", "'Dinâmicas internas' isenta as potências europeias."),
+            "D": ("ERRADA", "'Interesses culturais africanos' é tese negacionista."),
+        },
+        "fundamentacao": [
+            "WILLIAMS, Eric. Capitalismo e escravidão. São Paulo: Cia. das Letras, 2012.",
+            "SILVA, Alberto da Costa e. A África explicada aos meus filhos. Rio de Janeiro: Agir, 2009.",
+            "ALENCASTRO, Luiz Felipe. O trato dos viventes: formação do Brasil no Atlântico Sul. São Paulo: Cia. das Letras, 2000.",
+            "GORENDER, Jacob. O escravismo colonial. São Paulo: Ática, 1978.",
+        ],
+        "teoria": (
+            "O TRÁFICO TRANSATLÂNTICO (séc. XVI-XIX) escravizou cerca de 12 milhões de africanos, "
+            "dos quais 4,8 milhões vieram para o Brasil. Foi organizado por Portugal, Espanha, "
+            "Holanda, Inglaterra, França e outros. Williams (2012) demonstra o vínculo entre "
+            "escravidão e acumulação capitalista britânica; Alencastro (2000) analisa o Atlântico Sul."
+        ),
+        "padroes_banca": (
+            "O INEP cobra a leitura correta contra revisionismos."
+        ),
+        "pegadinhas": [
+            "'Africanizar' a culpa.",
+            "Anacronizar com Antiguidade.",
+            "Reduzir a cultura.",
+        ],
+        "erros_comuns": (
+            "Marcar C por confundir tráfico interno africano com o transatlântico."
+        ),
+        "dica_estrategica": (
+            "Escravismo moderno = responsabilidade estruturante das potências europeias."
+        ),
+        "variacao": (
+            "(Estilo INEP) Williams (2012) demonstrou que:\n"
+            "A) escravidão financiou a Revolução Industrial britânica;\n"
+            "B) escravidão foi neutra economicamente; C) inglaterra nunca lucrou; D) escravidão era pequena. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Alencastro (2000) analisa:\n"
+            "A) Atlântico Sul e formação do Brasil colonial; B) Renascimento italiano; C) Reforma; D) Iluminismo. → A",
+            "Q2. Lei Áurea foi assinada em:\n"
+            "A) 1888; B) 1850; C) 1871; D) 1889. → A",
+            "Q3. Lei do Ventre Livre foi de:\n"
+            "A) 1871; B) 1888; C) 1850; D) 1889. → A",
+        ],
+        "resumo": {
+            "regra": "Escravismo transatlântico = organização e lucro das potências europeias.",
+            "excecoes": "Havia participação de intermediários africanos, mas o motor era europeu.",
+            "palavra_chave": "Potências europeias + lucro.",
+            "artigo": "WILLIAMS (2012); ALENCASTRO (2000).",
+            "mnemonico": "P.O.L.: Potências, Organização, Lucro.",
+        },
+    },
+
+    78: {
+        "tema": "Revolução do Haiti e Trouillot",
+        "subtema": "Silêncios da história eurocêntrica",
+        "habilidade_bncc": "EF08HI14, EM13CHS502",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão da tese de Trouillot: a HISTORIOGRAFIA EUROCÊNTRICA silencia o "
+            "PROTAGONISMO haitiano. As demais alternativas invertem a proposta."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a leitura crítica da produção do silenciamento historiográfico."
+        ),
+        "resolucao": [
+            "Descarte A: defender protagonismo europeu contradiz Trouillot.",
+            "Descarte B: 'racionalismo imparcial' não é o alvo específico.",
+            "Descarte C: defender narrativa eurocêntrica contradiz o texto.",
+            "Marque D: criticar a negação do protagonismo popular haitiano.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Contradiz Trouillot: Haiti é obra dos africanos e afrodescendentes."),
+            "B": ("ERRADA", "Não é sobre racionalismo científico em geral."),
+            "C": ("ERRADA", "Trouillot CRITICA a narrativa eurocêntrica."),
+            "D": ("CORRETA", "Criticar a NEGAÇÃO do protagonismo popular haitiano é o cerne."),
+        },
+        "fundamentacao": [
+            "TROUILLOT, Michel-Rolph. Silenciando o passado: poder e a produção da história. Curitiba: Huya, 2016.",
+            "JAMES, C. L. R. Os jacobinos negros. São Paulo: Boitempo, 2000.",
+            "DUBOIS, Laurent. Avengers of the New World: The Story of the Haitian Revolution. Cambridge: Harvard University Press, 2004.",
+            "FISCHER, Sibylle. Modernity Disavowed: Haiti and the Cultures of Slavery in the Age of Revolution. Durham: Duke University Press, 2004.",
+        ],
+        "teoria": (
+            "A REVOLUÇÃO DO HAITI (1791-1804) foi a única revolução escrava vitoriosa da história, "
+            "resultando na abolição da escravidão e na independência do país. Toussaint Louverture e "
+            "Jean-Jacques Dessalines lideraram o processo. Trouillot (2016) e James (2000) mostram como "
+            "a historiografia ocidental invisibilizou esse feito por não conseguir integrar a agência "
+            "negra à narrativa moderna."
+        ),
+        "padroes_banca": (
+            "O INEP cobra articulação Haiti + Trouillot + silenciamento."
+        ),
+        "pegadinhas": [
+            "Confundir 'crítica' com 'defesa'.",
+            "Reduzir Trouillot a 'racionalismo científico'.",
+            "Aceitar protagonismo europeu no Haiti.",
+        ],
+        "erros_comuns": (
+            "Marcar B por associar Trouillot a 'imparcialidade'."
+        ),
+        "dica_estrategica": (
+            "Trouillot = silêncios da história eurocêntrica + agência dos subalternizados."
+        ),
+        "variacao": (
+            "(Estilo INEP) C. L. R. James (2000), em 'Os jacobinos negros', discute:\n"
+            "A) Revolução Francesa isoladamente;\n"
+            "B) Revolução do Haiti e Toussaint Louverture; C) Revolução Russa; D) Revolução Chinesa. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. A independência do Haiti é de:\n"
+            "A) 1804; B) 1791; C) 1791-1804 (processo); D) 1889. → C (processo).",
+            "Q2. Dessalines foi:\n"
+            "A) líder haitiano que proclamou a independência em 1804; B) presidente cubano; "
+            "C) rei francês; D) príncipe português. → A",
+            "Q3. Trouillot argumenta que o Haiti é silenciado por:\n"
+            "A) narrativas eurocêntricas; B) escassez documental; C) desinteresse cultural; D) causas naturais. → A",
+        ],
+        "resumo": {
+            "regra": "Haiti = revolução vitoriosa; Trouillot denuncia o silenciamento.",
+            "excecoes": "Historiografia recente vem reparando a lacuna.",
+            "palavra_chave": "Silenciamento + protagonismo popular.",
+            "artigo": "TROUILLOT (2016); JAMES (2000).",
+            "mnemonico": "H.T.P.: Haiti + Trouillot + Protagonismo popular.",
+        },
+    },
+
+    79: {
+        "tema": "Mulheres nas lutas anticoloniais africanas – PAIGC",
+        "subtema": "Duplo desafio (combate + gênero)",
+        "habilidade_bncc": "EF09HI25, EM13CHS604",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra reconhecimento do DUPLO DESAFIO enfrentado pelas mulheres do PAIGC: combater o "
+            "colonialismo E romper com papéis de gênero. As demais alternativas invisibilizam, "
+            "hierarquizam ou romantizam."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra articulação anticolonialismo + gênero."
+        ),
+        "resolucao": [
+            "Descarte A: participação NÃO foi 'preservada' após a colonização (foi restringida).",
+            "Descarte B: 'limitada a funções domésticas' invisibiliza atuação política.",
+            "Descarte C: reduzir a 'enfermeiras' hierarquiza subalternamente.",
+            "Marque D: duplo desafio (combate + gênero).",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "A colonização restringiu, e não 'preservou', a participação feminina."),
+            "B": ("ERRADA", "Reduz a participação política ao doméstico."),
+            "C": ("ERRADA", "Subalterniza mulheres a papéis de suporte."),
+            "D": ("CORRETA", "Duplo desafio = combate anticolonial + ruptura de papéis de gênero."),
+        },
+        "fundamentacao": [
+            "URDANG, Stephanie. Fighting Two Colonialisms: Women in Guinea-Bissau. New York: Monthly Review Press, 1979.",
+            "CABRAL, Amílcar. A arma da teoria: unidade e luta. Rio de Janeiro: Codecri, 1980.",
+            "UNESCO. História Geral da África, Vol. VIII: África desde 1935. Brasília: UNESCO, 2010.",
+            "OYĚWÙMÍ, Oyèrónkẹ́. A invenção das mulheres. Rio de Janeiro: Bazar do Tempo, 2021.",
+        ],
+        "teoria": (
+            "O PAIGC (Partido Africano da Independência da Guiné e Cabo Verde), fundado por Amílcar "
+            "Cabral em 1956, mobilizou também mulheres em combate. Urdang (1979) documentou o 'duplo "
+            "colonialismo' — colonial e patriarcal. Oyěwùmí (2021) discute a construção do gênero em "
+            "sociedades africanas."
+        ),
+        "padroes_banca": (
+            "O INEP cobra articulação anticolonial + gênero + agência."
+        ),
+        "pegadinhas": [
+            "Achar que colonização 'preservou' saberes.",
+            "Reduzir a mulheres a funções domésticas.",
+            "Subalternizar a papéis de suporte.",
+        ],
+        "erros_comuns": (
+            "Marcar C por hábito de ver mulheres em papéis auxiliares."
+        ),
+        "dica_estrategica": (
+            "Anticolonial + gênero = duplo desafio."
+        ),
+        "variacao": (
+            "(Estilo INEP) Amílcar Cabral, líder do PAIGC, defendia:\n"
+            "A) resistência armada + revolução cultural;\n"
+            "B) aliança total com Portugal; C) retorno ao tribalismo; D) integração à França. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. A independência de Guiné-Bissau foi em:\n"
+            "A) 1974; B) 1975; C) 1973 (proclamada); D) A e C. → D",
+            "Q2. Cabo Verde tornou-se independente em:\n"
+            "A) 1975; B) 1974; C) 1978; D) 1980. → A",
+            "Q3. Oyěwùmí (2021) discute:\n"
+            "A) a invenção das mulheres em contexto colonial; B) direito romano; C) matemática; D) hebraico. → A",
+        ],
+        "resumo": {
+            "regra": "Mulheres do PAIGC = duplo colonialismo enfrentado.",
+            "excecoes": "Cada país teve suas dinâmicas.",
+            "palavra_chave": "Duplo desafio + gênero.",
+            "artigo": "URDANG (1979); UNESCO (2010); OYĚWÙMÍ (2021).",
+            "mnemonico": "P.A.I.G.C.: Protagonismo Anticolonial e Insurgência de Gênero em Combate.",
+        },
+    },
+
+    80: {
+        "tema": "Representação, gênero e violência em imagens históricas",
+        "subtema": "Protagonismo político feminino africano",
+        "habilidade_bncc": "EF09HI25, EM13CHS502",
+        "gabarito": "B",
+        "nivel": "Médio",
+        "tipo": "Prática (justificativa pedagógica)",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a justificativa pedagógica: RECONHECER protagonismo político das mulheres "
+            "africanas + PROBLEMATIZAR representações naturalizadas quando associadas a homens. "
+            "Alternativas erradas subordinam mulheres (A), desviam para cultura juvenil (C) ou "
+            "essencializam violência (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a articulação REPRESENTAÇÃO + GÊNERO + VIOLÊNCIA NATURALIZADA."
+        ),
+        "resolucao": [
+            "Descarte A: 'ocupar posições de apoio aos homens' é o oposto do protagonismo.",
+            "Descarte C: 'jogos e séries juvenis' é desvio.",
+            "Descarte D: essencializar guerra na história africana é estereótipo.",
+            "Marque B: protagonismo + problematizar naturalização de violência masculina.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Subordina mulheres a homens; contraria o protagonismo mostrado."),
+            "B": ("CORRETA", "Protagonismo político + problematização de representações naturalizadas."),
+            "C": ("ERRADA", "'Jogos e séries' é desvio."),
+            "D": ("ERRADA", "Essencializa história africana como violência."),
+        },
+        "fundamentacao": [
+            "OYĚWÙMÍ, Oyèrónkẹ́. A invenção das mulheres. Rio de Janeiro: Bazar do Tempo, 2021.",
+            "UNESCO. História Geral da África, VIII. Brasília: UNESCO, 2010.",
+            "AMADIUME, Ifi. Male Daughters, Female Husbands: Gender and Sex in an African Society. Londres: Zed Books, 1987.",
+            "BUTLER, Judith. Problemas de gênero. Rio de Janeiro: Civilização Brasileira, 2003.",
+        ],
+        "teoria": (
+            "Estudos de gênero africanos (Oyěwùmí, 2021; Amadiume, 1987) desafiam a naturalização do "
+            "binarismo ocidental e reconhecem a agência política feminina. Butler (2003) fornece "
+            "quadro conceitual sobre performatividade de gênero. Representar mulheres armadas expõe a "
+            "NATURALIZAÇÃO da violência quando associada a homens e desnaturaliza estereótipos de "
+            "gênero."
+        ),
+        "padroes_banca": (
+            "O INEP cobra justificativa pedagógica coerente com estudos de gênero."
+        ),
+        "pegadinhas": [
+            "Subordinar mulheres a apoio.",
+            "Desviar para cultura juvenil.",
+            "Essencializar violência.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar África a 'guerra'."
+        ),
+        "dica_estrategica": (
+            "Representação + gênero = protagonismo + problematização de naturalização."
+        ),
+        "variacao": (
+            "(Estilo INEP) Ifi Amadiume (1987) discute:\n"
+            "A) construções de gênero em sociedades africanas fora do binarismo ocidental;\n"
+            "B) Renascimento italiano; C) direito romano; D) Iluminismo. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Oyěwùmí (2021) argumenta que:\n"
+            "A) gênero, tal como definido no Ocidente, não é categoria universal; "
+            "B) gênero é biologia pura; C) gênero é irrelevante; D) apenas mulheres têm gênero. → A",
+            "Q2. Butler (2003) formula:\n"
+            "A) performatividade de gênero; B) essência feminina; "
+            "C) determinismo biológico; D) cristianismo primitivo. → A",
+            "Q3. A guerra colonial em Guiné-Bissau ocorreu entre:\n"
+            "A) 1963-1974; B) 1900-1910; C) 1990-2000; D) 1975-1985. → A",
+        ],
+        "resumo": {
+            "regra": "Representação de mulheres em combate = protagonismo + problematização da violência naturalizada em homens.",
+            "excecoes": "Contexto pedagógico deve mediar sensibilidades.",
+            "palavra_chave": "Protagonismo + problematização + gênero.",
+            "artigo": "OYĚWÙMÍ (2021); AMADIUME (1987); BUTLER (2003).",
+            "mnemonico": "P.P.G.: Protagonismo, Problematização, Gênero.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -6410,7 +6801,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 15 (Q01 a Q75)",
+        "3. Análise completa – LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -6448,14 +6839,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 15 (Q01 a Q75)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 76)):
+    for num in list(range(1, 81)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -6575,7 +6966,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-15")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-16 – COMPLETO")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -6636,7 +7027,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 15 (Q01 a Q75)",
+              "3. Análise completa – LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -6675,7 +7066,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 15 (Q01 a Q75)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 16 – COMPLETO (Q01 a Q80 (TODAS))", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -6684,7 +7075,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 76)):
+    for num in list(range(1, 81)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -6779,7 +7170,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-15", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-16 – COMPLETO", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
