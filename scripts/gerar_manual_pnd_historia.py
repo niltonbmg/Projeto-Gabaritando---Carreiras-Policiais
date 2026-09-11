@@ -6737,6 +6737,114 @@ def _hex(c):
     return RGBColor(int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16))
 
 
+def _inserir_paginacao(doc):
+    """Adiciona 'Página N' centralizado no rodapé de todas as seções."""
+    from docx.oxml import parse_xml
+    for section in doc.sections:
+        footer = section.footer
+        if not footer.paragraphs:
+            footer.add_paragraph()
+        p = footer.paragraphs[0]
+        # limpar
+        for r in list(p.runs):
+            r._r.getparent().remove(r._r)
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run("Página ")
+        r.font.size = Pt(9); r.font.color.rgb = _hex(AZUL_ESCURO)
+        # PAGE field
+        fld = parse_xml(
+            '<w:fldSimple xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+            'w:instr=" PAGE   \\* MERGEFORMAT "><w:r><w:rPr>'
+            '<w:sz w:val="18"/><w:color w:val="0B3D91"/></w:rPr>'
+            '<w:t>1</w:t></w:r></w:fldSimple>'
+        )
+        p._p.append(fld)
+
+
+def _adicionar_sumario_toc(doc, titulo: str = "SUMÁRIO"):
+    """Adiciona um campo TOC do Word (será preenchido ao abrir o arquivo)."""
+    from docx.oxml import parse_xml
+    # título
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    r = p.add_run(titulo); r.bold=True; r.font.size=Pt(14); r.font.color.rgb=_hex(AZUL_ESCURO)
+    # campo TOC (Word preenche ao abrir; usuário pode dar Ctrl+A → F9 para atualizar)
+    toc_p = doc.add_paragraph()
+    toc = parse_xml(
+        '<w:r xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        '<w:fldChar w:fldCharType="begin" w:dirty="true"/>'
+        '<w:instrText xml:space="preserve"> TOC \\o "1-1" \\h \\z \\u </w:instrText>'
+        '<w:fldChar w:fldCharType="separate"/>'
+        '<w:t>Clique com o botão direito sobre este texto e escolha "Atualizar campo" (F9) para gerar o sumário com as páginas das questões.</w:t>'
+        '<w:fldChar w:fldCharType="end"/>'
+        '</w:r>'
+    )
+    toc_p._p.append(toc)
+
+
+def _inserir_marca_dagua(doc, imagem_path: Path,
+                         largura_pt: float = 487.0, altura_pt: float = 476.55):
+    """Insere marca d'água centralizada em todas as páginas (via header + VML)."""
+    from docx.oxml import OxmlElement, parse_xml
+    from docx.oxml.ns import qn, nsmap
+
+    if not imagem_path.exists():
+        return
+
+    for section in doc.sections:
+        header = section.header
+        # Precisamos ter ao menos um parágrafo no cabeçalho
+        if not header.paragraphs:
+            header.add_paragraph()
+        p = header.paragraphs[0]
+
+        # Adicionar a imagem ao pacote e obter o rId
+        run = p.add_run()
+        pic = run.add_picture(str(imagem_path))
+        # Descobrir rId da imagem recém-adicionada
+        drawing = run._r.find(qn("w:drawing"))
+        blip = drawing.iter("{http://schemas.openxmlformats.org/drawingml/2006/main}blip")
+        rid = next(blip).get(qn("r:embed"))
+        # remover o drawing "normal" — vamos substituir por VML de marca d'água
+        run._r.remove(drawing)
+
+        # Montar XML VML da marca d'água (padrão Word Picture Watermark)
+        vml = f'''
+<w:pict xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        xmlns:v="urn:schemas-microsoft-com:vml"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <v:shapetype id="_x0000_t75" coordsize="21600,21600" o:spt="75" o:preferrelative="t"
+               path="m@4@5l@4@11@9@11@9@5xe" filled="f" stroked="f">
+    <v:stroke joinstyle="miter"/>
+    <v:formulas>
+      <v:f eqn="if lineDrawn pixelLineWidth 0"/>
+      <v:f eqn="sum @0 1 0"/>
+      <v:f eqn="sum 0 0 @1"/>
+      <v:f eqn="prod @2 1 2"/>
+      <v:f eqn="prod @3 21600 pixelWidth"/>
+      <v:f eqn="prod @3 21600 pixelHeight"/>
+      <v:f eqn="sum @0 0 1"/>
+      <v:f eqn="prod @6 1 2"/>
+      <v:f eqn="prod @7 21600 pixelWidth"/>
+      <v:f eqn="sum @8 21600 0"/>
+      <v:f eqn="prod @7 21600 pixelHeight"/>
+      <v:f eqn="sum @10 21600 0"/>
+    </v:formulas>
+    <v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/>
+    <o:lock v:ext="edit" aspectratio="t"/>
+  </v:shapetype>
+  <v:shape id="WordPictureWatermark" o:spid="_x0000_s2050" type="#_x0000_t75"
+    style="position:absolute;margin-left:0;margin-top:0;width:{largura_pt}pt;height:{altura_pt}pt;
+           z-index:-251657216;mso-position-horizontal:center;mso-position-horizontal-relative:margin;
+           mso-position-vertical:center;mso-position-vertical-relative:margin"
+    o:allowincell="f">
+    <v:imagedata r:id="{rid}" o:title="marca-dagua"/>
+  </v:shape>
+</w:pict>'''
+        p._p.append(parse_xml(vml))
+
+
 def gerar_docx(destino: Path):
     doc = Document()
     style = doc.styles["Normal"]
@@ -6796,15 +6904,8 @@ def gerar_docx(destino: Path):
         "PND 2025 – Prova Nacional Docente\nÁrea: HISTÓRIA – Caderno PV_1 (TIPO 01)"
     )
 
-    # ---------- SUMÁRIO ----------
-    bloco_titulo("SUMÁRIO")
-    for txt in [
-        "Estrutura da prova e distribuição",
-        "Padrão de análise (15 blocos)",
-        "Índice completo das 80 questões (enunciado + alternativas)",
-        "Referências ABNT consolidadas",
-    ]:
-        doc.add_paragraph(txt, style="List Bullet")
+    # ---------- SUMÁRIO (TOC automático) ----------
+    _adicionar_sumario_toc(doc, "SUMÁRIO")
     doc.add_page_break()
 
     # ---------- Estrutura ----------
@@ -6843,8 +6944,22 @@ def gerar_docx(destino: Path):
         a = ANALISES[num]
         doc.add_page_break()
 
-        # Bloco 1
-        bloco_titulo(f"QUESTÃO {num:02d} — {a['tema']}")
+        # Bloco 1 — Título como Heading 1 (para o TOC capturar)
+        h = doc.add_paragraph(style="Heading 1")
+        hr = h.add_run(f"QUESTÃO {num:02d} — {a['tema']}")
+        hr.bold = True
+        hr.font.size = Pt(13)
+        hr.font.color.rgb = _hex(BRANCO)
+        # Sombreamento azul no parágrafo (via shading em pPr)
+        from docx.oxml import OxmlElement
+        from docx.oxml.ns import qn
+        pPr = h._p.get_or_add_pPr()
+        shd = OxmlElement("w:shd")
+        shd.set(qn("w:val"), "clear")
+        shd.set(qn("w:color"), "auto")
+        shd.set(qn("w:fill"), AZUL_MEDIO.lstrip("#"))
+        pPr.append(shd)
+        doc.add_paragraph()
         tbl = doc.add_table(rows=6, cols=2); tbl.style = "Light Grid Accent 1"; tbl.autofit=False
         col0, col1 = Cm(4.0), Cm(12.6)
         dados = [
@@ -6963,6 +7078,11 @@ def gerar_docx(destino: Path):
         refs.update(a["fundamentacao"])
     for ref in sorted(refs):
         paragrafo("• " + ref)
+
+    # ---------- Marca d'água + numeração ----------
+    marca = BASE / "saidas" / "marca_dagua.png"
+    _inserir_marca_dagua(doc, marca)
+    _inserir_paginacao(doc)
 
     destino.parent.mkdir(parents=True, exist_ok=True)
     doc.save(destino)
