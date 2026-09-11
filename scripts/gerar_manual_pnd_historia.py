@@ -5564,6 +5564,397 @@ ANALISES = {
         },
     },
 
+    71: {
+        "tema": "Chica da Silva, gênero e violência colonial",
+        "subtema": "Cidadania e representações históricas",
+        "habilidade_bncc": "EF08HI11, EM13CHS502",
+        "gabarito": "D",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a compreensão de que a sociedade colonial exercia VIOLÊNCIA e AUTORITARISMO "
+            "sobre corpos femininos negros, com efeitos nas condições contemporâneas. Distratores "
+            "romantizam ('encantos') ou proclamam cidadania plena de forma anacrônica."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a leitura crítica da colonialidade + gênero + continuidades no presente."
+        ),
+        "resolucao": [
+            "Descarte A: 'graças aos seus encantos' romantiza e reduz a agência de Chica.",
+            "Descarte B: 'cidadania participativa' é anacronismo (não existia no séc. XVIII).",
+            "Descarte C: afirmar 'cidadania plena' hoje contradiz a realidade estatística.",
+            "Marque D: violência + autoritarismo + reflexo na contemporaneidade.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Reduz Chica a 'encantos'; anula sua agência."),
+            "B": ("ERRADA", "Anacronismo: 'cidadania participativa' não existia em 1750."),
+            "C": ("ERRADA", "'Cidadania plena' hoje contradiz desigualdades persistentes."),
+            "D": ("CORRETA", "Violência de gênero na colônia + reflexos contemporâneos."),
+        },
+        "fundamentacao": [
+            "FURTADO, Júnia Ferreira. Chica da Silva e o contratador de diamantes. São Paulo: Cia. das Letras, 2003.",
+            "MARQUESE, Rafael. Escravidão e política no Brasil. São Paulo: Contexto, 2019.",
+            "GONZALEZ, Lélia. Por um feminismo afro-latino-americano. Rio de Janeiro: Zahar, 2020.",
+            "SCHWARCZ, Lilia. Sobre o autoritarismo brasileiro. São Paulo: Cia. das Letras, 2019.",
+        ],
+        "teoria": (
+            "A escravidão colonial atuou sobre corpos por meio de violência sexual, patriarcal e "
+            "religiosa. Lélia Gonzalez (2020) formula 'amefricanidade' para pensar a herança afro-"
+            "latino-americana. Schwarcz (2019) discute o autoritarismo persistente na sociedade "
+            "brasileira. A leitura de Chica da Silva à luz da colonialidade permite reconhecer "
+            "continuidades históricas."
+        ),
+        "padroes_banca": (
+            "O INEP cobra passado-presente + colonialidade + gênero."
+        ),
+        "pegadinhas": [
+            "Romantizar 'encantos'.",
+            "Anacronismo com 'cidadania'.",
+            "Proclamar plenitude atual de direitos.",
+        ],
+        "erros_comuns": (
+            "Marcar B por soar democrático."
+        ),
+        "dica_estrategica": (
+            "Análise crítica = violência + estrutura + reflexo no presente."
+        ),
+        "variacao": (
+            "(Estilo INEP) Lélia Gonzalez (2020) propõe:\n"
+            "A) amefricanidade;\n"
+            "B) branquitude neutra; C) meritocracia; D) universalismo iluminista. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Schwarcz (2019) discute:\n"
+            "A) autoritarismo brasileiro; B) Renascimento italiano; C) direito grego; D) micro-história. → A",
+            "Q2. Marquese (2019) analisa:\n"
+            "A) escravidão e política no Brasil; B) genealogia inca; C) filosofia analítica; D) matemática financeira. → A",
+            "Q3. Chica da Silva viveu em:\n"
+            "A) Arraial do Tijuco (Diamantina, MG), séc. XVIII; B) Salvador, séc. XVI; C) São Paulo, séc. XIX; D) Rio, séc. XVII. → A",
+        ],
+        "resumo": {
+            "regra": "Colonialidade + gênero + continuidades no presente.",
+            "excecoes": "Trajetórias individuais podem apresentar negociação, sem anular a estrutura.",
+            "palavra_chave": "Violência + autoritarismo + presente.",
+            "artigo": "FURTADO (2003); GONZALEZ (2020); SCHWARCZ (2019).",
+            "mnemonico": "V.A.P.: Violência, Autoritarismo, Presente.",
+        },
+    },
+
+    72: {
+        "tema": "Tereza de Benguela e invisibilização de mulheres negras",
+        "subtema": "Protagonismo político anterior ao sufrágio",
+        "habilidade_bncc": "EF08HI19, EM13CHS502; Lei 12.987/2014",
+        "gabarito": "A",
+        "nivel": "Médio",
+        "tipo": "Interpretativa",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra reconhecimento do PROTAGONISMO POLÍTICO de mulheres negras antes do sufrágio, "
+            "e da INVISIBILIZAÇÃO histórica. Alternativas erradas atribuem origem a leis eleitorais "
+            "restritivas do séc. XIX (B), isolamento (C) ou aumento proporcional desde 1932 (D — falso "
+            "estatisticamente)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão do quilombo do Piolho/Quariterê e da liderança de Tereza de "
+            "Benguela como POLÍTICA, contra o apagamento historiográfico."
+        ),
+        "resolucao": [
+            "Descarte B: leis eleitorais restritivas do séc. XIX não são a origem da baixa representação atual.",
+            "Descarte C: Tereza NÃO foi caso isolado.",
+            "Descarte D: aumento não é proporcional.",
+            "Marque A: mulheres negras exerceram poder político + invisibilizadas.",
+        ],
+        "analise_alternativas": {
+            "A": ("CORRETA", "Tereza de Benguela e outras mulheres negras exerceram poder político (Quariterê); foram invisibilizadas."),
+            "B": ("ERRADA", "Origem é anterior e mais estrutural."),
+            "C": ("ERRADA", "Havia outras: Dandara, Aqualtune, Luísa Mahin, Antonieta de Barros etc."),
+            "D": ("ERRADA", "Representação segue subrepresentada, mesmo com Lei de Cotas."),
+        },
+        "fundamentacao": [
+            "BRASIL. Lei nº 12.987, de 2 de junho de 2014. Institui o Dia Nacional de Tereza de Benguela e da Mulher Negra.",
+            "SCHUMAHER, Schuma; BRAZIL, Erico Vital. Dicionário Mulheres do Brasil. Rio de Janeiro: Zahar, 2000.",
+            "GOMES, Flávio dos Santos. Palmares. São Paulo: Contexto, 2005.",
+            "CARNEIRO, Sueli. Racismo, sexismo e desigualdade no Brasil. São Paulo: Selo Negro, 2011.",
+        ],
+        "teoria": (
+            "TEREZA DE BENGUELA liderou o quilombo do Quariterê (atual Mato Grosso) no séc. XVIII "
+            "por cerca de 20 anos após a morte do marido, José Piolho. Instituiu uma estrutura política "
+            "com parlamento e defesa. A Lei 12.987/2014 consagrou o 25 de julho como Dia Nacional de "
+            "Tereza de Benguela e da Mulher Negra."
+        ),
+        "padroes_banca": (
+            "O INEP cobra reconhecimento do protagonismo político negro feminino."
+        ),
+        "pegadinhas": [
+            "Reduzir Tereza a caso isolado.",
+            "Achar que representatividade é proporcional.",
+            "Confundir origem estrutural com norma pontual.",
+        ],
+        "erros_comuns": (
+            "Marcar D por otimismo estatístico."
+        ),
+        "dica_estrategica": (
+            "Reconhecer + nomear + articular ao presente."
+        ),
+        "variacao": (
+            "(Estilo INEP) Antonieta de Barros foi:\n"
+            "A) primeira deputada negra do Brasil (SC, 1934);\n"
+            "B) presidente do STF; C) ministra em 1900; D) senadora em 1888. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Sueli Carneiro (2011) discute:\n"
+            "A) racismo, sexismo, desigualdade no Brasil; B) direito romano; C) filosofia grega; D) matemática. → A",
+            "Q2. O Dia Nacional de Tereza de Benguela e da Mulher Negra é:\n"
+            "A) 25 de julho; B) 20 de novembro; C) 8 de março; D) 13 de maio. → A",
+            "Q3. Quariterê era:\n"
+            "A) quilombo em Mato Grosso (séc. XVIII); B) missão jesuítica no Paraguai; "
+            "C) capitania do Nordeste; D) aldeia guarani. → A",
+        ],
+        "resumo": {
+            "regra": "Mulheres negras exerceram poder político; foram invisibilizadas.",
+            "excecoes": "Historiografia recente vem reconstruindo trajetórias.",
+            "palavra_chave": "Protagonismo + invisibilização.",
+            "artigo": "Lei 12.987/2014; SCHUMAHER & BRAZIL (2000).",
+            "mnemonico": "T.B.I.: Tereza de Benguela, Invisibilizada mas Insurgente.",
+        },
+    },
+
+    73: {
+        "tema": "Negacionismo e método histórico",
+        "subtema": "Ensino de História e crítica de fontes",
+        "habilidade_bncc": "EM13CHS603, EM13CHS604",
+        "gabarito": "C",
+        "nivel": "Médio",
+        "tipo": "Prática",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a resposta correta ao NEGACIONISMO: articular ENSINO + PESQUISA + crítica de "
+            "fontes (identificação, veracidade, usos). Alternativas erradas ora reduzem a maquete (A), "
+            "propõem acriticidade (B) ou terceirizam para a internet (D)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra o método histórico como resposta ao negacionismo."
+        ),
+        "resolucao": [
+            "Descarte A: 'cartazes e maquetes' não enfrenta negacionismo.",
+            "Descarte B: 'transmissão acrítica' contradiz a chave.",
+            "Descarte D: internet como fonte principal para vestibular desloca o tema.",
+            "Marque C: ensino + pesquisa + crítica de fontes.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Não basta produzir cartazes; falta crítica de fonte."),
+            "B": ("ERRADA", "'Acrítico' contradiz o método."),
+            "C": ("CORRETA", "Método histórico = identificar, verificar e problematizar fontes."),
+            "D": ("ERRADA", "'Fatos para vestibular' desloca a chave do enfrentamento do negacionismo."),
+        },
+        "fundamentacao": [
+            "BLOCH, Marc. Apologia da história ou o ofício de historiador. Rio de Janeiro: Zahar, 2001.",
+            "TRAVERSO, Enzo. O passado, modos de usar. Lisboa: Unipop, 2012.",
+            "GAGO, Antonio Muñoz. Negacionismo histórico. Madri: Trotta, 2020.",
+            "BITTENCOURT, Circe. Ensino de História: fundamentos e métodos. São Paulo: Cortez, 2011.",
+        ],
+        "teoria": (
+            "O NEGACIONISMO (Traverso, 2012) instrumentaliza a dúvida contra evidências consolidadas. "
+            "A resposta pedagógica é ensinar o MÉTODO HISTÓRICO (Bloch, 2001): identificar autoria, "
+            "cronologia, contexto, intencionalidade e cotejar fontes. A Lei 7.716/89 tipifica negação "
+            "do Holocausto como racismo."
+        ),
+        "padroes_banca": (
+            "O INEP cobra ensino como resposta ao negacionismo."
+        ),
+        "pegadinhas": [
+            "Reduzir a maquete.",
+            "Aceitar transmissão acrítica.",
+            "Terceirizar para internet.",
+        ],
+        "erros_comuns": (
+            "Marcar A por acreditar em 'atividade prática' isolada."
+        ),
+        "dica_estrategica": (
+            "Negacionismo → método histórico + crítica de fontes."
+        ),
+        "variacao": (
+            "(Estilo INEP) A Lei 7.716/89 (Lei Caó):\n"
+            "A) tipifica crimes de racismo, inclusive negação do Holocausto;\n"
+            "B) instituiu FGTS; C) reformou CLT; D) criou o SUS. Gabarito: A."
+        ),
+        "minisimulado": [
+            "Q1. Marc Bloch é fundador dos:\n"
+            "A) Annales; B) positivismo; C) marxismo ortodoxo; D) estruturalismo linguístico. → A",
+            "Q2. Traverso (2012) discute:\n"
+            "A) usos públicos do passado; B) demografia; C) filologia clássica; D) direito civil. → A",
+            "Q3. Método histórico envolve:\n"
+            "A) crítica interna e externa das fontes; B) crença sem checagem; "
+            "C) memorização de datas; D) transcrição literal. → A",
+        ],
+        "resumo": {
+            "regra": "Negacionismo é enfrentado com método histórico e crítica de fontes.",
+            "excecoes": "Educação midiática amplia o combate.",
+            "palavra_chave": "Ensino + pesquisa + crítica.",
+            "artigo": "BLOCH (2001); TRAVERSO (2012); Lei 7.716/89.",
+            "mnemonico": "I.V.U.: Identificar, Verificar, Usos das fontes.",
+        },
+    },
+
+    74: {
+        "tema": "Decolonialidade – historiografia latino-americana",
+        "subtema": "Grupo Modernidade/Colonialidade (anos 1990)",
+        "habilidade_bncc": "EM13CHS502, EM13CHS604",
+        "gabarito": "B",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra o nome da corrente: DECOLONIALIDADE (Quijano, Mignolo, Dussel, Grosfoguel, "
+            "Maldonado-Torres). As demais são correntes diversas (historicismo, marxismo, história "
+            "cultural)."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a identificação da corrente pelos seus objetivos: RUPTURA EPISTEMOLÓGICA "
+            "com a modernidade eurocêntrica."
+        ),
+        "resolucao": [
+            "Descarte A: historicismo é anterior.",
+            "Descarte C: marxismo tem foco econômico-social.",
+            "Descarte D: história cultural é corrente distinta.",
+            "Marque B: decolonialidade.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "Historicismo é do séc. XIX (Ranke, Meinecke)."),
+            "B": ("CORRETA", "Decolonialidade emerge nos anos 1990 com o Grupo Modernidade/Colonialidade."),
+            "C": ("ERRADA", "Marxismo é anterior e tem outro foco."),
+            "D": ("ERRADA", "História cultural é corrente diversa (Chartier, Ginzburg)."),
+        },
+        "fundamentacao": [
+            "QUIJANO, Aníbal. Colonialidade do poder, eurocentrismo e América Latina. In: LANDER, E. (org.). A colonialidade do saber. Buenos Aires: CLACSO, 2005.",
+            "MIGNOLO, Walter. Colonialidade: o lado mais escuro da modernidade. Revista Brasileira de Ciências Sociais, v. 32, n. 94, 2017.",
+            "DUSSEL, Enrique. 1492: o encobrimento do outro. Petrópolis: Vozes, 1993.",
+            "GROSFOGUEL, Ramón. Para descolonizar os estudos de economia política. Revista Crítica de Ciências Sociais, n. 80, 2008.",
+        ],
+        "teoria": (
+            "A DECOLONIALIDADE (Quijano, 2005; Mignolo, 2017) é corrente latino-americana de crítica à "
+            "COLONIALIDADE DO PODER, do SABER e do SER (Maldonado-Torres). Distinta do 'pós-colonial' "
+            "(Said, Bhabha, Spivak), enfatiza continuidades da colonialidade após a independência "
+            "formal. Dialoga com Walter Rodney e Frantz Fanon."
+        ),
+        "padroes_banca": (
+            "O INEP cobra reconhecimento das correntes decoloniais como marco recente."
+        ),
+        "pegadinhas": [
+            "Confundir decolonial com pós-colonial.",
+            "Datar como séc. XIX.",
+            "Reduzir a marxismo.",
+        ],
+        "erros_comuns": (
+            "Marcar D por associar 'novo paradigma' à história cultural."
+        ),
+        "dica_estrategica": (
+            "Decolonial = anos 1990 + LatAm + ruptura epistemológica."
+        ),
+        "variacao": (
+            "(Estilo INEP) Enrique Dussel argumenta que 1492 é:\n"
+            "A) descobrimento neutro;\n"
+            "B) encobrimento do outro; C) intercâmbio equilibrado; D) fim da colonialidade. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Quijano cunhou:\n"
+            "A) colonialidade do poder; B) trabalho abstrato; C) mais-valia; D) longa duração. → A",
+            "Q2. Mignolo destaca:\n"
+            "A) colonialidade como lado mais escuro da modernidade; B) neutralidade; C) marxismo puro; D) positivismo. → A",
+            "Q3. Fanon escreveu:\n"
+            "A) Pele negra, máscaras brancas; B) O Príncipe; C) O Contrato Social; D) O Espírito das Leis. → A",
+        ],
+        "resumo": {
+            "regra": "Decolonialidade = crítica epistêmica latino-americana dos anos 1990.",
+            "excecoes": "Diálogo com pós-colonial e crítica africana.",
+            "palavra_chave": "Ruptura epistemológica + modernidade/colonialidade.",
+            "artigo": "QUIJANO (2005); MIGNOLO (2017); DUSSEL (1993).",
+            "mnemonico": "P.S.S.: Poder, Saber, Ser — colonialidades a superar.",
+        },
+    },
+
+    75: {
+        "tema": "História do cotidiano (Michel de Certeau; Nova História)",
+        "subtema": "Global + nacional + local",
+        "habilidade_bncc": "EM13CHS502, EM13CHS603",
+        "gabarito": "C",
+        "nivel": "Fácil-Médio",
+        "tipo": "Teórica",
+        "formato": "Múltipla escolha (A-D)",
+        "incidencia": "Alta",
+        "justificativa_classificacao": (
+            "Item cobra a corrente que promove INTERCONEXÕES entre escalas: HISTÓRIA DO COTIDIANO "
+            "articula vida dos estudantes ao macrocontexto. Distratores atribuem valores/objetivos "
+            "diferentes."
+        ),
+        "como_banca_pensou": (
+            "A banca cobra a compreensão da história do cotidiano como recurso didático."
+        ),
+        "resolucao": [
+            "Descarte A: 'neutralidade' contradiz historiografia crítica.",
+            "Descarte B: 'estruturalismo' não é o cerne.",
+            "Descarte D: 'inconsciente coletivo' é psicanálise/Jung.",
+            "Marque C: cotidiano + experiências dos estudantes + diferentes atores.",
+        ],
+        "analise_alternativas": {
+            "A": ("ERRADA", "'Neutralidade' e 'grandes personalidades' é história tradicional/positivista."),
+            "B": ("ERRADA", "Dialética não se define como 'estruturalismo prioritário'."),
+            "C": ("CORRETA", "História do cotidiano articula vida dos estudantes ao contexto histórico."),
+            "D": ("ERRADA", "'Inconsciente coletivo' é psicanálise, não historiografia."),
+        },
+        "fundamentacao": [
+            "CERTEAU, Michel de. A invenção do cotidiano. 22. ed. Petrópolis: Vozes, 2014.",
+            "LE GOFF, Jacques. A história nova. São Paulo: Martins Fontes, 2005.",
+            "BURKE, Peter. A escrita da história: novas perspectivas. São Paulo: UNESP, 1992.",
+            "THOMPSON, Edward P. Costumes em comum. São Paulo: Cia. das Letras, 1998.",
+        ],
+        "teoria": (
+            "A HISTÓRIA DO COTIDIANO (Certeau, 2014) e a NOVA HISTÓRIA francesa (Le Goff, 2005) "
+            "romperam com a história política tradicional para valorizar práticas, culturas, "
+            "microexperiências. Thompson (1998) enfatiza costumes populares. No ensino, permite "
+            "conectar vida dos estudantes a processos históricos."
+        ),
+        "padroes_banca": (
+            "O INEP cobra articulação escalas + protagonismo estudantil."
+        ),
+        "pegadinhas": [
+            "Confundir com neutralidade positivista.",
+            "Achar que dialética é estruturalismo.",
+            "Reduzir 'social' a 'inconsciente coletivo'.",
+        ],
+        "erros_comuns": (
+            "Marcar A por 'neutralidade' soar acadêmico."
+        ),
+        "dica_estrategica": (
+            "Cotidiano articula escalas + vida dos estudantes."
+        ),
+        "variacao": (
+            "(Estilo INEP) A 'Nova História' francesa foi liderada por:\n"
+            "A) Ranke; B) Bloch, Febvre, Braudel, Le Goff (Annales);\n"
+            "C) Comte; D) Weber. Gabarito: B."
+        ),
+        "minisimulado": [
+            "Q1. Certeau (2014) analisa:\n"
+            "A) invenção do cotidiano; B) demografia; C) filologia clássica; D) monarquia absoluta. → A",
+            "Q2. Thompson (1998) discute:\n"
+            "A) costumes em comum + cultura popular; B) direito romano; C) estruturalismo; D) genética. → A",
+            "Q3. Longa duração é conceito de:\n"
+            "A) Braudel; B) Ranke; C) Comte; D) Weber. → A",
+        ],
+        "resumo": {
+            "regra": "Cotidiano articula escalas e vida estudantil.",
+            "excecoes": "Grandes estruturas também devem ser tematizadas.",
+            "palavra_chave": "Cotidiano + experiências + escalas.",
+            "artigo": "CERTEAU (2014); LE GOFF (2005); THOMPSON (1998).",
+            "mnemonico": "G.N.L.: Global + Nacional + Local via cotidiano.",
+        },
+    },
+
     2: {
         "tema": "Livro didático – função referencial (Choppin, 2004)",
         "subtema": "Percepção docente sobre critérios de escolha",
@@ -6019,7 +6410,7 @@ def gerar_docx(destino: Path):
     for txt in [
         "1. Estrutura da prova e distribuição",
         "2. Padrão de análise (15 blocos)",
-        "3. Análise completa – LOTES 1 a 14 (Q01 a Q70)",
+        "3. Análise completa – LOTES 1 a 15 (Q01 a Q75)",
         "4. Índice completo das 80 questões (enunciado + alternativas)",
         "5. Referências ABNT consolidadas",
     ]:
@@ -6057,14 +6448,14 @@ def gerar_docx(destino: Path):
     doc.add_page_break()
 
     # ---------- 3. Análise LOTE 1 ----------
-    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 14 (Q01 a Q70)")
+    bloco_titulo("3. ANÁLISE COMPLETA – LOTES 1 a 15 (Q01 a Q75)")
     doc.add_paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados são "
         "baseados na análise técnica dos itens; recomenda-se cruzar com o gabarito oficial "
         "do INEP para validação final."
     )
 
-    for num in list(range(1, 71)):
+    for num in list(range(1, 76)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         doc.add_page_break()
@@ -6184,7 +6575,7 @@ def gerar_docx(destino: Path):
 
     # ---------- 5. Referências ----------
     doc.add_page_break()
-    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-14")
+    bloco_titulo("5. REFERÊNCIAS ABNT CONSOLIDADAS – LOTES 1-15")
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
@@ -6245,7 +6636,7 @@ def gerar_pdf(destino: Path):
     story.append(Paragraph("SUMÁRIO", h_bloco))
     for t in ["1. Estrutura da prova e distribuição",
               "2. Padrão de análise (15 blocos)",
-              "3. Análise completa – LOTES 1 a 14 (Q01 a Q70)",
+              "3. Análise completa – LOTES 1 a 15 (Q01 a Q75)",
               "4. Índice completo das 80 questões",
               "5. Referências ABNT consolidadas"]:
         story.append(Paragraph("• " + t, body))
@@ -6284,7 +6675,7 @@ def gerar_pdf(destino: Path):
     story.append(PageBreak())
 
     # 3. Análises do lote
-    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 14 (Q01 a Q70)", h_bloco))
+    story.append(Paragraph("3. ANÁLISE COMPLETA — LOTES 1 a 15 (Q01 a Q75)", h_bloco))
     story.append(Paragraph(
         "As análises abaixo aplicam integralmente os 15 blocos. Gabaritos indicados baseiam-se "
         "na análise técnica dos itens; sugere-se cruzar com o gabarito oficial do INEP.", body))
@@ -6293,7 +6684,7 @@ def gerar_pdf(destino: Path):
     cell_key = ParagraphStyle("cell_key", parent=cell_style, fontName="Helvetica-Bold",
                               textColor=HexColor(AZUL_ESCURO))
 
-    for num in list(range(1, 71)):
+    for num in list(range(1, 76)):
         q = next(x for x in QUESTOES if x["numero"] == num)
         a = ANALISES[num]
         story.append(PageBreak())
@@ -6388,7 +6779,7 @@ def gerar_pdf(destino: Path):
 
     # 5. Referências
     story.append(PageBreak())
-    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-14", h_bloco))
+    story.append(Paragraph("5. REFERÊNCIAS ABNT CONSOLIDADAS — LOTES 1-15", h_bloco))
     refs = set()
     for a in ANALISES.values():
         refs.update(a["fundamentacao"])
