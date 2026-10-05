@@ -289,26 +289,27 @@ def _gerar_logo_marca_dagua():
     Image.blend(branco, im, OPACIDADE_MARCA).save(LOGO_MARCA)
 
 
-def _inserir_marca_dagua(section, largura_pt=460.0):
-    """Logo centralizada atrás do texto em todas as páginas da seção (VML no cabeçalho)."""
-    from PIL import Image
-    w, h = Image.open(LOGO_MARCA).size
-    altura_pt = largura_pt * h / w
+def _inserir_marca_dagua(section, largura_cm=16.0):
+    """Logo centralizada ATRÁS do texto em todas as páginas da seção (imagem ancorada no cabeçalho)."""
     p = section.header.add_paragraph()
     run = p.add_run()
-    run.add_picture(str(LOGO_MARCA))
-    drawing = run._r.find(qn("w:drawing"))
-    rid = next(drawing.iter("{http://schemas.openxmlformats.org/drawingml/2006/main}blip")).get(qn("r:embed"))
-    run._r.remove(drawing)
-    run._r.append(parse_xml(f'''<w:pict xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-  xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"
-  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <v:shape id="WordPictureWatermark" o:spid="_x0000_s2051" type="#_x0000_t75"
-    style="position:absolute;margin-left:0;margin-top:0;width:{largura_pt}pt;height:{altura_pt:.1f}pt;
-           z-index:-251657216;mso-position-horizontal:center;mso-position-horizontal-relative:margin;
-           mso-position-vertical:center;mso-position-vertical-relative:margin" o:allowincell="f">
-    <v:imagedata r:id="{rid}" o:title="marca-dagua"/>
-  </v:shape></w:pict>'''))
+    inline = run.add_picture(str(LOGO_MARCA), width=Cm(largura_cm))._inline
+    cx, cy = inline.extent.cx, inline.extent.cy
+    graphic = inline.graphic.xml
+    anchor = parse_xml(f"""<wp:anchor xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+  distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="0" behindDoc="1"
+  locked="1" layoutInCell="1" allowOverlap="1">
+  <wp:simplePos x="0" y="0"/>
+  <wp:positionH relativeFrom="margin"><wp:align>center</wp:align></wp:positionH>
+  <wp:positionV relativeFrom="page"><wp:align>center</wp:align></wp:positionV>
+  <wp:extent cx="{cx}" cy="{cy}"/>
+  <wp:effectExtent l="0" t="0" r="0" b="0"/>
+  <wp:wrapNone/>
+  <wp:docPr id="999" name="Marca dagua"/>
+  <wp:cNvGraphicFramePr/>
+</wp:anchor>""")
+    anchor.append(parse_xml(graphic))
+    inline.getparent().replace(inline, anchor)
 
 
 def _capa(doc):
@@ -343,14 +344,14 @@ def _capa(doc):
 
 def _sumario_e_gabarito(doc):
     p = doc.add_paragraph(); _run(p, "SUMÁRIO", bold=True, size=16, cor=PRETO)
-    toc_p = doc.add_paragraph()
-    toc_p._p.append(parse_xml(
-        '<w:r xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-        '<w:fldChar w:fldCharType="begin" w:dirty="true"/>'
-        '<w:instrText xml:space="preserve"> TOC \\o "1-2" \\h \\z \\u </w:instrText>'
-        '<w:fldChar w:fldCharType="separate"/>'
-        '<w:t>Clique com o botão direito aqui e escolha "Atualizar campo" (F9) para gerar o sumário.</w:t>'
-        '<w:fldChar w:fldCharType="end"/></w:r>'))
+    for nome, qs in PROVAS:
+        p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(6); p.paragraph_format.space_after = Pt(2)
+        _run(p, f"{nome} – Conhecimentos em Informática", bold=True, size=11, cor=PRETO)
+        for q in qs:
+            p = doc.add_paragraph(); p.paragraph_format.left_indent = Cm(0.6)
+            p.paragraph_format.space_after = Pt(0)
+            _run(p, f"Questão {q['num']}  •  ", bold=True, size=10, cor=AMARELO)
+            _run(p, q["tema"], size=10)
 
     p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(18)
     _run(p, "GABARITO RÁPIDO", bold=True, size=16, cor=PRETO)
