@@ -14,22 +14,29 @@ from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
-from dados_cfoa_pmba_simulado01 import Q
+import importlib
+import sys
+
+SIM = sys.argv[1] if len(sys.argv) > 1 else "01"
+_dados = importlib.import_module(f"dados_cfoa_pmba_simulado{SIM}")
+Q = _dados.Q
 
 BASE = Path(__file__).resolve().parent.parent
 SAIDAS = BASE / "saidas"
 LOGO = SAIDAS / "logo_gabaritando.png"
 MARCA = SAIDAS / "marca_dagua_gabaritando.png"
-NOME = "gabarito_comentado_cfoa_pmba_simulado01"
-RODAPE = "Simulado 01 – CFOA PMBA 2026 • Gabaritando • Página "
+NOME = f"gabarito_comentado_cfoa_pmba_simulado{SIM}"
+RODAPE = f"Simulado {SIM} – CFOA PMBA 2026 • Gabaritando • Página "
 
 AMARELO, LARANJA, CINZA = "F5B800", "E08A00", "F2F2F2"
 VERDE, VERMELHO, PRETO = RGBColor(0x1B, 0x8A, 0x2F), RGBColor(0xC0, 0x1F, 0x1F), RGBColor(0x1F, 0x1F, 0x1F)
-INVERTIDAS = {29, 33, 43, 57, 78, 80}  # comando pede a alternativa INCORRETA
-PREFIXO = re.compile(r"^(CORRETA|INCORRETA \(gabarito\)|GABARITO DA BANCA)\.?\s*")
+INVERTIDAS = getattr(_dados, "INVERTIDAS", {29, 33, 43, 57, 78, 80})  # comando pede a INCORRETA
+PREFIXO = re.compile(r"^(CORRETA|INCORRETA \(gabarito\)|EM DESACORDO \(gabarito\)|GABARITO DA BANCA)\.?\s*")
 
 
 def tema(n):
+    if len(Q[n]) > 5:
+        return Q[n][5]
     return re.split(r"[:.;(]", Q[n][3])[0].strip()
 
 
@@ -46,10 +53,10 @@ def comentario(n, letra):
 
 # ---------------- Markdown ----------------
 def gerar_md(destino):
-    ln = ["# Gabarito Comentado – Simulado 01 – CFOA PMBA 2026", ""]
+    ln = [f"# Gabarito Comentado – Simulado {SIM} – CFOA PMBA 2026", ""]
     disc = None
     for n in sorted(Q):
-        d, gab, _, fund, obs = Q[n]
+        d, gab, _, fund, obs = Q[n][:5]
         if d != disc:
             disc = d
             ln += [f"## {d.upper()}", ""]
@@ -137,7 +144,7 @@ def capa(doc):
     p = c.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Pt(18)
-    run(p, "SIMULADO 01", bold=True, size=28)
+    run(p, f"SIMULADO {SIM}", bold=True, size=28)
     p = c.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_after = Pt(18)
@@ -196,7 +203,7 @@ def sumario_e_gabarito(doc):
 
 
 def questao(doc, n):
-    d, gab, _, fund, obs = Q[n]
+    d, gab, _, fund, obs = Q[n][:5]
     h = doc.add_heading(level=2)
     run(h, f"Questão {n:02d} • {tema(n)}", bold=True, size=11)
     h.paragraph_format.space_before = Pt(14)
@@ -249,7 +256,7 @@ def gerar_docx(destino):
 
 def main():
     assert sorted(Q) == list(range(1, 81))
-    for n, (_, gab, alts, _, _) in Q.items():
+    for n, (_, gab, alts, *_) in Q.items():
         assert set(alts) == set("ABCDE") and PREFIXO.match(alts[gab]), n
     SAIDAS.mkdir(exist_ok=True)
     gerar_md(SAIDAS / f"{NOME}.md")
