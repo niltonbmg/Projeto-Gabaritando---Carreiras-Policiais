@@ -39,7 +39,7 @@ LARANJA = "#B45309"
 C, E, A = "CERTA", "ERRADA", "ATENÇÃO"
 
 PROVAS = [
-    ("PROVA 1", [
+    ("PROVA 1", "Conhecimentos em Informática", [
         dict(num=21, tema="Windows 10 – Área de Transferência",
              enunciado="No MS-Windows 10, qual é a funcionalidade principal da Área de Transferência?",
              alts={"A": "Armazenar temporariamente arquivos e pastas excluídos.",
@@ -75,7 +75,7 @@ PROVAS = [
                   "D": (C, "MÉDIA() calcula a média aritmética. Ex.: =MÉDIA(A1:A10)."),
                   "E": (E, "CONTAR() não existe no Excel em português; as funções corretas são CONT.NÚM e CONT.VALORES.")},
              dica="MÉDIA ignora células vazias e textos – cuidado com questões que misturam zeros e células em branco."),
-        dict(num=24, tema="Correio eletrônico – Anexos",
+        dict(num=24, tema="Correio eletrônico – Anexos", anulavel=True,
              enunciado="Qual é a sequência correta para anexar um arquivo em uma mensagem de correio eletrônico?",
              alts={"A": "Abrir o programa de e-mail > Compor nova mensagem > Inserir assinatura > Anexar arquivo > Enviar.",
                    "B": "Abrir o programa de e-mail > Compor nova mensagem > Escrever o destinatário > Anexar arquivo > Enviar.",
@@ -101,7 +101,7 @@ PROVAS = [
                   "E": (E, "É 'Resource' (recurso), não 'Reference'.")},
              dica="Estrutura da URL: protocolo://domínio/caminho  →  https://www.site.com.br/pagina"),
     ]),
-    ("PROVA 2", [
+    ("PROVA 2", "Conhecimentos em Informática", [
         dict(num=21, tema="Windows 10 – Atalhos",
              enunciado="No Windows 10, um atalho é utilizado para:",
              alts={"A": "Armazenar cópias permanentes de arquivos.",
@@ -265,7 +265,7 @@ def _campo(p, instr, placeholder, size=9, cor=PRETO):
         f'</w:rPr><w:t>{placeholder}</w:t></w:r></w:fldSimple>'))
 
 
-def _cabecalho_rodape(section):
+def _cabecalho_rodape(section, disciplina):
     """Logo pequena no cabeçalho (direita) + linha amarela; 'Página N' no rodapé."""
     hp = section.header.paragraphs[0]
     hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -277,7 +277,7 @@ def _cabecalho_rodape(section):
 
     fp = section.footer.paragraphs[0]
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(fp, "Revisão Formosa do Rio Preto 2026 • Informática  |  Página ", size=9, cor=PRETO)
+    _run(fp, f"Revisão Formosa do Rio Preto 2026 • {disciplina}  |  Página ", size=9, cor=PRETO)
     _campo(fp, "PAGE", "1")
 
 
@@ -312,7 +312,7 @@ def _inserir_marca_dagua(section, largura_cm=16.0):
     inline.getparent().replace(inline, anchor)
 
 
-def _capa(doc):
+def _capa(doc, disciplina, resumo):
     sec = doc.sections[0]
     p = doc.add_paragraph(); p.paragraph_format.space_before = Cm(2.5)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -330,47 +330,51 @@ def _capa(doc):
 
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Cm(1.5)
-    _run(p, "CONHECIMENTOS EM INFORMÁTICA", bold=True, size=20, cor=PRETO)
+    _run(p, disciplina.upper(), bold=True, size=20, cor=PRETO)
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     _run(p, "Gabarito comentado alternativa por alternativa", size=14, cor=CINZA_TEXTO, italic=True)
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Cm(1.2)
-    _run(p, "Prova 1 (Q21–Q25)  •  Prova 2 (Q21–Q30)  •  15 questões", size=12, cor=CINZA_TEXTO)
+    _run(p, resumo, size=12, cor=CINZA_TEXTO)
 
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Cm(4)
     _run(p, "VEM GABARITAR COM A GENTE", bold=True, size=13, cor=AMARELO)
 
 
-def _sumario_e_gabarito(doc):
+def _sumario_e_gabarito(doc, provas):
     p = doc.add_paragraph(); _run(p, "SUMÁRIO", bold=True, size=16, cor=PRETO)
-    for nome, qs in PROVAS:
+    for nome, disc, qs in provas:
         p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(6); p.paragraph_format.space_after = Pt(2)
-        _run(p, f"{nome} – Conhecimentos em Informática", bold=True, size=11, cor=PRETO)
+        _run(p, f"{nome} – {disc}", bold=True, size=11, cor=PRETO)
         for q in qs:
             p = doc.add_paragraph(); p.paragraph_format.left_indent = Cm(0.6)
             p.paragraph_format.space_after = Pt(0)
-            _run(p, f"Questão {q['num']}  •  ", bold=True, size=10, cor=AMARELO)
+            _run(p, f"Questão {q['num']:02d}  •  ", bold=True, size=10, cor=AMARELO)
             _run(p, q["tema"], size=10)
 
     p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(18)
     _run(p, "GABARITO RÁPIDO", bold=True, size=16, cor=PRETO)
-    for nome, qs in PROVAS:
-        p = doc.add_paragraph(); _run(p, nome, bold=True, size=12, cor=PRETO)
+    for nome, disc, qs in provas:
+        p = doc.add_paragraph(); _run(p, f"{nome} – {disc}", bold=True, size=12, cor=PRETO)
         t = doc.add_table(rows=2, cols=len(qs)); t.style = "Table Grid"
         for i, q in enumerate(qs):
             c0, c1 = t.rows[0].cells[i], t.rows[1].cells[i]
             _shade(c0, PRETO); _shade(c1, AMARELO_CLARO)
-            for c, txt, cor in ((c0, f"Q{q['num']}", "#FFFFFF"), (c1, q["gab"] + ("*" if q["num"] == 24 and nome == "PROVA 1" else ""), PRETO)):
+            for c, txt, cor in ((c0, f"Q{q['num']:02d}", "#FFFFFF"), (c1, q["gab"] + ("*" if q.get("anulavel") else ""), PRETO)):
                 cp = c.paragraphs[0]; cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 _run(cp, txt, bold=True, size=11, cor=cor)
-    p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(6)
-    _run(p, "* Prova 1 – Q24: questão passível de anulação (ver comentário).", size=9, cor=LARANJA, italic=True)
+    for nome, _, qs in provas:
+        for q in qs:
+            if q.get("anulavel"):
+                p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(6)
+                _run(p, f"* {nome.title()} – Q{q['num']:02d}: questão passível de recurso/anulação (ver comentário).",
+                     size=9, cor=LARANJA, italic=True)
 
 
 def _questao(doc, prova, q):
     h = doc.add_heading(level=2)
-    _run(h, f"{prova} – Questão {q['num']} • {q['tema']}", bold=True, size=13, cor=PRETO)
+    _run(h, f"{prova} – Questão {q['num']:02d} • {q['tema']}", bold=True, size=13, cor=PRETO)
 
     # enunciado em caixa amarela clara
     t = doc.add_table(rows=1, cols=1); cell = t.rows[0].cells[0]
@@ -401,7 +405,28 @@ def _questao(doc, prova, q):
     doc.add_paragraph()
 
 
-def gerar_docx(destino: Path):
+def _texto_base(doc, texto):
+    titulo, paragrafos, fonte = texto
+    h = doc.add_heading(level=2)
+    _run(h, "Texto base", bold=True, size=13, cor=PRETO)
+    t = doc.add_table(rows=1, cols=1); cell = t.rows[0].cells[0]
+    _bordas_celula(cell, AMARELO)
+    cp = cell.paragraphs[0]; cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _run(cp, titulo, bold=True, size=12, cor=PRETO)
+    for par in paragrafos:
+        ap = cell.add_paragraph(); ap.paragraph_format.space_after = Pt(4)
+        ap.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        intertitulo = par.endswith("?")
+        _run(ap, par, bold=intertitulo, size=10.5, cor=PRETO if intertitulo else CINZA_TEXTO)
+    fp = cell.add_paragraph(); fp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    _run(fp, fonte, size=9, italic=True)
+    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+
+
+def gerar_docx(destino: Path, disciplina="Conhecimentos em Informática",
+               resumo="Prova 1 (Q21–Q25)  •  Prova 2 (Q21–Q30)  •  15 questões",
+               provas=PROVAS, rodape="Informática", textos=None):
+    """textos: {nome_da_prova: (titulo, [parágrafos], fonte)} – texto base exibido antes das questões."""
     doc = Document()
     st = doc.styles["Normal"]; st.font.name = "Calibri"; st.font.size = Pt(11)
     for nome in ("Heading 1", "Heading 2"):
@@ -412,22 +437,24 @@ def gerar_docx(destino: Path):
         setattr(sec, attr, Cm(2.0))
     sec.left_margin = sec.right_margin = Cm(2.2)
 
-    _capa(doc)
+    _capa(doc, disciplina, resumo)
 
     # nova seção para o conteúdo (capa fica sem cabeçalho/rodapé)
     sec2 = doc.add_section(WD_SECTION.NEW_PAGE)
     sec2.header.is_linked_to_previous = False
     sec2.footer.is_linked_to_previous = False
-    _cabecalho_rodape(sec2)
+    _cabecalho_rodape(sec2, rodape)
     _gerar_logo_marca_dagua()
     _inserir_marca_dagua(sec2)
 
-    _sumario_e_gabarito(doc)
+    _sumario_e_gabarito(doc, provas)
 
-    for nome, qs in PROVAS:
+    for nome, disc, qs in provas:
         doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
         h = doc.add_heading(level=1)
-        _run(h, f"{nome} – CONHECIMENTOS EM INFORMÁTICA", bold=True, size=18, cor=PRETO)
+        _run(h, f"{nome} – {disc.upper()}", bold=True, size=18, cor=PRETO)
+        if textos and nome in textos:
+            _texto_base(doc, textos[nome])
         for q in qs:
             _questao(doc, nome.title(), q)
 
