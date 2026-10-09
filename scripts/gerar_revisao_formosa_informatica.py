@@ -380,6 +380,9 @@ def _questao(doc, prova, q):
     t = doc.add_table(rows=1, cols=1); cell = t.rows[0].cells[0]
     _shade(cell, AMARELO_CLARO); _bordas_celula(cell, AMARELO)
     cp = cell.paragraphs[0]; _run(cp, q["enunciado"], size=11, cor=PRETO)
+    if q.get("imagem"):
+        ip = cell.add_paragraph(); ip.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        ip.add_run().add_picture(str(q["imagem"]), width=Cm(6))
     for letra, txt in q["alts"].items():
         ap = cell.add_paragraph(); ap.paragraph_format.left_indent = Cm(0.4)
         _run(ap, f"{letra.lower()}) ", bold=True, size=10.5, cor=PRETO)
