@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
-Gera o Gabarito Comentado do Simulado 06 – CFO PMBA (Oficial QOPM – Tipo A).
+Gera o Gabarito Comentado dos simulados CFO PMBA (Oficial QOPM).
+
+Uso: python3 scripts/gerar_gabarito_simulado_cfo_pmba.py [06|07]   (padrão: 06)
+Os dados de cada simulado ficam em scripts/dados_gabarito_simuladoNN_cfo_pmba.py.
 
 Identidade visual do Projeto Gabaritando (a mesma do caderno do simulado):
   - marca d'água com o "G" do Gabaritando (assets/gabaritando/marca_dagua_g.png)
   - rodapé com "OFICIAL (QOPM)" + logo GABARITANDO (assets/gabaritando/logo_rodape.png)
 
 Saídas:
-  saidas/gabarito_comentado_simulado06_cfo_pmba.docx
-  saidas/gabarito_comentado_simulado06_cfo_pmba.pdf  (via LibreOffice, se disponível)
+  saidas/gabarito_comentado_simuladoNN_cfo_pmba.docx
+  saidas/gabarito_comentado_simuladoNN_cfo_pmba.pdf  (via LibreOffice, se disponível)
 """
+import importlib
 import subprocess
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -22,11 +27,13 @@ from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn
 from docx.shared import Cm, Emu, Pt, RGBColor
 
-from dados_gabarito_simulado06_cfo_pmba import DISCURSIVA, Q
+NUM = sys.argv[1] if len(sys.argv) > 1 else "06"
+_dados = importlib.import_module(f"dados_gabarito_simulado{NUM}_cfo_pmba")
+Q, DISCURSIVA = _dados.Q, _dados.DISCURSIVA
 
 BASE = Path(__file__).resolve().parent.parent
 ASSETS = BASE / "assets" / "gabaritando"
-SAIDA = BASE / "saidas" / "gabarito_comentado_simulado06_cfo_pmba.docx"
+SAIDA = BASE / "saidas" / f"gabarito_comentado_simulado{NUM}_cfo_pmba.docx"
 
 # Paleta da marca (azul-marinho + dourado do logo "Projeto Gabaritando")
 NAVY = "1B2A4A"
@@ -138,10 +145,10 @@ def capa(doc):
     p.add_run().add_picture(str(ASSETS / "logo_projeto.png"), width=Cm(9))
     _para(doc, "VEM GABARITAR COM A GENTE", True, 11, OURO, WD_ALIGN_PARAGRAPH.CENTER, after=40)
     _para(doc, "GABARITO COMENTADO", True, 32, NAVY, WD_ALIGN_PARAGRAPH.CENTER, after=4)
-    _para(doc, "SIMULADO 06", True, 26, OURO, WD_ALIGN_PARAGRAPH.CENTER, after=4)
+    _para(doc, f"SIMULADO {NUM}", True, 26, OURO, WD_ALIGN_PARAGRAPH.CENTER, after=4)
     _para(doc, "Prova Objetiva e Discursiva", False, 14, CINZA, WD_ALIGN_PARAGRAPH.CENTER, after=30)
     _para(doc, "PMBA – Curso de Formação de Oficiais", True, 15, NAVY, WD_ALIGN_PARAGRAPH.CENTER, after=2)
-    _para(doc, "Cargo: Oficial (QOPM) – Tipo A", False, 12, CINZA, WD_ALIGN_PARAGRAPH.CENTER, after=40)
+    _para(doc, "Cargo: Oficial (QOPM)" + (" – Tipo A" if NUM == "06" else ""), False, 12, CINZA, WD_ALIGN_PARAGRAPH.CENTER, after=40)
     _para(doc, "“O crescimento mora no desconforto.”", True, 12, NAVY,
           WD_ALIGN_PARAGRAPH.CENTER, after=4, italic=True)
     _para(doc, "@projeto.gabaritando  ·  #seremosirmaosdefarda", False, 10, CINZA,
