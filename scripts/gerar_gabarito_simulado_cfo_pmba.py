@@ -2,7 +2,7 @@
 """
 Gera o Gabarito Comentado dos simulados CFO PMBA (Oficial QOPM).
 
-Uso: python3 scripts/gerar_gabarito_simulado_cfo_pmba.py [06|07]   (padrão: 06)
+Uso: python3 scripts/gerar_gabarito_simulado_cfo_pmba.py [06|07|08]   (padrão: 06)
 Os dados de cada simulado ficam em scripts/dados_gabarito_simuladoNN_cfo_pmba.py.
 
 Identidade visual do Projeto Gabaritando (a mesma do caderno do simulado):
@@ -47,6 +47,11 @@ A4_W, A4_H = Cm(21.0), Cm(29.7)
 
 
 # ---------------------------------------------------------------- utilitários
+def _rot(item):
+    """Rótulo da questão como no caderno (ex.: "07", "62-A")."""
+    return item.get("rot") or f"{item['n']:02d}"
+
+
 def _shade(cell, hex_color):
     tcPr = cell._tc.get_or_add_tcPr()
     shd = OxmlElement("w:shd")
@@ -166,7 +171,7 @@ def grade_respostas(doc):
         c_num, c_gab = t.cell(bloco * 2, col), t.cell(bloco * 2 + 1, col)
         _shade(c_num, NAVY)
         _shade(c_gab, OURO_CLARO)
-        for c, txt, cor in ((c_num, f"{item['n']:02d}", "FFFFFF"), (c_gab, item["gab"], NAVY)):
+        for c, txt, cor in ((c_num, _rot(item), "FFFFFF"), (c_gab, item["gab"], NAVY)):
             p = c.paragraphs[0]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             _run(p, txt, bold=True, size=10, color=cor)
@@ -181,17 +186,19 @@ def grade_respostas(doc):
         _shade(c, NAVY)
         _run(c.paragraphs[0], txt, True, 10, "FFFFFF")
     for disc in dict.fromkeys(item["disc"] for item in Q):
-        nums = [item["n"] for item in Q if item["disc"] == disc]
+        itens = [item for item in Q if item["disc"] == disc]
         row = t.add_row().cells
         _run(row[0].paragraphs[0], disc, True, 10, NAVY)
-        _run(row[1].paragraphs[0], f"{min(nums):02d} a {max(nums):02d}", size=10)
+        _run(row[1].paragraphs[0], f"{_rot(itens[0])} a {_rot(itens[-1])}", size=10)
         _run(row[2].paragraphs[0], str(cont[disc]), size=10)
 
     ressalvas = [item for item in Q if item["obs"]]
     if ressalvas:
         _para(doc, after=4)
         _para(doc, "Questões com observação (possível recurso/ressalva): "
-              + ", ".join(f"{i['n']:02d}" for i in ressalvas) + ".", True, 10, VERM)
+              + ", ".join(_rot(i) for i in ressalvas) + ".", True, 10, VERM)
+    if getattr(_dados, "AVISO", None):
+        _para(doc, "Nota sobre o caderno: " + _dados.AVISO, False, 10, NAVY, before=4)
 
 
 def questao(doc, item):
@@ -205,7 +212,7 @@ def questao(doc, item):
     _shade(c1, NAVY)
     _shade(c2, OURO)
     p = c1.paragraphs[0]
-    _run(p, f"QUESTÃO {item['n']:02d}  ", True, 12, "FFFFFF")
+    _run(p, f"QUESTÃO {_rot(item)}  ", True, 12, "FFFFFF")
     _run(p, f"{item['disc']} · {item['tema']}", False, 9.5, "FFFFFF")
     p = c2.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -300,6 +307,8 @@ def gerar_pdf(docx: Path):
 
 if __name__ == "__main__":
     assert len(Q) == 80 and [i["n"] for i in Q] == list(range(1, 81))
+    if getattr(_dados, "AVISO", None):
+        print("Aviso:", _dados.AVISO)
     d = gerar_docx(SAIDA)
     print("DOCX:", d)
     print("PDF:", gerar_pdf(d))
