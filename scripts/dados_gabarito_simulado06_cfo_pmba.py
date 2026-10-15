@@ -412,7 +412,7 @@ q(39, HUM, "Conjuração Baiana (1798)", "D",
   {"A": "Errada.", "B": "Errada.", "C": "Errada.",
    "D": "CORRETA.",
    "E": "Errada. Não era objetivo central explícito."},
-  "Diferença-chave: Inconfidência Mineira (elite, sem abolição) x Conjuração Baiana (popular, abolicionista).")
+  "Diferença-chave: Inconfidência Mineira (camadas dominantes, sem abolição) x Conjuração Baiana (popular, abolicionista).")
 
 q(40, HUM, "Mudanças climáticas e desigualdade", "C",
   "Vulnerabilidade = exposição ao risco + fragilidade socioeconômica + capacidade desigual de "

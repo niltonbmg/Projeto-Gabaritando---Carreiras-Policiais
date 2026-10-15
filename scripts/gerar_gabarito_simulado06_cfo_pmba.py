@@ -3,7 +3,7 @@
 Gera o Gabarito Comentado do Simulado 06 – CFO PMBA (Oficial QOPM – Tipo A).
 
 Identidade visual do Projeto Gabaritando (a mesma do caderno do simulado):
-  - fundo de página com brasão/marca d'água (assets/gabaritando/fundo_pagina.png)
+  - marca d'água com o "G" do Gabaritando (assets/gabaritando/marca_dagua_g.png)
   - rodapé com "OFICIAL (QOPM)" + logo GABARITANDO (assets/gabaritando/logo_rodape.png)
 
 Saídas:
@@ -102,13 +102,14 @@ def _campo(run, instr):
 
 
 def _configurar_cabecalho_rodape(section):
-    """Fundo de página (marca d'água) no cabeçalho + rodapé com logo GABARITANDO."""
+    """Marca d'água (G do Gabaritando) no cabeçalho + rodapé com logo GABARITANDO."""
     section.header.is_linked_to_previous = False
     section.footer.is_linked_to_previous = False
     hp = section.header.paragraphs[0]
     r = hp.add_run()
-    r.add_picture(str(ASSETS / "fundo_pagina.png"), width=A4_W, height=A4_H)
-    _inline_para_anchor(r, A4_W, A4_H)
+    lado = Cm(15)
+    r.add_picture(str(ASSETS / "marca_dagua_g.png"), width=lado, height=lado)
+    _inline_para_anchor(r, lado, lado, (A4_W - lado) / 2, (A4_H - lado) / 2)
 
     fp = section.footer.paragraphs[0]
     fp.paragraph_format.tab_stops.add_tab_stop(Cm(5.0))
