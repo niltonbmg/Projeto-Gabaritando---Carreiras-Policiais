@@ -134,8 +134,9 @@ def _barra_titulo(doc, texto, cor=NAVY, size=13):
 # ---------------------------------------------------------------- seções
 def capa(doc):
     _para(doc, after=30)
-    p = _para(doc, align=WD_ALIGN_PARAGRAPH.CENTER, after=40)
+    p = _para(doc, align=WD_ALIGN_PARAGRAPH.CENTER, after=4)
     p.add_run().add_picture(str(ASSETS / "logo_projeto.png"), width=Cm(9))
+    _para(doc, "VEM GABARITAR COM A GENTE", True, 11, OURO, WD_ALIGN_PARAGRAPH.CENTER, after=40)
     _para(doc, "GABARITO COMENTADO", True, 32, NAVY, WD_ALIGN_PARAGRAPH.CENTER, after=4)
     _para(doc, "SIMULADO 06", True, 26, OURO, WD_ALIGN_PARAGRAPH.CENTER, after=4)
     _para(doc, "Prova Objetiva e Discursiva", False, 14, CINZA, WD_ALIGN_PARAGRAPH.CENTER, after=30)
