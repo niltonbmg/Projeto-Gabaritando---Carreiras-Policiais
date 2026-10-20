@@ -157,6 +157,6 @@ if __name__ == "__main__":
     gerar_docx(destino, disciplina="Língua Portuguesa",
                resumo="Prova 1 (Q01–Q10)  •  10 questões  •  texto base incluso",
                provas=[("PROVA 1", "Língua Portuguesa", PORTUGUES_P1)],
-               rodape="Língua Portuguesa", textos={"PROVA 1": TEXTO_PORT})
+               rodape="Revisão Formosa do Rio Preto 2026 • Língua Portuguesa", textos={"PROVA 1": TEXTO_PORT})
     gerar_pdf(destino)
     print(f"OK: {destino}")

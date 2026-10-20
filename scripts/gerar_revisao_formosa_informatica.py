@@ -277,7 +277,7 @@ def _cabecalho_rodape(section, disciplina):
 
     fp = section.footer.paragraphs[0]
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(fp, f"Revisão Formosa do Rio Preto 2026 • {disciplina}  |  Página ", size=9, cor=PRETO)
+    _run(fp, f"{disciplina}  |  Página ", size=9, cor=PRETO)
     _campo(fp, "PAGE", "1")
 
 
@@ -312,7 +312,7 @@ def _inserir_marca_dagua(section, largura_cm=16.0):
     inline.getparent().replace(inline, anchor)
 
 
-def _capa(doc, disciplina, resumo):
+def _capa(doc, disciplina, resumo, titulo_capa):
     sec = doc.sections[0]
     p = doc.add_paragraph(); p.paragraph_format.space_before = Cm(2.5)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -326,7 +326,7 @@ def _capa(doc, disciplina, resumo):
     _run(cp, "REVISÃO", bold=True, size=40, cor=PRETO)
     cp2 = cell.add_paragraph(); cp2.alignment = WD_ALIGN_PARAGRAPH.CENTER
     cp2.paragraph_format.space_after = Pt(18)
-    _run(cp2, "CONCURSO DE FORMOSA DO RIO PRETO 2026", bold=True, size=18, cor=PRETO)
+    _run(cp2, titulo_capa, bold=True, size=18, cor=PRETO)
 
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Cm(1.5)
@@ -344,7 +344,7 @@ def _capa(doc, disciplina, resumo):
 
 def _sumario_e_gabarito(doc, provas):
     p = doc.add_paragraph(); _run(p, "SUMÁRIO", bold=True, size=16, cor=PRETO)
-    for nome, disc, qs in provas:
+    for nome, disc, qs, *_ in provas:
         p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(6); p.paragraph_format.space_after = Pt(2)
         _run(p, f"{nome} – {disc}", bold=True, size=11, cor=PRETO)
         for q in qs:
@@ -355,8 +355,9 @@ def _sumario_e_gabarito(doc, provas):
 
     p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(18)
     _run(p, "GABARITO RÁPIDO", bold=True, size=16, cor=PRETO)
-    for nome, disc, qs in provas:
-        p = doc.add_paragraph(); _run(p, f"{nome} – {disc}", bold=True, size=12, cor=PRETO)
+    for nome, disc, qs, *_ in provas:
+        p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(8)
+        _run(p, f"{nome} – {disc}", bold=True, size=12, cor=PRETO)
         t = doc.add_table(rows=2, cols=len(qs)); t.style = "Table Grid"
         for i, q in enumerate(qs):
             c0, c1 = t.rows[0].cells[i], t.rows[1].cells[i]
@@ -364,7 +365,7 @@ def _sumario_e_gabarito(doc, provas):
             for c, txt, cor in ((c0, f"Q{q['num']:02d}", "#FFFFFF"), (c1, q["gab"] + ("*" if q.get("anulavel") else ""), PRETO)):
                 cp = c.paragraphs[0]; cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 _run(cp, txt, bold=True, size=11, cor=cor)
-    for nome, _, qs in provas:
+    for nome, _, qs, *_ in provas:
         for q in qs:
             if q.get("anulavel"):
                 p = doc.add_paragraph(); p.paragraph_format.space_before = Pt(6)
@@ -382,7 +383,7 @@ def _questao(doc, prova, q):
     cp = cell.paragraphs[0]; _run(cp, q["enunciado"], size=11, cor=PRETO)
     if q.get("imagem"):
         ip = cell.add_paragraph(); ip.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        ip.add_run().add_picture(str(q["imagem"]), width=Cm(6))
+        ip.add_run().add_picture(str(q["imagem"]), width=Cm(q.get("largura_cm", 6)))
     for letra, txt in q["alts"].items():
         ap = cell.add_paragraph(); ap.paragraph_format.left_indent = Cm(0.4)
         _run(ap, f"{letra.lower()}) ", bold=True, size=10.5, cor=PRETO)
@@ -428,8 +429,14 @@ def _texto_base(doc, texto):
 
 def gerar_docx(destino: Path, disciplina="Conhecimentos em Informática",
                resumo="Prova 1 (Q21–Q25)  •  Prova 2 (Q21–Q30)  •  15 questões",
-               provas=PROVAS, rodape="Informática", textos=None):
-    """textos: {nome_da_prova: (titulo, [parágrafos], fonte)} – texto base exibido antes das questões."""
+               provas=PROVAS, rodape="Revisão Formosa do Rio Preto 2026 • Informática", textos=None, titulo_capa="CONCURSO DE FORMOSA DO RIO PRETO 2026",
+               extras=None):
+    """
+    provas: [(nome, disciplina, questões[, texto_base])].
+    textos: {nome_da_prova: (titulo, [parágrafos], fonte)} – texto base exibido antes das questões
+            (alternativa ao 4º elemento da tupla).
+    extras: [(titulo, [parágrafos])] – seções livres ao final (ex.: roteiro de redação).
+    """
     doc = Document()
     st = doc.styles["Normal"]; st.font.name = "Calibri"; st.font.size = Pt(11)
     for nome in ("Heading 1", "Heading 2"):
@@ -440,7 +447,7 @@ def gerar_docx(destino: Path, disciplina="Conhecimentos em Informática",
         setattr(sec, attr, Cm(2.0))
     sec.left_margin = sec.right_margin = Cm(2.2)
 
-    _capa(doc, disciplina, resumo)
+    _capa(doc, disciplina, resumo, titulo_capa)
 
     # nova seção para o conteúdo (capa fica sem cabeçalho/rodapé)
     sec2 = doc.add_section(WD_SECTION.NEW_PAGE)
@@ -452,15 +459,31 @@ def gerar_docx(destino: Path, disciplina="Conhecimentos em Informática",
 
     _sumario_e_gabarito(doc, provas)
 
-    for nome, disc, qs in provas:
+    for nome, disc, qs, *resto in provas:
         doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
         h = doc.add_heading(level=1)
         _run(h, f"{nome} – {disc.upper()}", bold=True, size=18, cor=PRETO)
-        if textos and nome in textos:
-            _texto_base(doc, textos[nome])
+        texto = resto[0] if resto else (textos or {}).get(nome)
+        if texto:
+            _texto_base(doc, texto)
         for q in qs:
             _questao(doc, nome.title(), q)
 
+    for titulo, paragrafos in extras or []:
+        doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+        h = doc.add_heading(level=1)
+        _run(h, titulo, bold=True, size=18, cor=PRETO)
+        for par in paragrafos:
+            p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            if par.startswith("## "):
+                p.paragraph_format.space_before = Pt(10)
+                _run(p, par[3:], bold=True, size=13, cor=PRETO)
+            elif par.startswith("- "):
+                p.paragraph_format.left_indent = Cm(0.6); p.paragraph_format.space_after = Pt(2)
+                _run(p, "• ", bold=True, size=10.5, cor=AMARELO)
+                _run(p, par[2:], size=10.5)
+            else:
+                _run(p, par, size=10.5)
     doc.save(destino)
 
 

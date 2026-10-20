@@ -139,6 +139,6 @@ if __name__ == "__main__":
     gerar_docx(destino, disciplina="Matemática",
                resumo="Prova 1 (Q11–Q20)  •  10 questões",
                provas=[("PROVA 1", "Matemática", MATEMATICA_P1)],
-               rodape="Matemática")
+               rodape="Revisão Formosa do Rio Preto 2026 • Matemática")
     gerar_pdf(destino)
     print(f"OK: {destino}")
