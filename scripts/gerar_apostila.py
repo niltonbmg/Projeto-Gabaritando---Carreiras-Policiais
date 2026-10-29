@@ -3,7 +3,7 @@
 Diagrama as apostilas de Técnico em Enfermagem – SES-TO (Markdown → DOCX + PDF),
 no mesmo padrão visual das apostilas SD CBMBA (scripts/gerar_apostila_sd_cbmba.py).
 
-Uso: python3 scripts/gerar_apostila.py 01 [02 ...]   (ou "todas")
+Uso: python3 scripts/gerar_apostila.py 01 [02 ...]   (ou "todas", ou "unica" = tudo num só arquivo)
 Fonte:  conteudo/tecnico-enfermagem-ses-to/NN_*.md
 Saídas: saidas/tecnico-enfermagem-ses-to/NN_*.docx e .pdf
 
@@ -194,7 +194,7 @@ def ler(md: Path):
     return m.group(1), m.group(2).strip(), linhas[i + 1:]
 
 
-def capa(doc, numero, titulo):
+def capa(doc, numero, titulo, unica=False):
     C = WD_ALIGN_PARAGRAPH.CENTER
     _para(doc, after=30)
     p = _para(doc, align=C, after=4)
@@ -210,7 +210,8 @@ def capa(doc, numero, titulo):
     _para(doc, after=14)
     _para(doc, titulo.upper(), True, 15, NAVY, C, after=30)
     _para(doc, "Secretaria de Estado da Saúde do Tocantins", True, 14, NAVY, C, after=2)
-    _para(doc, f"Cargo: Técnico em Enfermagem · Assunto {numero} do edital · 2026",
+    detalhe = numero if unica else f"Assunto {numero} do edital"
+    _para(doc, f"Cargo: Técnico em Enfermagem · {detalhe} · 2026",
           False, 12, CINZA, C, after=40)
     _para(doc, "“O crescimento mora no desconforto.”", True, 12, NAVY, C, after=4, italic=True)
     _para(doc, "@projeto.gabaritando", False, 10, CINZA, C)
@@ -279,8 +280,7 @@ def corpo(doc, linhas):
 
 
 # ---------------------------------------------------------------- principal
-def gerar(md: Path):
-    numero, titulo, linhas = ler(md)
+def _novo_doc():
     doc = Document()
     st = doc.styles["Normal"]
     st.font.name = "Arial"
@@ -292,22 +292,51 @@ def gerar(md: Path):
     sec.left_margin = sec.right_margin = Cm(2.0)
     sec.header_distance, sec.footer_distance = Cm(0), Cm(0.8)
     _rodape(sec)
+    return doc
 
-    capa(doc, numero, titulo)
-    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
-    corpo(doc, linhas)
 
+def _salvar(doc, nome):
     DESTINO.mkdir(parents=True, exist_ok=True)
-    docx = DESTINO / f"{md.stem}.docx"
+    docx = DESTINO / f"{nome}.docx"
     doc.save(docx)
     subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(DESTINO),
                     str(docx)], check=True, capture_output=True, timeout=300)
     return docx, docx.with_suffix(".pdf")
 
 
+def gerar_unica(arquivos):
+    """Junta todos os assuntos numa apostila só: capa geral, sumário e assuntos em sequência."""
+    assuntos = [ler(md) for md in arquivos]
+    doc = _novo_doc()
+    capa(doc, "Apostila completa", "Conhecimentos Específicos", unica=True)
+    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+    _barra(doc, "SUMÁRIO")
+    for numero, titulo, _ in assuntos:
+        p = _para(doc, after=3)
+        _run(p, f"Assunto {numero} ", True, 11, OURO)
+        _run(p, f"– {titulo}", False, 11, NAVY)
+    for numero, titulo, linhas in assuntos:
+        doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+        _barra(doc, f"ASSUNTO {numero} – {titulo.upper()}", size=15)
+        corpo(doc, linhas)
+    return _salvar(doc, "apostila_tecnico_enfermagem_ses_to")
+
+
+def gerar(md: Path):
+    numero, titulo, linhas = ler(md)
+    doc = _novo_doc()
+    capa(doc, numero, titulo)
+    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+    corpo(doc, linhas)
+    return _salvar(doc, md.stem)
+
+
 if __name__ == "__main__":
     args = sys.argv[1:] or ["todas"]
-    arquivos = sorted(FONTE.glob("[0-9][0-9]_*.md")) if args == ["todas"] else \
+    arquivos = [] if args == ["unica"] else sorted(FONTE.glob("[0-9][0-9]_*.md")) if args == ["todas"] else \
         [next(FONTE.glob(f"{n}_*.md")) for n in args]
-    for md in arquivos:
-        print(*gerar(md))
+    if args == ["unica"]:
+        print(*gerar_unica(sorted(FONTE.glob("[0-9][0-9]_*.md"))))
+    else:
+        for md in arquivos:
+            print(*gerar(md))
