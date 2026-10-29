@@ -37,8 +37,8 @@ from docx.shared import Cm, Pt, RGBColor
 
 BASE = Path(__file__).resolve().parent.parent
 
-AZUL = RGBColor(0x1F, 0x38, 0x64)
-DOURADO = RGBColor(0xB8, 0x86, 0x0B)
+AZUL = RGBColor(0x00, 0x00, 0x00)  # preto (identidade Gabaritando)
+DOURADO = RGBColor(0xE5, 0xA8, 0x00)  # amarelo Gabaritando
 TEXTO = RGBColor(0x00, 0x00, 0x00)
 
 
@@ -161,16 +161,16 @@ class Apostila:
                 r.font.size = Pt(10)
                 if i == 0:
                     r.bold = True
-                    r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-                    _shade(c, "1F3864")
+                    r.font.color.rgb = RGBColor(0xFF, 0xC4, 0x00)
+                    _shade(c, "000000")
                 elif i % 2 == 0:
-                    _shade(c, "EEF2F8")
+                    _shade(c, "FFF8DC")
         self.doc.add_paragraph()
 
     def destaque(self, texto):
         t = self.doc.add_table(rows=1, cols=1)
         c = t.cell(0, 0)
-        _shade(c, "FFF4D6")
+        _shade(c, "FFE58A")
         p = c.paragraphs[0]
         p.paragraph_format.line_spacing = 1.2
         for parte in re.split(r"(\*\*[^*]+\*\*)", texto):
@@ -237,7 +237,13 @@ class Apostila:
                 primeiro_h1 = False
                 self.doc.add_heading(l[2:], level=1)
             elif l.startswith("## "):
-                self.doc.add_heading(l[3:], level=2)
+                h = self.doc.add_heading(l[3:], level=2)
+                pbdr = OxmlElement("w:pBdr")
+                left = OxmlElement("w:left")
+                for k, v in (("w:val", "single"), ("w:sz", "36"), ("w:space", "6"), ("w:color", "FFC400")):
+                    left.set(qn(k), v)
+                pbdr.append(left)
+                h._p.get_or_add_pPr().append(pbdr)
             elif l.startswith("### "):
                 self.doc.add_heading(l[4:], level=3)
             elif l.startswith("- "):
