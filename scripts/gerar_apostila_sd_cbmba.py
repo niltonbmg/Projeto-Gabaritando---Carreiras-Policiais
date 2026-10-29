@@ -28,12 +28,12 @@ BASE = Path(__file__).resolve().parent.parent
 ASSETS = BASE / "assets" / "gabaritando"
 FONTE = BASE / "saidas" / "sd-cbmba" / "ciencias-naturais"
 DESTINO = FONTE / "pdf"
-AZUL_CLARO = "E8EDF5"
+AZUL_CLARO = "F2F2F2"
 
 # Paleta da marca (azul-marinho + dourado do logo "Projeto Gabaritando")
-NAVY = "1B2A4A"
-OURO = "B8862B"
-OURO_CLARO = "F6EBD3"
+NAVY = "111111"  # preto
+OURO = "FDB404"  # amarelo do logo
+OURO_CLARO = "FFF3D1"
 CINZA = "1F2933"
 VERDE = "1E7B34"
 VERM = "9B1C1C"
@@ -141,7 +141,7 @@ def _barra(doc, texto, cor=NAVY, size=13):
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
     c = t.cell(0, 0)
     _shade(c, cor)
-    _run(c.paragraphs[0], texto, True, size, "FFFFFF")
+    _run(c.paragraphs[0], texto, True, size, OURO)
     _para(doc, after=2)
 
 
@@ -169,7 +169,7 @@ def _tabela(doc, linhas, cabecalho):
             p = cells[j].paragraphs[0]
             if i == 0 and cabecalho:
                 _shade(cells[j], NAVY)
-                _inline(p, txt, 9.5, "FFFFFF", bold=True)
+                _inline(p, txt, 9.5, OURO, bold=True)
             else:
                 if i % 2 == (0 if cabecalho else 1):
                     _shade(cells[j], AZUL_CLARO)
@@ -192,7 +192,13 @@ def capa(doc, titulo, meta):
     p.add_run().add_picture(str(ASSETS / "logo_projeto.png"), width=Cm(9))
     _para(doc, "VEM GABARITAR COM A GENTE", True, 11, OURO, WD_ALIGN_PARAGRAPH.CENTER, after=40)
     _para(doc, "APOSTILA", True, 30, NAVY, WD_ALIGN_PARAGRAPH.CENTER, after=4)
-    _para(doc, meta.get("Disciplina", "").upper(), True, 18, OURO, WD_ALIGN_PARAGRAPH.CENTER, after=14)
+    t = doc.add_table(rows=1, cols=1)
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    _shade(t.cell(0, 0), NAVY)
+    p = t.cell(0, 0).paragraphs[0]
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _run(p, meta.get("Disciplina", "").upper(), True, 18, OURO)
+    _para(doc, after=14)
     _para(doc, titulo, True, 15, NAVY, WD_ALIGN_PARAGRAPH.CENTER, after=30)
     _para(doc, "Corpo de Bombeiros Militar da Bahia", True, 14, NAVY, WD_ALIGN_PARAGRAPH.CENTER, after=2)
     _para(doc, f"Cargo: Soldado · Item {meta.get('Item do edital', '')} do edital · "
@@ -228,19 +234,22 @@ def corpo(doc, linhas):
                 doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
             _barra(doc, secao.upper())
         elif l.startswith("### "):
-            _para(doc, l[4:], True, 12.5, OURO, before=8, after=3)
+            p = _para(doc, before=8, after=3)
+            _run(p, "■ ", True, 12.5, OURO)
+            _run(p, l[4:], True, 12.5, NAVY)
         elif l.startswith("#### "):
             _para(doc, l[5:], True, 11, NAVY, before=4, after=2)
         elif l.startswith("– "):
             p = _para(doc, after=2)
             p.paragraph_format.left_indent = Cm(0.5)
-            _run(p, "▸ ", True, 10, OURO)
+            _run(p, "▸ ", True, 10, "C98F00")
             _inline(p, l[2:])
         elif re.match(r"^\*\*\d+\.\*\*", l):
             m = re.match(r"^\*\*(\d+)\.\*\*\s*(.*)$", l)
             t = doc.add_table(rows=1, cols=1)
             _shade(t.cell(0, 0), NAVY)
-            _run(t.cell(0, 0).paragraphs[0], f"QUESTÃO {int(m.group(1)):02d}", True, 11, "FFFFFF")
+            _run(t.cell(0, 0).paragraphs[0], f"QUESTÃO {int(m.group(1)):02d}", True, 11, OURO)
+            t.cell(0, 0).paragraphs[0].paragraph_format.keep_with_next = True
             p = _para(doc, before=4, after=3)
             _inline(p, m.group(2))
         elif re.match(r"^[a-e]\) ", l):
@@ -257,7 +266,9 @@ def corpo(doc, linhas):
                 (f"✔ GABARITO: {gab}", dict(size=10.5, color=VERDE, bold=True)),
                 (com.replace("Comentário:", "**Comentário:**", 1), dict(size=10))])
         elif l.startswith("**Exemplo"):
-            _para(doc, l.strip("*"), True, 10.5, OURO, before=6, after=2)
+            p = _para(doc, before=6, after=2)
+            _run(p, "■ ", True, 10.5, OURO)
+            _run(p, l.strip("*"), True, 10.5, NAVY)
         elif secao.startswith("✨"):
             _caixa(doc, OURO_CLARO, [(l, dict(size=11, italic=True))])
         else:
