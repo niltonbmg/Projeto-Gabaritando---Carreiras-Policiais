@@ -1,4 +1,3 @@
-# CONHECIMENTOS ESPECÍFICOS — TÉCNICO EM ENFERMAGEM
 
 ## Assunto 1 – Fundamentos de Enfermagem: anatomia, fisiologia, semiologia, procedimentos e técnicas
 
