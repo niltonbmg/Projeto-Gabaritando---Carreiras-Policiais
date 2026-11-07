@@ -1,0 +1,30 @@
+# Projeto Gabaritando - /ead
+# Redireciona /ead/ para /ead/login e mantém URLs sem .php sem quebrar POST de formulários.
+
+Options -Indexes
+RewriteEngine On
+RewriteBase /ead/
+
+
+# Corrige URLs antigas/erradas como /ead/ead/admin-dashboard
+RewriteCond %{REQUEST_URI} ^/ead/(?:ead/)+?$ [NC]
+RewriteRule ^(?:ead/)+?$ /ead/ [R=302,L,NE]
+
+RewriteCond %{REQUEST_URI} ^/ead/(?:ead/)+(.+)$ [NC]
+RewriteRule ^(?:ead/)+(.+)$ /ead/$1 [R=302,L,NE]
+
+# Se acessar exatamente /ead ou /ead/, manda para o login
+RewriteCond %{REQUEST_URI} ^/ead/?$
+RewriteRule ^$ /ead/login [R=302,L]
+
+# Remove .php da URL apenas em GET/HEAD. Não redireciona POST para não perder cadastro/login.
+RewriteCond %{REQUEST_METHOD} !POST [NC]
+RewriteCond %{THE_REQUEST} \s/+ead/([^\s?]+)\.php[?\s] [NC]
+RewriteRule ^(.+)\.php$ /ead/$1 [R=302,L]
+
+# Permite acessar /login, /cadastro, /api/processa_cadastro etc carregando o .php interno
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L,QSA]
+
+# Mantém arquivos reais funcionando normalmente: css, js, imagens, uploads etc.

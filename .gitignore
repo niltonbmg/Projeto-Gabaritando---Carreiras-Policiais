@@ -1,5 +1,18 @@
+# Materiais gerados pelos scripts
 saidas/*.pdf
 saidas/*.docx
 downloads/
 __pycache__/
 *.pyc
+
+# Plataforma EAD: segredos e dados do servidor (nunca versionar)
+ead/.env
+ead/uploads/
+ead/vendor/
+ead/img/
+*.zip
+*.sql
+.DS_Store
+
+# Pacotes e prints gerados para entrega manual
+entregas/
