@@ -35,6 +35,38 @@ if (!function_exists('meta_cronograma_bootstrap')) {
             atualizado_em DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (usuario_id, curso_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS meta_aluno_revisoes (
+            usuario_id BIGINT UNSIGNED NOT NULL,
+            plano_item_id INT UNSIGNED NOT NULL,
+            rodada TINYINT UNSIGNED NOT NULL,
+            feita_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (usuario_id, plano_item_id, rodada)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+}
+
+if (!function_exists('meta_concluir_revisao')) {
+    function meta_concluir_revisao(PDO $pdo, int $usuarioId, int $planoItemId, int $rodada): void
+    {
+        if ($rodada < 1 || $rodada > count(META_REVISOES_DIAS)) {
+            throw new RuntimeException('Revisão inválida.');
+        }
+        $pdo->prepare('INSERT IGNORE INTO meta_aluno_revisoes (usuario_id, plano_item_id, rodada) VALUES (:u, :i, :r)')
+            ->execute([':u' => $usuarioId, ':i' => $planoItemId, ':r' => $rodada]);
+    }
+}
+
+if (!function_exists('meta_revisoes_feitas')) {
+    /** @return array<string,bool> chave "itemId:rodada" */
+    function meta_revisoes_feitas(PDO $pdo, int $usuarioId): array
+    {
+        $stmt = $pdo->prepare('SELECT plano_item_id, rodada FROM meta_aluno_revisoes WHERE usuario_id = :u');
+        $stmt->execute([':u' => $usuarioId]);
+        $feitas = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $feitas[(int)$r['plano_item_id'] . ':' . (int)$r['rodada']] = true;
+        }
+        return $feitas;
     }
 }
 
@@ -47,9 +79,23 @@ if (!function_exists('meta_cronograma_config')) {
         if (!$cfg) {
             return null;
         }
-        $dias = array_values(array_filter(array_map('intval', explode(',', (string)$cfg['dias_semana'])), static fn(int $d): bool => $d >= 0 && $d <= 6));
-        $cfg['dias'] = $dias ?: [1, 2, 3, 4, 5, 6];
-        $cfg['minutos_dia'] = max(30, (int)round((float)$cfg['horas_dia'] * 60));
+        // dias_semana: "1:3,2:3,6:5" = dia da semana (0=dom) : horas daquele dia.
+        // Formato antigo "1,2,3" usa horas_dia para todos.
+        $minutos = [];
+        foreach (explode(',', (string)$cfg['dias_semana']) as $parte) {
+            [$d, $h] = array_pad(explode(':', trim($parte)), 2, (string)$cfg['horas_dia']);
+            $d = (int)$d;
+            $m = (int)round((float)$h * 60);
+            if ($d >= 0 && $d <= 6 && $m > 0) {
+                $minutos[$d] = $m;
+            }
+        }
+        if (!$minutos) {
+            $minutos = array_fill_keys([1, 2, 3, 4, 5, 6], 180);
+        }
+        $cfg['minutos'] = $minutos;
+        $cfg['dias'] = array_keys($minutos);
+        $cfg['horas_semana'] = array_sum($minutos) / 60;
         return $cfg;
     }
 }
@@ -57,15 +103,27 @@ if (!function_exists('meta_cronograma_config')) {
 if (!function_exists('meta_cronograma_salvar_config')) {
     function meta_cronograma_salvar_config(PDO $pdo, int $usuarioId, int $cursoId, array $dados): void
     {
-        $horas = (float)str_replace(',', '.', (string)($dados['horas_dia'] ?? '3'));
-        if ($horas < 0.5 || $horas > 16) {
-            throw new RuntimeException('Informe entre 0,5 e 16 horas de estudo por dia.');
+        // $dados['horas'][dia] = horas daquele dia (0 = não estuda).
+        $pares = [];
+        $soma = 0.0;
+        foreach ((array)($dados['horas'] ?? []) as $d => $h) {
+            $d = (int)$d;
+            $h = (float)str_replace(',', '.', (string)$h);
+            if ($d < 0 || $d > 6 || $h <= 0) {
+                continue;
+            }
+            if ($h > 16) {
+                throw new RuntimeException('No máximo 16 horas de estudo em um dia.');
+            }
+            $pares[$d] = $d . ':' . rtrim(rtrim(number_format($h, 2, '.', ''), '0'), '.');
+            $soma += $h;
         }
-        $dias = array_values(array_unique(array_filter(array_map('intval', (array)($dados['dias'] ?? [])), static fn(int $d): bool => $d >= 0 && $d <= 6)));
-        if (!$dias) {
-            throw new RuntimeException('Escolha pelo menos um dia da semana para estudar.');
+        if (!$pares) {
+            throw new RuntimeException('Informe as horas de pelo menos um dia da semana.');
         }
-        sort($dias);
+        ksort($pares);
+        $horas = $soma / count($pares);
+        $dias = array_values($pares);
         $inicio = (string)($dados['data_inicio'] ?? '') ?: date('Y-m-d');
         $prova = trim((string)($dados['data_prova'] ?? ''));
         foreach ([$inicio, $prova] as $d) {
@@ -114,7 +172,7 @@ if (!function_exists('meta_cronograma_tarefas_pendentes')) {
 
 if (!function_exists('meta_cronograma_revisoes')) {
     /** Revisões espaçadas (+1, +7, +30 dias) dos assuntos já liberados. Chave: data Y-m-d. */
-    function meta_cronograma_revisoes(array $estado): array
+    function meta_cronograma_revisoes(array $estado, array $feitas = []): array
     {
         $revisoes = [];
         foreach ($estado['itens'] as $item) {
@@ -126,6 +184,9 @@ if (!function_exists('meta_cronograma_revisoes')) {
             }
             $base = new DateTimeImmutable(substr((string)$item['teoria_concluida_em'], 0, 10));
             foreach (META_REVISOES_DIAS as $n => $dias) {
+                if (isset($feitas[(int)$item['id'] . ':' . ($n + 1)])) {
+                    continue;
+                }
                 $data = $base->modify('+' . $dias . ' day')->format('Y-m-d');
                 $revisoes[$data][] = ['tipo' => 'revisao', 'item' => $item, 'minutos' => META_REVISAO_MINUTOS, 'rodada' => $n + 1];
             }
@@ -168,7 +229,7 @@ if (!function_exists('meta_cronograma_distribuir')) {
             if (!in_array((int)$dia->format('w'), $cfg['dias'], true)) {
                 continue;
             }
-            $livre = $cfg['minutos_dia'];
+            $livre = (int)($cfg['minutos'][(int)$dia->format('w')] ?? 0);
             foreach ($revisoes[$data] ?? [] as $rev) {
                 $agenda[$data][] = $rev;
                 $livre -= $rev['minutos'];
@@ -211,7 +272,7 @@ if (!function_exists('meta_cronograma_montar')) {
             return ['estado' => $estado, 'config' => $cfg, 'agenda' => [], 'fim' => null, 'atraso_dias' => 0, 'folga_dias' => null];
         }
 
-        $revisoes = meta_cronograma_revisoes($estado);
+        $revisoes = meta_cronograma_revisoes($estado, meta_revisoes_feitas($pdo, $usuarioId));
         $fila = meta_cronograma_tarefas_pendentes($estado);
         $real = meta_cronograma_distribuir($fila, $cfg, $hoje, $revisoes);
 
