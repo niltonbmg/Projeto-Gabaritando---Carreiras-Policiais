@@ -2940,6 +2940,16 @@ if ($aulas) {
             overflow:hidden;
         }
 
+        .aula-somente-pdf{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 120% at 0% 0%,#2a2108 0%,#111 55%,#0b0b0b 100%);color:#f3f3f4;text-align:left}
+        .aula-somente-pdf__conteudo{max-width:560px;display:grid;gap:12px}
+        .aula-somente-pdf__selo{display:inline-flex;align-items:center;gap:6px;justify-self:start;padding:6px 12px;border-radius:999px;background:rgba(251,185,40,.14);color:#fbb928;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+        .aula-somente-pdf__selo svg,.aula-somente-pdf__tempo svg,.aula-somente-pdf__botao svg{width:16px;height:16px}
+        .aula-somente-pdf h2{font-size:clamp(20px,3vw,28px);line-height:1.2}
+        .aula-somente-pdf p{color:#c9c9cf;font-size:15px}
+        .aula-somente-pdf__tempo{display:flex;align-items:center;gap:6px;font-size:14px}
+        .aula-somente-pdf__botao{justify-self:start;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;background:#fbb928;color:#111;font:inherit;font-weight:700;cursor:pointer}
+        .aula-somente-pdf__botao:focus-visible{outline:2px solid #fff;outline-offset:3px}
+        @media(max-width:760px){.video-frame:has(.aula-somente-pdf){aspect-ratio:auto!important;overflow:visible}.aula-somente-pdf{position:relative;inset:auto;padding:24px 20px}}
         .pdf-viewer-modal{
             position:fixed;
             inset:0;
@@ -3490,12 +3500,25 @@ if ($aulas) {
                                 referrerpolicy="strict-origin-when-cross-origin"
                                 allowfullscreen>
                             </iframe>
+                        <?php elseif ($pdfAtual['arquivo'] !== ''): ?>
+                            <?php // Aula só com PDF: apresentação própria, sem vídeo improvisado. ?>
+                            <div class="aula-somente-pdf">
+                                <div class="aula-somente-pdf__conteudo">
+                                    <span class="aula-somente-pdf__selo"><i data-lucide="book-open-text" aria-hidden="true"></i>Teoria mínima em PDF</span>
+                                    <h2><?php echo esc($aulaTitulo); ?></h2>
+                                    <p>Esta aula é de leitura. Leia o material com atenção, faça suas marcações e depois siga para as questões.</p>
+                                    <?php if (!empty($aulaAtual['pdf_duracao'])): ?><p class="aula-somente-pdf__tempo"><i data-lucide="clock-3" aria-hidden="true"></i>Tempo estimado de leitura: <?php echo esc((string)$aulaAtual['pdf_duracao']); ?></p><?php endif; ?>
+                                    <button type="button" class="aula-somente-pdf__botao" onclick="var b=document.getElementById('abrirPdfAula'); if(b){b.click();}">
+                                        <i data-lucide="file-text" aria-hidden="true"></i>Ler o material
+                                    </button>
+                                </div>
+                            </div>
                         <?php else: ?>
                             <div class="video-empty">
                                 <div>
-                                    <i data-lucide="video-off" aria-hidden="true"></i>
-                                    <h2>Vídeo não informado</h2>
-                                    <p>Cadastre a URL do YouTube ou do vídeo no conteúdo deste módulo.</p>
+                                    <i data-lucide="file-x" aria-hidden="true"></i>
+                                    <h2>Conteúdo em preparação</h2>
+                                    <p>O material desta aula será liberado em breve.</p>
                                 </div>
                             </div>
                         <?php endif; ?>
