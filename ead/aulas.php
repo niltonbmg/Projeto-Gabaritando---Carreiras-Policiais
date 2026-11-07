@@ -2986,6 +2986,9 @@ if ($aulas) {
         .ad-texto th,.ad-texto td{border:1px solid rgba(255,255,255,.14);padding:8px 10px;text-align:left;vertical-align:top}
         .ad-texto th{background:rgba(251,185,40,.12)}
         .ad-intro{padding:14px 16px;border-radius:12px;background:rgba(251,185,40,.08);border:1px solid rgba(251,185,40,.25);margin-bottom:14px}
+        .ad-abrir{margin-left:auto;font-size:12px;font-weight:500;opacity:.65;white-space:nowrap}
+        .ad-secao[open] .ad-abrir{display:none}
+        .ad-grupo{margin:18px 0 10px;font-size:1.05em;color:#fbb928}
         .ad-secao{border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-bottom:10px;overflow:hidden}
         .ad-secao>summary{cursor:pointer;list-style:none;padding:12px 16px;font-weight:700;background:rgba(255,255,255,.04);display:flex;justify-content:space-between;align-items:center;gap:10px}
         .ad-secao>summary::-webkit-details-marker{display:none}
@@ -3631,6 +3634,16 @@ if ($aulas) {
                 <div class="aula-extra">
                     <div class="content-section">
                         <?php $aulaDescricaoHtml = aula_descricao_html($aulaDescricao); ?>
+                        <?php if ($aulaAtual && ($aulaDescricaoHtml !== '' || $pdfAtual['arquivo'] !== '')): ?>
+                        <div class="pod" style="margin-bottom:20px" id="aulaPodcast" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>">
+                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast desta aula</span></button>
+                                <div class="pod-progresso" id="podProg" hidden><div class="pod-barra"><i id="podBarra"></i></div><span id="podMsg">Preparando o roteiro…</span></div>
+                                <div class="pod-player" id="podPlayer" hidden>
+                                    <audio id="podAudio" controls preload="none"></audio>
+                                    <div class="pod-vel" role="group" aria-label="Velocidade"><button type="button" data-v="1">1x</button><button type="button" data-v="1.25">1,25x</button><button type="button" data-v="1.5">1,5x</button></div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                         <?php if ($aulaDescricaoHtml !== ''): ?>
                         <section class="ad" id="aulaDescricao" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>" aria-label="Material da aula">
                             <div class="ad-barra">
@@ -3640,18 +3653,10 @@ if ($aulas) {
                                     <button type="button" class="ad-btn" data-ad="limpar" title="Remover todas as suas marcações desta aula">Limpar marcações</button>
                                     <button type="button" class="ad-btn" data-ad="menor" aria-label="Diminuir letra">A−</button>
                                     <button type="button" class="ad-btn" data-ad="maior" aria-label="Aumentar letra">A+</button>
-                                    <button type="button" class="ad-btn" data-ad="recolher">Recolher tudo</button>
+                                    <button type="button" class="ad-btn" data-ad="recolher">Abrir tudo</button>
                                 </div>
                             </div>
                             <p class="ad-dica">Dica: selecione um trecho com o dedo ou o mouse e toque em <strong>Marcar</strong>. Suas marcações ficam salvas na sua conta. Toque numa marcação para removê-la.</p>
-                            <div class="pod" id="aulaPodcast" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>">
-                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast desta aula</span></button>
-                                <div class="pod-progresso" id="podProg" hidden><div class="pod-barra"><i id="podBarra"></i></div><span id="podMsg">Preparando o roteiro…</span></div>
-                                <div class="pod-player" id="podPlayer" hidden>
-                                    <audio id="podAudio" controls preload="none"></audio>
-                                    <div class="pod-vel" role="group" aria-label="Velocidade"><button type="button" data-v="1">1x</button><button type="button" data-v="1.25">1,25x</button><button type="button" data-v="1.5">1,5x</button></div>
-                                </div>
-                            </div>
                             <div class="ad-texto" id="aulaDescricaoTexto"><?php echo $aulaDescricaoHtml; ?></div>
                             <span class="ad-status" id="aulaDescricaoStatus" role="status" aria-live="polite"></span>
                         </section>
@@ -5632,11 +5637,13 @@ if ($aulas) {
             try { localStorage.setItem('gab_ad_fs', String(tamanho)); } catch (e) {}
         } else if (acao === 'recolher') {
             var abrir = b.textContent.indexOf('Abrir') === 0;
+            texto.querySelectorAll('.ad-abrir').forEach(function (x) { x.textContent = abrir ? 'Toque para fechar' : 'Toque para abrir'; });
             texto.querySelectorAll('details.ad-secao').forEach(function (d) { d.open = abrir; });
             b.textContent = abrir ? 'Recolher tudo' : 'Abrir tudo';
         }
     });
 
+    texto.querySelectorAll('details.ad-secao').forEach(function (d) { d.addEventListener('toggle', function () { var x = d.querySelector('.ad-abrir'); if (x) { x.textContent = 'Toque para abrir'; } }); });
     fetch('api/aula-marcacoes.php?aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'})
         .then(function (r) { return r.json(); })
         .then(function (j) { (j.marcacoes || []).forEach(function (m) { if (aplicar(m.t, m.n)) { marcas.push(m); } }); })

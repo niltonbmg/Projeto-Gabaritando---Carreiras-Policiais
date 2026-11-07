@@ -90,8 +90,13 @@ if (!function_exists('aula_descricao_html')) {
                 continue;
             }
             $titulo = aula_desc_titulo($b['titulo']);
-            $html .= '<details class="ad-secao' . ($ehBizu ? ' ad-bizus' : '') . '" open>'
-                . '<summary><span>' . ($ehBizu ? '⚠️ ' : '') . aula_desc_e($titulo) . '</span></summary>'
+            if ($corpo === '') {
+                // Título sem conteúdo próprio (ex.: "RESUMO TEÓRICO: ..."): vira cabeçalho do grupo.
+                $html .= '<h3 class="ad-grupo">' . aula_desc_e($titulo) . '</h3>';
+                continue;
+            }
+            $html .= '<details class="ad-secao' . ($ehBizu ? ' ad-bizus' : '') . '">'
+                . '<summary><span>' . ($ehBizu ? '⚠️ ' : '') . aula_desc_e($titulo) . '</span><small class="ad-abrir">Toque para abrir</small></summary>'
                 . '<div class="ad-corpo">' . $corpo . '</div></details>';
         }
         return $html;

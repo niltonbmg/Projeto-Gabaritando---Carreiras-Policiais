@@ -86,7 +86,7 @@ if (!function_exists('podcast_gemini')) {
 if (!function_exists('podcast_material_da_aula')) {
     function podcast_material_da_aula(PDO $pdo, int $aulaId): array
     {
-        $stmt = $pdo->prepare('SELECT a.id, a.titulo, a.descricao, m.nome AS materia, c.nome AS curso
+        $stmt = $pdo->prepare('SELECT a.id, a.titulo, a.descricao, a.pdf_arquivo, m.nome AS materia, c.nome AS curso
                                  FROM admin_curso_aulas a
                                  LEFT JOIN admin_materias m ON m.id = a.materia_id
                                  LEFT JOIN admin_cursos c ON c.id = a.curso_id
@@ -97,10 +97,20 @@ if (!function_exists('podcast_material_da_aula')) {
             throw new RuntimeException('Aula não encontrada.');
         }
         $texto = trim(html_entity_decode(strip_tags(str_replace(['</p>', '</li>', '</h2>', '</h3>', '</h4>', '</tr>'], "\n", (string)$aula['descricao'])), ENT_QUOTES, 'UTF-8'));
-        if (mb_strlen($texto) < 200) {
-            throw new RuntimeException('Esta aula ainda não tem material escrito suficiente para gerar o podcast.');
+        // PDF da aula: o Gemini lê o PDF direto (aulas só com PDF ou com pouca descrição).
+        $aula['pdf_base64'] = '';
+        $pdf = trim((string)($aula['pdf_arquivo'] ?? ''));
+        if ($pdf !== '' && !preg_match('~^https?://~i', $pdf)) {
+            $caminho = realpath(dirname(__DIR__) . '/' . ltrim(preg_replace('~^/?ead/~', '', $pdf), '/'));
+            $raiz = realpath(dirname(__DIR__) . '/uploads');
+            if ($caminho && $raiz && strpos($caminho, $raiz) === 0 && is_file($caminho) && filesize($caminho) <= 15 * 1024 * 1024) {
+                $aula['pdf_base64'] = base64_encode((string)file_get_contents($caminho));
+            }
         }
-        $aula['texto'] = mb_substr($texto, 0, 20000);
+        if (mb_strlen($texto) < 200 && $aula['pdf_base64'] === '') {
+            throw new RuntimeException('Esta aula ainda não tem material (descrição ou PDF) para gerar o podcast.');
+        }
+        $aula['texto'] = mb_strlen($texto) >= 200 ? mb_substr($texto, 0, 20000) : '(sem descrição: use o PDF anexo como material da aula)';
         return $aula;
     }
 }
@@ -127,7 +137,7 @@ if (!function_exists('podcast_iniciar')) {
             . "- Sargento: professor experiente, didático, chama o ouvinte de \"combatente\".\n"
             . "- Ana: aluna que vai prestar o concurso, faz as perguntas que o aluno faria.\n\n"
             . "REGRAS\n"
-            . "1. Use somente o conteúdo do material. Não invente datas, números, nomes nem leis.\n"
+            . "1. Use somente o conteúdo do material (texto abaixo e o PDF anexo, se houver). Não invente datas, números, nomes nem leis.\n"
             . "2. Escreva números e datas por extenso, como devem ser falados (\"mil quinhentos e quarenta e nove\").\n"
             . "3. Comece com \"Fala, combatente! Aqui é o Podcast Gabaritando\". Inclua macetes e as pegadinhas da banca.\n"
             . "4. Termine com um mini quiz de duas perguntas respondidas na hora e com a chamada: resolver pelo menos 5 questões do assunto no cronograma. Feche com \"Fé na missão: a farda é questão de tempo!\".\n"
@@ -135,8 +145,12 @@ if (!function_exists('podcast_iniciar')) {
             . "Responda SOMENTE em JSON: {\"falas\":[{\"quem\":\"Sargento\"|\"Ana\",\"texto\":\"...\"}]}\n\n"
             . "CURSO: " . $aula['curso'] . "\nMATÉRIA: " . $aula['materia'] . "\nAULA: " . $aula['titulo'] . "\n\nMATERIAL DA AULA:\n" . $aula['texto'];
 
+        $partes = [['text' => $prompt]];
+        if ($aula['pdf_base64'] !== '') {
+            $partes[] = ['inlineData' => ['mimeType' => 'application/pdf', 'data' => $aula['pdf_base64']]];
+        }
         $resp = podcast_gemini(PODCAST_MODELO_TEXTO, [
-            'contents' => [['parts' => [['text' => $prompt]]]],
+            'contents' => [['parts' => $partes]],
             'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.7],
         ]);
         $texto = (string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? '');
