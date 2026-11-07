@@ -1,0 +1,8 @@
+# Segredos e dados do servidor (nunca versionar)
+ead/.env
+ead/uploads/
+ead/vendor/
+ead/img/
+*.zip
+*.sql
+.DS_Store

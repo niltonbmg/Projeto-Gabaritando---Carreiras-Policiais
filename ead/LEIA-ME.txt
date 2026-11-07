@@ -1,0 +1,14 @@
+COMO USAR
+
+1. Extraia o ZIP.
+2. Envie o arquivo .htaccess para a raiz do site, normalmente public_html/.
+3. Se já existir um .htaccess no servidor, faça backup antes.
+4. Depois teste:
+   - /materiais.php deve redirecionar para /materiais
+   - /admin-simulado.php deve redirecionar para /admin-simulado
+   - imagens, CSS, JS e uploads continuam funcionando.
+
+IMPORTANTE
+
+Se o servidor estiver com cache, limpe o cache do navegador ou teste em aba anônima.
+Se der erro 500, provavelmente o Apache/Hostinger não aceitou alguma regra. Nesse caso, restaure o backup do .htaccess antigo.
