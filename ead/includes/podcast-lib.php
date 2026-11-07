@@ -40,6 +40,24 @@ if (!function_exists('podcast_bootstrap')) {
     }
 }
 
+if (!function_exists('podcast_reconectar')) {
+    /**
+     * Depois de uma chamada longa ao Gemini, a hospedagem pode ter fechado a
+     * conexão parada com o banco ("MySQL server has gone away"). Testa e,
+     * se caiu, abre uma conexão nova.
+     */
+    function podcast_reconectar(PDO $pdo): PDO
+    {
+        try {
+            $pdo->query('SELECT 1');
+            return $pdo;
+        } catch (Throwable $e) {
+            $cfg = gab_db_config();
+            return gab_pdo_connect((string)$cfg['host'], (string)$cfg['database']);
+        }
+    }
+}
+
 if (!function_exists('podcast_pasta')) {
     function podcast_pasta(): string
     {
@@ -239,6 +257,7 @@ if (!function_exists('podcast_iniciar')) {
     /** Passo 1: roteiro. Retorna o número de partes de áudio. */
     function podcast_iniciar(PDO $pdo, int $aulaId): array
     {
+        $pdo = podcast_reconectar($pdo);
         podcast_bootstrap($pdo);
         $stmt = $pdo->prepare('SELECT * FROM aula_podcasts WHERE aula_id = :a');
         $stmt->execute([':a' => $aulaId]);
@@ -273,6 +292,7 @@ if (!function_exists('podcast_iniciar')) {
             'contents' => [['parts' => $partes]],
             'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.7],
         ], 110);
+        $pdo = podcast_reconectar($pdo);
         $texto = (string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? '');
         $dados = json_decode($texto, true);
         $falas = [];
@@ -302,6 +322,7 @@ if (!function_exists('podcast_parte')) {
     /** Passo 2: áudio do bloco $n (0..partes-1). Na última parte junta tudo. */
     function podcast_parte(PDO $pdo, int $aulaId, int $n): array
     {
+        $pdo = podcast_reconectar($pdo);
         podcast_bootstrap($pdo);
         $stmt = $pdo->prepare('SELECT * FROM aula_podcasts WHERE aula_id = :a');
         $stmt->execute([':a' => $aulaId]);
@@ -319,6 +340,7 @@ if (!function_exists('podcast_parte')) {
         $arqParte = podcast_pasta() . '/aula-' . $aulaId . '-parte-' . $n . '.pcm';
         if (!is_file($arqParte)) {
             $pcm = podcast_tts($blocos[$n]);
+            $pdo = podcast_reconectar($pdo);
             if (strlen($pcm) < 1000) {
                 throw new RuntimeException('O áudio desta parte veio vazio. Tente de novo.');
             }

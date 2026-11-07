@@ -51,7 +51,7 @@ try {
 } catch (Throwable $e) {
     if (isset($pdo, $aulaId) && $pdo instanceof PDO && $aulaId > 0) {
         try {
-            $pdo->prepare("UPDATE aula_podcasts SET erro = :e WHERE aula_id = :a")->execute([':e' => mb_substr($e->getMessage(), 0, 500), ':a' => $aulaId]);
+            podcast_reconectar($pdo)->prepare("UPDATE aula_podcasts SET erro = :e WHERE aula_id = :a")->execute([':e' => mb_substr($e->getMessage(), 0, 500), ':a' => $aulaId]);
         } catch (Throwable $ignorar) {
         }
     }
