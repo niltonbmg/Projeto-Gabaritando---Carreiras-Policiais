@@ -35,7 +35,7 @@ $menuItens = $menuItens ?? [
     ['titulo' => 'Simulados', 'link' => 'simulados.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => 'Banco de questões', 'link' => 'banco-questoes.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => 'Dashboard de questões', 'link' => 'dashboard-questoes.php', 'externo' => false],
-    ['titulo' => 'Cronograma', 'link' => 'cronograma.php' . $cursoContextoQuery, 'externo' => false],
+    ['titulo' => 'Cronograma', 'link' => 'meu-cronograma.php', 'externo' => false],
     ['titulo' => 'Fórum de dúvidas', 'link' => 'forum-duvidas.php', 'externo' => false],
     ['titulo' => 'Propostas de redação', 'link' => 'propostas-redacao.php', 'externo' => false],
     ['titulo' => 'Redações', 'link' => 'redacoes.php', 'externo' => false],
