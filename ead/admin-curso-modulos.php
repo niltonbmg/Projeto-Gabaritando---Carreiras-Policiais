@@ -7,6 +7,7 @@ require_once __DIR__ . '/api/admin-auth.php';
 auth_admin_require_login();
 
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
+require_once __DIR__ . '/includes/biblioteca-lib.php';
 
 $erro = '';
 $sucesso = '';
@@ -102,6 +103,11 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
             admin_cursos_redirect('admin-curso-modulos.php?curso_id=' . $cursoId . '&sucesso=modulo_atualizado');
         }
 
+        if ($acao === 'copiar_modulos') {
+            $qtd = biblioteca_copiar_modulos($pdo, (array)($_POST['modulo_ids'] ?? []), $cursoId);
+            admin_cursos_redirect('admin-curso-modulos.php?curso_id=' . $cursoId . '&sucesso=modulos_copiados&qtd=' . $qtd);
+        }
+
         if ($acao === 'excluir_modulo') {
             $moduloId = admin_cursos_int($_POST['modulo_id'] ?? 0);
             if ($moduloId <= 0) {
@@ -122,6 +128,7 @@ $mensagensSucesso = [
     'modulo_criado' => 'Módulo criado com sucesso.',
     'modulo_atualizado' => 'Módulo atualizado com sucesso.',
     'modulo_excluido' => 'Módulo excluído com sucesso.',
+    'modulos_copiados' => (int)($_GET['qtd'] ?? 0) . ' módulo(s) copiado(s) com todas as aulas, sem subir arquivo de novo.',
 ];
 $sucessoKey = (string)($_GET['sucesso'] ?? '');
 if ($sucessoKey !== '' && isset($mensagensSucesso[$sucessoKey])) {
@@ -137,6 +144,7 @@ $totalModulos = 0;
 $totalConteudos = 0;
 $editarModuloId = admin_cursos_int($_GET['editar'] ?? 0);
 $abrirCriar = (string)($_GET['modal'] ?? '') === 'criar';
+$abrirCopiar = (string)($_GET['modal'] ?? '') === 'copiar';
 
 if ($pdo instanceof PDO && $cursoId > 0) {
     try {
@@ -211,6 +219,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                 </div>
                 <div class="admin-page-actions">
                     <a class="admin-btn admin-btn-light" href="admin-cursos.php"><i data-lucide="arrow-left" aria-hidden="true"></i>Voltar</a>
+                    <?php if ($curso): ?><a class="admin-btn admin-btn-light" href="admin-curso-modulos.php?curso_id=<?php echo $cursoId; ?>&modal=copiar"><i data-lucide="copy" aria-hidden="true"></i>Copiar de outro curso</a><?php endif; ?>
                     <?php if ($curso): ?><a class="admin-btn admin-btn-primary" href="admin-curso-modulos.php?curso_id=<?php echo $cursoId; ?>&modal=criar"><i data-lucide="plus" aria-hidden="true"></i>Criar módulo</a><?php endif; ?>
                 </div>
             </section>
@@ -335,6 +344,40 @@ $menuBarInclude = admin_cursos_get_menubar();
             filtrarTopicos();
         })();
     </script>
+    <?php if ($curso && $abrirCopiar && $pdo instanceof PDO): ?>
+        <?php $modulosOutros = biblioteca_listar_modulos_outros_cursos($pdo, $cursoId); ?>
+        <div class="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="copiar-titulo">
+            <div class="admin-modal" style="width:min(900px,100%)">
+                <div class="admin-modal-header"><div><h2 id="copiar-titulo">Copiar módulos de outro curso</h2><p>O módulo vem com todas as aulas. Vídeos e PDFs são os mesmos arquivos, nada é enviado de novo.</p></div><a class="admin-modal-close" href="admin-curso-modulos.php?curso_id=<?php echo $cursoId; ?>" aria-label="Fechar"><i data-lucide="x" aria-hidden="true"></i></a></div>
+                <div class="admin-modal-body">
+                    <form method="post">
+                        <input type="hidden" name="acao" value="copiar_modulos"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
+                        <?php if (!$modulosOutros): ?>
+                            <div class="admin-empty"><div><i data-lucide="copy" aria-hidden="true"></i><h3>Nenhum módulo em outros cursos</h3><p>Quando houver módulos em outros cursos, eles aparecem aqui.</p></div></div>
+                        <?php else: ?>
+                            <div class="admin-table-wrap">
+                                <table class="admin-table">
+                                    <thead><tr><th style="width:36px"></th><th>Módulo</th><th>Curso de origem</th><th>Aulas</th></tr></thead>
+                                    <tbody>
+                                    <?php foreach ($modulosOutros as $mo): ?>
+                                        <tr>
+                                            <td><input type="checkbox" id="mod-<?php echo (int)$mo['id']; ?>" name="modulo_ids[]" value="<?php echo (int)$mo['id']; ?>"></td>
+                                            <td><label for="mod-<?php echo (int)$mo['id']; ?>"><strong><?php echo admin_esc((string)$mo['titulo']); ?></strong></label></td>
+                                            <td><?php echo admin_esc((string)$mo['curso']); ?></td>
+                                            <td><?php echo (int)$mo['total_aulas']; ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                        <div class="admin-form-actions"><a class="admin-btn admin-btn-light" href="admin-curso-modulos.php?curso_id=<?php echo $cursoId; ?>">Cancelar</a><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="copy-plus" aria-hidden="true"></i>Copiar para este curso</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <?php admin_cursos_scripts(); ?>
 </body>
 </html>

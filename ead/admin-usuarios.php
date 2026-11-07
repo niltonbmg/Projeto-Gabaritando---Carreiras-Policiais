@@ -246,12 +246,14 @@ if (!function_exists('admin_usuarios_montar_where')) {
             $buscaWhere = [];
             foreach (['nome', 'email', 'telefone'] as $coluna) {
                 if (admin_usuarios_tem_coluna($colunas, $coluna)) {
-                    $buscaWhere[] = "`{$coluna}` LIKE :busca";
+                    // Cada coluna precisa de um parâmetro próprio: com EMULATE_PREPARES=false
+                    // o PDO não aceita o mesmo nome (:busca) repetido e a busca quebrava.
+                    $buscaWhere[] = "`{$coluna}` LIKE :busca_{$coluna}";
+                    $params[':busca_' . $coluna] = '%' . $busca . '%';
                 }
             }
             if ($buscaWhere) {
                 $where[] = '(' . implode(' OR ', $buscaWhere) . ')';
-                $params[':busca'] = '%' . $busca . '%';
             }
         }
 

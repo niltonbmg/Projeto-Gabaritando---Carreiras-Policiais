@@ -7,6 +7,7 @@ require_once __DIR__ . '/api/admin-auth.php';
 auth_admin_require_login();
 
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
+require_once __DIR__ . '/includes/biblioteca-lib.php';
 
 $erro = '';
 $sucesso = '';
@@ -114,6 +115,12 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
             admin_cursos_redirect('admin-modulo-conteudos.php?curso_id=' . $cursoId . '&modulo_id=' . $moduloId . '&sucesso=conteudo_atualizado');
         }
 
+        if ($acao === 'importar_biblioteca') {
+            $selecionados = (array)($_POST['origem_ids'] ?? []);
+            $qtd = biblioteca_importar_conteudos($pdo, $selecionados, $cursoId, $moduloId);
+            admin_cursos_redirect('admin-modulo-conteudos.php?curso_id=' . $cursoId . '&modulo_id=' . $moduloId . '&sucesso=biblioteca_importado&qtd=' . $qtd);
+        }
+
         if ($acao === 'excluir_conteudo') {
             $conteudoId = admin_cursos_int($_POST['conteudo_id'] ?? 0);
             if ($conteudoId <= 0) {
@@ -134,6 +141,7 @@ $mensagensSucesso = [
     'conteudo_criado' => 'Conteúdo criado com sucesso.',
     'conteudo_atualizado' => 'Conteúdo atualizado com sucesso.',
     'conteudo_excluido' => 'Conteúdo excluído com sucesso.',
+    'biblioteca_importado' => (int)($_GET['qtd'] ?? 0) . ' conteúdo(s) reaproveitado(s) da biblioteca, sem subir arquivo de novo.',
 ];
 $sucessoKey = (string)($_GET['sucesso'] ?? '');
 if ($sucessoKey !== '' && isset($mensagensSucesso[$sucessoKey])) {
@@ -146,6 +154,16 @@ $conteudos = [];
 $conteudoEditando = null;
 $editarConteudoId = admin_cursos_int($_GET['editar'] ?? 0);
 $abrirCriar = (string)($_GET['modal'] ?? '') === 'criar';
+$abrirBiblioteca = (string)($_GET['modal'] ?? '') === 'biblioteca';
+$buscaBiblioteca = trim((string)($_GET['q'] ?? ''));
+$itensBiblioteca = [];
+if ($abrirBiblioteca && $pdo instanceof PDO) {
+    try {
+        $itensBiblioteca = biblioteca_buscar_conteudos($pdo, $buscaBiblioteca, 80);
+    } catch (Throwable $e) {
+        $erro = 'Erro ao carregar a biblioteca: ' . $e->getMessage();
+    }
+}
 
 if ($pdo instanceof PDO && $cursoId > 0 && $moduloId > 0) {
     try {
@@ -249,6 +267,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                 </div>
                 <div class="admin-page-actions">
                     <a class="admin-btn admin-btn-light" href="admin-curso-modulos.php?curso_id=<?php echo $cursoId; ?>"><i data-lucide="arrow-left" aria-hidden="true"></i>Voltar</a>
+                    <?php if ($curso && $modulo): ?><a class="admin-btn admin-btn-light" href="admin-modulo-conteudos.php?curso_id=<?php echo $cursoId; ?>&modulo_id=<?php echo $moduloId; ?>&modal=biblioteca"><i data-lucide="library" aria-hidden="true"></i>Reaproveitar da biblioteca</a><?php endif; ?>
                     <?php if ($curso && $modulo): ?><a class="admin-btn admin-btn-primary" href="admin-modulo-conteudos.php?curso_id=<?php echo $cursoId; ?>&modulo_id=<?php echo $moduloId; ?>&modal=criar"><i data-lucide="plus" aria-hidden="true"></i>Criar conteúdo</a><?php endif; ?>
                 </div>
             </section>
@@ -312,6 +331,46 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <div class="admin-form-field"><label>Tempo do PDF/leitura</label><input type="text" name="pdf_duracao" placeholder="Ex: 20 min" value="<?php echo $editando ? admin_esc((string)($conteudoEditando['pdf_duracao'] ?? '')) : ''; ?>"><span class="admin-form-hint">Use quando o conteúdo também tiver apostila/PDF.</span></div>
                         <div class="admin-form-field"><label>Ordem</label><input type="number" name="ordem" value="<?php echo $editando ? (int)$conteudoEditando['ordem'] : 0; ?>"></div>
                         <div class="admin-form-actions"><a class="admin-btn admin-btn-light" href="admin-modulo-conteudos.php?curso_id=<?php echo $cursoId; ?>&modulo_id=<?php echo $moduloId; ?>">Cancelar</a><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="save" aria-hidden="true"></i>Salvar conteúdo</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($curso && $modulo && $abrirBiblioteca): ?>
+        <?php $urlBase = 'admin-modulo-conteudos.php?curso_id=' . $cursoId . '&modulo_id=' . $moduloId; ?>
+        <div class="admin-modal-backdrop conteudo-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="biblioteca-titulo">
+            <div class="admin-modal conteudo-modal">
+                <div class="admin-modal-header"><div><h2 id="biblioteca-titulo">Reaproveitar da biblioteca</h2><p>Escolha aulas já cadastradas em qualquer curso. O vídeo e o PDF são os mesmos arquivos, nada é enviado de novo.</p></div><a class="admin-modal-close" href="<?php echo $urlBase; ?>" aria-label="Fechar"><i data-lucide="x" aria-hidden="true"></i></a></div>
+                <div class="admin-modal-body">
+                    <form method="get" class="admin-form-grid" style="margin-bottom:12px">
+                        <input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>"><input type="hidden" name="modulo_id" value="<?php echo $moduloId; ?>"><input type="hidden" name="modal" value="biblioteca">
+                        <div class="admin-form-field full"><label for="biblioteca-busca">Buscar por título, PDF, curso ou módulo</label><input id="biblioteca-busca" type="search" name="q" value="<?php echo admin_esc($buscaBiblioteca); ?>" placeholder="Ex: crase, Lei 7.990, Penal"></div>
+                        <div class="admin-form-actions" style="position:static"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="search" aria-hidden="true"></i>Buscar</button></div>
+                    </form>
+                    <form method="post">
+                        <input type="hidden" name="acao" value="importar_biblioteca"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>"><input type="hidden" name="modulo_id" value="<?php echo $moduloId; ?>">
+                        <?php if (!$itensBiblioteca): ?>
+                            <div class="admin-empty"><div><i data-lucide="library" aria-hidden="true"></i><h3>Nada encontrado</h3><p>Tente outra palavra. A biblioteca mostra todas as aulas já cadastradas nos cursos.</p></div></div>
+                        <?php else: ?>
+                            <div class="admin-table-wrap">
+                                <table class="admin-table">
+                                    <thead><tr><th style="width:36px"></th><th>Conteúdo</th><th>Usado em</th><th>Material</th></tr></thead>
+                                    <tbody>
+                                    <?php foreach ($itensBiblioteca as $item): ?>
+                                        <?php $idItem = (int)$item['id']; ?>
+                                        <tr>
+                                            <td><input type="checkbox" id="bib-<?php echo $idItem; ?>" name="origem_ids[]" value="<?php echo $idItem; ?>"></td>
+                                            <td><label for="bib-<?php echo $idItem; ?>"><strong><?php echo admin_esc((string)$item['titulo']); ?></strong></label><br><span><?php echo admin_esc((string)($item['modulo'] ?? '')); ?></span></td>
+                                            <td><span><?php echo admin_esc((string)($item['cursos'] ?? '')); ?></span></td>
+                                            <td><span><?php echo !empty($item['video_url']) ? 'Vídeo' : ''; ?><?php echo (!empty($item['video_url']) && !empty($item['pdf_arquivo'])) ? ' + ' : ''; ?><?php echo !empty($item['pdf_arquivo']) ? 'PDF' : ''; ?></span></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                        <div class="admin-form-actions"><a class="admin-btn admin-btn-light" href="<?php echo $urlBase; ?>">Cancelar</a><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="copy-plus" aria-hidden="true"></i>Adicionar selecionados a este módulo</button></div>
                     </form>
                 </div>
             </div>

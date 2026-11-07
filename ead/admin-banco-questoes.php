@@ -212,8 +212,8 @@ if ($pdo instanceof PDO) {
             $params[':filtro_status'] = $filtroStatus;
         }
         if ($busca !== '') {
-            $where[] = '(q.enunciado LIKE :busca OR q.explicacao LIKE :busca OR cp.titulo LIKE :busca)';
-            $params[':busca'] = '%' . $busca . '%';
+            $where[] = '(q.enunciado LIKE :busca1 OR q.explicacao LIKE :busca2 OR cp.titulo LIKE :busca3)';
+            foreach (range(1, 3) as $__n) { $params[':busca' . $__n] = '%' . $busca . '%'; } // parâmetro único por coluna (EMULATE_PREPARES=false)
         }
         $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
