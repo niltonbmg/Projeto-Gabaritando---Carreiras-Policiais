@@ -13,8 +13,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../api/conexao.php';
 
-const PODCAST_MODELO_TEXTO = 'gemini-2.5-flash';
-const PODCAST_MODELO_VOZ = 'gemini-2.5-flash-preview-tts';
+// Modelos em ordem de preferência. O primeiro que existir na conta é usado.
+// Dá para fixar outro no .env: GEMINI_MODELO_TEXTO=... / GEMINI_MODELO_VOZ=...
+const PODCAST_MODELOS_TEXTO = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+const PODCAST_MODELOS_VOZ = ['gemini-3.8-flash-tts', 'gemini-2.5-flash-tts', 'gemini-2.5-flash-preview-tts'];
+const PODCAST_MODELO_TEXTO = 'texto';
+const PODCAST_MODELO_VOZ = 'voz';
 const PODCAST_VOZ_SARGENTO = 'Charon';
 const PODCAST_VOZ_ANA = 'Kore';
 const PODCAST_TAXA = 24000; // PCM 16 bits, mono, 24 kHz
@@ -49,7 +53,26 @@ if (!function_exists('podcast_pasta')) {
 
 if (!function_exists('podcast_gemini')) {
     /** Chamada à API do Gemini. Base trocável por GEMINI_BASE_URL (testes). */
-    function podcast_gemini(string $modelo, array $corpo, int $timeout = 55): array
+    function podcast_gemini(string $tipo, array $corpo, int $timeout = 55): array
+    {
+        $fixo = gab_env($tipo === PODCAST_MODELO_VOZ ? 'GEMINI_MODELO_VOZ' : 'GEMINI_MODELO_TEXTO', '');
+        $lista = $fixo !== '' ? [$fixo] : ($tipo === PODCAST_MODELO_VOZ ? PODCAST_MODELOS_VOZ : PODCAST_MODELOS_TEXTO);
+        $ultimoErro = null;
+        foreach ($lista as $modelo) {
+            try {
+                return podcast_gemini_modelo($modelo, $corpo, $timeout);
+            } catch (RuntimeException $e) {
+                $ultimoErro = $e;
+                // Modelo inexistente nesta conta (404): tenta o próximo da lista.
+                if (strpos($e->getMessage(), '(404)') === false) {
+                    throw $e;
+                }
+            }
+        }
+        throw $ultimoErro ?? new RuntimeException('Nenhum modelo do Gemini disponível.');
+    }
+
+    function podcast_gemini_modelo(string $modelo, array $corpo, int $timeout = 55): array
     {
         $chave = gab_env('GEMINI_API_KEY', '');
         if ($chave === '') {
