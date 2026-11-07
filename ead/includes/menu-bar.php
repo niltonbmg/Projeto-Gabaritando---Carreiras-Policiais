@@ -19,6 +19,7 @@ $adminMenuGrupos = [
     ['titulo' => 'Conteúdo', 'itens' => [
         ['label' => 'Cursos e aulas', 'href' => 'admin-cursos.php', 'icon' => 'graduation-cap', 'pages' => ['admin-cursos.php', 'admin-cursos', 'admin-curso-modulos.php', 'admin-curso-modulos', 'admin-modulo-conteudos.php', 'admin-modulo-conteudos']],
         ['label' => 'Materiais', 'href' => 'admin-materiais.php', 'icon' => 'book-open', 'pages' => ['admin-materiais.php', 'admin-materiais']],
+        ['label' => 'Confirmar classificação', 'href' => 'admin-classificacao.php', 'icon' => 'tags', 'pages' => ['admin-classificacao.php', 'admin-classificacao']],
         ['label' => 'Indicações', 'href' => 'admin-indicacoes.php', 'icon' => 'clapperboard', 'pages' => ['admin-indicacoes.php', 'admin-indicacoes']],
         ['label' => 'Matérias', 'href' => 'admin-materias.php', 'icon' => 'library', 'pages' => ['admin-materias.php', 'admin-materias']],
     ]],

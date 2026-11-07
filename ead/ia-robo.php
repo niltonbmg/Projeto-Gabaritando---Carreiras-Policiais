@@ -7,6 +7,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/includes/ia-fila-lib.php';
+require_once __DIR__ . '/includes/ia-classificar-lib.php';
 
 $viaCli = PHP_SAPI === 'cli';
 if (!$viaCli) {
@@ -41,5 +42,15 @@ while (time() - $inicio < $limite - 60) { // deixa margem para o item em andamen
     $feitos++;
     echo date('H:i:s') . ' ' . $r['tipo'] . ' aula ' . $r['aula_id'] . ': ' . ($r['ok'] ? 'ok' : 'erro: ' . $r['erro']) . "\n";
 }
-echo $feitos === 0 ? "Fila vazia.\n" : "Itens processados: $feitos\n";
+// Depois: classificação automática do que entrou sem assunto (aulas, questões, materiais).
+$novos = ia_class_varrer($pdo);
+if ($novos) {
+    echo "Novos itens para classificar: $novos\n";
+}
+while (time() - $inicio < $limite - 30 && ($r = ia_class_processar_um($pdo)) !== null) {
+    $pdo = podcast_reconectar($pdo);
+    $feitos++;
+    echo date('H:i:s') . ' classificação ' . $r['id'] . ': ' . ($r['ok'] ? 'sugerida' : 'erro: ' . $r['erro']) . "\n";
+}
+echo $feitos === 0 ? "Nada a fazer.\n" : "Itens processados: $feitos\n";
 flock($trava, LOCK_UN);
