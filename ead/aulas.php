@@ -10,6 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 
 require_once __DIR__ . '/api/authenticador.php';
+require_once __DIR__ . '/includes/aula-descricao-lib.php';
 auth_require_login();
 $barraSuperiorInclude = __DIR__ . '/includes/barra-superior.php';
 if (!is_file($barraSuperiorInclude)) {
@@ -2950,6 +2951,38 @@ if ($aulas) {
         .aula-somente-pdf__botao{justify-self:start;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;background:#fbb928;color:#111;font:inherit;font-weight:700;cursor:pointer}
         .aula-somente-pdf__botao:focus-visible{outline:2px solid #fff;outline-offset:3px}
         @media(max-width:760px){.video-frame:has(.aula-somente-pdf){aspect-ratio:auto!important;overflow:visible}.aula-somente-pdf{position:relative;inset:auto;padding:24px 20px}}
+        /* Material da aula (descrição interativa) */
+        .ad{display:grid;gap:12px;margin-bottom:28px;--ad-fs:16px}
+        .ad-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+        .ad-barra h2{margin:0}
+        .ad-ferramentas{display:flex;flex-wrap:wrap;gap:6px}
+        .ad-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:inherit;border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+        .ad-btn:hover{background:rgba(255,255,255,.1)}
+        .ad-btn:focus-visible{outline:2px solid #fbb928;outline-offset:2px}
+        .ad-marca-ico{width:14px;height:14px;border-radius:3px;background:#fde047}
+        .ad-dica{font-size:13px;opacity:.7;margin:0}
+        .ad-texto{font-size:var(--ad-fs);line-height:1.65;max-width:72ch}
+        .ad-texto p{margin:0 0 12px}
+        .ad-texto ul,.ad-texto ol{margin:0 0 14px;padding-left:22px;display:grid;gap:6px}
+        .ad-texto h2,.ad-texto h3{margin:18px 0 8px;line-height:1.25}
+        .ad-texto h4{margin:16px 0 6px;color:#fbb928;font-size:.95em;text-transform:uppercase;letter-spacing:.04em}
+        .ad-texto strong{color:#fff}
+        .ad-texto table{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:.92em;display:block;overflow-x:auto}
+        .ad-texto th,.ad-texto td{border:1px solid rgba(255,255,255,.14);padding:8px 10px;text-align:left;vertical-align:top}
+        .ad-texto th{background:rgba(251,185,40,.12)}
+        .ad-intro{padding:14px 16px;border-radius:12px;background:rgba(251,185,40,.08);border:1px solid rgba(251,185,40,.25);margin-bottom:14px}
+        .ad-secao{border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-bottom:10px;overflow:hidden}
+        .ad-secao>summary{cursor:pointer;list-style:none;padding:12px 16px;font-weight:700;background:rgba(255,255,255,.04);display:flex;justify-content:space-between;align-items:center;gap:10px}
+        .ad-secao>summary::-webkit-details-marker{display:none}
+        .ad-secao>summary::after{content:"▾";transition:transform .2s}
+        .ad-secao:not([open])>summary::after{transform:rotate(-90deg)}
+        .ad-corpo{padding:12px 16px 4px}
+        .ad-bizus{border-color:rgba(251,185,40,.5)}
+        .ad-bizus>summary{background:rgba(251,185,40,.14);color:#fbb928}
+        .ad-bizu{border-left:4px solid #fbb928;background:rgba(251,185,40,.07);padding:10px 12px;border-radius:0 10px 10px 0;margin-bottom:10px}
+        .ad-texto mark.ad-m{background:#fde047;color:#111;border-radius:3px;padding:0 1px;cursor:pointer}
+        .ad-status{font-size:12px;opacity:.7;min-height:1em}
+        @media (prefers-reduced-motion:reduce){.ad-secao>summary::after{transition:none}}
         .pdf-viewer-modal{
             position:fixed;
             inset:0;
@@ -3582,8 +3615,24 @@ if ($aulas) {
 
                 <div class="aula-extra">
                     <div class="content-section">
-                        <h2>Descrição</h2>
-                        <p><?php echo nl2br(esc($aulaDescricao)); ?></p>
+                        <?php $aulaDescricaoHtml = aula_descricao_html($aulaDescricao); ?>
+                        <?php if ($aulaDescricaoHtml !== ''): ?>
+                        <section class="ad" id="aulaDescricao" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>" aria-label="Material da aula">
+                            <div class="ad-barra">
+                                <h2>Material da aula</h2>
+                                <div class="ad-ferramentas" role="toolbar" aria-label="Ferramentas de estudo">
+                                    <button type="button" class="ad-btn" data-ad="marcar" title="Selecione um trecho e clique para marcar"><span class="ad-marca-ico"></span>Marcar</button>
+                                    <button type="button" class="ad-btn" data-ad="limpar" title="Remover todas as suas marcações desta aula">Limpar marcações</button>
+                                    <button type="button" class="ad-btn" data-ad="menor" aria-label="Diminuir letra">A−</button>
+                                    <button type="button" class="ad-btn" data-ad="maior" aria-label="Aumentar letra">A+</button>
+                                    <button type="button" class="ad-btn" data-ad="recolher">Recolher tudo</button>
+                                </div>
+                            </div>
+                            <p class="ad-dica">Dica: selecione um trecho com o dedo ou o mouse e toque em <strong>Marcar</strong>. Suas marcações ficam salvas na sua conta. Toque numa marcação para removê-la.</p>
+                            <div class="ad-texto" id="aulaDescricaoTexto"><?php echo $aulaDescricaoHtml; ?></div>
+                            <span class="ad-status" id="aulaDescricaoStatus" role="status" aria-live="polite"></span>
+                        </section>
+                        <?php endif; ?>
 
                         <h2>PDF da aula</h2>
                         <?php if ($pdfAtual['arquivo'] !== ''): ?>
@@ -5467,5 +5516,95 @@ if ($aulas) {
             });
         })();
     </script>
+
+<script>
+// Material da aula: marca-texto salvo na conta, letra maior/menor, recolher seções.
+(function () {
+    var raiz = document.getElementById('aulaDescricao');
+    if (!raiz) { return; }
+    var texto = document.getElementById('aulaDescricaoTexto');
+    var status = document.getElementById('aulaDescricaoStatus');
+    var aulaId = raiz.getAttribute('data-aula-id');
+    var marcas = [];
+    var tamanho = 16;
+    try { tamanho = parseInt(localStorage.getItem('gab_ad_fs') || '16', 10) || 16; } catch (e) {}
+    raiz.style.setProperty('--ad-fs', tamanho + 'px');
+
+    function avisar(m) { status.textContent = m; if (m) { setTimeout(function () { if (status.textContent === m) { status.textContent = ''; } }, 2500); } }
+
+    // Envolve a n-ésima ocorrência do trecho t em <mark>, atravessando tags.
+    function aplicar(t, n) {
+        var nos = [], w = document.createTreeWalker(texto, NodeFilter.SHOW_TEXT, null), no, tudo = '';
+        while ((no = w.nextNode())) { nos.push({no: no, ini: tudo.length}); tudo += no.nodeValue; }
+        var pos = -1, k = 0;
+        do { pos = tudo.indexOf(t, pos + 1); k++; } while (pos !== -1 && k <= n);
+        if (pos === -1) { return false; }
+        var fim = pos + t.length;
+        nos.forEach(function (it) {
+            var a = it.ini, b = it.ini + it.no.nodeValue.length;
+            if (b <= pos || a >= fim || !it.no.nodeValue.trim()) { return; }
+            var r = document.createRange();
+            r.setStart(it.no, Math.max(0, pos - a));
+            r.setEnd(it.no, Math.min(it.no.nodeValue.length, fim - a));
+            var m = document.createElement('mark');
+            m.className = 'ad-m'; m.setAttribute('data-t', t); m.setAttribute('data-n', n);
+            m.title = 'Toque para remover a marcação';
+            r.surroundContents(m);
+        });
+        return true;
+    }
+    function ocorrencia(t, antesDe) {
+        var r = document.createRange(); r.setStart(texto, 0); r.setEnd(antesDe.startContainer, antesDe.startOffset);
+        var antes = r.toString(), n = 0, p = -1;
+        while ((p = antes.indexOf(t, p + 1)) !== -1) { n++; }
+        return n;
+    }
+    function salvar() {
+        fetch('api/aula-marcacoes.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'same-origin', body: JSON.stringify({aula_id: aulaId, marcacoes: marcas})})
+            .then(function (r) { return r.json(); })
+            .then(function (j) { avisar(j.ok ? 'Marcações salvas.' : (j.erro || 'Não foi possível salvar.')); })
+            .catch(function () { avisar('Sem conexão: a marcação aparece agora, mas pode não ficar salva.'); });
+    }
+    function remover(t, n) {
+        marcas = marcas.filter(function (m) { return !(m.t === t && m.n === n); });
+        texto.querySelectorAll('mark.ad-m').forEach(function (m) {
+            if (m.getAttribute('data-t') === t && +m.getAttribute('data-n') === n) { m.replaceWith.apply(m, Array.from(m.childNodes)); }
+        });
+        texto.normalize(); salvar();
+    }
+
+    raiz.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-ad]');
+        var mk = ev.target.closest('mark.ad-m');
+        if (mk) { remover(mk.getAttribute('data-t'), +mk.getAttribute('data-n')); return; }
+        if (!b) { return; }
+        var acao = b.getAttribute('data-ad');
+        if (acao === 'marcar') {
+            var sel = window.getSelection();
+            if (!sel || sel.isCollapsed || !texto.contains(sel.anchorNode) || !texto.contains(sel.focusNode)) { avisar('Primeiro selecione um trecho do material.'); return; }
+            var t = sel.toString().replace(/\s+$/,'').replace(/^\s+/,'');
+            if (t.length < 2) { avisar('Selecione um trecho maior.'); return; }
+            var rg = sel.getRangeAt(0), n = ocorrencia(t, rg);
+            sel.removeAllRanges();
+            if (aplicar(t, n)) { marcas.push({t: t, n: n}); salvar(); }
+        } else if (acao === 'limpar') {
+            marcas = []; texto.querySelectorAll('mark.ad-m').forEach(function (m) { m.replaceWith.apply(m, Array.from(m.childNodes)); }); texto.normalize(); salvar();
+        } else if (acao === 'maior' || acao === 'menor') {
+            tamanho = Math.max(14, Math.min(22, tamanho + (acao === 'maior' ? 1 : -1)));
+            raiz.style.setProperty('--ad-fs', tamanho + 'px');
+            try { localStorage.setItem('gab_ad_fs', String(tamanho)); } catch (e) {}
+        } else if (acao === 'recolher') {
+            var abrir = b.textContent.indexOf('Abrir') === 0;
+            texto.querySelectorAll('details.ad-secao').forEach(function (d) { d.open = abrir; });
+            b.textContent = abrir ? 'Recolher tudo' : 'Abrir tudo';
+        }
+    });
+
+    fetch('api/aula-marcacoes.php?aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'})
+        .then(function (r) { return r.json(); })
+        .then(function (j) { (j.marcacoes || []).forEach(function (m) { if (aplicar(m.t, m.n)) { marcas.push(m); } }); })
+        .catch(function () {});
+})();
+</script>
 </body>
 </html>
