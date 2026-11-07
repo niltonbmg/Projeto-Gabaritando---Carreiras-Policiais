@@ -6,3 +6,6 @@ ead/img/
 *.zip
 *.sql
 .DS_Store
+
+# Pacotes e prints gerados para entrega manual
+entregas/
