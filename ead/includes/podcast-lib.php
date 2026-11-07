@@ -271,14 +271,15 @@ if (!function_exists('podcast_iniciar')) {
         }
 
         $aula = podcast_material_da_aula($pdo, $aulaId);
-        $prompt = "Você é roteirista do Podcast Gabaritando, cursinho preparatório para carreiras policiais e militares da Bahia.\n"
+        $prompt = "Você é roteirista do podcast do Projeto Gabaritando, cursinho preparatório para carreiras policiais e militares da Bahia.\n"
             . "Escreva o roteiro de um podcast de 4 a 6 minutos sobre a aula abaixo, em português do Brasil, com dois personagens:\n"
             . "- Sargento: professor experiente, didático, chama o ouvinte de \"combatente\".\n"
             . "- Ana: aluna que vai prestar o concurso, faz as perguntas que o aluno faria.\n\n"
             . "REGRAS\n"
             . "1. Use somente o conteúdo do material (texto abaixo e o PDF anexo, se houver). Não invente datas, números, nomes nem leis.\n"
             . "2. Escreva números e datas por extenso, como devem ser falados (\"mil quinhentos e quarenta e nove\").\n"
-            . "3. Comece com \"Fala, combatente! Aqui é o Podcast Gabaritando\". Inclua macetes e as pegadinhas da banca.\n"
+            . "3. Comece com \"Fala, combatente! Aqui é o podcast do Projeto Gabaritando\". Inclua macetes e as pegadinhas da banca.\n"
+            . "3a. O nome do cursinho é sempre \"Projeto Gabaritando\", por extenso. Nunca diga só \"Gabaritando\". O ouvinte é sempre \"combatente\".\n"
             . "4. Termine com um mini quiz de duas perguntas respondidas na hora e com a chamada: resolver pelo menos 5 questões do assunto no cronograma. Feche com \"Fé na missão: a farda é questão de tempo!\".\n"
             . "5. Falas curtas e naturais, de conversa. Entre 20 e 28 falas no total.\n\n"
             . "Responda SOMENTE em JSON: {\"falas\":[{\"quem\":\"Sargento\"|\"Ana\",\"texto\":\"...\"}]}\n\n"
@@ -371,7 +372,7 @@ if (!function_exists('podcast_tts')) {
                 ['speaker' => 'Ana', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_ANA]]],
             ]]],
         ];
-        $dialogo = "Leia em português do Brasil, como um podcast animado e natural entre um sargento professor e uma aluna:\n";
+        $dialogo = "Leia em português do Brasil, como um podcast animado e natural do Projeto Gabaritando, entre um sargento professor e uma aluna:\n";
         $partesNovas = [];
         foreach ($falas as $f) {
             $dialogo .= $f['quem'] . ': ' . $f['texto'] . "\n";

@@ -8,6 +8,23 @@ auth_admin_require_login();
 
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
 require_once __DIR__ . '/includes/biblioteca-lib.php';
+require_once __DIR__ . '/includes/ia-fila-lib.php';
+
+
+if (!function_exists('conteudo_ia_depois_de_salvar')) {
+    /** Guarda a transcrição colada e põe a aula na fila da IA (apostila -> podcast). */
+    function conteudo_ia_depois_de_salvar(PDO $pdo, int $aulaId): void
+    {
+        $transcricao = trim((string)($_POST['transcricao'] ?? ''));
+        if ($transcricao !== '') {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS aula_transcricoes (aula_id INT UNSIGNED NOT NULL PRIMARY KEY, transcricao MEDIUMTEXT NOT NULL, atualizado_em DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $pdo->prepare('REPLACE INTO aula_transcricoes (aula_id, transcricao) VALUES (:a, :t)')->execute([':a' => $aulaId, ':t' => $transcricao]);
+        }
+        if (isset($_POST['gerar_ia']) || $transcricao !== '') {
+            ia_fila_adicionar($pdo, 'apostila', $aulaId);
+        }
+    }
+}
 
 $erro = '';
 $sucesso = '';
@@ -63,6 +80,7 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':ordem' => $ordem,
             ]);
 
+            conteudo_ia_depois_de_salvar($pdo, (int)$pdo->lastInsertId());
             admin_cursos_redirect('admin-modulo-conteudos.php?curso_id=' . $cursoId . '&modulo_id=' . $moduloId . '&sucesso=conteudo_criado');
         }
 
@@ -112,6 +130,7 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':modulo_id' => $moduloId,
             ]);
 
+            conteudo_ia_depois_de_salvar($pdo, $conteudoId);
             admin_cursos_redirect('admin-modulo-conteudos.php?curso_id=' . $cursoId . '&modulo_id=' . $moduloId . '&sucesso=conteudo_atualizado');
         }
 
@@ -138,8 +157,8 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $mensagensSucesso = [
-    'conteudo_criado' => 'Conteúdo criado com sucesso.',
-    'conteudo_atualizado' => 'Conteúdo atualizado com sucesso.',
+    'conteudo_criado' => 'Conteúdo criado. A IA vai gerar a descrição/apostila e o podcast em alguns minutos.',
+    'conteudo_atualizado' => 'Conteúdo atualizado. Se marcou a IA, a descrição e o podcast são refeitos em alguns minutos.',
     'conteudo_excluido' => 'Conteúdo excluído com sucesso.',
     'biblioteca_importado' => (int)($_GET['qtd'] ?? 0) . ' conteúdo(s) reaproveitado(s) da biblioteca, sem subir arquivo de novo.',
 ];
@@ -324,6 +343,8 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <input type="hidden" name="acao" value="<?php echo $editando ? 'editar_conteudo' : 'criar_conteudo'; ?>"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>"><input type="hidden" name="modulo_id" value="<?php echo $moduloId; ?>">
                         <?php if ($editando): ?><input type="hidden" name="conteudo_id" value="<?php echo (int)$conteudoEditando['id']; ?>"><?php endif; ?>
                         <div class="admin-form-field full"><label>Título da aula/conteúdo</label><input type="text" name="titulo" value="<?php echo $editando ? admin_esc((string)$conteudoEditando['titulo']) : ''; ?>" required></div>
+                        <div class="admin-form-field full"><label for="transcricao">Transcrição do YouTube (opcional)</label><textarea id="transcricao" name="transcricao" rows="4" placeholder="Cole aqui a transcrição do vídeo. Se deixar vazio e o vídeo for público, a IA assiste ao vídeo sozinha."></textarea></div>
+                        <div class="admin-form-field full"><label class="admin-form-hint" style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" name="gerar_ia" value="1" <?php echo (!$editando || trim(strip_tags((string)($conteudoEditando['descricao'] ?? ''))) === '' || !preg_match('/<h[23]/', (string)($conteudoEditando['descricao'] ?? ''))) ? 'checked' : ''; ?>> ✨ Gerar descrição, apostila e podcast com a IA automaticamente</label><span class="admin-form-hint">A descrição atual é guardada no histórico antes de ser trocada.</span></div>
                         <div class="admin-form-field full"><label>Descrição</label><textarea name="descricao"><?php echo $editando ? admin_esc((string)($conteudoEditando['descricao'] ?? '')) : ''; ?></textarea></div>
                         <div class="admin-form-field full"><label>URL do vídeo / YouTube</label><input type="url" name="video_url" placeholder="https://www.youtube.com/watch?v=..." value="<?php echo $editando ? admin_esc((string)($conteudoEditando['video_url'] ?? '')) : ''; ?>"><span class="admin-form-hint">Vídeo é só por URL. Não tem upload de vídeo aqui.</span></div>
                         <div class="admin-form-field"><label>PDF do conteúdo, se tiver</label><input type="file" name="pdf_arquivo" accept="application/pdf,.pdf"><?php if ($editando && !empty($conteudoEditando['pdf_arquivo'])): ?><span class="admin-form-hint">PDF atual: <?php echo admin_esc((string)($conteudoEditando['pdf_nome'] ?: 'arquivo cadastrado')); ?></span><label class="admin-form-hint"><input type="checkbox" name="remover_pdf" value="1"> Remover PDF atual</label><?php endif; ?></div>

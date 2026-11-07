@@ -7,7 +7,7 @@ require_once __DIR__ . '/api/admin-auth.php';
 auth_admin_require_login();
 
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
-require_once __DIR__ . '/includes/podcast-lib.php';
+require_once __DIR__ . '/includes/ia-fila-lib.php';
 @set_time_limit(120);
 
 $temChave = gab_env('GEMINI_API_KEY', '') !== '';
@@ -37,6 +37,25 @@ if ($temChave && ($_POST['testar'] ?? '') !== '') {
         $teste['erro'] = $e->getMessage();
     }
 }
+
+$filaMsg = '';
+$pdoFila = null;
+try {
+    $pdoFila = db();
+    ia_fila_bootstrap($pdoFila);
+    if (($_POST['fila'] ?? '') === 'todas') {
+        $filaMsg = ia_fila_todas_as_aulas($pdoFila) . ' aula(s) colocadas na fila. O robô faz tudo em segundo plano.';
+    } elseif (($_POST['fila'] ?? '') === 'processar') {
+        $r = ia_fila_processar_um($pdoFila);
+        $filaMsg = $r === null ? 'A fila está vazia.' : ($r['ok'] ? 'Feito: ' . $r['tipo'] . ' da aula ' . $r['aula_id'] . '.' : 'Erro em ' . $r['tipo'] . ' da aula ' . $r['aula_id'] . ': ' . $r['erro']);
+        $pdoFila = podcast_reconectar($pdoFila);
+    }
+    $fila = ia_fila_resumo($pdoFila);
+} catch (Throwable $e) {
+    $fila = null;
+    $filaMsg = 'Erro na fila: ' . $e->getMessage();
+}
+$caminhoRobo = __DIR__ . '/ia-robo.php';
 
 $topbarInclude = admin_cursos_get_topbar();
 $menuBarInclude = admin_cursos_get_menubar();
@@ -93,6 +112,21 @@ $menuBarInclude = admin_cursos_get_menubar();
                 <?php if ($teste['texto'] !== ''): ?><p class="ia-ok" style="margin-top:12px">✓ Texto em <?php echo number_format($teste['texto_ms'] / 1000, 1, ',', ''); ?>s: “<?php echo admin_esc($teste['texto']); ?>”</p><?php endif; ?>
                 <?php if ($teste['voz'] !== ''): ?><p class="ia-ok">✓ Voz em <?php echo number_format($teste['voz_ms'] / 1000, 1, ',', ''); ?>s:</p><audio controls src="<?php echo $teste['voz']; ?>"></audio><?php endif; ?>
             <?php endif; ?>
+        </section>
+        <section class="admin-panel">
+            <div class="admin-panel-title"><h2>4. Automação: fila da IA</h2></div>
+            <p>Cada aula salva com "✨ Gerar com a IA" entra na fila. O robô faz a descrição/apostila e depois o podcast, sozinho.</p>
+            <?php if ($filaMsg !== ''): ?><p class="<?php echo stripos($filaMsg, 'erro') !== false ? 'ia-erro' : 'ia-ok'; ?>"><?php echo admin_esc($filaMsg); ?></p><?php endif; ?>
+            <?php if ($fila): ?>
+                <p><strong><?php echo (int)$fila['pendente']; ?></strong> na fila · <strong><?php echo (int)$fila['feito']; ?></strong> feitos · <strong><?php echo (int)$fila['erro']; ?></strong> com erro</p>
+                <?php foreach ($fila['ultimos_erros'] as $er): ?><p class="ia-erro" style="font-weight:400">✗ <?php echo admin_esc($er['tipo'] . ' · ' . ($er['titulo'] ?? ('aula ' . $er['aula_id'])) . ': ' . (string)$er['erro']); ?></p><?php endforeach; ?>
+            <?php endif; ?>
+            <div class="admin-table-actions" style="justify-content:flex-start;margin:10px 0">
+                <form method="post" onsubmit="return confirm('Colocar na fila todas as aulas que ainda não passaram pela IA?');"><input type="hidden" name="fila" value="todas"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="wand-2"></i>Gerar para todas as aulas</button></form>
+                <form method="post"><input type="hidden" name="fila" value="processar"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="play"></i>Processar 1 agora</button></form>
+            </div>
+            <p><strong>Ligar o robô (uma vez só):</strong> Hostinger → seu site → <strong>Avançado → Cron Jobs</strong> → tipo <strong>PHP</strong> → a cada <strong>5 minutos</strong> → comando:</p>
+            <p><code><?php echo admin_esc($caminhoRobo); ?></code></p>
         </section>
         <?php endif; ?>
     </main>
