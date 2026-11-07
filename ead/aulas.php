@@ -11,6 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/api/authenticador.php';
 require_once __DIR__ . '/includes/aula-descricao-lib.php';
+require_once __DIR__ . '/includes/indicacoes-lib.php';
 auth_require_login();
 $barraSuperiorInclude = __DIR__ . '/includes/barra-superior.php';
 if (!is_file($barraSuperiorInclude)) {
@@ -2951,6 +2952,7 @@ if ($aulas) {
         .aula-somente-pdf__botao{justify-self:start;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;background:#fbb928;color:#111;font:inherit;font-weight:700;cursor:pointer}
         .aula-somente-pdf__botao:focus-visible{outline:2px solid #fff;outline-offset:3px}
         @media(max-width:760px){.video-frame:has(.aula-somente-pdf){aspect-ratio:auto!important;overflow:visible}.aula-somente-pdf{position:relative;inset:auto;padding:24px 20px}}
+        <?php echo indicacoes_css(); ?>
         /* Material da aula (descrição interativa) */
         .ad{display:grid;gap:12px;margin-bottom:28px;--ad-fs:16px}
         .ad-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
@@ -3633,6 +3635,20 @@ if ($aulas) {
                             <span class="ad-status" id="aulaDescricaoStatus" role="status" aria-live="polite"></span>
                         </section>
                         <?php endif; ?>
+
+                        <?php
+                        $indicacoesAula = [];
+                        try {
+                            if ($aulaAtual && function_exists('db')) {
+                                $stIndTop = db()->prepare('SELECT topico_id FROM admin_curso_aulas WHERE id = :id');
+                                $stIndTop->execute([':id' => (int)$aulaAtual['id']]);
+                                $indicacoesAula = indicacoes_do_topico(db(), (int)$stIndTop->fetchColumn());
+                            }
+                        } catch (Throwable $e) {
+                            $indicacoesAula = [];
+                        }
+                        echo indicacoes_html($indicacoesAula);
+                        ?>
 
                         <h2>PDF da aula</h2>
                         <?php if ($pdfAtual['arquivo'] !== ''): ?>
