@@ -65,14 +65,25 @@ if (!function_exists('podcast_gemini')) {
         }
         $ultimoErro = null;
         foreach ($lista as $modelo) {
-            try {
-                return podcast_gemini_modelo($modelo, $corpo, $timeout);
-            } catch (RuntimeException $e) {
-                $ultimoErro = $e;
-                // Modelo inexistente nesta conta (404): tenta o próximo da lista.
-                $m = $e->getMessage();
-                if (strpos($m, '(404)') === false && !(strpos($m, '(400)') !== false && stripos($m, 'model') !== false)) {
-                    throw $e;
+            for ($tentativa = 1; $tentativa <= 2; $tentativa++) {
+                try {
+                    return podcast_gemini_modelo($modelo, $corpo, $timeout);
+                } catch (RuntimeException $e) {
+                    $ultimoErro = $e;
+                    $m = $e->getMessage();
+                    $temporario = (bool)preg_match('~\((500|502|503|504)\)|high demand|overloaded|unavailable~i', $m);
+                    if ($temporario && $tentativa === 1) {
+                        sleep(3); // congestionamento no Google: espera e tenta o mesmo modelo de novo
+                        continue;
+                    }
+                    $trocaModelo = $temporario
+                        || strpos($m, '(404)') !== false
+                        || strpos($m, '(429)') !== false || stripos($m, 'Limite diário') !== false
+                        || (strpos($m, '(400)') !== false && stripos($m, 'model') !== false && stripos($m, 'speech_metadata') === false);
+                    if (!$trocaModelo) {
+                        throw $e;
+                    }
+                    break; // próximo modelo da lista
                 }
             }
         }
@@ -307,23 +318,8 @@ if (!function_exists('podcast_parte')) {
         }
         $arqParte = podcast_pasta() . '/aula-' . $aulaId . '-parte-' . $n . '.pcm';
         if (!is_file($arqParte)) {
-            $dialogo = "Leia em português do Brasil, como um podcast animado e natural entre um sargento professor e uma aluna:\n";
-            foreach ($blocos[$n] as $f) {
-                $dialogo .= $f['quem'] . ': ' . $f['texto'] . "\n";
-            }
-            $resp = podcast_gemini(PODCAST_MODELO_VOZ, [
-                'contents' => [['parts' => [['text' => $dialogo]]]],
-                'generationConfig' => [
-                    'responseModalities' => ['AUDIO'],
-                    'speechConfig' => ['multiSpeakerVoiceConfig' => ['speakerVoiceConfigs' => [
-                        ['speaker' => 'Sargento', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_SARGENTO]]],
-                        ['speaker' => 'Ana', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_ANA]]],
-                    ]]],
-                ],
-            ], 85);
-            $b64 = (string)($resp['candidates'][0]['content']['parts'][0]['inlineData']['data'] ?? '');
-            $pcm = base64_decode($b64, true);
-            if ($pcm === false || strlen($pcm) < 1000) {
+            $pcm = podcast_tts($blocos[$n]);
+            if (strlen($pcm) < 1000) {
                 throw new RuntimeException('O áudio desta parte veio vazio. Tente de novo.');
             }
             file_put_contents($arqParte, $pcm);
@@ -335,6 +331,43 @@ if (!function_exists('podcast_parte')) {
             return ['status' => 'gerando', 'partes' => count($blocos), 'partes_ok' => $ok];
         }
         return podcast_juntar($pdo, $aulaId, count($blocos));
+    }
+}
+
+if (!function_exists('podcast_tts')) {
+    /**
+     * Áudio (PCM 24 kHz) de uma lista de falas [{quem, texto}] com 2 vozes.
+     * Formato antigo: um texto "Sargento: ...\nAna: ...".
+     * Formato novo (modelos mais recentes): uma parte por fala com speechMetadata.speaker.
+     */
+    function podcast_tts(array $falas): string
+    {
+        $config = [
+            'responseModalities' => ['AUDIO'],
+            'speechConfig' => ['multiSpeakerVoiceConfig' => ['speakerVoiceConfigs' => [
+                ['speaker' => 'Sargento', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_SARGENTO]]],
+                ['speaker' => 'Ana', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_ANA]]],
+            ]]],
+        ];
+        $dialogo = "Leia em português do Brasil, como um podcast animado e natural entre um sargento professor e uma aluna:\n";
+        $partesNovas = [];
+        foreach ($falas as $f) {
+            $dialogo .= $f['quem'] . ': ' . $f['texto'] . "\n";
+            $partesNovas[] = ['text' => $f['texto'], 'speechMetadata' => ['speaker' => $f['quem']]];
+        }
+        try {
+            $resp = podcast_gemini(PODCAST_MODELO_VOZ, ['contents' => [['parts' => [['text' => $dialogo]]]], 'generationConfig' => $config], 85);
+        } catch (RuntimeException $e) {
+            if (stripos($e->getMessage(), 'speech_metadata') === false && stripos($e->getMessage(), 'speechMetadata') === false) {
+                throw $e;
+            }
+            $resp = podcast_gemini(PODCAST_MODELO_VOZ, ['contents' => [['role' => 'user', 'parts' => $partesNovas]], 'generationConfig' => $config], 85);
+        }
+        $pcm = '';
+        foreach ((array)($resp['candidates'][0]['content']['parts'] ?? []) as $parte) {
+            $pcm .= (string)base64_decode((string)($parte['inlineData']['data'] ?? ''), true);
+        }
+        return $pcm;
     }
 }
 
