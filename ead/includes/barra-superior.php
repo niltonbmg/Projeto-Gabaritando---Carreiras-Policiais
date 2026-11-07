@@ -29,6 +29,7 @@ foreach (['curso_id', 'id_curso', 'id'] as $cursoContextoChave) {
 $cursoContextoQuery = $cursoContextoId > 0 ? '?curso_id=' . $cursoContextoId : '';
 
 $menuItens = $menuItens ?? [
+    ['titulo' => 'Hoje você estuda', 'link' => 'meu-plano.php', 'externo' => false],
     ['titulo' => 'Materiais', 'link' => 'materiais.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => 'Agenda', 'link' => 'agenda.php', 'externo' => false],
     ['titulo' => 'Simulados', 'link' => 'simulados.php' . $cursoContextoQuery, 'externo' => false],

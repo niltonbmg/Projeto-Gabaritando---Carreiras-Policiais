@@ -1,0 +1,281 @@
+<?php
+// includes/meta-lib.php
+// Motor do Método META: Plano-Mestre por curso, trava de etapas e níveis por assunto.
+//
+// Regras (editáveis em meta_config):
+//   - O aluno segue os assuntos do Plano-Mestre na ordem.
+//   - Em cada assunto: 1) Teoria mínima  2) Questões comentadas.
+//   - O próximo assunto só abre quando o atual tem a teoria concluída e
+//     pelo menos `min_questoes` (padrão 5) questões resolvidas.
+//   - Nível do assunto pelas questões resolvidas e % de acerto:
+//       1 Iniciante 5 · 2 Praticante 15 (60%) · 3 Avançado 30 (70%) · 4 Domínio 50 (80%).
+//   - Admin pode liberar exceção para um aluno (fica registrado).
+declare(strict_types=1);
+
+const META_ETAPA_TEORIA = 'teoria';
+const META_ETAPA_QUESTOES = 'questoes';
+const META_ETAPA_CONCLUIDO = 'concluido';
+const META_ETAPA_BLOQUEADO = 'bloqueado';
+
+if (!function_exists('meta_bootstrap')) {
+    function meta_bootstrap(PDO $pdo): void
+    {
+        static $feito = false;
+        if ($feito) {
+            return;
+        }
+        $pdo->exec("CREATE TABLE IF NOT EXISTS meta_config (
+            chave VARCHAR(60) NOT NULL PRIMARY KEY,
+            valor VARCHAR(255) NOT NULL,
+            atualizado_em DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS meta_planos (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            curso_id INT UNSIGNED NOT NULL,
+            titulo VARCHAR(180) NOT NULL,
+            status ENUM('rascunho','aprovado') NOT NULL DEFAULT 'rascunho',
+            aprovado_em DATETIME NULL,
+            criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            atualizado_em DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY idx_meta_planos_curso (curso_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS meta_plano_itens (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            plano_id INT UNSIGNED NOT NULL,
+            ordem INT NOT NULL DEFAULT 0,
+            materia_id INT UNSIGNED NULL,
+            topico_id INT UNSIGNED NULL,
+            titulo VARCHAR(180) NOT NULL,
+            aula_id INT UNSIGNED NULL,
+            peso DECIMAL(5,2) NOT NULL DEFAULT 1.00,
+            horas DECIMAL(6,2) NOT NULL DEFAULT 1.00,
+            meta_questoes INT UNSIGNED NOT NULL DEFAULT 50,
+            criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_meta_itens_plano (plano_id, ordem)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS meta_aluno_itens (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            usuario_id BIGINT UNSIGNED NOT NULL,
+            plano_item_id INT UNSIGNED NOT NULL,
+            teoria_concluida_em DATETIME NULL,
+            liberado_por_admin_em DATETIME NULL,
+            liberado_motivo VARCHAR(255) NULL,
+            atualizado_em DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_meta_aluno_item (usuario_id, plano_item_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $padroes = [
+            'min_questoes' => '5',
+            'nivel2_questoes' => '15', 'nivel2_acerto' => '60',
+            'nivel3_questoes' => '30', 'nivel3_acerto' => '70',
+            'nivel4_questoes' => '50', 'nivel4_acerto' => '80',
+        ];
+        $stmt = $pdo->prepare('INSERT IGNORE INTO meta_config (chave, valor) VALUES (:c, :v)');
+        foreach ($padroes as $c => $v) {
+            $stmt->execute([':c' => $c, ':v' => $v]);
+        }
+        $feito = true;
+    }
+}
+
+if (!function_exists('meta_config')) {
+    /** @return array<string,int> */
+    function meta_config(PDO $pdo): array
+    {
+        $cfg = [];
+        foreach ($pdo->query('SELECT chave, valor FROM meta_config') as $r) {
+            $cfg[(string)$r['chave']] = (int)$r['valor'];
+        }
+        return $cfg;
+    }
+}
+
+if (!function_exists('meta_niveis')) {
+    /** Tabela de níveis montada a partir da configuração. */
+    function meta_niveis(array $cfg): array
+    {
+        return [
+            1 => ['nome' => 'Iniciante', 'questoes' => $cfg['min_questoes'] ?? 5, 'acerto' => 0],
+            2 => ['nome' => 'Praticante', 'questoes' => $cfg['nivel2_questoes'] ?? 15, 'acerto' => $cfg['nivel2_acerto'] ?? 60],
+            3 => ['nome' => 'Avançado', 'questoes' => $cfg['nivel3_questoes'] ?? 30, 'acerto' => $cfg['nivel3_acerto'] ?? 70],
+            4 => ['nome' => 'Domínio', 'questoes' => $cfg['nivel4_questoes'] ?? 50, 'acerto' => $cfg['nivel4_acerto'] ?? 80],
+        ];
+    }
+}
+
+if (!function_exists('meta_nivel')) {
+    /**
+     * Nível do assunto (0 a 4) pelas questões resolvidas e % de acerto.
+     * Também devolve quanto falta para o próximo nível.
+     */
+    function meta_nivel(int $resolvidas, int $acertos, array $cfg): array
+    {
+        $niveis = meta_niveis($cfg);
+        $pct = $resolvidas > 0 ? (int)round($acertos * 100 / $resolvidas) : 0;
+        $nivel = 0;
+        foreach ($niveis as $n => $req) {
+            if ($resolvidas >= $req['questoes'] && $pct >= $req['acerto']) {
+                $nivel = $n;
+            }
+        }
+        $proximo = $niveis[$nivel + 1] ?? null;
+        $faltam = $proximo ? max(0, $proximo['questoes'] - $resolvidas) : 0;
+        $meta = $niveis[4]['questoes'];
+
+        return [
+            'nivel' => $nivel,
+            'nome' => $nivel > 0 ? $niveis[$nivel]['nome'] : 'Não iniciado',
+            'resolvidas' => $resolvidas,
+            'acertos' => $acertos,
+            'percentual' => $pct,
+            'faltam_proximo' => $faltam,
+            'proximo_acerto' => $proximo['acerto'] ?? null,
+            'proximo_nome' => $proximo['nome'] ?? null,
+            'progresso_meta' => $meta > 0 ? min(100, (int)round($resolvidas * 100 / $meta)) : 0,
+        ];
+    }
+}
+
+if (!function_exists('meta_plano_do_curso')) {
+    /** Plano aprovado do curso (o mais recente). */
+    function meta_plano_do_curso(PDO $pdo, int $cursoId): ?array
+    {
+        $stmt = $pdo->prepare("SELECT * FROM meta_planos WHERE curso_id = :c AND status = 'aprovado' ORDER BY aprovado_em DESC, id DESC LIMIT 1");
+        $stmt->execute([':c' => $cursoId]);
+        return $stmt->fetch() ?: null;
+    }
+}
+
+if (!function_exists('meta_estado_aluno')) {
+    /**
+     * Estado do aluno no plano: cada assunto com etapa, nível e trava.
+     * Retorna ['plano'=>..., 'itens'=>[...], 'atual'=>item|null, 'nivel_geral'=>float, 'dominio_pct'=>int].
+     */
+    function meta_estado_aluno(PDO $pdo, int $usuarioId, int $cursoId): array
+    {
+        meta_bootstrap($pdo);
+        $cfg = meta_config($pdo);
+        $minQ = max(1, $cfg['min_questoes'] ?? 5);
+        $plano = meta_plano_do_curso($pdo, $cursoId);
+        if (!$plano) {
+            return ['plano' => null, 'itens' => [], 'atual' => null, 'nivel_geral' => 0.0, 'dominio_pct' => 0, 'config' => $cfg];
+        }
+
+        $stmt = $pdo->prepare("SELECT i.*, mt.titulo AS topico_nome, m.nome AS materia_nome,
+                    ai.teoria_concluida_em, ai.liberado_por_admin_em, ai.liberado_motivo,
+                    a.titulo AS aula_titulo, a.modulo_id AS aula_modulo_id, a.curso_id AS aula_curso_id,
+                    (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
+                      WHERE r.usuario_id = :u1 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS resolvidas,
+                    (SELECT COALESCE(SUM(r.correta), 0) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
+                      WHERE r.usuario_id = :u2 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS acertos
+               FROM meta_plano_itens i
+               LEFT JOIN admin_materia_topicos mt ON mt.id = i.topico_id
+               LEFT JOIN admin_materias m ON m.id = i.materia_id
+               LEFT JOIN admin_curso_aulas a ON a.id = i.aula_id
+               LEFT JOIN meta_aluno_itens ai ON ai.plano_item_id = i.id AND ai.usuario_id = :u3
+              WHERE i.plano_id = :p
+              ORDER BY i.ordem ASC, i.id ASC");
+        $stmt->execute([':u1' => $usuarioId, ':u2' => $usuarioId, ':u3' => $usuarioId, ':p' => (int)$plano['id']]);
+        $linhas = $stmt->fetchAll();
+
+        $itens = [];
+        $anteriorCumprido = true;
+        $atual = null;
+        $somaNiveis = 0;
+        $dominados = 0;
+        foreach ($linhas as $l) {
+            $nivel = meta_nivel((int)$l['resolvidas'], (int)$l['acertos'], $cfg);
+            $teoriaOk = !empty($l['teoria_concluida_em']) || empty($l['aula_id']);
+            $liberadoAdmin = !empty($l['liberado_por_admin_em']);
+            $cumprido = $liberadoAdmin || ($teoriaOk && (int)$l['resolvidas'] >= $minQ);
+
+            if ($liberadoAdmin) {
+                // Exceção do mentor: o assunto fica aberto e conta como cumprido.
+                $etapa = META_ETAPA_CONCLUIDO;
+            } elseif (!$anteriorCumprido) {
+                $etapa = META_ETAPA_BLOQUEADO;
+            } elseif ($cumprido) {
+                $etapa = META_ETAPA_CONCLUIDO;
+            } elseif (!$teoriaOk) {
+                $etapa = META_ETAPA_TEORIA;
+            } else {
+                $etapa = META_ETAPA_QUESTOES;
+            }
+
+            $item = $l + [
+                'etapa' => $etapa,
+                'nivel_info' => $nivel,
+                'teoria_ok' => $teoriaOk,
+                'faltam_minimo' => max(0, $minQ - (int)$l['resolvidas']),
+                'liberado_admin' => $liberadoAdmin,
+            ];
+            $itens[] = $item;
+            if ($atual === null && ($etapa === META_ETAPA_TEORIA || $etapa === META_ETAPA_QUESTOES)) {
+                $atual = $item;
+            }
+            $somaNiveis += $nivel['nivel'];
+            if ($nivel['nivel'] >= 4) {
+                $dominados++;
+            }
+            $anteriorCumprido = $anteriorCumprido && $cumprido;
+        }
+
+        $total = count($itens);
+        return [
+            'plano' => $plano,
+            'itens' => $itens,
+            'atual' => $atual,
+            'nivel_geral' => $total ? round($somaNiveis / $total, 1) : 0.0,
+            'dominio_pct' => $total ? (int)round($dominados * 100 / $total) : 0,
+            'concluidos' => count(array_filter($itens, static fn(array $i): bool => $i['etapa'] === META_ETAPA_CONCLUIDO)),
+            'config' => $cfg,
+        ];
+    }
+}
+
+if (!function_exists('meta_concluir_teoria')) {
+    /** Aluno marca a teoria como concluída. Só vale para o assunto liberado. */
+    function meta_concluir_teoria(PDO $pdo, int $usuarioId, int $cursoId, int $planoItemId): void
+    {
+        $estado = meta_estado_aluno($pdo, $usuarioId, $cursoId);
+        foreach ($estado['itens'] as $item) {
+            if ((int)$item['id'] === $planoItemId) {
+                if ($item['etapa'] === META_ETAPA_BLOQUEADO) {
+                    throw new RuntimeException('Este assunto ainda está bloqueado. Conclua o anterior primeiro.');
+                }
+                $stmt = $pdo->prepare('INSERT INTO meta_aluno_itens (usuario_id, plano_item_id, teoria_concluida_em) VALUES (:u, :i, NOW())
+                                       ON DUPLICATE KEY UPDATE teoria_concluida_em = COALESCE(teoria_concluida_em, NOW())');
+                $stmt->execute([':u' => $usuarioId, ':i' => $planoItemId]);
+                return;
+            }
+        }
+        throw new RuntimeException('Assunto não encontrado no seu plano.');
+    }
+}
+
+if (!function_exists('meta_liberar_excecao')) {
+    /** Mentor libera um assunto para o aluno, pulando a trava, com motivo registrado. */
+    function meta_liberar_excecao(PDO $pdo, int $usuarioId, int $planoItemId, string $motivo): void
+    {
+        $motivo = trim($motivo) !== '' ? trim($motivo) : 'Liberado pelo mentor';
+        $stmt = $pdo->prepare('INSERT INTO meta_aluno_itens (usuario_id, plano_item_id, liberado_por_admin_em, liberado_motivo) VALUES (:u, :i, NOW(), :m)
+                               ON DUPLICATE KEY UPDATE liberado_por_admin_em = NOW(), liberado_motivo = :m2');
+        $stmt->execute([':u' => $usuarioId, ':i' => $planoItemId, ':m' => $motivo, ':m2' => $motivo]);
+    }
+}
+
+if (!function_exists('meta_curso_do_aluno')) {
+    /** Primeiro curso ativo do aluno que tenha plano aprovado (ou o pedido, se for dele). */
+    function meta_curso_do_aluno(PDO $pdo, int $usuarioId, int $cursoPedido = 0): int
+    {
+        $stmt = $pdo->prepare("SELECT uc.curso_id FROM usuario_cursos uc
+                                 JOIN meta_planos p ON p.curso_id = uc.curso_id AND p.status = 'aprovado'
+                                WHERE uc.usuario_id = :u AND uc.status IN ('ativo','pago','aprovado','liberado','matriculado')
+                                ORDER BY (uc.curso_id = :pedido) DESC, uc.id ASC LIMIT 1");
+        $stmt->execute([':u' => $usuarioId, ':pedido' => $cursoPedido]);
+        return (int)($stmt->fetchColumn() ?: 0);
+    }
+}

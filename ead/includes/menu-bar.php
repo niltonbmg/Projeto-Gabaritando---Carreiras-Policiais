@@ -11,6 +11,7 @@ $adminMenuItems = [
     ['label' => 'Curso', 'href' => 'admin-cursos.php', 'icon' => 'graduation-cap', 'pages' => ['admin-cursos.php', 'admin-cursos', 'admin-curso-modulos.php', 'admin-curso-modulos', 'admin-modulo-conteudos.php', 'admin-modulo-conteudos']],
     ['label' => 'Materiais', 'href' => 'admin-materiais.php', 'icon' => 'book-open', 'pages' => ['admin-materiais.php', 'admin-materiais']],
     ['label' => 'Simulados', 'href' => 'admin-simulado.php', 'icon' => 'clipboard-check', 'pages' => ['admin-simulado.php', 'admin-simulado']],
+    ['label' => 'Plano-Mestre META', 'href' => 'admin-meta-plano.php', 'icon' => 'route', 'pages' => ['admin-meta-plano.php', 'admin-meta-plano']],
     ['label' => 'Cronograma', 'href' => 'admin-cronograma.php', 'icon' => 'calendar-days', 'pages' => ['admin-cronograma.php', 'admin-cronograma']],
     ['label' => 'Recompensas', 'href' => 'admin-recompensas.php', 'icon' => 'trophy', 'pages' => ['admin-recompensas.php', 'admin-recompensas']],
     ['label' => 'Banco de questões', 'href' => 'admin-banco-questoes.php', 'icon' => 'circle-help', 'pages' => ['admin-banco-questoes.php', 'admin-banco-questoes']],
