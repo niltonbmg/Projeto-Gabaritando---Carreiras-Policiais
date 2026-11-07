@@ -3639,7 +3639,7 @@ if ($aulas) {
                                 <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast desta aula</span></button>
                                 <div class="pod-progresso" id="podProg" hidden><div class="pod-barra"><i id="podBarra"></i></div><span id="podMsg">Preparando o roteiro…</span></div>
                                 <div class="pod-player" id="podPlayer" hidden>
-                                    <audio id="podAudio" controls preload="none"></audio>
+                                    <audio id="podAudio" controls preload="metadata"></audio>
                                     <div class="pod-vel" role="group" aria-label="Velocidade"><button type="button" data-v="1">1x</button><button type="button" data-v="1.25">1,25x</button><button type="button" data-v="1.5">1,5x</button></div>
                                 </div>
                             </div>
@@ -5690,21 +5690,35 @@ if ($aulas) {
             return partes(j.partes, j.partes_ok);
         });
     }
-    btn.addEventListener('click', function () {
-        btn.disabled = true; txt.textContent = 'Preparando…'; prog.hidden = false; contar('Escrevendo o roteiro da conversa…'); barra.style.width = '5%';
-        api({aula_id: aulaId, acao: 'iniciar'}).then(function (j) {
-            if (j.status === 'pronto') { return fetch('api/podcast.php?aula_id=' + aulaId, {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (s) { mostrar(s.url); }); }
-            return partes(j.partes, j.partes_ok || 0);
-        }).catch(function (e) {
-            clearInterval(relogio); msg.textContent = e.message + ' Toque no botão para tentar de novo.'; btn.disabled = false; txt.textContent = 'Tentar de novo';
+    function situacao() { return fetch('api/podcast.php?aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'}).then(function (r) { return r.json(); }); }
+    var recuperacoes = 0;
+    // Se algo falhar no caminho (ex.: a hospedagem cortou a resposta), confere a
+    // situação real: pronto -> mostra o player; ainda gerando -> continua de onde parou.
+    function recuperar(e) {
+        return situacao().then(function (s) {
+            if (s.status === 'pronto' && s.url) { clearInterval(relogio); barra.style.width = '100%'; mostrar(s.url); return; }
+            if (s.status === 'gerando' && s.partes > 0 && recuperacoes < 4) { recuperacoes++; return new Promise(function (ok) { setTimeout(ok, 4000); }).then(function () { return partes(s.partes, s.partes_ok).catch(recuperar); }); }
+            throw e;
+        }).catch(function () {
+            clearInterval(relogio); msg.textContent = (e && e.message ? e.message : 'Não foi possível gerar agora.') + ' Toque no botão para tentar de novo.'; btn.disabled = false; txt.textContent = 'Tentar de novo';
         });
-    });
+    }
+    function comecar() {
+        btn.disabled = true; txt.textContent = 'Preparando…'; prog.hidden = false; contar('Escrevendo o roteiro da conversa…'); barra.style.width = '5%'; recuperacoes = 0;
+        api({aula_id: aulaId, acao: 'iniciar'}).then(function (j) {
+            if (j.status === 'pronto') { return situacao().then(function (s) { mostrar(s.url); }); }
+            return partes(j.partes, j.partes_ok || 0);
+        }).catch(recuperar);
+    }
+    btn.addEventListener('click', comecar);
     raiz.querySelectorAll('.pod-vel button').forEach(function (b) {
         b.setAttribute('aria-pressed', b.getAttribute('data-v') === '1' ? 'true' : 'false');
         b.addEventListener('click', function () { audio.playbackRate = parseFloat(b.getAttribute('data-v')); raiz.querySelectorAll('.pod-vel button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); });
     });
     fetch('api/podcast.php?aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (s) {
-        if (s.status === 'pronto' && s.url) { btn.hidden = true; player.hidden = false; audio.src = s.url; }
+        if (s.status === 'pronto' && s.url) { btn.hidden = true; player.hidden = false; audio.src = s.url; return; }
+        // Alguém já está gerando (ou a página foi recarregada no meio): continua sozinho.
+        if (s.status === 'gerando' && s.partes > 0) { btn.disabled = true; txt.textContent = 'Preparando…'; prog.hidden = false; barra.style.width = Math.round(10 + 90 * s.partes_ok / s.partes) + '%'; partes(s.partes, s.partes_ok).catch(recuperar); }
     }).catch(function () {});
 })();
 </script>
