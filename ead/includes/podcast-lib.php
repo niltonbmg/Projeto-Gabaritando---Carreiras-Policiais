@@ -121,19 +121,20 @@ if (!function_exists('podcast_material_da_aula')) {
         }
         $texto = trim(html_entity_decode(strip_tags(str_replace(['</p>', '</li>', '</h2>', '</h3>', '</h4>', '</tr>'], "\n", (string)$aula['descricao'])), ENT_QUOTES, 'UTF-8'));
         // PDF da aula: o Gemini lê o PDF direto (aulas só com PDF ou com pouca descrição).
+        // Só manda o PDF quando a descrição não basta: o PDF deixa a resposta bem mais lenta.
         $aula['pdf_base64'] = '';
         $pdf = trim((string)($aula['pdf_arquivo'] ?? ''));
-        if ($pdf !== '' && !preg_match('~^https?://~i', $pdf)) {
+        if (mb_strlen($texto) < 200 && $pdf !== '' && !preg_match('~^https?://~i', $pdf)) {
             $caminho = realpath(dirname(__DIR__) . '/' . ltrim(preg_replace('~^/?ead/~', '', $pdf), '/'));
             $raiz = realpath(dirname(__DIR__) . '/uploads');
-            if ($caminho && $raiz && strpos($caminho, $raiz) === 0 && is_file($caminho) && filesize($caminho) <= 15 * 1024 * 1024) {
+            if ($caminho && $raiz && strpos($caminho, $raiz) === 0 && is_file($caminho) && filesize($caminho) <= 8 * 1024 * 1024) {
                 $aula['pdf_base64'] = base64_encode((string)file_get_contents($caminho));
             }
         }
         if (mb_strlen($texto) < 200 && $aula['pdf_base64'] === '') {
             throw new RuntimeException('Esta aula ainda não tem material (descrição ou PDF) para gerar o podcast.');
         }
-        $aula['texto'] = mb_strlen($texto) >= 200 ? mb_substr($texto, 0, 20000) : '(sem descrição: use o PDF anexo como material da aula)';
+        $aula['texto'] = mb_strlen($texto) >= 200 ? mb_substr($texto, 0, 12000) : '(sem descrição: use o PDF anexo como material da aula)';
         return $aula;
     }
 }

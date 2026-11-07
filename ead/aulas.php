@@ -5660,9 +5660,21 @@ if ($aulas) {
     var btn = document.getElementById('podBtn'), txt = document.getElementById('podBtnTxt');
     var prog = document.getElementById('podProg'), barra = document.getElementById('podBarra'), msg = document.getElementById('podMsg');
     var player = document.getElementById('podPlayer'), audio = document.getElementById('podAudio');
+    var relogio = null, inicio = 0, base = '';
+    function contar(t) { base = t; inicio = Date.now(); clearInterval(relogio); relogio = setInterval(function () { msg.textContent = base + ' ' + Math.round((Date.now() - inicio) / 1000) + 's'; }, 1000); msg.textContent = base; }
     function api(corpo) {
-        return fetch('api/podcast.php', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(corpo)})
-            .then(function (r) { return r.json().then(function (j) { if (!r.ok) { throw new Error(j.erro || 'Erro ao gerar.'); } return j; }); });
+        var ctl = window.AbortController ? new AbortController() : null;
+        var limite = setTimeout(function () { if (ctl) { ctl.abort(); } }, 150000);
+        return fetch('api/podcast.php', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(corpo), signal: ctl ? ctl.signal : undefined})
+            .then(function (r) {
+                return r.text().then(function (t) {
+                    var j; try { j = JSON.parse(t); } catch (e) { throw new Error(r.status >= 500 ? 'O servidor demorou demais ou falhou (erro ' + r.status + ').' : 'Resposta inesperada do servidor.'); }
+                    if (!r.ok) { throw new Error(j.erro || 'Erro ao gerar.'); }
+                    return j;
+                });
+            })
+            .catch(function (e) { if (e.name === 'AbortError') { throw new Error('Demorou mais de 2 minutos e meio.'); } throw e; })
+            .finally(function () { clearTimeout(limite); });
     }
     function mostrar(url) {
         prog.hidden = true; btn.hidden = true; player.hidden = false;
@@ -5672,19 +5684,19 @@ if ($aulas) {
     function partes(total, feitas) {
         if (feitas >= total) { return; }
         barra.style.width = Math.round(10 + 90 * feitas / total) + '%';
-        msg.textContent = 'Gravando o áudio: parte ' + (feitas + 1) + ' de ' + total + '… (só na primeira vez; depois fica pronto para todos)';
+        contar('Gravando o áudio: parte ' + (feitas + 1) + ' de ' + total + ' (só na primeira vez; depois fica pronto para todos)…');
         return api({aula_id: aulaId, acao: 'parte', n: feitas}).then(function (j) {
-            if (j.status === 'pronto') { barra.style.width = '100%'; mostrar(j.url); audio.play().catch(function () {}); return; }
+            if (j.status === 'pronto') { clearInterval(relogio); barra.style.width = '100%'; mostrar(j.url); audio.play().catch(function () {}); return; }
             return partes(j.partes, j.partes_ok);
         });
     }
     btn.addEventListener('click', function () {
-        btn.disabled = true; txt.textContent = 'Preparando…'; prog.hidden = false; msg.textContent = 'Escrevendo o roteiro da conversa…'; barra.style.width = '5%';
+        btn.disabled = true; txt.textContent = 'Preparando…'; prog.hidden = false; contar('Escrevendo o roteiro da conversa…'); barra.style.width = '5%';
         api({aula_id: aulaId, acao: 'iniciar'}).then(function (j) {
             if (j.status === 'pronto') { return fetch('api/podcast.php?aula_id=' + aulaId, {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (s) { mostrar(s.url); }); }
             return partes(j.partes, j.partes_ok || 0);
         }).catch(function (e) {
-            msg.textContent = e.message + ' Toque no botão para tentar de novo.'; btn.disabled = false; txt.textContent = 'Tentar de novo';
+            clearInterval(relogio); msg.textContent = e.message + ' Toque no botão para tentar de novo.'; btn.disabled = false; txt.textContent = 'Tentar de novo';
         });
     });
     raiz.querySelectorAll('.pod-vel button').forEach(function (b) {
