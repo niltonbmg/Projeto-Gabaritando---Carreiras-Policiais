@@ -15,7 +15,7 @@ require_once __DIR__ . '/../api/conexao.php';
 
 // Modelos em ordem de preferência. O primeiro que existir na conta é usado.
 // Dá para fixar outro no .env: GEMINI_MODELO_TEXTO=... / GEMINI_MODELO_VOZ=...
-const PODCAST_MODELOS_TEXTO = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+const PODCAST_MODELOS_TEXTO = ['gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-flash'];
 const PODCAST_MODELOS_VOZ = ['gemini-3.8-flash-tts', 'gemini-2.5-flash-tts', 'gemini-2.5-flash-preview-tts'];
 const PODCAST_MODELO_TEXTO = 'texto';
 const PODCAST_MODELO_VOZ = 'voz';
@@ -56,7 +56,13 @@ if (!function_exists('podcast_gemini')) {
     function podcast_gemini(string $tipo, array $corpo, int $timeout = 55): array
     {
         $fixo = gab_env($tipo === PODCAST_MODELO_VOZ ? 'GEMINI_MODELO_VOZ' : 'GEMINI_MODELO_TEXTO', '');
-        $lista = $fixo !== '' ? [$fixo] : ($tipo === PODCAST_MODELO_VOZ ? PODCAST_MODELOS_VOZ : PODCAST_MODELOS_TEXTO);
+        if ($fixo !== '') {
+            $lista = [$fixo];
+        } else {
+            // Primeiro os modelos que a própria conta diz ter; depois a lista padrão.
+            $disp = podcast_modelos_disponiveis();
+            $lista = array_values(array_unique(array_merge($tipo === PODCAST_MODELO_VOZ ? $disp['voz'] : $disp['texto'], $tipo === PODCAST_MODELO_VOZ ? PODCAST_MODELOS_VOZ : PODCAST_MODELOS_TEXTO)));
+        }
         $ultimoErro = null;
         foreach ($lista as $modelo) {
             try {
@@ -64,7 +70,8 @@ if (!function_exists('podcast_gemini')) {
             } catch (RuntimeException $e) {
                 $ultimoErro = $e;
                 // Modelo inexistente nesta conta (404): tenta o próximo da lista.
-                if (strpos($e->getMessage(), '(404)') === false) {
+                $m = $e->getMessage();
+                if (strpos($m, '(404)') === false && !(strpos($m, '(400)') !== false && stripos($m, 'model') !== false)) {
                     throw $e;
                 }
             }
@@ -72,7 +79,85 @@ if (!function_exists('podcast_gemini')) {
         throw $ultimoErro ?? new RuntimeException('Nenhum modelo do Gemini disponível.');
     }
 
+    /**
+     * Pergunta ao Google quais modelos esta chave pode usar e separa em
+     * texto e voz (TTS), do mais novo para o mais antigo. Cache de 6 horas.
+     */
+    function podcast_modelos_disponiveis(bool $forcar = false): array
+    {
+        $cache = podcast_pasta() . '/.modelos.json';
+        if (!$forcar && is_file($cache) && filemtime($cache) > time() - 21600) {
+            $d = json_decode((string)file_get_contents($cache), true);
+            if (is_array($d) && isset($d['texto'], $d['voz'])) {
+                return $d;
+            }
+        }
+        $res = ['texto' => [], 'voz' => [], 'erro' => ''];
+        $chave = gab_env('GEMINI_API_KEY', '');
+        if ($chave === '') {
+            $res['erro'] = 'Chave não configurada.';
+            return $res;
+        }
+        $base = rtrim(gab_env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'), '/');
+        $ch = curl_init($base . '/v1beta/models?pageSize=200');
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_HTTPHEADER => ['x-goog-api-key: ' . $chave]]);
+        $resp = curl_exec($ch);
+        $codigo = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        $json = json_decode((string)$resp, true);
+        if ($codigo !== 200 || !is_array($json)) {
+            $res['erro'] = 'Não foi possível listar os modelos (' . $codigo . '): ' . mb_substr((string)($json['error']['message'] ?? 'sem resposta'), 0, 200);
+            return $res;
+        }
+        foreach ((array)($json['models'] ?? []) as $m) {
+            $nome = preg_replace('~^models/~', '', (string)($m['name'] ?? ''));
+            $metodos = (array)($m['supportedGenerationMethods'] ?? []);
+            if ($nome === '' || !in_array('generateContent', $metodos, true)) {
+                continue;
+            }
+            if (strpos($nome, 'tts') !== false) {
+                $res['voz'][] = $nome;
+            } elseif (strpos($nome, 'flash') !== false && !preg_match('~image|live|audio|embedding|thinking|exp~', $nome)) {
+                $res['texto'][] = $nome;
+            }
+        }
+        // Mais novo primeiro (ordena pelo número da versão; "flash" antes de "pro" por ser mais rápido).
+        $ordem = static function (array $l): array {
+            usort($l, static function (string $a, string $b): int {
+                preg_match('~(\d+(?:\.\d+)?)~', $a, $ma);
+                preg_match('~(\d+(?:\.\d+)?)~', $b, $mb);
+                $c = (float)($mb[1] ?? 0) <=> (float)($ma[1] ?? 0);
+                return $c !== 0 ? $c : (strpos($a, 'preview') !== false) <=> (strpos($b, 'preview') !== false);
+            });
+            return $l;
+        };
+        $res['texto'] = $ordem($res['texto']);
+        // Para o roteiro, os modelos "lite" (mais rápidos) vêm primeiro.
+        usort($res['texto'], static fn(string $a, string $b): int => (strpos($b, 'lite') !== false) <=> (strpos($a, 'lite') !== false));
+        $res['voz'] = $ordem($res['voz']);
+        @file_put_contents($cache, json_encode($res));
+        return $res;
+    }
+
     function podcast_gemini_modelo(string $modelo, array $corpo, int $timeout = 55): array
+    {
+        // Desliga/reduz o "raciocínio" (deixa a resposta muito mais rápida).
+        if (empty($corpo['generationConfig']['responseModalities'])) {
+            $comPensamento = $corpo;
+            $corpo['generationConfig']['thinkingConfig'] = preg_match('~2\.5~', $modelo) ? ['thinkingBudget' => 0] : ['thinkingLevel' => 'low'];
+            try {
+                return podcast_gemini_chamar($modelo, $corpo, $timeout);
+            } catch (RuntimeException $e) {
+                if (strpos($e->getMessage(), '(400)') === false || stripos($e->getMessage(), 'think') === false) {
+                    throw $e;
+                }
+                return podcast_gemini_chamar($modelo, $comPensamento, $timeout);
+            }
+        }
+        return podcast_gemini_chamar($modelo, $corpo, $timeout);
+    }
+
+    function podcast_gemini_chamar(string $modelo, array $corpo, int $timeout = 55): array
     {
         $chave = gab_env('GEMINI_API_KEY', '');
         if ($chave === '') {
@@ -165,7 +250,7 @@ if (!function_exists('podcast_iniciar')) {
             . "2. Escreva números e datas por extenso, como devem ser falados (\"mil quinhentos e quarenta e nove\").\n"
             . "3. Comece com \"Fala, combatente! Aqui é o Podcast Gabaritando\". Inclua macetes e as pegadinhas da banca.\n"
             . "4. Termine com um mini quiz de duas perguntas respondidas na hora e com a chamada: resolver pelo menos 5 questões do assunto no cronograma. Feche com \"Fé na missão: a farda é questão de tempo!\".\n"
-            . "5. Falas curtas e naturais, de conversa. Entre 24 e 34 falas no total.\n\n"
+            . "5. Falas curtas e naturais, de conversa. Entre 20 e 28 falas no total.\n\n"
             . "Responda SOMENTE em JSON: {\"falas\":[{\"quem\":\"Sargento\"|\"Ana\",\"texto\":\"...\"}]}\n\n"
             . "CURSO: " . $aula['curso'] . "\nMATÉRIA: " . $aula['materia'] . "\nAULA: " . $aula['titulo'] . "\n\nMATERIAL DA AULA:\n" . $aula['texto'];
 
@@ -176,7 +261,7 @@ if (!function_exists('podcast_iniciar')) {
         $resp = podcast_gemini(PODCAST_MODELO_TEXTO, [
             'contents' => [['parts' => $partes]],
             'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.7],
-        ]);
+        ], 110);
         $texto = (string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? '');
         $dados = json_decode($texto, true);
         $falas = [];

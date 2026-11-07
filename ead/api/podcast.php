@@ -10,7 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-@set_time_limit(120);
+@set_time_limit(180);
+@ini_set('max_execution_time', '180');
 
 require_once __DIR__ . '/authenticador.php';
 require_once __DIR__ . '/../includes/podcast-lib.php';
