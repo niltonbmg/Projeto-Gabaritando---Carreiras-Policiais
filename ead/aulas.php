@@ -2953,6 +2953,19 @@ if ($aulas) {
         .aula-somente-pdf__botao:focus-visible{outline:2px solid #fff;outline-offset:3px}
         @media(max-width:760px){.video-frame:has(.aula-somente-pdf){aspect-ratio:auto!important;overflow:visible}.aula-somente-pdf{position:relative;inset:auto;padding:24px 20px}}
         <?php echo indicacoes_css(); ?>
+        .pod [hidden],.pod[hidden]{display:none!important}
+        .pod{display:grid;gap:10px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(251,185,40,.16),rgba(251,185,40,.04));border:1px solid rgba(251,185,40,.35)}
+        .pod-btn{justify-self:start;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 16px;background:#fbb928;color:#111;font:inherit;font-weight:700;cursor:pointer}
+        .pod-btn:disabled{opacity:.6;cursor:wait}
+        .pod-btn:focus-visible,.pod-vel button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+        .pod-progresso{display:grid;gap:6px;font-size:13px}
+        .pod-barra{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+        .pod-barra i{display:block;height:100%;width:5%;background:#fbb928;transition:width .4s}
+        .pod-player{display:grid;gap:8px}
+        .pod-player audio{width:100%}
+        .pod-vel{display:flex;gap:6px}
+        .pod-vel button{border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;border-radius:8px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer}
+        .pod-vel button[aria-pressed="true"]{background:#fbb928;color:#111;border-color:#fbb928}
         /* Material da aula (descrição interativa) */
         .ad{display:grid;gap:12px;margin-bottom:28px;--ad-fs:16px}
         .ad-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
@@ -3631,6 +3644,14 @@ if ($aulas) {
                                 </div>
                             </div>
                             <p class="ad-dica">Dica: selecione um trecho com o dedo ou o mouse e toque em <strong>Marcar</strong>. Suas marcações ficam salvas na sua conta. Toque numa marcação para removê-la.</p>
+                            <div class="pod" id="aulaPodcast" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>">
+                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast desta aula</span></button>
+                                <div class="pod-progresso" id="podProg" hidden><div class="pod-barra"><i id="podBarra"></i></div><span id="podMsg">Preparando o roteiro…</span></div>
+                                <div class="pod-player" id="podPlayer" hidden>
+                                    <audio id="podAudio" controls preload="none"></audio>
+                                    <div class="pod-vel" role="group" aria-label="Velocidade"><button type="button" data-v="1">1x</button><button type="button" data-v="1.25">1,25x</button><button type="button" data-v="1.5">1,5x</button></div>
+                                </div>
+                            </div>
                             <div class="ad-texto" id="aulaDescricaoTexto"><?php echo $aulaDescricaoHtml; ?></div>
                             <span class="ad-status" id="aulaDescricaoStatus" role="status" aria-live="polite"></span>
                         </section>
@@ -5620,6 +5641,52 @@ if ($aulas) {
         .then(function (r) { return r.json(); })
         .then(function (j) { (j.marcacoes || []).forEach(function (m) { if (aplicar(m.t, m.n)) { marcas.push(m); } }); })
         .catch(function () {});
+})();
+</script>
+
+<script>
+// Podcast da aula: gera no primeiro clique (em partes) e guarda para todos.
+(function () {
+    var raiz = document.getElementById('aulaPodcast');
+    if (!raiz) { return; }
+    var aulaId = raiz.getAttribute('data-aula-id');
+    var btn = document.getElementById('podBtn'), txt = document.getElementById('podBtnTxt');
+    var prog = document.getElementById('podProg'), barra = document.getElementById('podBarra'), msg = document.getElementById('podMsg');
+    var player = document.getElementById('podPlayer'), audio = document.getElementById('podAudio');
+    function api(corpo) {
+        return fetch('api/podcast.php', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(corpo)})
+            .then(function (r) { return r.json().then(function (j) { if (!r.ok) { throw new Error(j.erro || 'Erro ao gerar.'); } return j; }); });
+    }
+    function mostrar(url) {
+        prog.hidden = true; btn.hidden = true; player.hidden = false;
+        audio.src = url;
+        if ('mediaSession' in navigator) { navigator.mediaSession.metadata = new MediaMetadata({title: document.title.replace(/ \|.*$/, ''), artist: 'Podcast Gabaritando'}); }
+    }
+    function partes(total, feitas) {
+        if (feitas >= total) { return; }
+        barra.style.width = Math.round(10 + 90 * feitas / total) + '%';
+        msg.textContent = 'Gravando o áudio: parte ' + (feitas + 1) + ' de ' + total + '… (só na primeira vez; depois fica pronto para todos)';
+        return api({aula_id: aulaId, acao: 'parte', n: feitas}).then(function (j) {
+            if (j.status === 'pronto') { barra.style.width = '100%'; mostrar(j.url); audio.play().catch(function () {}); return; }
+            return partes(j.partes, j.partes_ok);
+        });
+    }
+    btn.addEventListener('click', function () {
+        btn.disabled = true; txt.textContent = 'Preparando…'; prog.hidden = false; msg.textContent = 'Escrevendo o roteiro da conversa…'; barra.style.width = '5%';
+        api({aula_id: aulaId, acao: 'iniciar'}).then(function (j) {
+            if (j.status === 'pronto') { return fetch('api/podcast.php?aula_id=' + aulaId, {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (s) { mostrar(s.url); }); }
+            return partes(j.partes, j.partes_ok || 0);
+        }).catch(function (e) {
+            msg.textContent = e.message + ' Toque no botão para tentar de novo.'; btn.disabled = false; txt.textContent = 'Tentar de novo';
+        });
+    });
+    raiz.querySelectorAll('.pod-vel button').forEach(function (b) {
+        b.setAttribute('aria-pressed', b.getAttribute('data-v') === '1' ? 'true' : 'false');
+        b.addEventListener('click', function () { audio.playbackRate = parseFloat(b.getAttribute('data-v')); raiz.querySelectorAll('.pod-vel button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); });
+    });
+    fetch('api/podcast.php?aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (s) {
+        if (s.status === 'pronto' && s.url) { btn.hidden = true; player.hidden = false; audio.src = s.url; }
+    }).catch(function () {});
 })();
 </script>
 </body>

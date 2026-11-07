@@ -1,0 +1,263 @@
+<?php
+// includes/podcast-lib.php
+// Podcast de cada aula com o Gemini (plano gratuito da API do Google).
+//
+// Fluxo, em passos curtos para não estourar o tempo limite da hospedagem:
+//   1) iniciar: o Gemini escreve o roteiro (Sargento x Ana) a partir do
+//      material da aula e o divide em blocos.
+//   2) parte n: o Gemini transforma cada bloco em áudio (2 vozes).
+//   3) na última parte, os blocos são juntados em um arquivo de áudio,
+//      guardado em uploads/podcasts/. Todo aluno depois só ouve.
+// Chave: GEMINI_API_KEY no .env da pasta ead.
+declare(strict_types=1);
+
+require_once __DIR__ . '/../api/conexao.php';
+
+const PODCAST_MODELO_TEXTO = 'gemini-2.5-flash';
+const PODCAST_MODELO_VOZ = 'gemini-2.5-flash-preview-tts';
+const PODCAST_VOZ_SARGENTO = 'Charon';
+const PODCAST_VOZ_ANA = 'Kore';
+const PODCAST_TAXA = 24000; // PCM 16 bits, mono, 24 kHz
+
+if (!function_exists('podcast_bootstrap')) {
+    function podcast_bootstrap(PDO $pdo): void
+    {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS aula_podcasts (
+            aula_id INT UNSIGNED NOT NULL PRIMARY KEY,
+            status ENUM('gerando','pronto','erro') NOT NULL DEFAULT 'gerando',
+            roteiro MEDIUMTEXT NULL,
+            partes INT UNSIGNED NOT NULL DEFAULT 0,
+            partes_ok INT UNSIGNED NOT NULL DEFAULT 0,
+            arquivo VARCHAR(255) NULL,
+            duracao_seg INT UNSIGNED NULL,
+            erro VARCHAR(500) NULL,
+            atualizado_em DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+}
+
+if (!function_exists('podcast_pasta')) {
+    function podcast_pasta(): string
+    {
+        $dir = dirname(__DIR__) . '/uploads/podcasts';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        return $dir;
+    }
+}
+
+if (!function_exists('podcast_gemini')) {
+    /** Chamada à API do Gemini. Base trocável por GEMINI_BASE_URL (testes). */
+    function podcast_gemini(string $modelo, array $corpo, int $timeout = 55): array
+    {
+        $chave = gab_env('GEMINI_API_KEY', '');
+        if ($chave === '') {
+            throw new RuntimeException('A chave do Gemini não está configurada (GEMINI_API_KEY no .env).');
+        }
+        $base = rtrim(gab_env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'), '/');
+        $ch = curl_init($base . '/v1beta/models/' . $modelo . ':generateContent');
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'x-goog-api-key: ' . $chave],
+            CURLOPT_POSTFIELDS => json_encode($corpo, JSON_UNESCAPED_UNICODE),
+        ]);
+        $resp = curl_exec($ch);
+        $codigo = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $erroCurl = curl_error($ch);
+        curl_close($ch);
+        if ($resp === false) {
+            throw new RuntimeException('Sem resposta do Gemini: ' . $erroCurl);
+        }
+        $json = json_decode((string)$resp, true);
+        if ($codigo === 429) {
+            throw new RuntimeException('Limite diário gratuito do Gemini atingido. Tente de novo mais tarde.');
+        }
+        if ($codigo >= 400 || !is_array($json)) {
+            $msg = is_array($json) ? (string)($json['error']['message'] ?? 'erro desconhecido') : 'resposta inválida';
+            throw new RuntimeException('Gemini recusou (' . $codigo . '): ' . mb_substr($msg, 0, 200));
+        }
+        return $json;
+    }
+}
+
+if (!function_exists('podcast_material_da_aula')) {
+    function podcast_material_da_aula(PDO $pdo, int $aulaId): array
+    {
+        $stmt = $pdo->prepare('SELECT a.id, a.titulo, a.descricao, m.nome AS materia, c.nome AS curso
+                                 FROM admin_curso_aulas a
+                                 LEFT JOIN admin_materias m ON m.id = a.materia_id
+                                 LEFT JOIN admin_cursos c ON c.id = a.curso_id
+                                WHERE a.id = :id');
+        $stmt->execute([':id' => $aulaId]);
+        $aula = $stmt->fetch();
+        if (!$aula) {
+            throw new RuntimeException('Aula não encontrada.');
+        }
+        $texto = trim(html_entity_decode(strip_tags(str_replace(['</p>', '</li>', '</h2>', '</h3>', '</h4>', '</tr>'], "\n", (string)$aula['descricao'])), ENT_QUOTES, 'UTF-8'));
+        if (mb_strlen($texto) < 200) {
+            throw new RuntimeException('Esta aula ainda não tem material escrito suficiente para gerar o podcast.');
+        }
+        $aula['texto'] = mb_substr($texto, 0, 20000);
+        return $aula;
+    }
+}
+
+if (!function_exists('podcast_iniciar')) {
+    /** Passo 1: roteiro. Retorna o número de partes de áudio. */
+    function podcast_iniciar(PDO $pdo, int $aulaId): array
+    {
+        podcast_bootstrap($pdo);
+        $stmt = $pdo->prepare('SELECT * FROM aula_podcasts WHERE aula_id = :a');
+        $stmt->execute([':a' => $aulaId]);
+        $atual = $stmt->fetch();
+        if ($atual && $atual['status'] === 'pronto' && $atual['arquivo']) {
+            return ['status' => 'pronto'];
+        }
+        // Outro aluno já está gerando há menos de 5 minutos: não duplica.
+        if ($atual && $atual['status'] === 'gerando' && $atual['roteiro'] && strtotime((string)$atual['atualizado_em']) > time() - 300) {
+            return ['status' => 'gerando', 'partes' => (int)$atual['partes'], 'partes_ok' => (int)$atual['partes_ok']];
+        }
+
+        $aula = podcast_material_da_aula($pdo, $aulaId);
+        $prompt = "Você é roteirista do Podcast Gabaritando, cursinho preparatório para carreiras policiais e militares da Bahia.\n"
+            . "Escreva o roteiro de um podcast de 4 a 6 minutos sobre a aula abaixo, em português do Brasil, com dois personagens:\n"
+            . "- Sargento: professor experiente, didático, chama o ouvinte de \"combatente\".\n"
+            . "- Ana: aluna que vai prestar o concurso, faz as perguntas que o aluno faria.\n\n"
+            . "REGRAS\n"
+            . "1. Use somente o conteúdo do material. Não invente datas, números, nomes nem leis.\n"
+            . "2. Escreva números e datas por extenso, como devem ser falados (\"mil quinhentos e quarenta e nove\").\n"
+            . "3. Comece com \"Fala, combatente! Aqui é o Podcast Gabaritando\". Inclua macetes e as pegadinhas da banca.\n"
+            . "4. Termine com um mini quiz de duas perguntas respondidas na hora e com a chamada: resolver pelo menos 5 questões do assunto no cronograma. Feche com \"Fé na missão: a farda é questão de tempo!\".\n"
+            . "5. Falas curtas e naturais, de conversa. Entre 24 e 34 falas no total.\n\n"
+            . "Responda SOMENTE em JSON: {\"falas\":[{\"quem\":\"Sargento\"|\"Ana\",\"texto\":\"...\"}]}\n\n"
+            . "CURSO: " . $aula['curso'] . "\nMATÉRIA: " . $aula['materia'] . "\nAULA: " . $aula['titulo'] . "\n\nMATERIAL DA AULA:\n" . $aula['texto'];
+
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, [
+            'contents' => [['parts' => [['text' => $prompt]]]],
+            'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.7],
+        ]);
+        $texto = (string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? '');
+        $dados = json_decode($texto, true);
+        $falas = [];
+        foreach ((array)($dados['falas'] ?? []) as $f) {
+            $quem = ($f['quem'] ?? '') === 'Ana' ? 'Ana' : 'Sargento';
+            $t = trim((string)($f['texto'] ?? ''));
+            if ($t !== '') {
+                $falas[] = ['quem' => $quem, 'texto' => $t];
+            }
+        }
+        if (count($falas) < 6) {
+            throw new RuntimeException('O roteiro veio incompleto. Tente de novo.');
+        }
+        // Blocos de ~8 falas (cerca de 1 minuto de áudio cada).
+        $blocos = array_chunk($falas, 8);
+        $pdo->prepare("INSERT INTO aula_podcasts (aula_id, status, roteiro, partes, partes_ok, arquivo, erro) VALUES (:a, 'gerando', :r, :p, 0, NULL, NULL)
+                       ON DUPLICATE KEY UPDATE status = 'gerando', roteiro = VALUES(roteiro), partes = VALUES(partes), partes_ok = 0, arquivo = NULL, erro = NULL")
+            ->execute([':a' => $aulaId, ':r' => json_encode($blocos, JSON_UNESCAPED_UNICODE), ':p' => count($blocos)]);
+        foreach (glob(podcast_pasta() . '/aula-' . $aulaId . '-parte-*.pcm') ?: [] as $velho) {
+            @unlink($velho);
+        }
+        return ['status' => 'gerando', 'partes' => count($blocos), 'partes_ok' => 0];
+    }
+}
+
+if (!function_exists('podcast_parte')) {
+    /** Passo 2: áudio do bloco $n (0..partes-1). Na última parte junta tudo. */
+    function podcast_parte(PDO $pdo, int $aulaId, int $n): array
+    {
+        podcast_bootstrap($pdo);
+        $stmt = $pdo->prepare('SELECT * FROM aula_podcasts WHERE aula_id = :a');
+        $stmt->execute([':a' => $aulaId]);
+        $pod = $stmt->fetch();
+        if (!$pod || !$pod['roteiro']) {
+            throw new RuntimeException('Roteiro não encontrado. Comece de novo.');
+        }
+        if ($pod['status'] === 'pronto') {
+            return ['status' => 'pronto', 'url' => (string)$pod['arquivo']];
+        }
+        $blocos = json_decode((string)$pod['roteiro'], true);
+        if (!isset($blocos[$n])) {
+            throw new RuntimeException('Parte inválida.');
+        }
+        $arqParte = podcast_pasta() . '/aula-' . $aulaId . '-parte-' . $n . '.pcm';
+        if (!is_file($arqParte)) {
+            $dialogo = "Leia em português do Brasil, como um podcast animado e natural entre um sargento professor e uma aluna:\n";
+            foreach ($blocos[$n] as $f) {
+                $dialogo .= $f['quem'] . ': ' . $f['texto'] . "\n";
+            }
+            $resp = podcast_gemini(PODCAST_MODELO_VOZ, [
+                'contents' => [['parts' => [['text' => $dialogo]]]],
+                'generationConfig' => [
+                    'responseModalities' => ['AUDIO'],
+                    'speechConfig' => ['multiSpeakerVoiceConfig' => ['speakerVoiceConfigs' => [
+                        ['speaker' => 'Sargento', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_SARGENTO]]],
+                        ['speaker' => 'Ana', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_ANA]]],
+                    ]]],
+                ],
+            ], 85);
+            $b64 = (string)($resp['candidates'][0]['content']['parts'][0]['inlineData']['data'] ?? '');
+            $pcm = base64_decode($b64, true);
+            if ($pcm === false || strlen($pcm) < 1000) {
+                throw new RuntimeException('O áudio desta parte veio vazio. Tente de novo.');
+            }
+            file_put_contents($arqParte, $pcm);
+        }
+        $ok = count(glob(podcast_pasta() . '/aula-' . $aulaId . '-parte-*.pcm') ?: []);
+        $pdo->prepare('UPDATE aula_podcasts SET partes_ok = :ok WHERE aula_id = :a')->execute([':ok' => $ok, ':a' => $aulaId]);
+
+        if ($ok < count($blocos)) {
+            return ['status' => 'gerando', 'partes' => count($blocos), 'partes_ok' => $ok];
+        }
+        return podcast_juntar($pdo, $aulaId, count($blocos));
+    }
+}
+
+if (!function_exists('podcast_juntar')) {
+    /** Passo 3: junta as partes em um WAV (com pausa curta entre blocos). */
+    function podcast_juntar(PDO $pdo, int $aulaId, int $partes): array
+    {
+        $pausa = str_repeat("\0\0", (int)(PODCAST_TAXA * 0.4));
+        $pcm = '';
+        for ($i = 0; $i < $partes; $i++) {
+            $pcm .= (string)file_get_contents(podcast_pasta() . '/aula-' . $aulaId . '-parte-' . $i . '.pcm') . $pausa;
+        }
+        $cab = 'RIFF' . pack('V', 36 + strlen($pcm)) . 'WAVEfmt ' . pack('VvvVVvv', 16, 1, 1, PODCAST_TAXA, PODCAST_TAXA * 2, 2, 16) . 'data' . pack('V', strlen($pcm));
+        $nome = 'aula-' . $aulaId . '-' . substr(sha1((string)microtime(true)), 0, 8) . '.wav';
+        file_put_contents(podcast_pasta() . '/' . $nome, $cab . $pcm);
+        $url = 'uploads/podcasts/' . $nome;
+        $duracao = (int)round(strlen($pcm) / (PODCAST_TAXA * 2));
+
+        // Se o servidor tiver ffmpeg, converte para MP3 (arquivo ~10x menor).
+        if (function_exists('exec') && @exec('command -v ffmpeg') !== '') {
+            $mp3 = substr($nome, 0, -4) . '.mp3';
+            @exec('ffmpeg -loglevel error -y -i ' . escapeshellarg(podcast_pasta() . '/' . $nome) . ' -b:a 64k ' . escapeshellarg(podcast_pasta() . '/' . $mp3), $o, $rc);
+            if ($rc === 0 && is_file(podcast_pasta() . '/' . $mp3)) {
+                @unlink(podcast_pasta() . '/' . $nome);
+                $url = 'uploads/podcasts/' . $mp3;
+            }
+        }
+        foreach (glob(podcast_pasta() . '/aula-' . $aulaId . '-parte-*.pcm') ?: [] as $p) {
+            @unlink($p);
+        }
+        $pdo->prepare("UPDATE aula_podcasts SET status = 'pronto', arquivo = :f, duracao_seg = :d, erro = NULL WHERE aula_id = :a")
+            ->execute([':f' => $url, ':d' => $duracao, ':a' => $aulaId]);
+        return ['status' => 'pronto', 'url' => $url];
+    }
+}
+
+if (!function_exists('podcast_status')) {
+    function podcast_status(PDO $pdo, int $aulaId): array
+    {
+        podcast_bootstrap($pdo);
+        $stmt = $pdo->prepare('SELECT status, partes, partes_ok, arquivo, erro FROM aula_podcasts WHERE aula_id = :a');
+        $stmt->execute([':a' => $aulaId]);
+        $p = $stmt->fetch();
+        if (!$p) {
+            return ['status' => 'nenhum'];
+        }
+        return ['status' => $p['status'], 'partes' => (int)$p['partes'], 'partes_ok' => (int)$p['partes_ok'], 'url' => (string)($p['arquivo'] ?? ''), 'erro' => (string)($p['erro'] ?? '')];
+    }
+}
