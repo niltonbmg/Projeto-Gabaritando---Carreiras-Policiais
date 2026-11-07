@@ -16,6 +16,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/meta-lib.php';
+require_once __DIR__ . '/meta-tempo-lib.php';
 
 const META_REVISOES_DIAS = [1, 7, 30];
 const META_REVISAO_MINUTOS = 20;
@@ -145,6 +146,10 @@ if (!function_exists('meta_cronograma_minutos_item')) {
     /** Minutos de teoria e de questões de um assunto, pelas horas do Plano-Mestre. */
     function meta_cronograma_minutos_item(array $item): array
     {
+        // Tempo calculado (vídeo + PDF + questões); ver meta-tempo-lib.php.
+        if (isset($item['tempo'])) {
+            return ['teoria' => max(10, (int)$item['tempo']['teoria']), 'questoes' => max(15, (int)$item['tempo']['questoes'])];
+        }
         $total = max(30, (int)round((float)$item['horas'] * 60));
         $teoria = (int)round($total * META_FRACAO_TEORIA);
         return ['teoria' => $teoria, 'questoes' => $total - $teoria];
@@ -270,6 +275,14 @@ if (!function_exists('meta_cronograma_montar')) {
         $cfg = meta_cronograma_config($pdo, $usuarioId, $cursoId);
         if (!$cfg || !$estado['plano']) {
             return ['estado' => $estado, 'config' => $cfg, 'agenda' => [], 'fim' => null, 'atraso_dias' => 0, 'folga_dias' => null];
+        }
+
+        // Tempo real de cada assunto (vídeo, PDF, questões) antes de distribuir.
+        meta_tempo_bootstrap($pdo);
+        $cfgTempo = meta_config($pdo);
+        $fatores = meta_tempo_fatores_aprendidos($pdo);
+        foreach ($estado['itens'] as $k => $it) {
+            $estado['itens'][$k]['tempo'] = meta_tempo_item($pdo, $it, $cfgTempo, $fatores);
         }
 
         $revisoes = meta_cronograma_revisoes($estado, meta_revisoes_feitas($pdo, $usuarioId));

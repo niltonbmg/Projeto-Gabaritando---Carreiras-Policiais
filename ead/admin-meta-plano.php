@@ -9,6 +9,7 @@ auth_admin_require_login();
 
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
 require_once __DIR__ . '/includes/meta-lib.php';
+require_once __DIR__ . '/includes/meta-tempo-lib.php';
 
 $erro = '';
 $sucesso = '';
@@ -19,6 +20,7 @@ try {
     $pdo = admin_cursos_db();
     admin_cursos_bootstrap($pdo);
     meta_bootstrap($pdo);
+    meta_tempo_bootstrap($pdo);
 } catch (Throwable $e) {
     $erro = 'Erro na conexão ou criação das tabelas: ' . $e->getMessage();
 }
@@ -107,14 +109,34 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($acao === 'salvar_itens') {
-            $stmt = $pdo->prepare('UPDATE meta_plano_itens SET ordem = :o, peso = :pe, horas = :h, topico_id = :t, aula_id = :a WHERE id = :id AND plano_id = :p');
+            $cfgT = meta_config($pdo);
+            $fatoresT = meta_tempo_fatores_aprendidos($pdo);
+            $stmtItem = $pdo->prepare('SELECT * FROM meta_plano_itens WHERE id = :id AND plano_id = :p');
+            $stmt = $pdo->prepare('UPDATE meta_plano_itens SET ordem = :o, peso = :pe, topico_id = :t, aula_id = :a, complexidade = :cx, tempo_ajustado_min = :aj WHERE id = :id AND plano_id = :p');
             foreach ((array)($_POST['itens'] ?? []) as $id => $v) {
+                $stmtItem->execute([':id' => (int)$id, ':p' => $planoId]);
+                $antes = $stmtItem->fetch();
+                if (!$antes) {
+                    continue;
+                }
+                $cx = isset(META_COMPLEXIDADES[$v['complexidade'] ?? '']) ? (string)$v['complexidade'] : 'media';
+                $ajTxt = trim((string)($v['ajuste'] ?? ''));
+                $aj = $ajTxt === '' ? null : max(10, (int)$ajTxt);
+                // Aprendizado: correção nova do mentor é medida contra o cálculo base.
+                if ($aj !== null && $aj !== (int)($antes['tempo_ajustado_min'] ?? 0)) {
+                    $tmp = $antes;
+                    $tmp['complexidade'] = $cx;
+                    $tmp['tempo_ajustado_min'] = null;
+                    $t = meta_tempo_item($pdo, $tmp, $cfgT, []);
+                    meta_tempo_registrar_ajuste($pdo, $antes, (int)$t['base'], $aj);
+                }
                 $stmt->execute([
                     ':o' => (int)($v['ordem'] ?? 0),
                     ':pe' => max(0.0, (float)str_replace(',', '.', (string)($v['peso'] ?? '1'))),
-                    ':h' => max(0.0, (float)str_replace(',', '.', (string)($v['horas'] ?? '1'))),
                     ':t' => admin_cursos_int($v['topico_id'] ?? 0) ?: null,
                     ':a' => admin_cursos_int($v['aula_id'] ?? 0) ?: null,
+                    ':cx' => $cx,
+                    ':aj' => $aj,
                     ':id' => (int)$id, ':p' => $planoId,
                 ]);
             }
@@ -138,7 +160,7 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($acao === 'salvar_regras') {
             $stmt = $pdo->prepare('UPDATE meta_config SET valor = :v WHERE chave = :c');
-            foreach (['min_questoes', 'nivel2_questoes', 'nivel2_acerto', 'nivel3_questoes', 'nivel3_acerto', 'nivel4_questoes', 'nivel4_acerto'] as $c) {
+            foreach (['min_por_pagina', 'min_por_questao', 'pct_questoes', 'min_questoes', 'nivel2_questoes', 'nivel2_acerto', 'nivel3_questoes', 'nivel3_acerto', 'nivel4_questoes', 'nivel4_acerto'] as $c) {
                 if (isset($_POST[$c])) {
                     $stmt->execute([':v' => (string)max(0, (int)$_POST[$c]), ':c' => $c]);
                 }
@@ -194,7 +216,23 @@ if ($pdo instanceof PDO) {
         $erro = 'Erro ao carregar o plano: ' . $e->getMessage();
     }
 }
-$totalHoras = array_sum(array_map(static fn(array $i): float => (float)$i['horas'], $itens));
+$tempos = [];
+$fatoresAprendidos = [];
+if ($pdo instanceof PDO && $itens) {
+    $fatoresAprendidos = meta_tempo_fatores_aprendidos($pdo);
+    foreach ($itens as $i) {
+        $tempos[(int)$i['id']] = meta_tempo_item($pdo, $i, $cfg, $fatoresAprendidos);
+    }
+}
+$totalMin = array_sum(array_column($tempos, 'total'));
+$totalHoras = $totalMin / 60;
+$nomesMaterias = [];
+if ($pdo instanceof PDO) {
+    foreach ($pdo->query('SELECT id, nome FROM admin_materias') as $m) {
+        $nomesMaterias[(int)$m['id']] = (string)$m['nome'];
+    }
+}
+function mp_min(int $m): string { return $m >= 60 ? intdiv($m, 60) . 'h' . ($m % 60 ? sprintf('%02d', $m % 60) : '') : $m . 'min'; }
 
 $topbarInclude = admin_cursos_get_topbar();
 $menuBarInclude = admin_cursos_get_menubar();
@@ -220,6 +258,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         .meta-itens td{vertical-align:middle}
         .meta-num{max-width:80px}
         .meta-regras{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+        .meta-tempo strong{display:block}.meta-tempo span{display:block;font-size:12px;color:#5b6170;white-space:nowrap}.meta-tempo .meta-fonte{color:#8a8f9c;font-size:11px;white-space:normal}
         .meta-resumo{display:flex;flex-wrap:wrap;gap:16px;color:#5b6170;font-size:14px}
     </style>
 </head>
@@ -267,7 +306,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="meta-resumo"><span><strong><?php echo count($itens); ?></strong> assuntos</span><span><strong><?php echo number_format($totalHoras, 1, ',', '.'); ?></strong> horas planejadas</span></div>
+                <div class="meta-resumo"><span><strong><?php echo count($itens); ?></strong> assuntos</span><span><strong><?php echo number_format($totalHoras, 1, ',', '.'); ?></strong> horas calculadas</span><span>Deixe "Seu ajuste" vazio para usar o cálculo. Quando você corrige um tempo, o sistema aprende e ajusta os próximos da mesma matéria.</span></div>
 
                 <?php if (!$itens): ?>
                     <div class="admin-empty"><div><i data-lucide="list-ordered"></i><h3>Nenhum assunto no plano</h3><p>Use "Gerar das aulas do curso" ou adicione um assunto abaixo.</p></div></div>
@@ -276,7 +315,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <input type="hidden" name="acao" value="salvar_itens"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
                         <div class="admin-table-wrap">
                             <table class="admin-table meta-itens">
-                                <thead><tr><th>Ordem</th><th>Assunto</th><th>Tópico (para contar questões)</th><th>Aula de teoria mínima</th><th>Peso</th><th>Horas</th><th></th></tr></thead>
+                                <thead><tr><th>Ordem</th><th>Assunto</th><th>Tópico (para contar questões)</th><th>Aula de teoria mínima</th><th>Complexidade</th><th>Tempo calculado</th><th>Seu ajuste (min)</th><th></th></tr></thead>
                                 <tbody>
                                 <?php foreach ($itens as $i): $id = (int)$i['id']; ?>
                                     <tr>
@@ -285,8 +324,10 @@ $menuBarInclude = admin_cursos_get_menubar();
                                         <td><select name="itens[<?php echo $id; ?>][topico_id]" aria-label="Tópico"><option value="0">— sem tópico —</option><?php foreach ($topicos as $t): ?><option value="<?php echo (int)$t['id']; ?>" <?php echo (int)$t['id'] === (int)$i['topico_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$t['materia'] . ' › ' . (string)$t['titulo']); ?></option><?php endforeach; ?></select>
                                             <?php if (empty($i['topico_id'])): ?><span class="admin-form-hint">Sem tópico, as questões não contam.</span><?php endif; ?></td>
                                         <td><select name="itens[<?php echo $id; ?>][aula_id]" aria-label="Aula"><option value="0">— sem aula —</option><?php foreach ($aulas as $a): ?><option value="<?php echo (int)$a['id']; ?>" <?php echo (int)$a['id'] === (int)$i['aula_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$a['titulo']); ?></option><?php endforeach; ?></select></td>
-                                        <td><input class="meta-num" type="text" inputmode="decimal" name="itens[<?php echo $id; ?>][peso]" value="<?php echo admin_esc(rtrim(rtrim((string)$i['peso'], '0'), '.')); ?>" aria-label="Peso"></td>
-                                        <td><input class="meta-num" type="text" inputmode="decimal" name="itens[<?php echo $id; ?>][horas]" value="<?php echo admin_esc(rtrim(rtrim((string)$i['horas'], '0'), '.')); ?>" aria-label="Horas"></td>
+                                        <td><select name="itens[<?php echo $id; ?>][complexidade]" aria-label="Complexidade"><?php foreach (META_COMPLEXIDADES as $ck => $cv): ?><option value="<?php echo $ck; ?>" <?php echo ($i['complexidade'] ?? 'media') === $ck ? 'selected' : ''; ?>><?php echo $cv['nome']; ?></option><?php endforeach; ?></select><input type="hidden" name="itens[<?php echo $id; ?>][peso]" value="<?php echo admin_esc((string)$i['peso']); ?>"></td>
+                                        <?php $tp = $tempos[$id] ?? null; ?>
+                                        <td class="meta-tempo"><?php if ($tp): ?><strong><?php echo mp_min((int)$tp['total']); ?></strong><span>🎥 <?php echo mp_min((int)$tp['video']); ?> · 📄 <?php echo mp_min((int)$tp['pdf']); ?><?php echo $tp['paginas'] ? ' (' . (int)$tp['paginas'] . ' pág.)' : ''; ?> · ✍️ <?php echo mp_min((int)$tp['questoes']); ?></span><span class="meta-fonte"><?php echo admin_esc($tp['fonte_video']); ?><?php echo $tp['fator_aprendido'] != 1.0 ? ' · aprendido ×' . number_format((float)$tp['fator_aprendido'], 2, ',', '') : ''; ?></span><?php endif; ?></td>
+                                        <td><input class="meta-num" type="number" min="10" name="itens[<?php echo $id; ?>][ajuste]" value="<?php echo $i['tempo_ajustado_min'] ? (int)$i['tempo_ajustado_min'] : ''; ?>" placeholder="<?php echo $tp ? (int)$tp['calculado'] : ''; ?>" aria-label="Seu ajuste em minutos"></td>
                                         <td><button class="admin-btn admin-btn-danger admin-btn-small" type="submit" form="rm-<?php echo $id; ?>" aria-label="Remover"><i data-lucide="trash-2"></i></button></td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -320,6 +361,9 @@ $menuBarInclude = admin_cursos_get_menubar();
             <form method="post">
                 <input type="hidden" name="acao" value="salvar_regras"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
                 <div class="meta-regras">
+                    <div class="admin-form-field"><label for="r-pag">Minutos por página de PDF</label><input id="r-pag" type="number" min="1" name="min_por_pagina" value="<?php echo (int)($cfg['min_por_pagina'] ?? 3); ?>"></div>
+                    <div class="admin-form-field"><label for="r-mq">Minutos por questão</label><input id="r-mq" type="number" min="1" name="min_por_questao" value="<?php echo (int)($cfg['min_por_questao'] ?? 3); ?>"></div>
+                    <div class="admin-form-field"><label for="r-pq">Questões: % mínimo do tempo do assunto</label><input id="r-pq" type="number" min="10" max="90" name="pct_questoes" value="<?php echo (int)($cfg['pct_questoes'] ?? 55); ?>"></div>
                     <div class="admin-form-field"><label for="r-min">Mínimo para avançar (nível 1)</label><input id="r-min" type="number" min="1" name="min_questoes" value="<?php echo (int)($cfg['min_questoes'] ?? 5); ?>"></div>
                     <div class="admin-form-field"><label for="r-n2q">Nível 2 · questões</label><input id="r-n2q" type="number" name="nivel2_questoes" value="<?php echo (int)($cfg['nivel2_questoes'] ?? 15); ?>"></div>
                     <div class="admin-form-field"><label for="r-n2a">Nível 2 · % acerto</label><input id="r-n2a" type="number" name="nivel2_acerto" value="<?php echo (int)($cfg['nivel2_acerto'] ?? 60); ?>"></div>
@@ -329,6 +373,10 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <div class="admin-form-field"><label for="r-n4a">Nível 4 · % acerto</label><input id="r-n4a" type="number" name="nivel4_acerto" value="<?php echo (int)($cfg['nivel4_acerto'] ?? 80); ?>"></div>
                 </div>
                 <div class="admin-form-actions" style="position:static"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="save"></i>Salvar regras</button></div>
+                <?php if ($fatoresAprendidos): ?>
+                    <p class="meta-resumo" style="margin-top:12px"><strong>O que o sistema aprendeu com você:</strong>
+                    <?php foreach ($fatoresAprendidos as $mid => $fa): ?><span><?php echo admin_esc($nomesMaterias[$mid] ?? 'Sem matéria'); ?>: tempos ×<?php echo number_format((float)$fa['fator'], 2, ',', ''); ?> (<?php echo (int)$fa['n']; ?> correção/ões)</span><?php endforeach; ?></p>
+                <?php endif; ?>
             </form>
         </section>
     </main>
