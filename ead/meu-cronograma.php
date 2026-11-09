@@ -326,6 +326,9 @@ if (is_file($barraSuperiorPath)) {
             <div class="mc-alerta erro" role="alert">No ritmo atual você não termina o plano antes da prova. Aumente suas horas em "Minha rotina" ou fale com o mentor no próximo check-in.</div>
         <?php endif; ?>
 
+        <?php $ajustes = array_filter((array)($cron['desempenho'] ?? []), static fn(array $d): bool => (float)$d['fator'] !== 1.0); if ($ajustes): ?>
+            <div class="mc-alerta" role="note">📊 Ajustado pelo seu Ranking Individual: <?php echo mc_e(implode(' · ', array_map(static fn(array $d): string => $d['materia'] . ' ' . $d['pct'] . '% (' . ((float)$d['fator'] > 1 ? 'mais tempo' : 'manutenção') . ')', $ajustes))); ?>. <a href="desafio.php" style="color:inherit">Ver ranking</a></div>
+        <?php endif; ?>
         <nav class="mc-nav" aria-label="Trocar de semana">
             <?php if ($semana > 0): ?><a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>&semana=<?php echo $semana - 1; ?>" aria-label="Semana anterior">‹</a><?php else: ?><span class="off" aria-hidden="true">‹</span><?php endif; ?>
             <div>

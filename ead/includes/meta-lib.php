@@ -285,3 +285,44 @@ if (!function_exists('meta_curso_do_aluno')) {
         return (int)($stmt->fetchColumn() ?: 0);
     }
 }
+
+if (!function_exists('meta_desempenho_materias')) {
+    /**
+     * Ranking Individual do aluno: acerto por matéria (todas as questões que ele
+     * resolveu: ciclo de estudo e Desafio do Dia), da mais forte para a mais fraca.
+     * Também devolve o fator de ajuste do cronograma de cada matéria:
+     *   acerto < 60% (com 10+ questões)  -> 1,3  (mais tempo onde ele erra)
+     *   acerto >= 80% (com 10+ questões) -> 0,85 (manutenção do que já domina)
+     */
+    function meta_desempenho_materias(PDO $pdo, int $usuarioId): array
+    {
+        $st = $pdo->prepare('SELECT q.materia_id, m.nome, COUNT(*) total, SUM(r.correta) acertos
+                               FROM banco_questoes_respostas_usuario r
+                               JOIN admin_banco_questoes q ON q.id = r.questao_id
+                               LEFT JOIN admin_materias m ON m.id = q.materia_id
+                              WHERE r.usuario_id = :u AND q.materia_id IS NOT NULL
+                              GROUP BY q.materia_id, m.nome');
+        $st->execute([':u' => $usuarioId]);
+        $lista = [];
+        foreach ($st->fetchAll() as $r) {
+            $total = (int)$r['total'];
+            $pct = $total ? (int)round((int)$r['acertos'] * 100 / $total) : 0;
+            $fator = 1.0;
+            $motivo = 'poucas questões ainda (mínimo 10 para ajustar)';
+            if ($total >= 10) {
+                if ($pct < 60) {
+                    $fator = 1.3;
+                    $motivo = 'acerto abaixo de 60%: +30% de tempo para reforçar';
+                } elseif ($pct >= 80) {
+                    $fator = 0.85;
+                    $motivo = 'acerto de 80% ou mais: tempo de manutenção';
+                } else {
+                    $motivo = 'acerto entre 60% e 79%: ritmo normal';
+                }
+            }
+            $lista[(int)$r['materia_id']] = ['materia_id' => (int)$r['materia_id'], 'materia' => (string)($r['nome'] ?? 'Sem matéria'), 'total' => $total, 'acertos' => (int)$r['acertos'], 'pct' => $pct, 'fator' => $fator, 'motivo' => $motivo];
+        }
+        uasort($lista, static fn(array $a, array $b): int => [$b['pct'], $b['total']] <=> [$a['pct'], $a['total']]);
+        return $lista;
+    }
+}

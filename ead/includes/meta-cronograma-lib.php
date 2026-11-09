@@ -347,8 +347,12 @@ if (!function_exists('meta_cronograma_montar')) {
         meta_tempo_bootstrap($pdo);
         $cfgTempo = meta_config($pdo);
         $fatores = meta_tempo_fatores_aprendidos($pdo);
+        // Ranking Individual: matéria fraca ganha peso (mais tempo no ciclo); forte, manutenção.
+        $desempenho = meta_desempenho_materias($pdo, $usuarioId);
         foreach ($estado['itens'] as $k => $it) {
             $estado['itens'][$k]['tempo'] = meta_tempo_item($pdo, $it, $cfgTempo, $fatores);
+            $f = $desempenho[(int)($it['materia_id'] ?? 0)]['fator'] ?? 1.0;
+            $estado['itens'][$k]['peso'] = max(0.1, (float)($it['peso'] ?? 1)) * $f;
         }
 
         $revisoes = meta_cronograma_revisoes($estado, meta_revisoes_feitas($pdo, $usuarioId));
@@ -396,6 +400,7 @@ if (!function_exists('meta_cronograma_montar')) {
             'fim_ideal' => $ideal['fim'],
             'atraso_dias' => $atraso,
             'folga_dias' => $folga,
+            'desempenho' => $desempenho,
         ];
     }
 }

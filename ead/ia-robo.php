@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/ia-fila-lib.php';
 require_once __DIR__ . '/includes/ia-classificar-lib.php';
+require_once __DIR__ . '/includes/desafio-lib.php';
 
 $viaCli = PHP_SAPI === 'cli';
 if (!$viaCli) {
@@ -32,6 +33,13 @@ if ($trava === false || !flock($trava, LOCK_EX | LOCK_NB)) {
 
 $inicio = time();
 $pdo = db();
+// Desafio do Dia já pronto quando o primeiro aluno abrir (e a mensagem do WhatsApp também).
+try {
+    date_default_timezone_set('America/Bahia');
+    desafio_gerar($pdo, date('Y-m-d'));
+} catch (Throwable $e) {
+    echo 'Desafio do dia: ' . $e->getMessage() . "\n";
+}
 $feitos = 0;
 while (time() - $inicio < $limite - 60) { // deixa margem para o item em andamento
     $r = ia_fila_processar_um($pdo);
