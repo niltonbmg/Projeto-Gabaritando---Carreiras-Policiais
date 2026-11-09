@@ -3708,7 +3708,7 @@ if ($aulas) {
                         <?php $aulaDescricaoHtml = aula_descricao_html($aulaDescricao); ?>
                         <?php if ($aulaAtual && ($aulaDescricaoHtml !== '' || $pdfAtual['arquivo'] !== '')): ?>
                         <div class="pod" style="margin-bottom:20px" id="aulaPodcast" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>">
-                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast: Antigão e Recruta Bia</span></button>
+                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast: Antigão e Combatente</span></button>
                                 <div class="pod-progresso" id="podProg" hidden><div class="pod-barra"><i id="podBarra"></i></div><span id="podMsg">Preparando o roteiro…</span></div>
                                 <div class="pod-player" id="podPlayer" hidden>
                                     <audio id="podAudio" controls preload="metadata"></audio>
