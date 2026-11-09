@@ -723,6 +723,7 @@ if ($acaoAulas !== '') {
         }
 
         if ($acaoAulas === 'marcar_assistido') {
+            unset($_SESSION['gab_missao_' . (int)$usuarioIdAjax]);
             $stmtTipoAula = $pdoAjax->prepare("
                 SELECT video_url
                 FROM admin_curso_aulas
@@ -2972,6 +2973,8 @@ if ($aulas) {
         .ciclo-barra i{display:block;height:100%;border-radius:99px;background:#fbb928}
         .ciclo-barra b{position:absolute;top:-3px;width:2px;height:14px;background:#fff}
         .ciclo-bt{justify-self:start;margin-top:2px;border-radius:10px;padding:8px 12px;background:#fbb928;color:#111;font-weight:700;font-size:13px;text-decoration:none}
+        .ciclo-prox{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:12px 0;padding:14px 16px;border-radius:14px;background:#0f2a1a;border:1px solid #22c55e;color:#e8fbe9;font-size:14.5px}
+        .ciclo-prox strong{color:#4ade80}
         .ciclo-mentoria{margin:12px 0 0;font-size:13px;color:#c9c9cf}
         @media(max-width:1000px){.ciclo-passos{grid-template-columns:1fr 1fr}}
         @media(max-width:560px){.ciclo-passos{grid-template-columns:1fr}}
@@ -3742,6 +3745,7 @@ if ($aulas) {
                     $ciclo = null;
                 }
                 ?>
+                <?php if ($ciclo): ?><script>window.gabCiclo = <?php echo json_encode(['topico' => (int)$ciclo['topico'], 'min' => (int)$ciclo['min'], 'res' => (int)$ciclo['res']]); ?>;</script><?php endif; ?>
                 <?php if ($ciclo): $cp = $ciclo['passo']; ?>
                 <section class="ciclo" aria-labelledby="cicloTitulo">
                     <div class="ciclo-topo">
@@ -3751,7 +3755,7 @@ if ($aulas) {
                     <ol class="ciclo-passos">
                         <li class="<?php echo $cp > 1 ? 'feito' : 'agora'; ?>">
                             <span class="ciclo-n"><?php echo $cp > 1 ? '✓' : '1'; ?></span>
-                            <div><strong>Teoria mínima</strong><small>Assista à aula (ou à videoaula do Antigão) e leia o PDF fazendo suas marcações.</small>
+                            <div><strong>Teoria mínima</strong><small>Escolha um jeito: videoaula do professor, videoaula do Antigão ou o PDF com marcações. O podcast é extra.</small>
                             <em><?php echo $cp > 1 ? 'Concluída' : 'Ao terminar, toque em “Marcar como assistido”.'; ?></em></div>
                         </li>
                         <li class="<?php echo $cp > 2 ? 'feito' : ($cp === 2 ? 'agora' : ''); ?>">
@@ -3799,7 +3803,7 @@ if ($aulas) {
                         <?php $aulaDescricaoHtml = aula_descricao_html($aulaDescricao); ?>
                         <?php if ($aulaAtual && ($aulaDescricaoHtml !== '' || $pdfAtual['arquivo'] !== '')): ?>
                         <div class="pod" style="margin-bottom:20px" id="aulaPodcast" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>">
-                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast: Antigão e Recruta 01</span></button>
+                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Extra · Ouvir o podcast: Antigão e Recruta 01</span></button>
                                 <div class="pod-progresso" id="podProg" hidden><div class="pod-barra"><i id="podBarra"></i></div><span id="podMsg">Preparando o roteiro…</span></div>
                                 <div class="pod-player" id="podPlayer" hidden>
                                     <audio id="podAudio" controls preload="metadata"></audio>
@@ -5515,6 +5519,19 @@ if ($aulas) {
                         btnAssistido.classList.add('is-watched');
                         btnAssistido.innerHTML = '<i data-lucide="check"></i>Assistido';
                         marcarVisualmenteAssistida(data.aula_id || config.aulaId);
+                        // Ciclo no automático: teoria feita -> já leva para as questões do assunto.
+                        (function(){
+                            var c = window.gabCiclo || {};
+                            if (!c.topico || document.getElementById('cicloProximo')) { return; }
+                            var faltam = Math.max(0, (c.min || 5) - (c.res || 0));
+                            var box = document.createElement('div');
+                            box.id = 'cicloProximo'; box.className = 'ciclo-prox'; box.setAttribute('role', 'status');
+                            box.innerHTML = '<strong>✓ Teoria concluída!</strong> <span>' + (faltam > 0 ? 'Passo 2: resolva ' + faltam + ' questões para liberar o próximo assunto.' : 'Passo 2: continue nas questões até a meta de 50.') + '</span>'
+                                + '<a class="ciclo-bt" href="banco-questoes.php?topico_id=' + encodeURIComponent(c.topico) + '">✅ Resolver questões agora</a>';
+                            btnAssistido.closest('.aula-actions').insertAdjacentElement('afterend', box);
+                            var cicloSec = document.querySelector('.ciclo-passos li'); if (cicloSec) { cicloSec.className = 'feito'; }
+                            box.querySelector('a').focus();
+                        })();
                         atualizarProgresso(data.progresso || 0);
                         if (window.aulasRenderizarIcones) {
                             window.aulasRenderizarIcones();

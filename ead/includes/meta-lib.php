@@ -180,6 +180,20 @@ if (!function_exists('meta_estado_aluno')) {
               ORDER BY i.ordem ASC, i.id ASC");
         $stmt->execute([':u1' => $usuarioId, ':u2' => $usuarioId, ':u3' => $usuarioId, ':p' => (int)$plano['id']]);
         $linhas = $stmt->fetchAll();
+        // Ciclo automático: aula marcada como assistida na página da aula já conta como teoria concluída.
+        try {
+            $stA = $pdo->prepare('SELECT aula_id, MIN(COALESCE(assistido_em, NOW())) FROM aulas_progresso WHERE usuario_id = :u AND assistido = 1 GROUP BY aula_id');
+            $stA->execute([':u' => $usuarioId]);
+            $assistidas = $stA->fetchAll(PDO::FETCH_KEY_PAIR);
+            foreach ($linhas as &$lin) {
+                if (empty($lin['teoria_concluida_em']) && !empty($lin['aula_id']) && isset($assistidas[(int)$lin['aula_id']])) {
+                    $lin['teoria_concluida_em'] = $assistidas[(int)$lin['aula_id']];
+                }
+            }
+            unset($lin);
+        } catch (Throwable $e) {
+            // tabela de progresso ainda não existe: segue só com a marcação do plano
+        }
 
         $itens = [];
         // Ciclo de matérias: a trava do Método META vale dentro de cada matéria.

@@ -29,7 +29,8 @@ foreach (['curso_id', 'id_curso', 'id'] as $cursoContextoChave) {
 $cursoContextoQuery = $cursoContextoId > 0 ? '?curso_id=' . $cursoContextoId : '';
 
 $menuItens = $menuItens ?? [
-    ['titulo' => 'Hoje você estuda', 'link' => 'meu-plano.php', 'externo' => false],
+    ['titulo' => '▶ Missão do dia', 'link' => 'meu-plano.php', 'externo' => false],
+    ['titulo' => 'Como funciona o método', 'link' => 'meu-plano.php?tour=1', 'externo' => false],
     ['titulo' => '🎯 Desafio do dia · Ranking', 'link' => 'desafio.php', 'externo' => false],
     ['titulo' => 'Materiais', 'link' => 'materiais.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => 'Agenda', 'link' => 'agenda.php', 'externo' => false],
@@ -49,6 +50,8 @@ $menuItens = $menuItens ?? [
 
 $notificacoesTopbar = [];
 $totalNotificacoesNaoLidas = 0;
+$missaoTopo = null;
+$mostrarTourMetodo = false;
 if ($usuarioLogado) {
     try {
         require_once __DIR__ . '/notificacoes.php';
@@ -59,6 +62,17 @@ if ($usuarioLogado) {
                     $totalNotificacoesNaoLidas++;
                 }
             }
+        }
+        // Ciclo no automático: próximo passo + lembrete do Antigão no sininho.
+        require_once __DIR__ . '/missao-lib.php';
+        if (function_exists('db') && !$usuarioEhAdmin) {
+            $missaoTopo = missao_proximo_passo(db(), (int)$usuarioAtual['id']);
+            $lembreteMissao = missao_lembrete($missaoTopo);
+            if ($lembreteMissao) {
+                array_unshift($notificacoesTopbar, $lembreteMissao);
+                $totalNotificacoesNaoLidas++;
+            }
+            $mostrarTourMetodo = !missao_viu_tour(db(), (int)$usuarioAtual['id']) || isset($_GET['tour']);
         }
     } catch (Throwable $e) {
         error_log('[Barra superior - notificações] ' . $e->getMessage());
@@ -668,6 +682,87 @@ if ($usuarioLogado) {
         </button>
     </div>
 </header>
+<?php if (!empty($missaoTopo) && basename((string)($_SERVER['SCRIPT_NAME'] ?? '')) !== 'login.php'): $mt = $missaoTopo; ?>
+<style>
+    .msb{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:8px max(16px,env(safe-area-inset-left));background:#17130a;border-bottom:1px solid rgba(251,185,40,.35);color:#f3f3f4;font-family:'Ubuntu',system-ui,sans-serif}
+    .msb-txt{display:grid;min-width:0;flex:1;line-height:1.25}
+    .msb-txt small{font-size:11px;color:#fbb928;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .msb-txt span{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .msb-bolas{display:inline-flex;gap:5px}
+    .msb-bolas i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.18)}
+    .msb-bolas i.feito{background:#22c55e}
+    .msb-bolas i.agora{background:#fbb928;box-shadow:0 0 0 3px rgba(251,185,40,.3)}
+    .msb-bt{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:9px 14px;background:#fbb928;color:#111;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap}
+    .msb-bt:focus-visible{outline:2px solid #fff;outline-offset:2px}
+    @media(max-width:600px){.msb{gap:8px;padding:8px 12px}.msb-bolas{display:none}.msb-bt{padding:9px 12px;font-size:13px}}
+</style>
+<nav class="msb" aria-label="Sua missão">
+    <?php echo missao_bolinhas((int)$mt['passo']); ?>
+    <div class="msb-txt">
+        <small><?php echo MISSAO_ICONES[$mt['tipo']] ?? '🎯'; ?> Passo <?php echo (int)$mt['passo']; ?> de 4 · <?php echo htmlspecialchars(MISSAO_PASSOS[(int)$mt['passo']] ?? '', ENT_QUOTES, 'UTF-8'); ?></small>
+        <span><?php echo htmlspecialchars($mt['frase'], ENT_QUOTES, 'UTF-8'); ?></span>
+    </div>
+    <a class="msb-bt" href="<?php echo htmlspecialchars($mt['url'], ENT_QUOTES, 'UTF-8'); ?>">▶ Continuar</a>
+</nav>
+<?php endif; ?>
+<?php if (!empty($mostrarTourMetodo)): ?>
+<style>
+    .tour{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.78);font-family:'Ubuntu',system-ui,sans-serif}
+    .tour-box{width:100%;max-width:520px;background:#141416;border:1px solid rgba(251,185,40,.45);border-radius:20px;padding:24px;color:#f3f3f4;display:grid;gap:14px;text-align:center}
+    .tour-box img{height:64px;width:auto;justify-self:center}
+    .tour-box h2{font-size:22px;margin:0}
+    .tour-box p{margin:0;color:#c9c9cf;font-size:15.5px;line-height:1.5}
+    .tour-box p strong{color:#fbb928}
+    .tour-ico{font-size:46px;line-height:1}
+    .tour-pontos{display:flex;justify-content:center;gap:6px}
+    .tour-pontos i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)}
+    .tour-pontos i.on{background:#fbb928}
+    .tour-acoes{display:flex;justify-content:space-between;gap:10px}
+    .tour-acoes button{border:0;border-radius:12px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}
+    .tour-pular{background:transparent;color:#a3a3ab}
+    .tour-prox{background:#fbb928;color:#111;flex:1}
+</style>
+<div class="tour" id="tourMetodo" role="dialog" aria-modal="true" aria-labelledby="tourTitulo">
+    <div class="tour-box">
+        <img src="img/logo.png" onerror="this.onerror=null;this.src='favicon.png'" alt="Projeto Gabaritando">
+        <div class="tour-ico" id="tourIco" aria-hidden="true">🎖</div>
+        <h2 id="tourTitulo"></h2>
+        <p id="tourTexto"></p>
+        <div class="tour-pontos" id="tourPontos" aria-hidden="true"></div>
+        <div class="tour-acoes"><button type="button" class="tour-pular" id="tourPular">Pular</button><button type="button" class="tour-prox" id="tourProx">Próximo</button></div>
+    </div>
+</div>
+<script>
+(function () {
+    var telas = [
+        ['🎖', 'Fala, combatente! Aqui é o Antigão.', 'Eu vou te guiar até a farda. Aqui o estudo segue <strong>um ciclo de 4 passos</strong>, sempre na mesma ordem. Você não precisa decorar nada: é só apertar <strong>▶ Continuar</strong>, no topo de qualquer página.'],
+        ['📘', '1. Teoria mínima', 'Escolha <strong>um</strong> jeito: a videoaula do professor, a minha videoaula ou o PDF (com marca-texto). O podcast é um <strong>extra</strong> para revisar no ônibus. Terminou? Marque <strong>assistido</strong>: eu já te levo para o passo 2.'],
+        ['✅', '2. Questões comentadas', 'Resolva <strong>no mínimo 5 questões</strong> do assunto para liberar o próximo. A meta para dominar é <strong>50</strong>. Errou? Leia o comentário: é aí que você aprende.'],
+        ['🔁', '3. Revisões', 'Eu marco revisões rápidas <strong>1, 7 e 30 dias depois</strong>. São 10 minutos que fazem você não esquecer na prova.'],
+        ['📝', '4. Simulado e Redação', 'Toda semana tem simulado no tempo de prova e redação. E toda semana seu mentor confere seus números e ajusta seu plano.<br><br><strong>Fé na missão: a farda é questão de tempo!</strong>']
+    ];
+    var i = 0, el = document.getElementById('tourMetodo');
+    function mostrar() {
+        document.getElementById('tourIco').textContent = telas[i][0];
+        document.getElementById('tourTitulo').textContent = telas[i][1];
+        document.getElementById('tourTexto').innerHTML = telas[i][2];
+        document.getElementById('tourPontos').innerHTML = telas.map(function (_, k) { return '<i class="' + (k === i ? 'on' : '') + '"></i>'; }).join('');
+        document.getElementById('tourProx').textContent = i === telas.length - 1 ? 'Começar minha missão ▶' : 'Próximo';
+        document.getElementById('tourProx').focus();
+    }
+    function fechar(irParaMissao) {
+        fetch('api/missao.php', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({acao: 'tour_visto'})}).catch(function () {});
+        el.remove();
+        var bt = document.querySelector('.msb-bt');
+        if (irParaMissao && bt) { location.href = bt.getAttribute('href'); }
+    }
+    document.getElementById('tourProx').addEventListener('click', function () { if (i < telas.length - 1) { i++; mostrar(); } else { fechar(true); } });
+    document.getElementById('tourPular').addEventListener('click', function () { fechar(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.getElementById('tourMetodo')) { fechar(false); } });
+    mostrar();
+})();
+</script>
+<?php endif; ?>
 
 <div class="menu-backdrop" id="menuBackdrop" aria-hidden="true"></div>
 <aside class="side-menu" id="sideMenu" aria-hidden="true" aria-label="Menu lateral">

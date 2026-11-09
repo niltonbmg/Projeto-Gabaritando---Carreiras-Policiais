@@ -83,7 +83,7 @@ function mc_cor_materia(int $materiaId): string
 $nomesDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 $nomesDiasLongos = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 $meses = ['', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-$rotulos = ['teoria' => 'Teoria mínima', 'questoes' => 'Questões', 'revisao' => 'Revisão', 'simulado' => 'Simulado', 'redacao' => 'Redação'];
+$rotulos = ['teoria' => '📘 Teoria mínima', 'questoes' => '✅ Questões', 'revisao' => '🔁 Revisão', 'simulado' => '📝 Simulado', 'redacao' => '✍️ Redação'];
 $cfg = $cron['config'] ?? null;
 $temPlano = $cron && $cron['estado']['plano'];
 $mostrarForm = $temPlano && (!$cfg || $editar);
@@ -132,6 +132,7 @@ function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ,
     } elseif ($t['tipo'] === 'simulado' || $t['tipo'] === 'redacao') {
         $acao .= '<a class="mc-abrir" href="' . ($t['tipo'] === 'simulado' ? 'simulados.php' : 'propostas-redacao.php') . '" data-timer="' . $titulo . '">' . ($t['tipo'] === 'simulado' ? 'Fazer simulado' : 'Escrever redação') . '</a>';
     } else {
+        $acao .= $podeAgora && !empty($item['topico_id']) ? '<a class="mc-abrir" href="banco-questoes.php?topico_id=' . (int)$item['topico_id'] . '&revisao=' . $id . '-' . (int)$t['rodada'] . '" data-timer="' . $titulo . '">Revisar</a>' : '';
         $acao .= '<form method="post"><input type="hidden" name="acao" value="feito_revisao"><input type="hidden" name="curso_id" value="' . $cursoId . '"><input type="hidden" name="item_id" value="' . $id . '"><input type="hidden" name="rodada" value="' . (int)$t['rodada'] . '">'
             . '<button class="mc-check" type="submit" ' . ($podeAgora ? '' : 'disabled') . ' aria-label="Marcar revisão como feita: ' . $titulo . '" title="' . ($podeAgora ? 'Marcar como feito' : 'Disponível no dia da revisão') . '"></button></form>';
     }

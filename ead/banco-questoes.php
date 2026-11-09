@@ -361,6 +361,15 @@ try {
     $erroPagina = $e->getMessage();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'concluir_revisao' && $pdo instanceof PDO) {
+    require_once __DIR__ . '/includes/missao-lib.php';
+    meta_concluir_revisao($pdo, (int)$usuarioId, (int)($_POST['item_id'] ?? 0), (int)($_POST['rodada'] ?? 0));
+    missao_limpar_cache((int)$usuarioId);
+    $prox = missao_proximo_passo($pdo, (int)$usuarioId, true);
+    header('Location: ' . ($prox['url'] ?? 'meu-plano.php') . (strpos((string)($prox['url'] ?? ''), '?') !== false ? '&' : '?') . 'ok=revisao');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     if (!$pdo instanceof PDO) {
         bq_json(['ok' => false, 'mensagem' => 'Banco indisponível.'], 500);
@@ -414,8 +423,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
             $stmtCorreta->execute([':questao_id' => $questaoId]);
             $opcaoCorreta = $stmtCorreta->fetch() ?: ['id' => 0, 'letra' => ''];
 
+            // Ciclo no automático: quantas já foram neste assunto (para o contador e a liberação).
+            $cicloResp = null;
+            try {
+                $stT = $pdo->prepare('SELECT materia_topico_id FROM admin_banco_questoes WHERE id = :q');
+                $stT->execute([':q' => $questaoId]);
+                $topResp = (int)$stT->fetchColumn();
+                if ($topResp > 0) {
+                    $stT = $pdo->prepare('SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = :t');
+                    $stT->execute([':u' => $usuarioId, ':t' => $topResp]);
+                    $cicloResp = ['topico_id' => $topResp, 'feitas' => (int)$stT->fetchColumn()];
+                }
+                unset($_SESSION['gab_missao_' . (int)$usuarioId]);
+                if ($cicloResp && is_file(__DIR__ . '/includes/missao-lib.php')) {
+                    require_once __DIR__ . '/includes/missao-lib.php';
+                    $prox = missao_proximo_passo($pdo, (int)$usuarioId, true);
+                    $cicloResp['proximo'] = $prox ? ['url' => $prox['url'], 'acao' => $prox['acao'], 'assunto' => $prox['assunto'], 'topico_missao' => $prox['tipo'] === 'questoes' ? $prox['url'] : ''] : null;
+                }
+            } catch (Throwable $ignored) {
+            }
+
             bq_json([
                 'ok' => true,
+                'ciclo' => $cicloResp,
                 'questao_id' => $questaoId,
                 'opcao_id' => $opcaoId,
                 'correta' => $correta === 1,
@@ -712,6 +742,17 @@ function bq_status_label(?string $status): string
         .empty-box{min-height:230px;display:flex;align-items:center;justify-content:center;text-align:center;color:#6b7280;padding:28px}.empty-box h2{font-size:1.2rem;color:#111;margin-bottom:8px}.empty-box p{line-height:1.45}.alert{border:1px solid #fecaca;background:#fff1f2;color:#b91c1c;border-radius:9px;padding:13px 14px;font-weight:700;margin-bottom:18px;line-height:1.35}
         .pagination{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:18px;margin:18px 0 0}.pager-center{text-align:center}.pager-title{font-size:.75rem;color:#344054;text-transform:uppercase;margin:0 0 8px}.pager-controls{display:flex;align-items:center;justify-content:center;gap:12px}.pager-btn{width:39px;height:39px;border:0;background:var(--yellow);color:#fff;display:flex;align-items:center;justify-content:center}.pager-btn.is-disabled{opacity:.45;pointer-events:none}.pager-number{min-width:55px;height:39px;border-bottom:1px solid var(--yellow);display:flex;align-items:center;justify-content:center;color:#111}.pager-divider{height:39px;width:1px;background:var(--yellow);opacity:.85}.per-page{justify-self:end;display:flex;align-items:center;gap:10px}.per-page a{width:40px;height:40px;border:1px solid #e1e3e8;display:flex;align-items:center;justify-content:center;color:var(--yellow-dark);background:#fff}.per-page a.is-active{background:var(--yellow);border-color:var(--yellow);color:#fff;font-weight:700}.per-page span{font-size:.98rem;color:#111}
         @media(max-width:980px){.page-wrap{padding:0 14px 34px;margin-top:22px}.bq-title{min-height:70px;font-size:1.65rem}.bq-body{padding:18px 16px 24px}.filters{gap:8px}.select-wrap,.select-wrap.is-wide,.select-wrap.is-mid{min-width:calc(50% - 5px)}.filters-label{width:100%;margin-bottom:2px}.pagination{grid-template-columns:1fr;justify-items:center}.per-page{justify-self:center}}
+.bqc{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;padding:14px 16px;border-radius:14px;background:#17130a;border:1px solid rgba(251,185,40,.45);color:#f3f3f4}
+        .bqc > div:first-child{display:grid;gap:4px;min-width:0;flex:1}
+        .bqc small{color:#fbb928;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+        .bqc strong{font-size:16px}
+        .bqc span{font-size:14px;color:#d4d4d8}
+        .bqc-barra{position:relative;display:block;height:8px;border-radius:99px;background:rgba(255,255,255,.14);max-width:420px;margin-top:4px}
+        .bqc-barra i{display:block;height:100%;border-radius:99px;background:#fbb928;transition:width .4s}
+        .bqc-barra b{position:absolute;top:-3px;width:2px;height:14px;background:#fff}
+        .bqc-bt{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:10px 14px;background:#fbb928;color:#111;font:inherit;font-weight:700;font-size:14px;text-decoration:none;cursor:pointer}
+        .bqc.liberou{border-color:#22c55e;background:#0f2a1a}
+        .bqc-ok{margin:0 0 12px;padding:12px 14px;border-radius:12px;background:#0f2a1a;color:#4ade80;font-weight:700}
         @media(max-width:640px){.page-wrap{padding:0 12px 28px;margin-top:18px}.bq-title{min-height:60px;font-size:1.1rem}.bq-body{padding:15px 12px 22px}.select-wrap,.select-wrap.is-wide,.select-wrap.is-mid{min-width:100%}.option-row{grid-template-columns:24px 35px 1fr;gap:8px}.question-text{font-size:1rem}.option-text{font-size:.95rem}.pager-controls{gap:8px}.per-page{gap:6px;flex-wrap:wrap;justify-content:center}}
     </style>
 </head>
@@ -722,6 +763,38 @@ function bq_status_label(?string $status): string
         <section class="bq-card" aria-label="Banco de questões">
             <header class="bq-title">Banco de Questões</header>
             <div class="bq-body">
+                <?php
+                $cicloBanner = null;
+                if ($topicoId > 0 && $pdo instanceof PDO) {
+                    try {
+                        require_once __DIR__ . '/includes/missao-lib.php';
+                        $cfgB = meta_config($pdo);
+                        $stB = $pdo->prepare('SELECT mt.titulo, (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = mt.id) feitas FROM admin_materia_topicos mt WHERE mt.id = :t');
+                        $stB->execute([':u' => (int)$usuarioId, ':t' => $topicoId]);
+                        $rowB = $stB->fetch();
+                        if ($rowB) {
+                            $cicloBanner = ['assunto' => (string)$rowB['titulo'], 'feitas' => (int)$rowB['feitas'], 'min' => max(1, (int)($cfgB['min_questoes'] ?? 5)), 'meta' => max(1, (int)($cfgB['nivel4_questoes'] ?? 50))];
+                        }
+                    } catch (Throwable $e) {
+                        $cicloBanner = null;
+                    }
+                }
+                $revisaoParam = preg_match('/^(\d+)-(\d)$/', (string)($_GET['revisao'] ?? ''), $mRev) ? [(int)$mRev[1], (int)$mRev[2]] : null;
+                ?>
+                <?php if (($_GET['ok'] ?? '') === 'revisao'): ?><div class="bqc-ok" role="status">🔁 Revisão concluída! Seguimos para o próximo passo da sua missão.</div><?php endif; ?>
+                <?php if ($revisaoParam && $cicloBanner): ?>
+                <div class="bqc bqc-rev" role="region" aria-label="Revisão">
+                    <div><small>🔁 Passo 3 · Revisão <?php echo $revisaoParam[1]; ?>ª</small><strong><?php echo bq_esc($cicloBanner['assunto']); ?></strong><span>Resolva de 3 a 5 questões (pode reler suas marcações da aula) e toque em concluir.</span></div>
+                    <form method="post"><input type="hidden" name="acao" value="concluir_revisao"><input type="hidden" name="item_id" value="<?php echo $revisaoParam[0]; ?>"><input type="hidden" name="rodada" value="<?php echo $revisaoParam[1]; ?>"><button type="submit" class="bqc-bt">✓ Concluí a revisão</button></form>
+                </div>
+                <?php elseif ($cicloBanner): $fb = $cicloBanner; ?>
+                <div class="bqc" id="bqCiclo" data-topico="<?php echo $topicoId; ?>" data-min="<?php echo $fb['min']; ?>" data-meta="<?php echo $fb['meta']; ?>" data-feitas="<?php echo $fb['feitas']; ?>" role="region" aria-label="Seu progresso no assunto">
+                    <div><small>✅ Passo 2 · Questões comentadas</small><strong><?php echo bq_esc($fb['assunto']); ?></strong>
+                    <span id="bqCicloTxt"></span>
+                    <span class="bqc-barra" aria-hidden="true"><i id="bqCicloBarra"></i><b style="left:<?php echo (int)round($fb['min'] * 100 / $fb['meta']); ?>%"></b></span></div>
+                    <div id="bqCicloAcao" aria-live="polite"></div>
+                </div>
+                <?php endif; ?>
                 <?php if ($erroPagina !== ''): ?>
                     <div class="alert"><?php echo bq_esc($erroPagina); ?></div>
                 <?php endif; ?>
@@ -1032,5 +1105,39 @@ function bq_status_label(?string $status): string
             });
         })();
     </script>
+<script>
+// Contador do ciclo: "x de 5 para liberar" e comemoração ao liberar o próximo assunto.
+(function () {
+    var box = document.getElementById('bqCiclo');
+    if (!box) { return; }
+    var min = +box.dataset.min, meta = +box.dataset.meta, feitas = +box.dataset.feitas, topico = box.dataset.topico;
+    var txt = document.getElementById('bqCicloTxt'), barra = document.getElementById('bqCicloBarra'), acao = document.getElementById('bqCicloAcao');
+    function pintar() {
+        txt.textContent = feitas < min ? feitas + ' de ' + min + ' para liberar o próximo assunto · meta ' + meta : feitas + ' de ' + meta + ' para dominar o assunto · próximo assunto liberado ✓';
+        barra.style.width = Math.min(100, feitas * 100 / meta) + '%';
+        box.classList.toggle('liberou', feitas >= min);
+    }
+    pintar();
+    var _fetch = window.fetch;
+    window.fetch = function () {
+        return _fetch.apply(this, arguments).then(function (r) {
+            try {
+                r.clone().json().then(function (j) {
+                    if (!j || !j.ciclo || String(j.ciclo.topico_id) !== String(topico)) { return; }
+                    var antes = feitas; feitas = j.ciclo.feitas; pintar();
+                    if (antes < min && feitas >= min) {
+                        var p = j.ciclo.proximo;
+                        acao.innerHTML = '<strong style="color:#4ade80">🔓 Próximo assunto liberado!</strong> ' + (p ? '<a class="bqc-bt" href="' + p.url + '">▶ ' + (p.acao || 'Continuar') + (p.assunto ? ': ' + p.assunto.replace(/[<>&"]/g, '') : '') + '</a>' : '');
+                        var a = acao.querySelector('a'); if (a) { a.focus(); }
+                        var msb = document.querySelector('.msb');
+                        if (msb && p) { msb.querySelector('.msb-txt span').textContent = '🔓 Liberado! Próximo: ' + p.assunto; msb.querySelector('.msb-bt').setAttribute('href', p.url); }
+                    }
+                }).catch(function () {});
+            } catch (e) {}
+            return r;
+        });
+    };
+})();
+</script>
 </body>
 </html>
