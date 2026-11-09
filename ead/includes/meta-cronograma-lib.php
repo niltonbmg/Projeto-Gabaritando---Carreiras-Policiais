@@ -372,6 +372,10 @@ if (!function_exists('meta_cronograma_montar')) {
         }
         $fila = meta_cronograma_tarefas_pendentes($estado);
         $real = meta_cronograma_distribuir($fila, $cfg, $hoje, $revisoes);
+        if (is_file(__DIR__ . '/edital-hack-lib.php')) {
+            require_once __DIR__ . '/edital-hack-lib.php';
+            $real['agenda'] = hack_no_cronograma($pdo, $usuarioId, $real['agenda']);
+        }
 
         // Plano ideal: tudo desde a data de início, sem nada feito.
         $filaIdeal = [];

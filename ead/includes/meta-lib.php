@@ -295,6 +295,15 @@ if (!function_exists('meta_curso_do_aluno')) {
                                  JOIN meta_planos p ON p.curso_id = uc.curso_id AND p.status = 'aprovado'
                                 WHERE uc.usuario_id = :u AND uc.status IN ('ativo','pago','aprovado','liberado','matriculado')
                                 ORDER BY (uc.curso_id = :pedido) DESC, uc.id ASC LIMIT 1");
+        if ($cursoPedido <= 0) {
+            // O cargo escolhido em "Meu concurso" define o curso (o edital é a base).
+            try {
+                $esc = $pdo->prepare('SELECT cg.curso_id FROM aluno_concurso ac JOIN concurso_cargos cg ON cg.id = ac.cargo_id WHERE ac.usuario_id = :u');
+                $esc->execute([':u' => $usuarioId]);
+                $cursoPedido = (int)$esc->fetchColumn();
+            } catch (Throwable $e) {
+            }
+        }
         $stmt->execute([':u' => $usuarioId, ':pedido' => $cursoPedido]);
         return (int)($stmt->fetchColumn() ?: 0);
     }

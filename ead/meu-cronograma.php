@@ -83,7 +83,7 @@ function mc_cor_materia(int $materiaId): string
 $nomesDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 $nomesDiasLongos = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 $meses = ['', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-$rotulos = ['teoria' => '📘 Teoria mínima', 'questoes' => '✅ Questões', 'revisao' => '🔁 Revisão', 'simulado' => '📝 Simulado', 'redacao' => '✍️ Redação'];
+$rotulos = ['edital' => '🕵️ Edital', 'teoria' => '📘 Teoria mínima', 'questoes' => '✅ Questões', 'revisao' => '🔁 Revisão', 'simulado' => '📝 Simulado', 'redacao' => '✍️ Redação'];
 $cfg = $cron['config'] ?? null;
 $temPlano = $cron && $cron['estado']['plano'];
 $mostrarForm = $temPlano && (!$cfg || $editar);
@@ -108,7 +108,7 @@ foreach ($diasSemana as $dia) {
 function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ, array $rotulos, string $data, string $hoje): string
 {
     $item = $t['item'];
-    $cor = $t['tipo'] === 'simulado' ? '#111827' : ($t['tipo'] === 'redacao' ? '#7c2d12' : mc_cor_materia((int)($item['materia_id'] ?? 0)));
+    $cor = $t['tipo'] === 'edital' ? '#1f2937' : ($t['tipo'] === 'simulado' ? '#111827' : ($t['tipo'] === 'redacao' ? '#7c2d12' : mc_cor_materia((int)($item['materia_id'] ?? 0))));
     $titulo = mc_e((string)$item['titulo']);
     $materia = mc_e((string)($item['materia_nome'] ?? ''));
     $etapa = mc_e(($rotulos[$t['tipo']] ?? '') . (!empty($t['rodada']) ? ' ' . (int)$t['rodada'] . 'ª' : '') . (!empty($t['parcial']) ? ' · parte' : ''));
@@ -129,6 +129,8 @@ function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ,
         $feitas = min($minQ, (int)$item['nivel_info']['resolvidas']);
         $acao .= $liberado ? '<a class="mc-abrir" href="banco-questoes.php?topico_id=' . (int)$item['topico_id'] . '" data-timer="' . $titulo . '">Resolver</a>' : '';
         $acao .= '<span class="mc-contador" title="Marca sozinho ao chegar em ' . $minQ . ' questões">' . $feitas . '/' . $minQ . '</span>';
+    } elseif ($t['tipo'] === 'edital') {
+        $acao .= '<a class="mc-abrir" href="meu-concurso.php" data-timer="' . $titulo . '">Abrir</a>';
     } elseif ($t['tipo'] === 'simulado' || $t['tipo'] === 'redacao') {
         $acao .= '<a class="mc-abrir" href="' . ($t['tipo'] === 'simulado' ? 'simulados.php' : 'propostas-redacao.php') . '" data-timer="' . $titulo . '">' . ($t['tipo'] === 'simulado' ? 'Fazer simulado' : 'Escrever redação') . '</a>';
     } else {

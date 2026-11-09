@@ -1,0 +1,586 @@
+<?php
+// includes/edital-hack-lib.php
+// O edital é a base do curso.
+//  - A IA extrai TODAS as informações do edital (vagas, salário, requisitos, etapas,
+//    datas, TAF...) por cargo.
+//  - A IA (Antigão) escreve "Hackeando o Edital" e "Hackeando a Prova" para cada cargo,
+//    de forma estratégica, com base no edital, no conteúdo programático e na última prova.
+//  - Rascunhos do cadastro ficam no banco: o mentor pausa e continua depois sem perder nada.
+//  - Assunto do conteúdo programático sem aula: a IA gera a aula (apostila + videoaula do Antigão).
+//  - Aluno escolhe concurso e cargo; "Hackeando o edital" entra no cronograma a cada 2 dias.
+declare(strict_types=1);
+
+require_once __DIR__ . '/edital-lib.php';
+require_once __DIR__ . '/ia-fila-lib.php';
+
+const HACK_FORMATO_Q = '{"questoes":[{"enunciado":"texto completo","alternativas":["A","B","C","D","E"],"correta":0,"comentario":"por que a certa é certa e as outras erradas, 2 a 4 frases","dificuldade":"facil|medio|dificil","ano":2022,"fonte":"banca, órgão e ano da prova"}]}';
+
+if (!function_exists('hack_bootstrap')) {
+    function hack_bootstrap(PDO $pdo): void
+    {
+        static $feito = false;
+        if ($feito) {
+            return;
+        }
+        edital_bootstrap($pdo);
+        edital_plano_bootstrap($pdo);
+        foreach (['edital_info' => 'MEDIUMTEXT NULL', 'edital_pdf' => 'VARCHAR(255) NULL', 'hacks' => 'MEDIUMTEXT NULL', 'prova_status' => "VARCHAR(20) NULL"] as $col => $def) {
+            if (!$pdo->query('SHOW COLUMNS FROM concursos LIKE ' . $pdo->quote($col))->fetch()) {
+                $pdo->exec("ALTER TABLE concursos ADD COLUMN `$col` $def");
+            }
+        }
+        $pdo->exec("CREATE TABLE IF NOT EXISTS edital_rascunhos (
+            concurso_id INT UNSIGNED NOT NULL,
+            chave VARCHAR(40) NOT NULL,
+            dados MEDIUMTEXT NULL,
+            atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (concurso_id, chave)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS aluno_concurso (
+            usuario_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+            concurso_id INT UNSIGNED NOT NULL,
+            cargo_id INT UNSIGNED NOT NULL,
+            escolhido_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS aluno_edital_visitas (
+            usuario_id BIGINT UNSIGNED NOT NULL,
+            dia DATE NOT NULL,
+            PRIMARY KEY (usuario_id, dia)
+        ) ENGINE=InnoDB");
+        $feito = true;
+    }
+
+    // ---------------- Rascunhos (pausar e continuar) ----------------
+    function hack_rascunho_get(PDO $pdo, int $concursoId, string $chave, $padrao = null)
+    {
+        $st = $pdo->prepare('SELECT dados FROM edital_rascunhos WHERE concurso_id = :c AND chave = :k');
+        $st->execute([':c' => $concursoId, ':k' => $chave]);
+        $v = $st->fetchColumn();
+        return $v === false ? $padrao : json_decode((string)$v, true);
+    }
+
+    function hack_rascunho_set(PDO $pdo, int $concursoId, string $chave, $dados): void
+    {
+        if ($dados === null || $dados === '' || $dados === []) {
+            $pdo->prepare('DELETE FROM edital_rascunhos WHERE concurso_id = :c AND chave = :k')->execute([':c' => $concursoId, ':k' => $chave]);
+            return;
+        }
+        $pdo->prepare('INSERT INTO edital_rascunhos (concurso_id, chave, dados) VALUES (:c, :k, :d) ON DUPLICATE KEY UPDATE dados = VALUES(dados)')
+            ->execute([':c' => $concursoId, ':k' => $chave, ':d' => json_encode($dados, JSON_UNESCAPED_UNICODE)]);
+    }
+
+    // ---------------- PDF do edital guardado ----------------
+    function hack_salvar_pdf_edital(PDO $pdo, int $concursoId, string $tmp): string
+    {
+        $dir = dirname(__DIR__) . '/uploads/editais';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        $nome = 'edital-' . $concursoId . '-' . substr(sha1((string)microtime(true)), 0, 8) . '.pdf';
+        if (!@move_uploaded_file($tmp, $dir . '/' . $nome) && !@copy($tmp, $dir . '/' . $nome)) {
+            throw new RuntimeException('Não consegui guardar o PDF do edital.');
+        }
+        $url = 'uploads/editais/' . $nome;
+        $pdo->prepare('UPDATE concursos SET edital_pdf = :p WHERE id = :id')->execute([':p' => $url, ':id' => $concursoId]);
+        return $url;
+    }
+
+    function hack_pdf_base64(?string $url): string
+    {
+        $url = trim((string)$url);
+        if ($url === '') {
+            return '';
+        }
+        $caminho = realpath(dirname(__DIR__) . '/' . $url);
+        $raiz = realpath(dirname(__DIR__) . '/uploads');
+        if ($caminho && $raiz && strpos($caminho, $raiz) === 0 && is_file($caminho) && filesize($caminho) <= 15 * 1024 * 1024) {
+            return base64_encode((string)file_get_contents($caminho));
+        }
+        return '';
+    }
+
+    // ---------------- IA: informações do edital ----------------
+    /** Lê TODAS as informações do edital (não só o conteúdo programático). */
+    function hack_ia_info(string $texto, string $pdfBase64, array $cargos): array
+    {
+        $prompt = "Você é especialista em editais de concursos policiais e militares da Bahia e trabalha para o Projeto Gabaritando.\n"
+            . "Leia o EDITAL e extraia TODAS as informações que um candidato precisa saber, por cargo quando for diferente.\n"
+            . "Cargos: " . json_encode($cargos, JSON_UNESCAPED_UNICODE) . ".\n"
+            . "REGRAS: copie números e datas exatamente como no edital. O que não estiver no edital fica null (nunca invente).\n"
+            . "Responda SOMENTE em JSON neste formato:\n"
+            . '{"orgao":"","banca":"","ano":null,"inscricoes":{"inicio":null,"fim":null,"taxa":null,"onde":null},'
+            . '"prova_objetiva":{"data":null,"duracao":null,"questoes":null,"alternativas":null,"criterio_aprovacao":null,"penaliza_erro":null},'
+            . '"redacao":{"tem":null,"criterio":null},"etapas":[{"nome":"","carater":"eliminatório/classificatório","resumo":""}],'
+            . '"taf":[{"cargo":"","sexo":"","exercicio":"","minimo":""}],'
+            . '"cargos":[{"nome":"","vagas":null,"vagas_detalhe":null,"salario":null,"escolaridade":null,"idade":null,"altura":null,"cnh":null,"outros_requisitos":[""]}],'
+            . '"cotas":null,"validade":null,"lotacao":null,"datas_importantes":[{"evento":"","data":""}],"atencao":["pontos do edital que mais eliminam candidatos"]}' . "\n\n"
+            . "EDITAL (texto):\n" . mb_substr($texto, 0, 80000);
+        $partes = [['text' => $prompt]];
+        if ($pdfBase64 !== '') {
+            $partes[] = ['inlineData' => ['mimeType' => 'application/pdf', 'data' => $pdfBase64]];
+        }
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => $partes]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1]], 170);
+        $j = edital_json_do_texto((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+        if (!$j) {
+            throw new RuntimeException('A IA não conseguiu ler as informações do edital. Tente de novo.');
+        }
+        return $j;
+    }
+
+    // ---------------- IA: Hackeando o Edital / a Prova ----------------
+    function hack_ia_gerar(PDO $pdo, int $concursoId, int $cargoId): array
+    {
+        hack_bootstrap($pdo);
+        $st = $pdo->prepare('SELECT c.*, b.nome AS banca_nome FROM concursos c LEFT JOIN admin_bancas b ON b.id = c.banca_id WHERE c.id = :id');
+        $st->execute([':id' => $concursoId]);
+        $c = $st->fetch();
+        $cg = $pdo->prepare('SELECT * FROM concurso_cargos WHERE id = :id AND concurso_id = :c');
+        $cg->execute([':id' => $cargoId, ':c' => $concursoId]);
+        $cargo = $cg->fetch();
+        if (!$c || !$cargo) {
+            throw new RuntimeException('Concurso ou cargo não encontrado.');
+        }
+        $itens = hack_itens_do_cargo($pdo, $concursoId, $cargoId);
+        $prova = json_decode((string)($c['ultima_prova'] ?? ''), true) ?: [];
+        $porMateria = [];
+        foreach ($itens as $i) {
+            $q = (int)(($prova['itens'] ?? [])[(int)$i['id']] ?? ($prova['itens'][(string)$i['id']] ?? 0));
+            $porMateria[$i['materia']]['assuntos'][] = $i['assunto'] . ($q ? " ($q questões na última prova)" : '');
+            $porMateria[$i['materia']]['questoes'] = ($porMateria[$i['materia']]['questoes'] ?? 0) + $q;
+        }
+        $prompt = "Você é o ANTIGÃO, a IA mentora do Projeto Gabaritando: veterano, estrategista, fala direto com o aluno (\"combatente\"), frases curtas, sem enrolação.\n"
+            . "Escreva para o candidato ao cargo \"{$cargo['nome']}\" do concurso \"{$c['nome']}\".\n"
+            . ($c['situacao'] === 'aberto' ? "O EDITAL ESTÁ ABERTO.\n" : "O edital AINDA NÃO SAIU: tudo é baseado no último edital (" . ($c['base_edital'] ?: 'anterior') . "). Deixe claro que pode mudar e que a preparação começa antes do edital.\n")
+            . "Use SOMENTE os dados abaixo. Onde não houver dado, não invente número: dê a orientação estratégica geral.\n\n"
+            . "1) HACKEANDO O EDITAL: 6 a 9 blocos curtos. O que mais importa no edital para ESTE cargo e o que fazer com isso: requisitos que eliminam (idade, altura, CNH, escolaridade), etapas e como se preparar para cada uma (inclusive TAF desde já), datas e prazos que não pode perder, salário e vagas como motivação, armadilhas do edital.\n"
+            . "2) HACKEANDO A PROVA: 6 a 9 blocos. Onde estão os pontos: matérias e assuntos que mais caem (use os números), onde ganhar ponto rápido, estilo da banca, critério de aprovação/eliminação, gestão de tempo na prova, ordem para resolver, e o que estudar primeiro.\n"
+            . "3) RESUMO_ANTIGAO: 2 a 3 frases de abertura motivadora e estratégica.\n"
+            . "Cada bloco: {\"icone\":\"um emoji\",\"titulo\":\"curto\",\"texto\":\"2 a 4 frases\"}.\n"
+            . "Responda SOMENTE em JSON: {\"resumo_antigao\":\"\",\"hack_edital\":[...],\"hack_prova\":[...]}\n\n"
+            . "INFORMAÇÕES DO EDITAL: " . mb_substr((string)($c['edital_info'] ?? '{}'), 0, 20000) . "\n"
+            . "BANCA: " . ($c['banca_nome'] ?: 'não informada') . " · DATA DA PROVA: " . ($c['data_prova'] ?: 'não definida') . "\n"
+            . "ÚLTIMA PROVA: " . (!empty($prova['encontrada']) ? trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '')) . ' (fonte: ' . ($prova['fonte'] ?? '') . ')' : 'distribuição não disponível') . "\n"
+            . "CONTEÚDO PROGRAMÁTICO DO CARGO (matéria: assuntos; total de questões na última prova): " . json_encode($porMateria, JSON_UNESCAPED_UNICODE);
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => $prompt]]]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.5]], 150);
+        $pdo = podcast_reconectar($pdo);
+        $j = edital_json_do_texto((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+        $limpa = static function ($lista): array {
+            $r = [];
+            foreach ((array)$lista as $b) {
+                $t = trim((string)($b['titulo'] ?? ''));
+                $x = trim((string)($b['texto'] ?? ''));
+                if ($t !== '' && $x !== '') {
+                    $r[] = ['icone' => mb_substr((string)($b['icone'] ?? '📌'), 0, 4), 'titulo' => mb_substr($t, 0, 120), 'texto' => mb_substr($x, 0, 900)];
+                }
+            }
+            return array_slice($r, 0, 12);
+        };
+        $res = ['resumo_antigao' => mb_substr(trim((string)($j['resumo_antigao'] ?? '')), 0, 600), 'hack_edital' => $limpa($j['hack_edital'] ?? []), 'hack_prova' => $limpa($j['hack_prova'] ?? []), 'gerado_em' => date('Y-m-d H:i')];
+        if (!$res['hack_edital'] || !$res['hack_prova']) {
+            throw new RuntimeException('A IA não montou os textos. Tente de novo.');
+        }
+        $hacks = json_decode((string)($c['hacks'] ?? ''), true) ?: [];
+        $hacks[(string)$cargoId] = $res;
+        $pdo->prepare('UPDATE concursos SET hacks = :h WHERE id = :id')->execute([':h' => json_encode($hacks, JSON_UNESCAPED_UNICODE), ':id' => $concursoId]);
+        return $res;
+    }
+
+    function hack_itens_do_cargo(PDO $pdo, int $concursoId, int $cargoId): array
+    {
+        return array_values(array_filter(edital_itens($pdo, $concursoId), static function (array $i) use ($cargoId): bool {
+            $ids = array_filter(array_map('intval', explode(',', (string)$i['cargos'])));
+            return !$ids || in_array($cargoId, $ids, true);
+        }));
+    }
+
+    // ---------------- Aulas: PDF por assunto e geração pela IA ----------------
+    /** Cria (ou completa) a aula do assunto em cada curso dos cargos, com PDF e/ou vídeo. */
+    function hack_aula_do_item(PDO $pdo, int $editalItemId, array $cargoIds, string $titulo, string $url, string $pdf): array
+    {
+        $ids = edital_criar_aula($pdo, $editalItemId, $cargoIds, $titulo, $url);
+        foreach ($ids as $aid) {
+            if ($pdf !== '') {
+                $pdo->prepare('UPDATE admin_curso_aulas SET pdf_arquivo = :p WHERE id = :id')->execute([':p' => $pdf, ':id' => $aid]);
+            }
+            ia_fila_adicionar($pdo, 'apostila', $aid); // apostila + podcast (+ videoaula do Antigão se não tiver vídeo)
+        }
+        return $ids;
+    }
+
+    /** Para cada assunto do cargo sem aula: cria a aula "gerada pela IA" e põe na fila. */
+    function hack_gerar_faltantes(PDO $pdo, int $concursoId): int
+    {
+        $n = 0;
+        foreach (edital_andamento($pdo, $concursoId) as $an) {
+            if (empty($an['cargo']['curso_id'])) {
+                continue;
+            }
+            foreach ($an['itens'] as $it) {
+                if ($it['aulas']) {
+                    continue;
+                }
+                $ids = edital_criar_aula($pdo, (int)$it['id'], [(int)$an['cargo']['id']], $it['assunto'] . ' · aula do Antigão', '');
+                foreach ($ids as $aid) {
+                    ia_fila_adicionar($pdo, 'aula_ia', $aid);
+                    $n++;
+                }
+            }
+        }
+        return $n;
+    }
+
+    /** Robô: escreve a teoria mínima de uma aula sem material (só pelo assunto e o edital). */
+    function hack_aula_ia_processar(PDO $pdo, int $aulaId): void
+    {
+        $st = $pdo->prepare('SELECT a.*, m.nome AS materia, t.titulo AS assunto, c.nome AS curso FROM admin_curso_aulas a
+                               LEFT JOIN admin_materias m ON m.id = a.materia_id LEFT JOIN admin_materia_topicos t ON t.id = a.topico_id
+                               LEFT JOIN admin_cursos c ON c.id = a.curso_id WHERE a.id = :id');
+        $st->execute([':id' => $aulaId]);
+        $a = $st->fetch();
+        if (!$a) {
+            throw new RuntimeException('Aula não existe mais.');
+        }
+        if (trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '') {
+            ia_fila_adicionar($pdo, 'apostila', $aulaId); // ganhou material de verdade: segue o fluxo normal
+            return;
+        }
+        $prompt = "Você é professor do Projeto Gabaritando (cursinho para carreiras policiais e militares da Bahia) e escreve a TEORIA MÍNIMA de uma aula que ainda não tem vídeo nem PDF.\n"
+            . "Curso: {$a['curso']} · Matéria: {$a['materia']} · Assunto do edital: {$a['assunto']}.\n"
+            . "Escreva em HTML simples (h2, h3, p, ul, li, strong, table), em português do Brasil, linguagem direta para o aluno (\"combatente\"):\n"
+            . "1. <h2>O que cai na prova</h2>: em 2 frases, por que o assunto importa.\n"
+            . "2. <h2>Teoria mínima</h2>: os conceitos essenciais, do simples ao difícil, com um exemplo para cada um.\n"
+            . "3. <h2>Pegadinhas da banca</h2>: 3 a 5 pegadinhas clássicas com o macete para não cair.\n"
+            . "4. <h2>Resumo para revisão</h2>: 5 a 8 tópicos curtos.\n"
+            . "5. <h2>Sua missão</h2>: resolver pelo menos 5 questões do assunto.\n"
+            . "Seja fiel ao conteúdo consagrado da matéria (leis citadas pelo nome e artigo apenas quando tiver certeza). Sempre \"Projeto Gabaritando\" por extenso. Entre 700 e 1400 palavras. Responda só o HTML.";
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => $prompt]]]], 'generationConfig' => ['temperature' => 0.4]], 150);
+        $pdo = podcast_reconectar($pdo);
+        $html = '';
+        foreach ((array)($resp['candidates'][0]['content']['parts'] ?? []) as $p) {
+            $html .= (string)($p['text'] ?? '');
+        }
+        $html = trim((string)preg_replace('~^```(?:html)?\s*|\s*```$~m', '', $html));
+        if (function_exists('aula_desc_sanitizar_html')) {
+            $html = aula_desc_sanitizar_html($html);
+        }
+        if (mb_strlen(strip_tags($html)) < 300) {
+            throw new RuntimeException('A IA devolveu um texto curto demais.');
+        }
+        $html = '<p class="aula-ia-aviso"><strong>🤖 Aula preparada pelo Antigão</strong> a partir do edital, enquanto a aula do professor não chega.</p>' . $html;
+        $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :id')->execute([':d' => $html, ':id' => $aulaId]);
+        ia_fila_adicionar($pdo, 'videoaula', $aulaId);
+        ia_fila_adicionar($pdo, 'podcast', $aulaId);
+    }
+
+    // ---------------- Progresso do cadastro (barra do mentor) ----------------
+    /** Etapas do cadastro, cada uma com feito/total e um texto do que falta. */
+    function hack_progresso(PDO $pdo, int $concursoId): array
+    {
+        hack_bootstrap($pdo);
+        $st = $pdo->prepare('SELECT * FROM concursos WHERE id = :id');
+        $st->execute([':id' => $concursoId]);
+        $c = $st->fetch();
+        if (!$c) {
+            return ['etapas' => [], 'pct' => 0, 'proxima' => 'concurso'];
+        }
+        $cg = $pdo->prepare('SELECT * FROM concurso_cargos WHERE concurso_id = :c');
+        $cg->execute([':c' => $concursoId]);
+        $cargos = $cg->fetchAll();
+        $ligados = count(array_filter($cargos, static fn($x) => !empty($x['curso_id'])));
+        $itens = edital_itens($pdo, $concursoId);
+        $info = json_decode((string)($c['edital_info'] ?? ''), true);
+        $prova = json_decode((string)($c['ultima_prova'] ?? ''), true);
+        $andamento = edital_andamento($pdo, $concursoId);
+        $cob = array_sum(array_column($andamento, 'cobertos'));
+        $tot = array_sum(array_column($andamento, 'total'));
+        $planos = 0;
+        foreach ($cargos as $x) {
+            if (!empty($x['curso_id'])) {
+                $p = $pdo->prepare("SELECT COUNT(*) FROM meta_planos WHERE curso_id = :c AND status = 'aprovado'");
+                $p->execute([':c' => (int)$x['curso_id']]);
+                $planos += (int)$p->fetchColumn() > 0 ? 1 : 0;
+            }
+        }
+        $hacks = json_decode((string)($c['hacks'] ?? ''), true) ?: [];
+        $qs = hack_questoes_situacao($pdo, $concursoId);
+        $rascEdital = hack_rascunho_get($pdo, $concursoId, 'edital_texto', '');
+        $rascAulas = hack_rascunho_get($pdo, $concursoId, 'sugestoes', []);
+        $e = [
+            'concurso' => ['nome' => 'Concurso e cargos', 'ok' => $cargos && $ligados === count($cargos), 'det' => count($cargos) . ' cargo(s) · ' . $ligados . ' ligado(s) a curso'],
+            'edital' => ['nome' => 'Edital', 'ok' => $itens && is_array($info), 'det' => ($itens ? count($itens) . ' assuntos' : 'conteúdo programático pendente') . ' · ' . (is_array($info) ? 'informações lidas' : 'informações pendentes') . ($rascEdital ? ' · rascunho salvo' : '')],
+            'prova' => ['nome' => 'Hackeando a prova', 'ok' => !empty($prova['encontrada']) || ($c['prova_status'] ?? '') === 'sem_prova', 'det' => !empty($prova['encontrada']) ? 'última prova: ' . trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '')) : (($c['prova_status'] ?? '') === 'sem_prova' ? 'sem prova anterior (pesos estimados)' : 'última prova pendente')],
+            'aulas' => ['nome' => 'Aulas por assunto', 'ok' => $tot > 0 && $cob >= $tot, 'det' => $cob . '/' . $tot . ' assuntos com aula' . ($rascAulas ? ' · ' . count($rascAulas) . ' sugestão(ões) para conferir' : '')],
+            'questoes' => ['nome' => 'Questões por assunto', 'ok' => $qs['total'] > 0 && $qs['ok'] >= $qs['total'], 'det' => $qs['ok'] . '/' . $qs['total'] . ' assuntos com 10+ questões'],
+            'plano' => ['nome' => 'Plano-Mestre', 'ok' => $cargos && $planos >= count($cargos), 'det' => $planos . '/' . count($cargos) . ' cargo(s) com plano aprovado'],
+            'publicar' => ['nome' => 'Hackeando para o aluno', 'ok' => $cargos && count($hacks) >= count($cargos), 'det' => count($hacks) . '/' . count($cargos) . ' cargo(s) com textos do Antigão'],
+        ];
+        $feitas = count(array_filter($e, static fn($x) => $x['ok']));
+        // Peso extra das aulas (é a etapa mais longa): conta a fração coberta.
+        $pct = (int)round((($feitas - ($e['aulas']['ok'] ? 1 : 0)) + ($tot ? $cob / $tot : 0)) * 100 / count($e));
+        $proxima = 'publicar';
+        foreach ($e as $k => $x) {
+            if (!$x['ok']) {
+                $proxima = $k;
+                break;
+            }
+        }
+        return ['etapas' => $e, 'pct' => min(100, $pct), 'proxima' => $proxima, 'feitas' => $feitas];
+    }
+
+    // ---------------- Aluno ----------------
+    function hack_escolha_aluno(PDO $pdo, int $usuarioId): ?array
+    {
+        hack_bootstrap($pdo);
+        $st = $pdo->prepare('SELECT ac.*, c.nome AS concurso, c.situacao, c.base_edital, c.data_prova, cg.nome AS cargo, cg.curso_id
+                               FROM aluno_concurso ac JOIN concursos c ON c.id = ac.concurso_id JOIN concurso_cargos cg ON cg.id = ac.cargo_id
+                              WHERE ac.usuario_id = :u');
+        $st->execute([':u' => $usuarioId]);
+        return $st->fetch() ?: null;
+    }
+
+    function hack_registrar_visita(PDO $pdo, int $usuarioId): void
+    {
+        hack_bootstrap($pdo);
+        $pdo->prepare('INSERT IGNORE INTO aluno_edital_visitas (usuario_id, dia) VALUES (:u, CURDATE())')->execute([':u' => $usuarioId]);
+    }
+
+    /**
+     * Cronograma: "Hackeando o edital" (10 min) a cada 2 dias de estudo.
+     * Hoje some se o aluno já visitou a página hoje.
+     */
+    function hack_no_cronograma(PDO $pdo, int $usuarioId, array $agenda): array
+    {
+        try {
+            $esc = hack_escolha_aluno($pdo, $usuarioId);
+        } catch (Throwable $e) {
+            return $agenda;
+        }
+        if (!$esc) {
+            return $agenda;
+        }
+        $st = $pdo->prepare('SELECT 1 FROM aluno_edital_visitas WHERE usuario_id = :u AND dia = CURDATE()');
+        $st->execute([':u' => $usuarioId]);
+        $visitouHoje = (bool)$st->fetchColumn();
+        $hoje = date('Y-m-d');
+        $dias = array_keys($agenda);
+        sort($dias);
+        $n = 0;
+        foreach ($dias as $d) {
+            if ($n++ % 2 !== 0 || ($d === $hoje && $visitouHoje)) {
+                continue;
+            }
+            array_unshift($agenda[$d], ['tipo' => 'edital', 'minutos' => 10,
+                'item' => ['id' => 0, 'titulo' => 'Hackeando o edital · ' . $esc['cargo'], 'materia_nome' => $esc['concurso'], 'materia_id' => 0, 'topico_id' => 0]]);
+        }
+        return $agenda;
+    }
+    // ---------------- Questões por assunto ----------------
+    /** Cursos (dos cargos) que cobrem o assunto do edital. */
+    function hack_cursos_do_item(PDO $pdo, array $item): array
+    {
+        $cg = $pdo->prepare('SELECT id, curso_id FROM concurso_cargos WHERE concurso_id = :c AND curso_id IS NOT NULL');
+        $cg->execute([':c' => (int)$item['concurso_id']]);
+        $ids = array_filter(array_map('intval', explode(',', (string)$item['cargos'])));
+        $cursos = [];
+        foreach ($cg->fetchAll() as $x) {
+            if (!$ids || in_array((int)$x['id'], $ids, true)) {
+                $cursos[] = (int)$x['curso_id'];
+            }
+        }
+        return array_values(array_unique($cursos));
+    }
+
+    /** Grava questões no banco, ligadas ao assunto e liberadas para os cursos dos cargos. */
+    function hack_gravar_questoes(PDO $pdo, array $item, array $questoes, ?int $bancaId, string $origem): int
+    {
+        $cursos = hack_cursos_do_item($pdo, $item);
+        if (!$bancaId) {
+            // O banco de questões exige banca: usa "A definir" quando o concurso ainda não tem.
+            $bancaId = (int)$pdo->query("SELECT id FROM admin_bancas WHERE nome = 'A definir' LIMIT 1")->fetchColumn();
+            if (!$bancaId) {
+                $pdo->exec("INSERT INTO admin_bancas (nome, criado_em) VALUES ('A definir', NOW())");
+                $bancaId = (int)$pdo->lastInsertId();
+            }
+        }
+        $n = 0;
+        $insQ = $pdo->prepare("INSERT INTO admin_banco_questoes (curso_id, banca_id, materia_id, materia_topico_id, ano, enunciado, explicacao, dificuldade, status, ordem, criado_em)
+                               VALUES (:c, :b, :m, :t, :a, :e, :x, :d, 'ativo', 0, NOW())");
+        $insO = $pdo->prepare('INSERT INTO admin_banco_questao_opcoes (questao_id, letra, texto, correta, ordem, criado_em) VALUES (:q, :l, :t, :c, :o, NOW())');
+        $insA = $pdo->prepare('INSERT IGNORE INTO admin_banco_questao_acessos (questao_id, curso_id) VALUES (:q, :c)');
+        $dup = $pdo->prepare('SELECT id FROM admin_banco_questoes WHERE materia_topico_id = :t AND LEFT(enunciado, 180) = LEFT(:e, 180) LIMIT 1');
+        foreach ($questoes as $q) {
+            $enun = trim((string)($q['enunciado'] ?? ''));
+            $alts = array_values(array_filter(array_map(static fn($a) => trim((string)$a), (array)($q['alternativas'] ?? [])), 'strlen'));
+            $cor = (int)($q['correta'] ?? -1);
+            if ($enun === '' || count($alts) < 2 || !isset($alts[$cor])) {
+                continue;
+            }
+            $dup->execute([':t' => (int)$item['topico_id'], ':e' => $enun]);
+            if ($dup->fetchColumn()) {
+                continue;
+            }
+            $fonte = trim((string)($q['fonte'] ?? ''));
+            $exp = trim((string)($q['comentario'] ?? ''));
+            $exp = ($origem === 'gerada' ? '🤖 Questão inédita do Antigão, no nível da prova. ' : ($fonte !== '' ? '📌 Fonte: ' . $fonte . '. ' : '')) . $exp;
+            $dif = in_array($q['dificuldade'] ?? '', ['facil', 'medio', 'dificil'], true) ? $q['dificuldade'] : 'medio';
+            $insQ->execute([':c' => $cursos[0] ?? null, ':b' => $bancaId, ':m' => (int)$item['materia_id'], ':t' => (int)$item['topico_id'],
+                ':a' => ((int)($q['ano'] ?? 0)) ?: null, ':e' => mb_substr($enun, 0, 6000), ':x' => mb_substr($exp, 0, 6000), ':d' => $dif]);
+            $qid = (int)$pdo->lastInsertId();
+            foreach ($alts as $k => $alt) {
+                $insO->execute([':q' => $qid, ':l' => chr(65 + $k), ':t' => mb_substr($alt, 0, 3000), ':c' => $k === $cor ? 1 : 0, ':o' => $k + 1]);
+            }
+            foreach ($cursos as $cu) {
+                $insA->execute([':q' => $qid, ':c' => $cu]);
+            }
+            $n++;
+        }
+        return $n;
+    }
+
+    function hack_questoes_json(array $resp): array
+    {
+        $txt = '';
+        foreach ((array)($resp['candidates'][0]['content']['parts'] ?? []) as $p) {
+            $txt .= (string)($p['text'] ?? '');
+        }
+        $j = edital_json_do_texto($txt) ?? [];
+        return (array)($j['questoes'] ?? []);
+    }
+
+
+    /**
+     * Questões de UM assunto: 1) pesquisa questões reais na internet (mesma banca primeiro);
+     * 2) se achar poucas, gera questões inéditas no nível da prova. Retorna [reais, geradas].
+     */
+    function hack_questoes_do_item(PDO $pdo, int $editalItemId, int $meta = 10): array
+    {
+        $st = $pdo->prepare('SELECT e.*, m.nome AS materia, t.titulo AS assunto, c.nome AS concurso, c.banca_id, b.nome AS banca
+                               FROM edital_itens e JOIN admin_materias m ON m.id = e.materia_id JOIN admin_materia_topicos t ON t.id = e.topico_id
+                               JOIN concursos c ON c.id = e.concurso_id LEFT JOIN admin_bancas b ON b.id = c.banca_id WHERE e.id = :id');
+        $st->execute([':id' => $editalItemId]);
+        $it = $st->fetch();
+        if (!$it) {
+            throw new RuntimeException('Assunto do edital não encontrado.');
+        }
+        $ja = $pdo->prepare("SELECT COUNT(*) FROM admin_banco_questoes WHERE materia_topico_id = :t AND status = 'ativo'");
+        $ja->execute([':t' => (int)$it['topico_id']]);
+        $falta = $meta - (int)$ja->fetchColumn();
+        if ($falta <= 0) {
+            return [0, 0];
+        }
+        $banca = $it['banca'] ?: 'a banca do concurso';
+        $base = "Concurso: {$it['concurso']} · Banca: $banca · Matéria: {$it['materia']} · Assunto: {$it['assunto']}.\n";
+        $reais = 0;
+        try {
+            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Pesquise na internet QUESTÕES REAIS de provas anteriores (de preferência da banca $banca e de concursos policiais/militares) sobre o assunto abaixo.\n" . $base
+                . "Traga até $falta questões objetivas COMPLETAS, copiadas fielmente, com o gabarito oficial. Só traga questões que você realmente encontrou, com a fonte (banca, órgão, ano). Se não encontrar, devolva lista vazia.\n"
+                . "Responda SOMENTE em JSON: " . HACK_FORMATO_Q]]]], 'tools' => [['google_search' => new stdClass()]]], 150);
+            $pdo = podcast_reconectar($pdo);
+            $reais = hack_gravar_questoes($pdo, $it, array_slice(hack_questoes_json($resp), 0, $falta), $it['banca_id'] ? (int)$it['banca_id'] : null, 'real');
+        } catch (RuntimeException $e) {
+            $pdo = podcast_reconectar($pdo);
+        }
+        $geradas = 0;
+        if ($reais < $falta) {
+            $n = $falta - $reais;
+            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Você é elaborador de provas da banca $banca. Crie $n questões INÉDITAS de múltipla escolha, no MESMO nível e estilo da prova deste concurso.\n" . $base
+                . "Regras: 5 alternativas (A a E) plausíveis, só uma correta, cobrindo pegadinhas clássicas do assunto; misture fácil, médio e difícil (30/50/20); conteúdo correto e atual; comentário didático.\n"
+                . "Responda SOMENTE em JSON: " . HACK_FORMATO_Q]]]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.6]], 150);
+            $pdo = podcast_reconectar($pdo);
+            $geradas = hack_gravar_questoes($pdo, $it, hack_questoes_json($resp), $it['banca_id'] ? (int)$it['banca_id'] : null, 'gerada');
+        }
+        return [$reais, $geradas];
+    }
+
+    /** Questões enviadas pelo mentor (texto ou PDF): a IA separa por assunto do edital e grava. */
+    function hack_questoes_enviadas(PDO $pdo, int $concursoId, string $texto, string $pdfBase64): int
+    {
+        $itens = edital_itens($pdo, $concursoId);
+        if (!$itens) {
+            throw new RuntimeException('Cadastre o edital antes das questões.');
+        }
+        $lista = array_map(static fn($i) => ['id' => (int)$i['id'], 'assunto' => $i['materia'] . ' › ' . $i['assunto']], $itens);
+        $prompt = "Extraia TODAS as questões objetivas do material (texto e/ou PDF), com o gabarito (se houver gabarito no fim do material, use-o; se não houver, resolva com cuidado).\n"
+            . "Para cada questão, diga a qual assunto do edital ela pertence (edital_item_id da lista) e escreva um comentário didático.\n"
+            . "Responda SOMENTE em JSON: {\"questoes\":[{\"edital_item_id\":n,\"enunciado\":\"\",\"alternativas\":[\"\"],\"correta\":0,\"comentario\":\"\",\"dificuldade\":\"medio\",\"ano\":null,\"fonte\":\"\"}]}\n\n"
+            . "ASSUNTOS DO EDITAL: " . json_encode($lista, JSON_UNESCAPED_UNICODE) . "\n\nMATERIAL:\n" . mb_substr($texto, 0, 60000);
+        $partes = [['text' => $prompt]];
+        if ($pdfBase64 !== '') {
+            $partes[] = ['inlineData' => ['mimeType' => 'application/pdf', 'data' => $pdfBase64]];
+        }
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => $partes]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1]], 170);
+        $pdo = podcast_reconectar($pdo);
+        $porItem = [];
+        foreach (hack_questoes_json($resp) as $q) {
+            $porItem[(int)($q['edital_item_id'] ?? 0)][] = $q;
+        }
+        $st = $pdo->prepare('SELECT banca_id FROM concursos WHERE id = :id');
+        $st->execute([':id' => $concursoId]);
+        $banca = (int)$st->fetchColumn() ?: null;
+        $n = 0;
+        foreach ($itens as $it) {
+            if (!empty($porItem[(int)$it['id']])) {
+                $n += hack_gravar_questoes($pdo, $it, $porItem[(int)$it['id']], $banca, 'enviada');
+            }
+        }
+        return $n;
+    }
+
+    /** Situação das questões por assunto do concurso. */
+    function hack_questoes_situacao(PDO $pdo, int $concursoId, int $meta = 10): array
+    {
+        $r = ['total' => 0, 'ok' => 0, 'itens' => []];
+        $cnt = $pdo->prepare("SELECT COUNT(*) FROM admin_banco_questoes WHERE materia_topico_id = :t AND status = 'ativo'");
+        foreach (edital_itens($pdo, $concursoId) as $it) {
+            $cnt->execute([':t' => (int)$it['topico_id']]);
+            $n = (int)$cnt->fetchColumn();
+            $r['total']++;
+            $r['ok'] += $n >= $meta ? 1 : 0;
+            $r['itens'][] = $it + ['questoes' => $n];
+        }
+        return $r;
+    }
+    // ---------------- Jornada até a nomeação (o Antigão acompanha cada etapa) ----------------
+    /** Etapas da jornada do aluno, montadas com as etapas do edital do cargo. */
+    function hack_jornada_etapas(array $info): array
+    {
+        $e = [
+            ['id' => 'preparacao', 'nome' => 'Preparação', 'antigao' => 'Agora é ciclo todo dia: teoria, questões, revisão. Quem chega pronto no edital sai na frente.'],
+            ['id' => 'inscricao', 'nome' => 'Inscrição', 'antigao' => 'Edital na rua! Faça a inscrição nos primeiros dias, confira o comprovante e guarde tudo. Não deixe para o último dia.'],
+            ['id' => 'objetiva', 'nome' => 'Prova objetiva', 'antigao' => 'Reta final: simulados no tempo de prova e revisão do que mais cai. Na véspera, descanso e documento separado.'],
+        ];
+        foreach ((array)($info['etapas'] ?? []) as $et) {
+            $nome = trim((string)($et['nome'] ?? ''));
+            $n = edital_normalizar($nome);
+            if ($nome === '' || str_contains($n, 'objetiva') || str_contains($n, 'inscri')) {
+                continue;
+            }
+            $dica = str_contains($n, 'taf') || str_contains($n, 'fisic') ? 'TAF se ganha no treino de meses, não na semana. Siga a planilha e teste os índices do edital.'
+                : (str_contains($n, 'reda') ? 'Redação toda semana, corrigida. Estrutura pronta na cabeça e leitura de temas de segurança pública.'
+                : (str_contains($n, 'medic') || str_contains($n, 'saude') || str_contains($n, 'exame') ? 'Separe os exames com antecedência e confira a lista do edital item por item.'
+                : (str_contains($n, 'psico') ? 'Durma bem, seja você mesmo e siga as instruções com calma.'
+                : (str_contains($n, 'social') || str_contains($n, 'investig') || str_contains($n, 'document') ? 'Documentação completa e verdadeira. Junte certidões cedo: atraso aqui elimina.'
+                : 'Leia no edital o que é cobrado nesta etapa e prepare-se com antecedência.'))));
+            $e[] = ['id' => 'e_' . substr(md5($n), 0, 8), 'nome' => $nome, 'antigao' => $dica . (trim((string)($et['resumo'] ?? '')) !== '' ? ' Pelo edital: ' . trim((string)$et['resumo']) . '.' : '')];
+        }
+        $e[] = ['id' => 'resultado', 'nome' => 'Resultado e convocação', 'antigao' => 'Acompanhe o Diário Oficial todo dia. Convocação perdida é vaga perdida.'];
+        $e[] = ['id' => 'formacao', 'nome' => 'Curso de formação', 'antigao' => 'Você chegou na tropa! Disciplina e dedicação no curso de formação: falta pouco.'];
+        $e[] = ['id' => 'nomeacao', 'nome' => 'Nomeação', 'antigao' => 'NOMEADO! Missão cumprida, combatente. A farda era questão de tempo. Conta pra gente: você é exemplo para os próximos.'];
+        return $e;
+    }
+
+    function hack_jornada_atual(PDO $pdo, int $usuarioId): string
+    {
+        $pdo->exec('CREATE TABLE IF NOT EXISTS aluno_jornada (usuario_id BIGINT UNSIGNED NOT NULL PRIMARY KEY, etapa VARCHAR(40) NOT NULL, atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB');
+        $st = $pdo->prepare('SELECT etapa FROM aluno_jornada WHERE usuario_id = :u');
+        $st->execute([':u' => $usuarioId]);
+        return (string)($st->fetchColumn() ?: 'preparacao');
+    }
+
+    function hack_jornada_avancar(PDO $pdo, int $usuarioId, string $etapa): void
+    {
+        hack_jornada_atual($pdo, $usuarioId);
+        $pdo->prepare('INSERT INTO aluno_jornada (usuario_id, etapa) VALUES (:u, :e) ON DUPLICATE KEY UPDATE etapa = VALUES(etapa)')->execute([':u' => $usuarioId, ':e' => mb_substr($etapa, 0, 40)]);
+    }
+}
+

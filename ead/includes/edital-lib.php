@@ -285,7 +285,7 @@ if (!function_exists('edital_criar_aula')) {
             }
             $dup = $pdo->prepare('SELECT id FROM admin_curso_aulas WHERE curso_id = :c AND video_url = :v LIMIT 1');
             $dup->execute([':c' => $cursoId, ':v' => $url]);
-            if ($ja = $dup->fetchColumn()) {
+            if ($url !== '' && ($ja = $dup->fetchColumn())) {
                 $ids[] = (int)$ja;
                 continue; // a mesma aula já está neste curso
             }
@@ -297,7 +297,9 @@ if (!function_exists('edital_criar_aula')) {
         }
         if (function_exists('ia_fila_adicionar')) {
             foreach ($ids as $aid) {
-                ia_fila_adicionar($pdo, 'apostila', $aid);
+                if ($url !== '') {
+                    ia_fila_adicionar($pdo, 'apostila', $aid);
+                }
             }
         }
         return $ids;

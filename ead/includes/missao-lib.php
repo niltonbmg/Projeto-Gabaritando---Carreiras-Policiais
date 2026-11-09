@@ -13,7 +13,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/meta-lib.php';
 require_once __DIR__ . '/meta-cronograma-lib.php';
 
-const MISSAO_ICONES = ['teoria' => '📘', 'questoes' => '✅', 'revisao' => '🔁', 'simulado' => '📝', 'redacao' => '✍️'];
+const MISSAO_ICONES = ['edital' => '🕵️', 'teoria' => '📘', 'questoes' => '✅', 'revisao' => '🔁', 'simulado' => '📝', 'redacao' => '✍️'];
 const MISSAO_PASSOS = [1 => 'Teoria', 2 => 'Questões', 3 => 'Revisão', 4 => 'Simulado'];
 
 if (!function_exists('missao_link_aula')) {

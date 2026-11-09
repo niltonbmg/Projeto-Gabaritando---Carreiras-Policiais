@@ -30,6 +30,7 @@ $cursoContextoQuery = $cursoContextoId > 0 ? '?curso_id=' . $cursoContextoId : '
 
 $menuItens = $menuItens ?? [
     ['titulo' => '▶ Missão do dia', 'link' => 'meu-plano.php', 'externo' => false],
+    ['titulo' => '🕵️ Meu concurso · Hackeando o edital', 'link' => 'meu-concurso.php', 'externo' => false],
     ['titulo' => 'Como funciona o método', 'link' => 'meu-plano.php?tour=1', 'externo' => false],
     ['titulo' => '🎯 Desafio do dia · Ranking', 'link' => 'desafio.php', 'externo' => false],
     ['titulo' => 'Materiais', 'link' => 'materiais.php' . $cursoContextoQuery, 'externo' => false],
@@ -700,7 +701,7 @@ if ($usuarioLogado) {
     <?php echo missao_bolinhas((int)$mt['passo']); ?>
     <div class="msb-txt">
         <small><?php echo MISSAO_ICONES[$mt['tipo']] ?? '🎯'; ?> Passo <?php echo (int)$mt['passo']; ?> de 4 · <?php echo htmlspecialchars(MISSAO_PASSOS[(int)$mt['passo']] ?? '', ENT_QUOTES, 'UTF-8'); ?></small>
-        <span><?php echo htmlspecialchars($mt['frase'], ENT_QUOTES, 'UTF-8'); ?></span>
+        <span><strong style="color:#fbb928">Antigão:</strong> <?php echo htmlspecialchars($mt['frase'], ENT_QUOTES, 'UTF-8'); ?></span>
     </div>
     <a class="msb-bt" href="<?php echo htmlspecialchars($mt['url'], ENT_QUOTES, 'UTF-8'); ?>">▶ Continuar</a>
 </nav>

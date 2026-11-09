@@ -17,7 +17,7 @@ $adminMenuGrupos = [
         ['label' => 'Recompensas', 'href' => 'admin-recompensas.php', 'icon' => 'trophy', 'pages' => ['admin-recompensas.php', 'admin-recompensas']],
     ]],
     ['titulo' => 'Conteúdo', 'itens' => [
-        ['label' => 'Concursos e editais', 'href' => 'admin-editais.php', 'icon' => 'file-badge', 'pages' => ['admin-editais.php', 'admin-editais']],
+        ['label' => 'Cadastro do concurso', 'href' => 'admin-editais.php', 'icon' => 'file-badge', 'pages' => ['admin-editais.php', 'admin-editais']],
         ['label' => 'Cursos e aulas', 'href' => 'admin-cursos.php', 'icon' => 'graduation-cap', 'pages' => ['admin-cursos.php', 'admin-cursos', 'admin-curso-modulos.php', 'admin-curso-modulos', 'admin-modulo-conteudos.php', 'admin-modulo-conteudos']],
         ['label' => 'Materiais', 'href' => 'admin-materiais.php', 'icon' => 'book-open', 'pages' => ['admin-materiais.php', 'admin-materiais']],
         ['label' => 'Confirmar classificação', 'href' => 'admin-classificacao.php', 'icon' => 'tags', 'pages' => ['admin-classificacao.php', 'admin-classificacao']],

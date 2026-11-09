@@ -167,8 +167,9 @@ if (is_file($barraSuperiorPath)) {
                     elseif ($t['tipo'] === 'questoes') { $url = 'banco-questoes.php?topico_id=' . (int)$it['topico_id']; }
                     elseif ($t['tipo'] === 'revisao') { $url = 'banco-questoes.php?topico_id=' . (int)$it['topico_id'] . '&revisao=' . (int)$it['id'] . '-' . (int)$t['rodada']; }
                     elseif ($t['tipo'] === 'simulado') { $url = 'simulados.php'; }
+                    elseif ($t['tipo'] === 'edital') { $url = 'meu-concurso.php'; }
                     elseif ($t['tipo'] === 'redacao') { $url = 'propostas-redacao.php'; }
-                    $nomeT = ['teoria' => 'Teoria mínima', 'questoes' => 'Questões', 'revisao' => 'Revisão ' . (int)($t['rodada'] ?? 0) . 'ª', 'simulado' => 'Simulado', 'redacao' => 'Redação'][$t['tipo']] ?? '';
+                    $nomeT = ['edital' => 'Hackeando o edital', 'teoria' => 'Teoria mínima', 'questoes' => 'Questões', 'revisao' => 'Revisão ' . (int)($t['rodada'] ?? 0) . 'ª', 'simulado' => 'Simulado', 'redacao' => 'Redação'][$t['tipo']] ?? '';
                     $det = $t['tipo'] === 'questoes' ? ' · ' . min($minQ, (int)$it['nivel_info']['resolvidas']) . '/' . $minQ . ' para liberar' : ''; ?>
                 <li class="<?php echo $ehProx ? 'agora' : ''; ?>">
                     <span class="md-ico" aria-hidden="true"><?php echo MISSAO_ICONES[$t['tipo']] ?? '🎯'; ?></span>

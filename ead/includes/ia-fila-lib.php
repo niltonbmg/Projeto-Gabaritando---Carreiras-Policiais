@@ -73,7 +73,7 @@ if (!function_exists('ia_fila_processar_um')) {
         $pdo = podcast_reconectar($pdo);
         // Apostilas antes de podcasts; até 3 tentativas por item.
         $item = $pdo->query("SELECT * FROM ia_fila WHERE status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE)
-                              ORDER BY (tipo = 'apostila') DESC, id ASC LIMIT 1")->fetch();
+                              ORDER BY (tipo IN ('apostila','aula_ia')) DESC, id ASC LIMIT 1")->fetch();
         if (!$item) {
             return null;
         }
@@ -108,6 +108,13 @@ if (!function_exists('ia_fila_processar_um')) {
                     $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $aulaId]);
                     ia_fila_adicionar($pdo, 'videoaula', $aulaId);
                 }
+            } elseif ($item['tipo'] === 'aula_ia') {
+                require_once __DIR__ . '/edital-hack-lib.php';
+                hack_aula_ia_processar($pdo, $aulaId);
+            } elseif ($item['tipo'] === 'questoes') {
+                // aqui aula_id guarda o id do assunto do edital (edital_itens.id)
+                require_once __DIR__ . '/edital-hack-lib.php';
+                hack_questoes_do_item($pdo, $aulaId);
             } elseif ($item['tipo'] === 'videoaula') {
                 $r = videoaula_iniciar($pdo, $aulaId);
                 for ($n = (int)($r['partes_ok'] ?? 0); ($r['status'] ?? '') !== 'pronto' && $n < (int)($r['partes'] ?? 0); $n++) {
