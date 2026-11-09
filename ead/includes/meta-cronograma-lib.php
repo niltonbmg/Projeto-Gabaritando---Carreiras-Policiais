@@ -21,6 +21,7 @@ require_once __DIR__ . '/meta-tempo-lib.php';
 const META_REVISOES_DIAS = [1, 7, 30];
 const META_REVISAO_MINUTOS = 20;
 const META_FRACAO_TEORIA = 0.4;
+const META_BLOCO_MIN = 60; // máximo de minutos seguidos da mesma matéria
 
 if (!function_exists('meta_cronograma_bootstrap')) {
     function meta_cronograma_bootstrap(PDO $pdo): void
@@ -30,12 +31,17 @@ if (!function_exists('meta_cronograma_bootstrap')) {
             usuario_id BIGINT UNSIGNED NOT NULL,
             curso_id INT UNSIGNED NOT NULL,
             horas_dia DECIMAL(4,2) NOT NULL DEFAULT 3.00,
-            dias_semana VARCHAR(20) NOT NULL DEFAULT '1,2,3,4,5,6',
+            dias_semana VARCHAR(120) NOT NULL DEFAULT '1,2,3,4,5,6',
             data_inicio DATE NOT NULL,
             data_prova DATE NULL,
             atualizado_em DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (usuario_id, curso_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // Corrige instalações antigas: 20 caracteres não cabiam "1:3,2:3,...,0:2".
+        $col = $pdo->query("SHOW COLUMNS FROM meta_aluno_config LIKE 'dias_semana'")->fetch();
+        if ($col && preg_match('/varchar\((\d+)\)/i', (string)$col['Type'], $m) && (int)$m[1] < 120) {
+            $pdo->exec("ALTER TABLE meta_aluno_config MODIFY dias_semana VARCHAR(120) NOT NULL DEFAULT '1,2,3,4,5,6'");
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS meta_aluno_revisoes (
             usuario_id BIGINT UNSIGNED NOT NULL,
             plano_item_id INT UNSIGNED NOT NULL,
@@ -224,35 +230,92 @@ if (!function_exists('meta_cronograma_distribuir')) {
         }
         $revisoes = $ajustadas;
 
+        // Ciclo de matérias: uma fila por matéria (na ordem do plano). Cada dia
+        // alterna as matérias, dando mais tempo às de maior peso, em blocos de
+        // até META_BLOCO_MIN minutos.
+        $filas = [];
+        $pesos = [];
+        foreach ($fila as $t) {
+            $mid = (int)($t['item']['materia_id'] ?? 0);
+            $filas[$mid][] = $t;
+            $pesos[$mid][] = max(0.1, (float)($t['item']['peso'] ?? 1));
+        }
+        $peso = [];
+        foreach ($pesos as $mid => $l) {
+            $peso[$mid] = array_sum($l) / count($l);
+        }
+        $usado = array_fill_keys(array_keys($filas), 0.0);
+        $restanteTarefa = [];
+        foreach ($filas as $mid => $l) {
+            $restanteTarefa[$mid] = $l[0]['minutos'];
+        }
+        $eventos = $cfg['eventos'] ?? [];
+
         $agenda = [];
         $dia = $inicio;
-        $i = 0;
-        $restante = $fila ? $fila[0]['minutos'] : 0;
         $fim = null;
+        $semana0 = (int)$inicio->format('oW');
         for ($n = 0; $n < $limiteDias; $n++, $dia = $dia->modify('+1 day')) {
             $data = $dia->format('Y-m-d');
-            if (!in_array((int)$dia->format('w'), $cfg['dias'], true)) {
+            $dow = (int)$dia->format('w');
+            if (!in_array($dow, $cfg['dias'], true)) {
                 continue;
             }
-            $livre = (int)($cfg['minutos'][(int)$dia->format('w')] ?? 0);
+            $livre = (int)($cfg['minutos'][$dow] ?? 0);
+            // Simulado e redação semanais (no dia definido pelo mentor).
+            foreach ($eventos as $ev) {
+                $semanas = max(1, (int)$ev['cada_semanas']);
+                $numSemana = intdiv((int)$dia->format('U') - (int)$inicio->format('U'), 7 * 86400);
+                if ($dow === (int)$ev['dia'] && $numSemana % $semanas === 0 && $livre >= 30) {
+                    $min = min($livre, (int)$ev['minutos']);
+                    $agenda[$data][] = ['tipo' => $ev['tipo'], 'minutos' => $min, 'item' => ['id' => 0, 'titulo' => $ev['titulo'], 'materia_nome' => $ev['rotulo'], 'materia_id' => 0]];
+                    $livre -= $min;
+                }
+            }
             foreach ($revisoes[$data] ?? [] as $rev) {
                 $agenda[$data][] = $rev;
                 $livre -= $rev['minutos'];
             }
-            while ($i < count($fila) && $livre >= 15) {
-                $usar = min($livre, $restante);
-                $t = $fila[$i];
-                $t['minutos'] = $usar;
-                $t['parcial'] = $usar < $fila[$i]['minutos'];
-                $agenda[$data][] = $t;
+            $materiasHoje = [];
+            while ($livre >= 15 && $filas) {
+                // Matéria mais "atrasada" em relação ao seu peso; evita repetir a mesma no dia.
+                $escolha = null;
+                foreach ($filas as $mid => $l) {
+                    $nota = $usado[$mid] / $peso[$mid] + (isset($materiasHoje[$mid]) ? 1e6 : 0);
+                    if ($escolha === null || $nota < $escolhaNota) {
+                        $escolha = $mid;
+                        $escolhaNota = $nota;
+                    }
+                }
+                $t = $filas[$escolha][0];
+                $usar = min($livre, $restanteTarefa[$escolha], META_BLOCO_MIN);
+                $ultimo = isset($agenda[$data]) ? count($agenda[$data]) - 1 : -1;
+                if ($ultimo >= 0 && ($agenda[$data][$ultimo]['tipo'] ?? '') === $t['tipo'] && (int)($agenda[$data][$ultimo]['item']['id'] ?? -1) === (int)$t['item']['id']) {
+                    $agenda[$data][$ultimo]['minutos'] += $usar; // mesmo assunto em sequência: um cartão só
+                    $agenda[$data][$ultimo]['parcial'] = $agenda[$data][$ultimo]['minutos'] < $t['minutos'];
+                } else {
+                    $parte = $t;
+                    $parte['minutos'] = $usar;
+                    $parte['parcial'] = $usar < $t['minutos'];
+                    $agenda[$data][] = $parte;
+                }
                 $livre -= $usar;
-                $restante -= $usar;
-                if ($restante <= 0) {
-                    $i++;
-                    $restante = $fila[$i]['minutos'] ?? 0;
+                $usado[$escolha] += $usar;
+                $restanteTarefa[$escolha] -= $usar;
+                $materiasHoje[$escolha] = true;
+                if ($restanteTarefa[$escolha] <= 0) {
+                    array_shift($filas[$escolha]);
+                    if ($filas[$escolha]) {
+                        $restanteTarefa[$escolha] = $filas[$escolha][0]['minutos'];
+                    } else {
+                        unset($filas[$escolha]);
+                    }
+                }
+                if (count($materiasHoje) >= count($filas) + (int)!isset($filas[$escolha])) {
+                    $materiasHoje = []; // todas as matérias já passaram hoje: pode repetir
                 }
             }
-            if ($i >= count($fila) && $fim === null) {
+            if (!$filas && $fim === null) {
                 $fim = $data;
             }
             if ($fim !== null && $n > 45) {
@@ -286,6 +349,20 @@ if (!function_exists('meta_cronograma_montar')) {
         }
 
         $revisoes = meta_cronograma_revisoes($estado, meta_revisoes_feitas($pdo, $usuarioId));
+
+        // Simulado e redação fixos na semana (0 minutos = desligado).
+        $ins = $pdo->prepare('INSERT IGNORE INTO meta_config (chave, valor) VALUES (:c, :v)');
+        foreach (['simulado_dia' => '6', 'simulado_min' => '120', 'simulado_semanas' => '1', 'redacao_dia' => '3', 'redacao_min' => '60', 'redacao_semanas' => '1'] as $c => $v) {
+            $ins->execute([':c' => $c, ':v' => $v]);
+        }
+        $cfgEv = meta_config($pdo);
+        $cfg['eventos'] = [];
+        if (($cfgEv['simulado_min'] ?? 0) > 0) {
+            $cfg['eventos'][] = ['tipo' => 'simulado', 'dia' => $cfgEv['simulado_dia'] ?? 6, 'minutos' => $cfgEv['simulado_min'], 'cada_semanas' => $cfgEv['simulado_semanas'] ?? 1, 'titulo' => 'Simulado no tempo de prova', 'rotulo' => 'Simulado'];
+        }
+        if (($cfgEv['redacao_min'] ?? 0) > 0) {
+            $cfg['eventos'][] = ['tipo' => 'redacao', 'dia' => $cfgEv['redacao_dia'] ?? 3, 'minutos' => $cfgEv['redacao_min'], 'cada_semanas' => $cfgEv['redacao_semanas'] ?? 1, 'titulo' => 'Redação da semana', 'rotulo' => 'Redação'];
+        }
         $fila = meta_cronograma_tarefas_pendentes($estado);
         $real = meta_cronograma_distribuir($fila, $cfg, $hoje, $revisoes);
 

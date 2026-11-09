@@ -161,7 +161,7 @@ if (!function_exists('meta_estado_aluno')) {
         $minQ = max(1, $cfg['min_questoes'] ?? 5);
         $plano = meta_plano_do_curso($pdo, $cursoId);
         if (!$plano) {
-            return ['plano' => null, 'itens' => [], 'atual' => null, 'nivel_geral' => 0.0, 'dominio_pct' => 0, 'config' => $cfg];
+            return ['plano' => null, 'itens' => [], 'atual' => null, 'atuais' => [], 'nivel_geral' => 0.0, 'dominio_pct' => 0, 'config' => $cfg];
         }
 
         $stmt = $pdo->prepare("SELECT i.*, mt.titulo AS topico_nome, m.nome AS materia_nome,
@@ -182,8 +182,11 @@ if (!function_exists('meta_estado_aluno')) {
         $linhas = $stmt->fetchAll();
 
         $itens = [];
-        $anteriorCumprido = true;
+        // Ciclo de matérias: a trava do Método META vale dentro de cada matéria.
+        // Cada matéria tem o seu assunto em andamento; as matérias andam juntas.
+        $cumpridoPorMateria = [];
         $atual = null;
+        $atuais = [];
         $somaNiveis = 0;
         $dominados = 0;
         foreach ($linhas as $l) {
@@ -195,7 +198,7 @@ if (!function_exists('meta_estado_aluno')) {
             if ($liberadoAdmin) {
                 // Exceção do mentor: o assunto fica aberto e conta como cumprido.
                 $etapa = META_ETAPA_CONCLUIDO;
-            } elseif (!$anteriorCumprido) {
+            } elseif (!($cumpridoPorMateria[(int)($l['materia_id'] ?? 0)] ?? true)) {
                 $etapa = META_ETAPA_BLOQUEADO;
             } elseif ($cumprido) {
                 $etapa = META_ETAPA_CONCLUIDO;
@@ -213,14 +216,16 @@ if (!function_exists('meta_estado_aluno')) {
                 'liberado_admin' => $liberadoAdmin,
             ];
             $itens[] = $item;
-            if ($atual === null && ($etapa === META_ETAPA_TEORIA || $etapa === META_ETAPA_QUESTOES)) {
-                $atual = $item;
+            if ($etapa === META_ETAPA_TEORIA || $etapa === META_ETAPA_QUESTOES) {
+                $atual = $atual ?? $item;
+                $atuais[(int)($l['materia_id'] ?? 0)] = $atuais[(int)($l['materia_id'] ?? 0)] ?? $item;
             }
             $somaNiveis += $nivel['nivel'];
             if ($nivel['nivel'] >= 4) {
                 $dominados++;
             }
-            $anteriorCumprido = $anteriorCumprido && $cumprido;
+            $mid = (int)($l['materia_id'] ?? 0);
+            $cumpridoPorMateria[$mid] = ($cumpridoPorMateria[$mid] ?? true) && $cumprido;
         }
 
         $total = count($itens);
@@ -228,6 +233,7 @@ if (!function_exists('meta_estado_aluno')) {
             'plano' => $plano,
             'itens' => $itens,
             'atual' => $atual,
+            'atuais' => array_values($atuais),
             'nivel_geral' => $total ? round($somaNiveis / $total, 1) : 0.0,
             'dominio_pct' => $total ? (int)round($dominados * 100 / $total) : 0,
             'concluidos' => count(array_filter($itens, static fn(array $i): bool => $i['etapa'] === META_ETAPA_CONCLUIDO)),

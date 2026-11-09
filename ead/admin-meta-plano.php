@@ -160,7 +160,7 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($acao === 'salvar_regras') {
             $stmt = $pdo->prepare('UPDATE meta_config SET valor = :v WHERE chave = :c');
-            foreach (['min_por_pagina', 'min_por_questao', 'pct_questoes', 'min_questoes', 'nivel2_questoes', 'nivel2_acerto', 'nivel3_questoes', 'nivel3_acerto', 'nivel4_questoes', 'nivel4_acerto'] as $c) {
+            foreach (['simulado_dia', 'simulado_min', 'simulado_semanas', 'redacao_dia', 'redacao_min', 'redacao_semanas', 'min_por_pagina', 'min_por_questao', 'pct_questoes', 'min_questoes', 'nivel2_questoes', 'nivel2_acerto', 'nivel3_questoes', 'nivel3_acerto', 'nivel4_questoes', 'nivel4_acerto'] as $c) {
                 if (isset($_POST[$c])) {
                     $stmt->execute([':v' => (string)max(0, (int)$_POST[$c]), ':c' => $c]);
                 }
@@ -361,6 +361,13 @@ $menuBarInclude = admin_cursos_get_menubar();
             <form method="post">
                 <input type="hidden" name="acao" value="salvar_regras"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
                 <div class="meta-regras">
+                    <?php $nd = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']; ?>
+                    <div class="admin-form-field"><label for="r-sd">Simulado: dia da semana</label><select id="r-sd" name="simulado_dia"><?php foreach ($nd as $k => $v): ?><option value="<?php echo $k; ?>" <?php echo (int)($cfg['simulado_dia'] ?? 6) === $k ? 'selected' : ''; ?>><?php echo $v; ?></option><?php endforeach; ?></select></div>
+                    <div class="admin-form-field"><label for="r-sm">Simulado: minutos (0 = desligado)</label><input id="r-sm" type="number" min="0" name="simulado_min" value="<?php echo (int)($cfg['simulado_min'] ?? 120); ?>"></div>
+                    <div class="admin-form-field"><label for="r-ss">Simulado: a cada quantas semanas</label><input id="r-ss" type="number" min="1" name="simulado_semanas" value="<?php echo (int)($cfg['simulado_semanas'] ?? 1); ?>"></div>
+                    <div class="admin-form-field"><label for="r-rd">Redação: dia da semana</label><select id="r-rd" name="redacao_dia"><?php foreach ($nd as $k => $v): ?><option value="<?php echo $k; ?>" <?php echo (int)($cfg['redacao_dia'] ?? 3) === $k ? 'selected' : ''; ?>><?php echo $v; ?></option><?php endforeach; ?></select></div>
+                    <div class="admin-form-field"><label for="r-rm">Redação: minutos (0 = desligado)</label><input id="r-rm" type="number" min="0" name="redacao_min" value="<?php echo (int)($cfg['redacao_min'] ?? 60); ?>"></div>
+                    <div class="admin-form-field"><label for="r-rs">Redação: a cada quantas semanas</label><input id="r-rs" type="number" min="1" name="redacao_semanas" value="<?php echo (int)($cfg['redacao_semanas'] ?? 1); ?>"></div>
                     <div class="admin-form-field"><label for="r-pag">Minutos por página de PDF</label><input id="r-pag" type="number" min="1" name="min_por_pagina" value="<?php echo (int)($cfg['min_por_pagina'] ?? 3); ?>"></div>
                     <div class="admin-form-field"><label for="r-mq">Minutos por questão</label><input id="r-mq" type="number" min="1" name="min_por_questao" value="<?php echo (int)($cfg['min_por_questao'] ?? 3); ?>"></div>
                     <div class="admin-form-field"><label for="r-pq">Questões: % mínimo do tempo do assunto</label><input id="r-pq" type="number" min="10" max="90" name="pct_questoes" value="<?php echo (int)($cfg['pct_questoes'] ?? 55); ?>"></div>
