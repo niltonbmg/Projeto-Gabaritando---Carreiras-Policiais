@@ -2952,7 +2952,30 @@ if ($aulas) {
         .aula-somente-pdf__botao{justify-self:start;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;background:#fbb928;color:#111;font:inherit;font-weight:700;cursor:pointer}
         .aula-somente-pdf__botao:focus-visible{outline:2px solid #fff;outline-offset:3px}
         @media(max-width:760px){.video-frame:has(.aula-somente-pdf){aspect-ratio:auto!important;overflow:visible}.aula-somente-pdf{position:relative;inset:auto;padding:24px 20px}}
-.ad-flutua{position:fixed;z-index:60;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:9px 14px;background:#fbb928;color:#111;font:inherit;font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer}
+.ciclo{margin:18px 0;padding:18px;border-radius:16px;background:linear-gradient(135deg,rgba(251,185,40,.10),rgba(255,255,255,.02));border:1px solid rgba(251,185,40,.35);color:#f3f3f4}
+        .ciclo-topo h2{font-size:18px;margin:0 0 6px}
+        .ciclo-topo p{margin:0;font-size:14px;color:#c9c9cf}
+        .ciclo-topo strong{color:#fbb928}
+        .ciclo-passos{list-style:none;margin:16px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .ciclo-passos li{display:flex;gap:10px;padding:12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);opacity:.75}
+        .ciclo-passos li.agora{opacity:1;border-color:#fbb928;background:rgba(251,185,40,.10);box-shadow:0 0 0 1px #fbb928 inset}
+        .ciclo-passos li.feito{opacity:1}
+        .ciclo-passos li > div{display:grid;gap:5px;min-width:0}
+        .ciclo-passos strong{font-size:15px}
+        .ciclo-passos small{font-size:12.5px;color:#c9c9cf;line-height:1.4}
+        .ciclo-passos em{font-style:normal;font-size:12.5px;font-weight:700;color:#fbb928}
+        .ciclo-passos li.feito em{color:#4ade80}
+        .ciclo-n{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:rgba(255,255,255,.12)}
+        .ciclo-passos li.agora .ciclo-n{background:#fbb928;color:#111}
+        .ciclo-passos li.feito .ciclo-n{background:#22c55e;color:#fff}
+        .ciclo-barra{position:relative;display:block;height:8px;border-radius:99px;background:rgba(255,255,255,.12)}
+        .ciclo-barra i{display:block;height:100%;border-radius:99px;background:#fbb928}
+        .ciclo-barra b{position:absolute;top:-3px;width:2px;height:14px;background:#fff}
+        .ciclo-bt{justify-self:start;margin-top:2px;border-radius:10px;padding:8px 12px;background:#fbb928;color:#111;font-weight:700;font-size:13px;text-decoration:none}
+        .ciclo-mentoria{margin:12px 0 0;font-size:13px;color:#c9c9cf}
+        @media(max-width:1000px){.ciclo-passos{grid-template-columns:1fr 1fr}}
+        @media(max-width:560px){.ciclo-passos{grid-template-columns:1fr}}
+        .ad-flutua{position:fixed;z-index:60;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:9px 14px;background:#fbb928;color:#111;font:inherit;font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer}
         .ad-flutua[hidden]{display:none}
         .pdf-marca-area{position:relative;display:inline-block;line-height:0}
         .pdf-marca-camada{position:absolute;inset:0;pointer-events:none}
@@ -3682,6 +3705,74 @@ if ($aulas) {
                             </span>
                         </div>
                     </div>
+                <?php endif; ?>
+
+                <?php
+                // Método META: o ciclo do aluno neste assunto, com o passo atual em destaque.
+                $ciclo = null;
+                try {
+                    if ($aulaAtual && function_exists('db')) {
+                        require_once __DIR__ . '/includes/meta-lib.php';
+                        $pdoCiclo = db();
+                        meta_bootstrap($pdoCiclo);
+                        $cfgCiclo = meta_config($pdoCiclo);
+                        $stC = $pdoCiclo->prepare('SELECT topico_id FROM admin_curso_aulas WHERE id = :id');
+                        $stC->execute([':id' => (int)$aulaAtual['id']]);
+                        $topicoCiclo = (int)$stC->fetchColumn();
+                        $resC = 0; $aceC = 0;
+                        if ($topicoCiclo > 0) {
+                            $stC = $pdoCiclo->prepare('SELECT COUNT(*), COALESCE(SUM(r.correta),0) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = :t');
+                            $stC->execute([':u' => (int)$usuarioId, ':t' => $topicoCiclo]);
+                            [$resC, $aceC] = array_map('intval', $stC->fetch(PDO::FETCH_NUM));
+                        }
+                        $revC = 0;
+                        try {
+                            $stC = $pdoCiclo->prepare('SELECT COUNT(*) FROM meta_aluno_revisoes r JOIN meta_plano_itens i ON i.id = r.plano_item_id WHERE r.usuario_id = :u AND i.aula_id = :a');
+                            $stC->execute([':u' => (int)$usuarioId, ':a' => (int)$aulaAtual['id']]);
+                            $revC = (int)$stC->fetchColumn();
+                        } catch (Throwable $e) {
+                        }
+                        $minC = max(1, (int)($cfgCiclo['min_questoes'] ?? 5));
+                        $metaC = max($minC, (int)($cfgCiclo['nivel4_questoes'] ?? 50));
+                        $ciclo = ['teoria' => $aulaAtualAssistida, 'res' => $resC, 'pct' => $resC ? (int)round($aceC * 100 / $resC) : 0, 'min' => $minC, 'meta' => $metaC,
+                            'nivel' => meta_nivel($resC, $aceC, $cfgCiclo), 'rev' => min(3, $revC), 'topico' => $topicoCiclo];
+                        $ciclo['passo'] = !$ciclo['teoria'] ? 1 : ($resC < $minC ? 2 : ($revC < 3 ? 3 : 4));
+                    }
+                } catch (Throwable $e) {
+                    $ciclo = null;
+                }
+                ?>
+                <?php if ($ciclo): $cp = $ciclo['passo']; ?>
+                <section class="ciclo" aria-labelledby="cicloTitulo">
+                    <div class="ciclo-topo">
+                        <h2 id="cicloTitulo">🎯 Método META · seu ciclo neste assunto</h2>
+                        <p>Teoria mínima → Questões comentadas → Revisões → Simulado e Redação, sempre com mentoria. <strong>O próximo assunto só abre com <?php echo (int)$ciclo['min']; ?> questões resolvidas.</strong></p>
+                    </div>
+                    <ol class="ciclo-passos">
+                        <li class="<?php echo $cp > 1 ? 'feito' : 'agora'; ?>">
+                            <span class="ciclo-n"><?php echo $cp > 1 ? '✓' : '1'; ?></span>
+                            <div><strong>Teoria mínima</strong><small>Assista à aula (ou à videoaula do Antigão) e leia o PDF fazendo suas marcações.</small>
+                            <em><?php echo $cp > 1 ? 'Concluída' : 'Ao terminar, toque em “Marcar como assistido”.'; ?></em></div>
+                        </li>
+                        <li class="<?php echo $cp > 2 ? 'feito' : ($cp === 2 ? 'agora' : ''); ?>">
+                            <span class="ciclo-n"><?php echo $cp > 2 ? '✓' : '2'; ?></span>
+                            <div><strong>Questões comentadas</strong><small>Mínimo de <?php echo (int)$ciclo['min']; ?> para avançar · meta de <?php echo (int)$ciclo['meta']; ?> para dominar o assunto.</small>
+                            <span class="ciclo-barra" aria-hidden="true"><i style="width:<?php echo min(100, (int)round($ciclo['res'] * 100 / $ciclo['meta'])); ?>%"></i><b style="left:<?php echo (int)round($ciclo['min'] * 100 / $ciclo['meta']); ?>%"></b></span>
+                            <em><?php echo (int)$ciclo['res']; ?>/<?php echo (int)$ciclo['meta']; ?> resolvidas<?php if ($ciclo['res']): ?> · <?php echo (int)$ciclo['pct']; ?>% de acerto<?php endif; ?> · nível <?php echo esc((string)($ciclo['nivel']['nome'] ?? '—')); ?></em>
+                            <?php if ($ciclo['topico'] > 0 && $cp >= 2): ?><a class="ciclo-bt" href="banco-questoes.php?topico_id=<?php echo (int)$ciclo['topico']; ?>">Resolver questões</a><?php endif; ?></div>
+                        </li>
+                        <li class="<?php echo $cp > 3 ? 'feito' : ($cp === 3 ? 'agora' : ''); ?>">
+                            <span class="ciclo-n"><?php echo $cp > 3 ? '✓' : '3'; ?></span>
+                            <div><strong>Revisões</strong><small>1 dia, 7 dias e 30 dias depois: aparecem sozinhas no seu cronograma.</small>
+                            <em><?php echo (int)$ciclo['rev']; ?> de 3 feitas</em></div>
+                        </li>
+                        <li class="<?php echo $cp === 4 ? 'agora' : ''; ?>">
+                            <span class="ciclo-n">4</span>
+                            <div><strong>Simulado e Redação</strong><small>Toda semana, no dia marcado no seu cronograma: medem se o assunto ficou de verdade.</small></div>
+                        </li>
+                    </ol>
+                    <p class="ciclo-mentoria">🎖 <strong>Mentoria semanal:</strong> seu mentor acompanha esses números e ajusta seu plano. O Ranking Individual também ajusta o tempo de cada matéria.</p>
+                </section>
                 <?php endif; ?>
 
                 <div class="aula-actions" aria-label="Ações da aula">
