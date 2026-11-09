@@ -108,6 +108,10 @@ if (!function_exists('ia_fila_processar_um')) {
                     $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $aulaId]);
                     ia_fila_adicionar($pdo, 'videoaula', $aulaId);
                 }
+            } elseif ($item['tipo'] === 'redacao') {
+                // aqui aula_id guarda o id da redação: leitura do Antigão (escondida até o corretor dar a nota)
+                require_once __DIR__ . '/redacao-lib.php';
+                redacao_ia_ler($pdo, $aulaId);
             } elseif ($item['tipo'] === 'aula_ia') {
                 require_once __DIR__ . '/edital-hack-lib.php';
                 hack_aula_ia_processar($pdo, $aulaId);

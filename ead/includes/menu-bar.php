@@ -31,6 +31,7 @@ $adminMenuGrupos = [
         ['label' => 'Bancas', 'href' => 'admin-bancas.php', 'icon' => 'building-2', 'pages' => ['admin-bancas.php', 'admin-bancas']],
     ]],
     ['titulo' => 'Alunos', 'itens' => [
+        ['label' => 'Redação', 'href' => 'admin-redacao.php', 'icon' => 'pen-line', 'pages' => ['admin-redacao.php', 'admin-redacao']],
         ['label' => 'Desafio do dia', 'href' => 'admin-desafio.php', 'icon' => 'target', 'pages' => ['admin-desafio.php', 'admin-desafio']],
         ['label' => 'Usuários', 'href' => 'admin-usuarios.php', 'icon' => 'users', 'pages' => ['admin-usuarios.php', 'admin-usuarios']],
         ['label' => 'Mensagens', 'href' => 'admin-mensagens.php', 'icon' => 'message-square-text', 'pages' => ['admin-mensagens.php', 'admin-mensagens']],

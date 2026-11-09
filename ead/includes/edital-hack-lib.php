@@ -110,7 +110,7 @@ if (!function_exists('hack_bootstrap')) {
             . "Responda SOMENTE em JSON neste formato:\n"
             . '{"orgao":"","banca":"","ano":null,"inscricoes":{"inicio":null,"fim":null,"taxa":null,"onde":null},'
             . '"prova_objetiva":{"data":null,"duracao":null,"questoes":null,"alternativas":null,"criterio_aprovacao":null,"penaliza_erro":null},'
-            . '"redacao":{"tem":null,"criterio":null},"etapas":[{"nome":"","carater":"eliminatório/classificatório","resumo":""}],'
+            . '"redacao":{"tem":null,"criterio":"resumo do critério de correção","criterios":[{"nome":"critério de correção como está no edital","max":0,"descricao":"o que é avaliado"}]},"etapas":[{"nome":"","carater":"eliminatório/classificatório","resumo":""}],'
             . '"taf":[{"cargo":"","sexo":"","exercicio":"","minimo":""}],'
             . '"cargos":[{"nome":"","vagas":null,"vagas_detalhe":null,"salario":null,"escolaridade":null,"idade":null,"altura":null,"cnh":null,"outros_requisitos":[""]}],'
             . '"cotas":null,"validade":null,"lotacao":null,"datas_importantes":[{"evento":"","data":""}],"atencao":["pontos do edital que mais eliminam candidatos"]}' . "\n\n"

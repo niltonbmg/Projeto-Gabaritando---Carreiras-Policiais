@@ -132,7 +132,7 @@ function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ,
     } elseif ($t['tipo'] === 'edital') {
         $acao .= '<a class="mc-abrir" href="meu-concurso.php" data-timer="' . $titulo . '">Abrir</a>';
     } elseif ($t['tipo'] === 'simulado' || $t['tipo'] === 'redacao') {
-        $acao .= '<a class="mc-abrir" href="' . ($t['tipo'] === 'simulado' ? 'simulados.php' : 'propostas-redacao.php') . '" data-timer="' . $titulo . '">' . ($t['tipo'] === 'simulado' ? 'Fazer simulado' : 'Escrever redação') . '</a>';
+        $acao .= '<a class="mc-abrir" href="' . ($t['tipo'] === 'simulado' ? 'simulados.php' : 'redacoes.php') . '" data-timer="' . $titulo . '">' . ($t['tipo'] === 'simulado' ? 'Fazer simulado' : 'Escrever redação') . '</a>';
     } else {
         $acao .= $podeAgora && !empty($item['topico_id']) ? '<a class="mc-abrir" href="banco-questoes.php?topico_id=' . (int)$item['topico_id'] . '&revisao=' . $id . '-' . (int)$t['rodada'] . '" data-timer="' . $titulo . '">Revisar</a>' : '';
         $acao .= '<form method="post"><input type="hidden" name="acao" value="feito_revisao"><input type="hidden" name="curso_id" value="' . $cursoId . '"><input type="hidden" name="item_id" value="' . $id . '"><input type="hidden" name="rodada" value="' . (int)$t['rodada'] . '">'

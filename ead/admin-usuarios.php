@@ -272,6 +272,11 @@ if (!function_exists('admin_usuarios_montar_where')) {
 }
 
 $pdo = db();
+try {
+    require_once __DIR__ . '/includes/redacao-lib.php';
+    redacao_bootstrap($pdo); // perfil "Professor de redação"
+} catch (Throwable $e) {
+}
 gab_boas_vindas_bootstrap($pdo);
 $colunas = admin_usuarios_colunas($pdo);
 $adminAtual = auth_admin_user();
@@ -304,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (strlen($senhaNova) < 6) {
                 throw new RuntimeException('A senha precisa ter pelo menos 6 caracteres.');
             }
-            if (!in_array($tipoNovo, ['cliente', 'admin'], true)) {
+            if (!in_array($tipoNovo, ['cliente', 'admin', 'professor_redacao'], true)) {
                 $tipoNovo = 'cliente';
             }
             if (!in_array($statusNovo, ['ativo', 'inativo', 'bloqueado'], true)) {
@@ -390,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($emailEditar === '' || !filter_var($emailEditar, FILTER_VALIDATE_EMAIL)) {
                 throw new RuntimeException('Informe um e-mail válido.');
             }
-            if (!in_array($tipoEditar, ['cliente', 'admin'], true)) {
+            if (!in_array($tipoEditar, ['cliente', 'admin', 'professor_redacao'], true)) {
                 $tipoEditar = 'cliente';
             }
             if (!in_array($statusEditar, ['ativo', 'inativo', 'bloqueado'], true)) {
@@ -707,7 +712,7 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
                 <form class="filters" method="get" action="admin-usuarios">
                     <div class="field"><label for="q">Buscar</label><input class="input" id="q" name="q" type="search" value="<?php echo admin_usuarios_e($busca); ?>" placeholder="Nome, e-mail ou telefone"></div>
                     <div class="field"><label for="status">Status</label><select class="select" id="status" name="status"><option value="">Todos</option><option value="ativo" <?php echo $statusFiltro === 'ativo' ? 'selected' : ''; ?>>Ativo</option><option value="bloqueado" <?php echo $statusFiltro === 'bloqueado' ? 'selected' : ''; ?>>Bloqueado</option><option value="inativo" <?php echo $statusFiltro === 'inativo' ? 'selected' : ''; ?>>Inativo</option></select></div>
-                    <div class="field"><label for="tipo">Tipo</label><select class="select" id="tipo" name="tipo"><option value="">Todos</option><option value="cliente" <?php echo $tipoFiltro === 'cliente' ? 'selected' : ''; ?>>Cliente</option><option value="admin" <?php echo $tipoFiltro === 'admin' ? 'selected' : ''; ?>>Admin</option></select></div>
+                    <div class="field"><label for="tipo">Tipo</label><select class="select" id="tipo" name="tipo"><option value="">Todos</option><option value="cliente" <?php echo $tipoFiltro === 'cliente' ? 'selected' : ''; ?>>Cliente</option><option value="admin" <?php echo $tipoFiltro === 'admin' ? 'selected' : ''; ?>>Admin</option><option value="professor_redacao" <?php echo $tipoFiltro === 'professor_redacao' ? 'selected' : ''; ?>>Professor de redação</option></select></div>
                     <button class="btn" type="submit"><i data-lucide="search"></i>Filtrar</button>
                 </form>
             </section>
@@ -734,7 +739,7 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
                                 <tr>
                                     <td><div class="user-main"><div class="avatar"><?php echo admin_usuarios_e($inicial); ?></div><div><div class="user-name"><?php echo admin_usuarios_e($nome); ?></div><div class="user-email"><?php echo admin_usuarios_e($email); ?></div></div></div></td>
                                     <td><?php echo admin_usuarios_e($telefone !== '' ? $telefone : '-'); ?></td>
-                                    <td><span class="badge <?php echo $tipo === 'admin' ? 'badge-admin' : 'badge-cliente'; ?>"><?php echo admin_usuarios_e(ucfirst($tipo)); ?></span></td>
+                                    <td><span class="badge <?php echo $tipo === 'admin' ? 'badge-admin' : 'badge-cliente'; ?>"><?php echo admin_usuarios_e($tipo === 'professor_redacao' ? 'Professor de redação' : ucfirst($tipo)); ?></span></td>
                                     <td><span class="badge badge-<?php echo admin_usuarios_e($status); ?>"><?php echo admin_usuarios_e(ucfirst($status)); ?></span></td>
                                     <td><?php echo admin_usuarios_e(admin_usuarios_data($usuario['ultimo_login'] ?? '')); ?></td>
                                     <td><?php echo admin_usuarios_e(admin_usuarios_data($usuario['created_at'] ?? '')); ?></td>
@@ -781,7 +786,7 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
                     <div class="field"><label for="novo_email">E-mail</label><input class="input" id="novo_email" name="email" type="email" required autocomplete="email" placeholder="email@exemplo.com"></div>
                     <div class="field"><label for="novo_telefone">Telefone</label><input class="input" id="novo_telefone" name="telefone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000"></div>
                     <div class="field"><label for="nova_senha_criar">Senha inicial</label><input class="input" id="nova_senha_criar" name="senha" type="password" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>
-                    <div class="field"><label for="novo_tipo">Tipo</label><select class="select" id="novo_tipo" name="tipo"><option value="cliente">Cliente</option><option value="admin">Admin</option></select></div>
+                    <div class="field"><label for="novo_tipo">Tipo</label><select class="select" id="novo_tipo" name="tipo"><option value="cliente">Cliente</option><option value="admin">Admin</option><option value="professor_redacao">Professor de redação</option></select></div>
                     <div class="field"><label for="novo_status">Status</label><select class="select" id="novo_status" name="status"><option value="ativo">Ativo</option><option value="bloqueado">Bloqueado</option><option value="inativo">Inativo</option></select></div>
                 </div>
 
@@ -830,7 +835,7 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
                     <div class="field"><label for="editar_nome">Nome completo</label><input class="input" id="editar_nome" name="nome" type="text" required value="<?php echo admin_usuarios_e($usuarioEditar['nome'] ?? ''); ?>"></div>
                     <div class="field"><label for="editar_email">E-mail</label><input class="input" id="editar_email" name="email" type="email" required value="<?php echo admin_usuarios_e($usuarioEditar['email'] ?? ''); ?>"></div>
                     <div class="field"><label for="editar_telefone">Telefone</label><input class="input" id="editar_telefone" name="telefone" type="tel" value="<?php echo admin_usuarios_e($usuarioEditar['telefone'] ?? ''); ?>"></div>
-                    <div class="field"><label for="editar_tipo">Tipo</label><select class="select" id="editar_tipo" name="tipo"><option value="cliente" <?php echo ($usuarioEditar['tipo'] ?? 'cliente') === 'cliente' ? 'selected' : ''; ?>>Cliente</option><option value="admin" <?php echo ($usuarioEditar['tipo'] ?? '') === 'admin' ? 'selected' : ''; ?>>Admin</option></select></div>
+                    <div class="field"><label for="editar_tipo">Tipo</label><select class="select" id="editar_tipo" name="tipo"><option value="cliente" <?php echo ($usuarioEditar['tipo'] ?? 'cliente') === 'cliente' ? 'selected' : ''; ?>>Cliente</option><option value="admin" <?php echo ($usuarioEditar['tipo'] ?? '') === 'admin' ? 'selected' : ''; ?>>Admin</option><option value="professor_redacao" <?php echo ($usuarioEditar['tipo'] ?? '') === 'professor_redacao' ? 'selected' : ''; ?>>Professor de redação</option></select></div>
                     <div class="field"><label for="editar_status">Status</label><select class="select" id="editar_status" name="status"><option value="ativo" <?php echo ($usuarioEditar['status'] ?? 'ativo') === 'ativo' ? 'selected' : ''; ?>>Ativo</option><option value="bloqueado" <?php echo ($usuarioEditar['status'] ?? '') === 'bloqueado' ? 'selected' : ''; ?>>Bloqueado</option><option value="inativo" <?php echo ($usuarioEditar['status'] ?? '') === 'inativo' ? 'selected' : ''; ?>>Inativo</option></select></div>
                 </div>
 

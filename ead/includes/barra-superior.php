@@ -40,8 +40,7 @@ $menuItens = $menuItens ?? [
     ['titulo' => 'Dashboard de questões', 'link' => 'dashboard-questoes.php', 'externo' => false],
     ['titulo' => 'Cronograma', 'link' => 'meu-cronograma.php', 'externo' => false],
     ['titulo' => 'Fórum de dúvidas', 'link' => 'forum-duvidas.php', 'externo' => false],
-    ['titulo' => 'Propostas de redação', 'link' => 'propostas-redacao.php', 'externo' => false],
-    ['titulo' => 'Redações', 'link' => 'redacoes.php', 'externo' => false],
+    ['titulo' => '✍️ Redação', 'link' => 'redacoes.php', 'externo' => false],
     ['titulo' => 'Cadernos', 'link' => 'cadernos.php', 'externo' => false],
     ['titulo' => 'Flashcards', 'link' => 'flashcards.php', 'externo' => false],
     ['titulo' => 'Recompensas', 'link' => 'recompensas.php', 'externo' => false],
@@ -74,6 +73,22 @@ if ($usuarioLogado) {
                 $totalNotificacoesNaoLidas++;
             }
             $mostrarTourMetodo = !missao_viu_tour(db(), (int)$usuarioAtual['id']) || isset($_GET['tour']);
+        }
+        // Redação corrigida: aviso no sininho. Professor de redação: atalho para a fila.
+        if (function_exists('db')) {
+            require_once __DIR__ . '/redacao-lib.php';
+            try {
+                $stRed = db()->prepare("SELECT id, nota FROM redacoes WHERE usuario_id = :u AND status = 'corrigida' AND visto_aluno = 0 ORDER BY id DESC LIMIT 3");
+                $stRed->execute([':u' => (int)$usuarioAtual['id']]);
+                foreach ($stRed->fetchAll() as $red) {
+                    array_unshift($notificacoesTopbar, ['tipo' => 'redacao', 'referencia_id' => (int)$red['id'], 'titulo' => '✍️ Sua redação foi corrigida: nota ' . redacao_fmt((float)$red['nota']), 'descricao' => 'Veja os comentários do professor.', 'link' => 'redacoes.php', 'icone' => 'pen-line', 'lida' => false, 'tempo' => 'agora', 'data' => date('Y-m-d H:i:s')]);
+                    $totalNotificacoesNaoLidas++;
+                }
+            } catch (Throwable $e) {
+            }
+            if ($tipoUsuarioAtual === REDACAO_PERFIL) {
+                array_unshift($menuItens, ['titulo' => '✍️ Fila de correção', 'link' => 'correcao-redacao.php', 'externo' => false]);
+            }
         }
     } catch (Throwable $e) {
         error_log('[Barra superior - notificações] ' . $e->getMessage());
