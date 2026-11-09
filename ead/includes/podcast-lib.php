@@ -271,17 +271,27 @@ if (!function_exists('podcast_iniciar')) {
         }
 
         $aula = podcast_material_da_aula($pdo, $aulaId);
-        $prompt = "Você é roteirista do podcast do Projeto Gabaritando, cursinho preparatório para carreiras policiais e militares da Bahia.\n"
-            . "Escreva o roteiro de um podcast de 4 a 6 minutos sobre a aula abaixo, em português do Brasil, com dois personagens:\n"
-            . "- Sargento = o ANTIGÃO, a IA professora do Projeto Gabaritando: um veterano experiente, bem-humorado e didático, que já viu muita prova; chama o ouvinte de \"combatente\". Na conversa ele é chamado de \"Antigão\" (nunca de Sargento).\n"
-            . "- Ana = o COMBATENTE: o aluno que vai prestar o concurso (representa quem está ouvindo), faz as perguntas e comete os erros que o aluno cometeria, e aprende na hora. Na conversa é sempre chamado de \"Combatente\" (nunca de Ana).\n\n"
+        $prompt = "Você é roteirista do podcast do Projeto Gabaritando, cursinho para carreiras policiais e militares da Bahia.\n"
+            . "Escreva um podcast de 4 a 6 minutos sobre a aula abaixo, em português do Brasil, como uma CONVERSA DE VERDADE entre dois personagens:\n\n"
+            . "PERSONAGENS\n"
+            . "- Sargento = o ANTIGÃO: a IA professora do Projeto Gabaritando. Veterano da tropa, já viu muita prova, calmo, bem-humorado, fala simples e direto, usa comparações do dia a dia do quartel e da rua. Na conversa é chamado de \"Antigão\".\n"
+            . "- Ana = o RECRUTA ZERO UM: aluno que vai prestar o concurso, esperto mas inseguro. Pergunta o que todo aluno pergunta, chuta errado de vez em quando, fica surpreso, comemora quando entende. Na conversa é chamado de \"Recruta Zero Um\" ou só \"Zero Um\". Sempre escreva \"Zero Um\" por extenso.\n\n"
+            . "COMO DEVE SOAR (o mais importante)\n"
+            . "- Conversa de verdade: um interrompe o outro, reage (\"Peraí, Antigão!\", \"Isso!\", \"Ih, eu ia errar essa\"), faz pergunta de volta. Nada de um fazer palestra e o outro só dizer \"entendi\".\n"
+            . "- Cada fala tem no máximo 3 frases curtas. Nada de listas lidas em voz alta, nada de \"em primeiro lugar, em segundo lugar\".\n"
+            . "- Ensine com EXEMPLOS concretos: frases, situações e questões no estilo da banca. A cada conceito, um exemplo.\n"
+            . "- Pelo menos duas vezes o Zero Um erra uma pegadinha e o Antigão explica o porquê, com um macete fácil de lembrar.\n"
+            . "- Proibido: \"ótima pergunta\", \"com certeza\", \"exatamente\" repetidos, frases de efeito vazias, repetir a mesma ideia.\n\n"
+            . "ROTEIRO\n"
+            . "1. Abertura curta: \"Fala, combatente! Aqui é o Antigão, no podcast do Projeto Gabaritando. E hoje tô aqui com o Recruta Zero Um.\" e, em uma frase, por que esse assunto cai na prova.\n"
+            . "2. Desenvolvimento: do mais simples ao mais difícil, só com o conteúdo do material.\n"
+            . "3. Desafio rápido: o Antigão faz duas perguntas ao Zero Um, que responde (uma certa, uma errada e corrigida).\n"
+            . "4. Fechamento: resumo em uma frase, a missão (resolver pelo menos 5 questões do assunto) e \"Fé na missão: a farda é questão de tempo!\".\n\n"
             . "REGRAS\n"
-            . "1. Use somente o conteúdo do material (texto abaixo e o PDF anexo, se houver). Não invente datas, números, nomes nem leis.\n"
-            . "2. Escreva números e datas por extenso, como devem ser falados (\"mil quinhentos e quarenta e nove\").\n"
-            . "3. Comece com \"Fala, combatente! Aqui é o Antigão, no podcast do Projeto Gabaritando, e comigo está o Combatente\". Inclua macetes e as pegadinhas da banca.\n"
-            . "3a. O nome do cursinho é sempre \"Projeto Gabaritando\", por extenso. Nunca diga só \"Gabaritando\". O ouvinte é sempre \"combatente\".\n"
-            . "4. Termine com um mini quiz de duas perguntas respondidas na hora e com a chamada: resolver pelo menos 5 questões do assunto no cronograma. Feche com \"Fé na missão: a farda é questão de tempo!\".\n"
-            . "5. Falas curtas e naturais, de conversa. Entre 20 e 28 falas no total.\n\n"
+            . "- Use somente o conteúdo do material (texto e PDF anexo). Não invente datas, números, nomes nem leis.\n"
+            . "- Números, datas, siglas e artigos de lei por extenso, como são falados (\"artigo quinto\", \"mil novecentos e oitenta e oito\").\n"
+            . "- Sempre \"Projeto Gabaritando\" por extenso. Quem ouve é \"combatente\".\n"
+            . "- Entre 24 e 32 falas no total.\n\n"
             . "Responda SOMENTE em JSON: {\"falas\":[{\"quem\":\"Sargento\"|\"Ana\",\"texto\":\"...\"}]}\n\n"
             . "CURSO: " . $aula['curso'] . "\nMATÉRIA: " . $aula['materia'] . "\nAULA: " . $aula['titulo'] . "\n\nMATERIAL DA AULA:\n" . $aula['texto'];
 
@@ -291,7 +301,7 @@ if (!function_exists('podcast_iniciar')) {
         }
         $resp = podcast_gemini(PODCAST_MODELO_TEXTO, [
             'contents' => [['parts' => $partes]],
-            'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.7],
+            'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.85],
         ], 110);
         $pdo = podcast_reconectar($pdo);
         $texto = (string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? '');
@@ -372,7 +382,7 @@ if (!function_exists('podcast_tts')) {
                 ['speaker' => 'Ana', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_ANA]]],
             ]]],
         ];
-        $dialogo = "Leia em português do Brasil, como um podcast animado e natural do Projeto Gabaritando, entre um sargento professor e uma aluna:\n";
+        $dialogo = "Leia em português do Brasil, como uma conversa descontraída e natural de podcast do Projeto Gabaritando: Sargento é o Antigão, veterano calmo e bem-humorado; Ana é o Recruta Zero Um, jovem, curioso e animado. Ritmo de conversa real, com reações e pausas naturais:\n";
         $partesNovas = [];
         foreach ($falas as $f) {
             $dialogo .= $f['quem'] . ': ' . $f['texto'] . "\n";

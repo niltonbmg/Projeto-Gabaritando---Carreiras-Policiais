@@ -27,7 +27,7 @@ if ($temChave && ($_POST['testar'] ?? '') !== '') {
         $teste['texto_ms'] = (int)((microtime(true) - $t0) * 1000);
 
         $t0 = microtime(true);
-        $pcm = podcast_tts([['quem' => 'Sargento', 'texto' => 'Fala, combatente! Aqui é o Antigão, teste de voz do Projeto Gabaritando.'], ['quem' => 'Ana', 'texto' => 'Funcionou, Antigão!']]);
+        $pcm = podcast_tts([['quem' => 'Sargento', 'texto' => 'Fala, combatente! Aqui é o Antigão, teste de voz do Projeto Gabaritando.'], ['quem' => 'Ana', 'texto' => 'Recruta Zero Um na escuta, Antigão!']]);
         if ($pcm) {
             $wav = 'RIFF' . pack('V', 36 + strlen($pcm)) . 'WAVEfmt ' . pack('VvvVVvv', 16, 1, 1, PODCAST_TAXA, PODCAST_TAXA * 2, 2, 16) . 'data' . pack('V', strlen($pcm)) . $pcm;
             $teste['voz'] = 'data:audio/wav;base64,' . base64_encode($wav);
@@ -45,6 +45,14 @@ try {
     ia_fila_bootstrap($pdoFila);
     if (($_POST['fila'] ?? '') === 'todas') {
         $filaMsg = ia_fila_todas_as_aulas($pdoFila) . ' aula(s) colocadas na fila. O robô faz tudo em segundo plano.';
+    } elseif (($_POST['fila'] ?? '') === 'refazer_podcasts') {
+        podcast_bootstrap($pdoFila);
+        $ids = $pdoFila->query('SELECT aula_id FROM aula_podcasts')->fetchAll(PDO::FETCH_COLUMN);
+        $pdoFila->exec('DELETE FROM aula_podcasts');
+        foreach ($ids as $idAula) {
+            ia_fila_adicionar($pdoFila, 'podcast', (int)$idAula);
+        }
+        $filaMsg = count($ids) . ' podcast(s) na fila para refazer com o Antigão e o Recruta 01.';
     } elseif (($_POST['fila'] ?? '') === 'videoaulas') {
         videoaula_bootstrap($pdoFila);
         $ids = $pdoFila->query("SELECT a.id FROM admin_curso_aulas a WHERE COALESCE(TRIM(a.video_url), '') = '' AND COALESCE(TRIM(a.pdf_arquivo), '') <> ''
@@ -132,6 +140,7 @@ $menuBarInclude = admin_cursos_get_menubar();
             <div class="admin-table-actions" style="justify-content:flex-start;margin:10px 0">
                 <form method="post" onsubmit="return confirm('Colocar na fila todas as aulas que ainda não passaram pela IA?');"><input type="hidden" name="fila" value="todas"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="wand-2"></i>Gerar para todas as aulas</button></form>
                 <form method="post" onsubmit="return confirm('Gerar a Videoaula IA (slides + narração + perguntas) para todas as aulas que só têm PDF?');"><input type="hidden" name="fila" value="videoaulas"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="clapperboard"></i>Gerar Videoaulas IA (aulas só com PDF)</button></form>
+                <form method="post" onsubmit="return confirm('Refazer TODOS os podcasts já gerados com o novo roteiro (Antigão e Recruta 01)? Os atuais saem do ar até o robô refazer cada um.');"><input type="hidden" name="fila" value="refazer_podcasts"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="mic"></i>Refazer todos os podcasts (novo roteiro)</button></form>
                 <form method="post"><input type="hidden" name="fila" value="processar"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="play"></i>Processar 1 agora</button></form>
             </div>
             <p><strong>Ligar o robô (uma vez só):</strong> Hostinger → seu site → <strong>Avançado → Cron Jobs</strong> → tipo <strong>PHP</strong> → a cada <strong>5 minutos</strong> → comando:</p>
