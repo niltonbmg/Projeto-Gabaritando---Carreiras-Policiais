@@ -31,6 +31,34 @@ try {
     $pdo = db();
     aula_marcacoes_bootstrap($pdo);
 
+    // Marcações no PDF: retângulos por página, em frações da página (0..1), valem em qualquer zoom.
+    if (($_GET['tipo'] ?? '') === 'pdf') {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS aula_marcacoes_pdf (
+            usuario_id INT UNSIGNED NOT NULL, aula_id INT UNSIGNED NOT NULL, dados MEDIUMTEXT NULL,
+            atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (usuario_id, aula_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $stmt = $pdo->prepare('SELECT dados FROM aula_marcacoes_pdf WHERE usuario_id = :u AND aula_id = :a');
+            $stmt->execute([':u' => $usuarioId, ':a' => (int)($_GET['aula_id'] ?? 0)]);
+            $dados = json_decode((string)($stmt->fetchColumn() ?: '[]'), true);
+            aula_marc_resposta(200, ['marcacoes' => is_array($dados) ? $dados : []]);
+        }
+        $entrada = json_decode((string)file_get_contents('php://input'), true);
+        $aulaId = (int)($entrada['aula_id'] ?? 0);
+        if ($aulaId <= 0) {
+            aula_marc_resposta(400, ['erro' => 'Aula inválida.']);
+        }
+        $f = static fn($v): float => round(max(0.0, min(1.0, (float)$v)), 4);
+        $limpo = [];
+        foreach (array_slice(is_array($entrada['marcacoes'] ?? null) ? $entrada['marcacoes'] : [], 0, 1000) as $m) {
+            $limpo[] = ['p' => max(1, (int)($m['p'] ?? 1)), 'x' => $f($m['x'] ?? 0), 'y' => $f($m['y'] ?? 0), 'w' => $f($m['w'] ?? 0), 'h' => $f($m['h'] ?? 0)];
+        }
+        $pdo->prepare('INSERT INTO aula_marcacoes_pdf (usuario_id, aula_id, dados) VALUES (:u, :a, :d) ON DUPLICATE KEY UPDATE dados = VALUES(dados)')
+            ->execute([':u' => $usuarioId, ':a' => $aulaId, ':d' => json_encode($limpo)]);
+        aula_marc_resposta(200, ['ok' => true, 'total' => count($limpo)]);
+    }
+
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $aulaId = (int)($_GET['aula_id'] ?? 0);
         $stmt = $pdo->prepare('SELECT dados FROM aula_marcacoes WHERE usuario_id = :u AND aula_id = :a');

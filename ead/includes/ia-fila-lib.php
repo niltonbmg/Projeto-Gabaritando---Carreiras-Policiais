@@ -8,6 +8,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/apostila-lib.php';
+require_once __DIR__ . '/videoaula-lib.php';
 
 if (!function_exists('ia_fila_bootstrap')) {
     function ia_fila_bootstrap(PDO $pdo): void
@@ -68,6 +69,7 @@ if (!function_exists('ia_fila_processar_um')) {
     function ia_fila_processar_um(PDO $pdo): ?array
     {
         ia_fila_bootstrap($pdo);
+        videoaula_bootstrap($pdo);
         $pdo = podcast_reconectar($pdo);
         // Apostilas antes de podcasts; até 3 tentativas por item.
         $item = $pdo->query("SELECT * FROM ia_fila WHERE status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE)
@@ -101,6 +103,17 @@ if (!function_exists('ia_fila_processar_um')) {
                 // Podcast antigo fica desatualizado: refaz com a apostila nova.
                 $pdo->prepare('DELETE FROM aula_podcasts WHERE aula_id = :a')->execute([':a' => $aulaId]);
                 ia_fila_adicionar($pdo, 'podcast', $aulaId);
+                // Aula sem vídeo: a IA também monta a Videoaula IA (slides + narração + paradas).
+                if (trim((string)$aula['video_url']) === '') {
+                    $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $aulaId]);
+                    ia_fila_adicionar($pdo, 'videoaula', $aulaId);
+                }
+            } elseif ($item['tipo'] === 'videoaula') {
+                $r = videoaula_iniciar($pdo, $aulaId);
+                for ($n = (int)($r['partes_ok'] ?? 0); ($r['status'] ?? '') !== 'pronto' && $n < (int)($r['partes'] ?? 0); $n++) {
+                    $r = videoaula_parte($pdo, $aulaId, $n);
+                    $pdo = podcast_reconectar($pdo);
+                }
             } elseif ($item['tipo'] === 'podcast') {
                 $r = podcast_iniciar($pdo, $aulaId);
                 if (($r['status'] ?? '') !== 'pronto') {

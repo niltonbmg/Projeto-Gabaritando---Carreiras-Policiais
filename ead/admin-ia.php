@@ -45,6 +45,14 @@ try {
     ia_fila_bootstrap($pdoFila);
     if (($_POST['fila'] ?? '') === 'todas') {
         $filaMsg = ia_fila_todas_as_aulas($pdoFila) . ' aula(s) colocadas na fila. O robô faz tudo em segundo plano.';
+    } elseif (($_POST['fila'] ?? '') === 'videoaulas') {
+        videoaula_bootstrap($pdoFila);
+        $ids = $pdoFila->query("SELECT a.id FROM admin_curso_aulas a WHERE COALESCE(TRIM(a.video_url), '') = '' AND COALESCE(TRIM(a.pdf_arquivo), '') <> ''
+                                 AND NOT EXISTS (SELECT 1 FROM aula_videoaulas v WHERE v.aula_id = a.id AND v.status = 'pronto')")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($ids as $idAula) {
+            ia_fila_adicionar($pdoFila, 'videoaula', (int)$idAula);
+        }
+        $filaMsg = count($ids) . ' aula(s) só com PDF colocadas na fila da Videoaula IA.';
     } elseif (($_POST['fila'] ?? '') === 'processar') {
         $r = ia_fila_processar_um($pdoFila);
         $filaMsg = $r === null ? 'A fila está vazia.' : ($r['ok'] ? 'Feito: ' . $r['tipo'] . ' da aula ' . $r['aula_id'] . '.' : 'Erro em ' . $r['tipo'] . ' da aula ' . $r['aula_id'] . ': ' . $r['erro']);
@@ -123,6 +131,7 @@ $menuBarInclude = admin_cursos_get_menubar();
             <?php endif; ?>
             <div class="admin-table-actions" style="justify-content:flex-start;margin:10px 0">
                 <form method="post" onsubmit="return confirm('Colocar na fila todas as aulas que ainda não passaram pela IA?');"><input type="hidden" name="fila" value="todas"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="wand-2"></i>Gerar para todas as aulas</button></form>
+                <form method="post" onsubmit="return confirm('Gerar a Videoaula IA (slides + narração + perguntas) para todas as aulas que só têm PDF?');"><input type="hidden" name="fila" value="videoaulas"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="clapperboard"></i>Gerar Videoaulas IA (aulas só com PDF)</button></form>
                 <form method="post"><input type="hidden" name="fila" value="processar"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="play"></i>Processar 1 agora</button></form>
             </div>
             <p><strong>Ligar o robô (uma vez só):</strong> Hostinger → seu site → <strong>Avançado → Cron Jobs</strong> → tipo <strong>PHP</strong> → a cada <strong>5 minutos</strong> → comando:</p>

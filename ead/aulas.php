@@ -2952,6 +2952,58 @@ if ($aulas) {
         .aula-somente-pdf__botao{justify-self:start;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;background:#fbb928;color:#111;font:inherit;font-weight:700;cursor:pointer}
         .aula-somente-pdf__botao:focus-visible{outline:2px solid #fff;outline-offset:3px}
         @media(max-width:760px){.video-frame:has(.aula-somente-pdf){aspect-ratio:auto!important;overflow:visible}.aula-somente-pdf{position:relative;inset:auto;padding:24px 20px}}
+.ad-flutua{position:fixed;z-index:60;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:9px 14px;background:#fbb928;color:#111;font:inherit;font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer}
+        .ad-flutua[hidden]{display:none}
+        .pdf-marca-area{position:relative;display:inline-block;line-height:0}
+        .pdf-marca-camada{position:absolute;inset:0;pointer-events:none}
+        .pdf-marca-camada.ativa{pointer-events:auto;cursor:crosshair;touch-action:none}
+        .pdf-marca{position:absolute;background:rgba(251,213,40,.42);mix-blend-mode:multiply;border-radius:2px}
+        .pdf-marca-camada.ativa .pdf-marca{cursor:pointer;outline:1px dashed rgba(180,120,0,.8)}
+        #pdfMarcarBtn[aria-pressed="true"]{background:#fbb928;color:#111}
+        .pdf-marca-dica{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;background:#111;color:#fbb928;border:1px solid #fbb928;border-radius:999px;padding:6px 12px;font-size:13px;line-height:1.3;white-space:nowrap}
+        .pdf-marca-dica[hidden]{display:none}
+        .aula-somente-pdf__acoes{display:flex;flex-wrap:wrap;gap:10px}
+        .aula-somente-pdf__botao--sec{background:transparent;color:#fbb928;border:1px solid rgba(251,185,40,.6)}
+        .va-gerando{display:grid;gap:6px;font-size:13px}.va-gerando[hidden]{display:none}
+        .va-gerando__barra{display:block;height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+        .va-gerando__barra i{display:block;height:100%;width:5%;background:#fbb928;transition:width .4s}
+        .aula-somente-pdf[hidden],.va[hidden],.va-parada[hidden]{display:none!important}
+        .va{position:absolute;inset:0;z-index:3;display:grid;grid-template-rows:1fr auto;background:radial-gradient(120% 120% at 0% 0%,#2a2108 0%,#111 55%,#0b0b0b 100%);color:#f5f5f6;overflow:hidden}
+        .va:fullscreen{border-radius:0}
+        .va-logo{position:absolute;top:14px;right:16px;height:42px;width:auto;z-index:2;opacity:.95;pointer-events:none}
+        .va-palco{position:relative;display:flex;align-items:center;padding:28px clamp(18px,5vw,56px);min-height:0}
+        .va-slide{display:grid;gap:14px;width:100%;max-width:860px;animation:vaEntra .5s ease}
+        .va-slide__emoji{font-size:clamp(28px,4vw,44px);line-height:1}
+        .va-slide h3{font-size:clamp(20px,3.2vw,34px);line-height:1.15;color:#fff;margin:0;padding-right:70px}
+        .va-slide ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+        .va-slide li{font-size:clamp(14px,1.9vw,20px);line-height:1.35;padding-left:22px;position:relative;opacity:0;animation:vaEntra .45s ease forwards}
+        .va-slide li::before{content:"";position:absolute;left:0;top:.5em;width:10px;height:10px;border-radius:3px;background:#fbb928}
+        .va-slide__dest{border-left:4px solid #fbb928;background:rgba(251,185,40,.12);border-radius:8px;padding:10px 14px;font-size:clamp(13px,1.7vw,17px);opacity:0;animation:vaEntra .45s ease forwards}
+        .va-abertura{display:grid;justify-items:center;text-align:center;gap:14px;width:100%}
+        .va-abertura img{height:clamp(70px,14vw,130px);width:auto}
+        .va-abertura h3{padding:0}
+        .va-abertura small{color:#fbb928;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+        @keyframes vaEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+        .va-barra{display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(0,0,0,.55)}
+        .va-bt{border:0;background:transparent;color:#fff;font:inherit;font-size:16px;min-width:36px;min-height:36px;border-radius:8px;cursor:pointer}
+        .va-bt:hover{background:rgba(255,255,255,.12)}.va-bt:focus-visible{outline:2px solid #fbb928}
+        .va-vel{font-size:13px;font-weight:700}
+        .va-prog{flex:1;display:flex;gap:4px;min-width:60px}
+        .va-prog span{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.18);overflow:hidden}
+        .va-prog span i{display:block;height:100%;width:0;background:#fbb928}
+        .va-prog span.feito i{width:100%}
+        .va-cont{font-size:12px;color:#c9c9cf;white-space:nowrap}
+        .va-parada{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(10,10,10,.92);overflow:auto}
+        .va-parada__box{width:100%;max-width:640px;display:grid;gap:10px}
+        .va-parada__selo{color:#fbb928;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+        .va-parada__box p{margin:0;font-size:clamp(15px,2vw,19px);color:#fff}
+        .va-alt{text-align:left;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#fff;border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;cursor:pointer}
+        .va-alt:hover:not(:disabled){border-color:#fbb928}
+        .va-alt.certa{border-color:#22c55e;background:rgba(34,197,94,.16)}
+        .va-alt.errada{border-color:#ef4444;background:rgba(239,68,68,.16)}
+        .va-exp{border-radius:10px;padding:10px 12px;background:rgba(251,185,40,.12);font-size:14px;color:#f3f3f4}
+        .va-continuar{justify-self:start;border:0;border-radius:10px;padding:10px 16px;background:#fbb928;color:#111;font:inherit;font-weight:700;cursor:pointer}
+        @media(max-width:760px){.video-frame:has(.va:not([hidden])){aspect-ratio:auto!important}.va{position:relative;min-height:440px}.va-logo{height:30px;top:10px;right:10px}.va-barra{flex-wrap:wrap}.va-prog{order:9;flex-basis:100%}}
         <?php echo indicacoes_css(); ?>
         .pod [hidden],.pod[hidden]{display:none!important}
         .pod{display:grid;gap:10px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(251,185,40,.16),rgba(251,185,40,.04));border:1px solid rgba(251,185,40,.35)}
@@ -3559,10 +3611,30 @@ if ($aulas) {
                                     <h2><?php echo esc($aulaTitulo); ?></h2>
                                     <p>Esta aula é de leitura. Leia o material com atenção, faça suas marcações e depois siga para as questões.</p>
                                     <?php if (!empty($aulaAtual['pdf_duracao'])): ?><p class="aula-somente-pdf__tempo"><i data-lucide="clock-3" aria-hidden="true"></i>Tempo estimado de leitura: <?php echo esc((string)$aulaAtual['pdf_duracao']); ?></p><?php endif; ?>
-                                    <button type="button" class="aula-somente-pdf__botao" onclick="var b=document.getElementById('abrirPdfAula'); if(b){b.click();}">
-                                        <i data-lucide="file-text" aria-hidden="true"></i>Ler o material
-                                    </button>
+                                    <div class="aula-somente-pdf__acoes">
+                                        <button type="button" class="aula-somente-pdf__botao" id="vaAbrir"><span aria-hidden="true">▶</span>Assistir à Videoaula IA</button>
+                                        <button type="button" class="aula-somente-pdf__botao aula-somente-pdf__botao--sec" onclick="var b=document.getElementById('abrirPdfAula'); if(b){b.click();}">
+                                            <i data-lucide="file-text" aria-hidden="true"></i>Ler o material
+                                        </button>
+                                    </div>
+                                    <p class="va-gerando" id="vaGerando" hidden role="status" aria-live="polite"><span class="va-gerando__barra"><i id="vaGerandoBarra"></i></span><span id="vaGerandoMsg">Preparando a videoaula…</span></p>
                                 </div>
+                            </div>
+                            <div class="va" id="videoaulaIA" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>" hidden>
+                                <img class="va-logo" src="img/logo.png" onerror="this.onerror=null;this.src='favicon.png'" alt="Projeto Gabaritando">
+                                <div class="va-palco" id="vaPalco" aria-live="polite"></div>
+                                <div class="va-parada" id="vaParada" hidden role="dialog" aria-modal="false" aria-labelledby="vaParadaPerg"></div>
+                                <div class="va-barra">
+                                    <button type="button" class="va-bt" id="vaPlay" aria-label="Reproduzir">▶</button>
+                                    <button type="button" class="va-bt" id="vaAnt" aria-label="Slide anterior">⏮</button>
+                                    <button type="button" class="va-bt" id="vaProx" aria-label="Próximo slide">⏭</button>
+                                    <div class="va-prog" id="vaProg" aria-hidden="true"></div>
+                                    <span class="va-cont" id="vaCont"></span>
+                                    <button type="button" class="va-bt va-vel" id="vaVel" aria-label="Velocidade">1x</button>
+                                    <button type="button" class="va-bt" id="vaTela" aria-label="Tela cheia">⛶</button>
+                                    <button type="button" class="va-bt" id="vaFechar" aria-label="Fechar videoaula">✕</button>
+                                </div>
+                                <audio id="vaAudio" preload="auto"></audio>
                             </div>
                         <?php else: ?>
                             <div class="video-empty">
@@ -3656,7 +3728,7 @@ if ($aulas) {
                                     <button type="button" class="ad-btn" data-ad="recolher">Abrir tudo</button>
                                 </div>
                             </div>
-                            <p class="ad-dica">Dica: selecione um trecho com o dedo ou o mouse e toque em <strong>Marcar</strong>. Suas marcações ficam salvas na sua conta. Toque numa marcação para removê-la.</p>
+                            <p class="ad-dica">Dica: selecione um trecho com o dedo ou o mouse: o botão <strong>Marcar</strong> aparece junto do texto. Suas marcações ficam salvas na sua conta. Toque numa marcação para removê-la.</p>
                             <div class="ad-texto" id="aulaDescricaoTexto"><?php echo $aulaDescricaoHtml; ?></div>
                             <span class="ad-status" id="aulaDescricaoStatus" role="status" aria-live="polite"></span>
                         </section>
@@ -3867,6 +3939,7 @@ if ($aulas) {
                     <button type="button" class="pdf-tool-btn" id="pdfMenosZoom" aria-label="Diminuir zoom"><i data-lucide="zoom-out"></i></button>
                     <span class="pdf-zoom-label" id="pdfZoomLabel">100%</span>
                     <button type="button" class="pdf-tool-btn" id="pdfMaisZoom" aria-label="Aumentar zoom"><i data-lucide="zoom-in"></i></button>
+                    <button type="button" class="pdf-tool-btn" id="pdfMarcarBtn" aria-pressed="false" title="Marca-texto: arraste sobre o trecho" aria-label="Marca-texto">🖍</button>
                     <button type="button" class="pdf-tool-link pdf-download-watermarked" id="pdfViewerDownload" aria-label="Baixar PDF com marca d'água" title="Baixar PDF com marca d'água"><i data-lucide="download"></i></button>
                 </div>
 
@@ -3875,8 +3948,9 @@ if ($aulas) {
 
             <div class="pdf-viewer-body" id="pdfViewerBody">
                 <div class="pdf-canvas-wrap">
-                    <canvas id="pdfViewerCanvas"></canvas>
+                    <div class="pdf-marca-area"><canvas id="pdfViewerCanvas"></canvas><div class="pdf-marca-camada" id="pdfMarcaCamada" aria-label="Marcações desta página"></div></div>
                 </div>
+                <p class="pdf-marca-dica" id="pdfMarcaDica" hidden>🖍 Arraste sobre o trecho para marcar · toque numa marcação para apagar</p>
                 <div class="pdf-viewer-status" id="pdfViewerStatus">
                     <div class="pdf-viewer-status__box">
                         <span class="pdf-viewer-spinner" aria-hidden="true"></span>
@@ -4884,6 +4958,7 @@ if ($aulas) {
                     });
                     await tarefaRender.promise;
                     ocultarStatus();
+                    document.dispatchEvent(new CustomEvent('gab:pdf-pagina', {detail: {pagina: paginaAtual}}));
                     corpo.scrollTop = 0;
                     corpo.scrollLeft = 0;
                     salvarProgresso(false);
@@ -5643,6 +5718,28 @@ if ($aulas) {
         }
     });
 
+    // Botão "Marcar" flutuante: aparece colado no trecho selecionado, onde quer que o aluno esteja na tela.
+    var flut = document.createElement('button');
+    flut.type = 'button'; flut.className = 'ad-flutua'; flut.setAttribute('data-ad', 'marcar'); flut.hidden = true;
+    flut.innerHTML = '<span class="ad-marca-ico"></span>Marcar';
+    raiz.appendChild(flut);
+    flut.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    flut.addEventListener('click', function () { flut.hidden = true; });
+    var flutTimer = null;
+    function posicionarFlutuante() {
+        var sel = window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.rangeCount || !texto.contains(sel.anchorNode) || !texto.contains(sel.focusNode) || sel.toString().trim().length < 2) { flut.hidden = true; return; }
+        var r = sel.getRangeAt(0).getBoundingClientRect();
+        flut.hidden = false;
+        var w = flut.offsetWidth || 100, emCima = r.top > 70;
+        // No celular o menu do sistema (copiar/colar) fica em cima da seleção: o botão vai embaixo.
+        if ('ontouchstart' in window) { emCima = false; }
+        flut.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+        flut.style.top = (emCima ? r.top - 48 : Math.min(window.innerHeight - 52, r.bottom + 12)) + 'px';
+    }
+    document.addEventListener('selectionchange', function () { clearTimeout(flutTimer); flutTimer = setTimeout(posicionarFlutuante, 180); });
+    window.addEventListener('scroll', function () { if (!flut.hidden) { posicionarFlutuante(); } }, {passive: true});
+
     texto.querySelectorAll('details.ad-secao').forEach(function (d) { d.addEventListener('toggle', function () { var x = d.querySelector('.ad-abrir'); if (x) { x.textContent = 'Toque para abrir'; } }); });
     fetch('api/aula-marcacoes.php?aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'})
         .then(function (r) { return r.json(); })
@@ -5720,6 +5817,186 @@ if ($aulas) {
         // Alguém já está gerando (ou a página foi recarregada no meio): continua sozinho.
         if (s.status === 'gerando' && s.partes > 0) { btn.disabled = true; txt.textContent = 'Preparando…'; prog.hidden = false; barra.style.width = Math.round(10 + 90 * s.partes_ok / s.partes) + '%'; partes(s.partes, s.partes_ok).catch(recuperar); }
     }).catch(function () {});
+})();
+</script>
+<script>
+// Videoaula IA: slides sincronizados com a narração + paradas com pergunta.
+(function () {
+    var va = document.getElementById('videoaulaIA'), abrir = document.getElementById('vaAbrir');
+    if (!va || !abrir) { return; }
+    var aulaId = va.getAttribute('data-aula-id'), dados = null, idx = 0, tocando = false, feitas = {}, vel = 1;
+    var palco = document.getElementById('vaPalco'), audio = document.getElementById('vaAudio'), parada = document.getElementById('vaParada');
+    var btPlay = document.getElementById('vaPlay'), prog = document.getElementById('vaProg'), cont = document.getElementById('vaCont');
+    var ger = document.getElementById('vaGerando'), gerBarra = document.getElementById('vaGerandoBarra'), gerMsg = document.getElementById('vaGerandoMsg');
+    var logo = va.querySelector('.va-logo');
+    function api(corpo) {
+        return fetch('api/videoaula.php', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(corpo)})
+            .then(function (r) { return r.json().then(function (j) { if (!r.ok) { throw new Error(j.erro || 'Erro ao gerar a videoaula.'); } return j; }); });
+    }
+    function situacao() { return fetch('api/videoaula.php?aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'}).then(function (r) { return r.json(); }); }
+    function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+    function progresso(ok, total, msg) { ger.hidden = false; gerBarra.style.width = Math.max(5, Math.round(ok * 100 / Math.max(1, total))) + '%'; gerMsg.textContent = msg; }
+    function gerar() {
+        abrir.disabled = true;
+        progresso(0, 1, 'A IA está lendo o PDF e montando os slides… (cerca de 1 minuto)');
+        return api({aula_id: aulaId, acao: 'iniciar'}).then(function proximo(r) {
+            if (r.status === 'pronto') { return situacao(); }
+            var total = r.partes || 1, ok = r.partes_ok || 0;
+            progresso(ok, total, 'Gravando a narração: slide ' + Math.min(ok + 1, total) + ' de ' + total + '…');
+            return api({aula_id: aulaId, acao: 'parte', n: ok}).then(proximo);
+        });
+    }
+    abrir.addEventListener('click', function () {
+        if (dados) { mostrar(); return; }
+        abrir.disabled = true;
+        situacao().then(function (s) {
+            if (s.status === 'pronto') { return s; }
+            return gerar();
+        }).then(function (s) {
+            if (!s || s.status !== 'pronto') { throw new Error('A videoaula ainda não ficou pronta. Tente de novo em instantes.'); }
+            dados = s; ger.hidden = true; mostrar();
+        }).catch(function (e) {
+            ger.hidden = false; gerBarra.style.width = '0'; gerMsg.textContent = e.message + ' Enquanto isso, leia o material.';
+        }).then(function () { abrir.disabled = false; });
+    });
+    var intro = document.querySelector('.aula-somente-pdf');
+    function mostrar() {
+        va.hidden = false; if (intro) { intro.hidden = true; }
+        va.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+        prog.innerHTML = dados.slides.map(function () { return '<span><i></i></span>'; }).join('');
+        idx = 0; ir(0, true);
+    }
+    function marcarProgresso() {
+        Array.prototype.forEach.call(prog.children, function (el, i) { el.className = i < idx ? 'feito' : ''; if (i !== idx) { el.firstChild.style.width = ''; } });
+        cont.textContent = (idx + 1) + '/' + dados.slides.length;
+    }
+    function desenhar() {
+        var sl = dados.slides[idx], n = (sl.topicos || []).length + (sl.destaque ? 1 : 0);
+        var passo = Math.max(1.2, (audio.duration && isFinite(audio.duration) ? audio.duration / vel : 8) / (n + 1.5));
+        var itens = (sl.topicos || []).map(function (t, i) { return '<li style="animation-delay:' + ((i + 1) * passo).toFixed(1) + 's">' + esc(t) + '</li>'; }).join('');
+        var dest = sl.destaque ? '<div class="va-slide__dest" style="animation-delay:' + (((sl.topicos || []).length + 1) * passo).toFixed(1) + 's">💡 ' + esc(sl.destaque) + '</div>' : '';
+        if (idx === 0) {
+            palco.innerHTML = '<div class="va-slide va-abertura"><img src="' + esc(logo.getAttribute('src')) + '" alt="Projeto Gabaritando"><small>Projeto Gabaritando · Videoaula</small><h3>' + esc(sl.titulo) + '</h3><ul>' + itens + '</ul>' + dest + '</div>';
+        } else {
+            palco.innerHTML = '<div class="va-slide"><div class="va-slide__emoji" aria-hidden="true">' + esc(sl.emoji) + '</div><h3>' + esc(sl.titulo) + '</h3><ul>' + itens + '</ul>' + dest + '</div>';
+        }
+        if (!tocando) { palco.querySelectorAll('li,.va-slide__dest').forEach(function (el) { el.style.animationDelay = '0s'; }); }
+    }
+    function ir(n, comecar) {
+        idx = Math.max(0, Math.min(dados.slides.length - 1, n));
+        parada.hidden = true;
+        marcarProgresso();
+        audio.src = dados.slides[idx].audio; audio.playbackRate = vel;
+        var desenhou = false;
+        var feito = function () { if (!desenhou) { desenhou = true; desenhar(); } };
+        audio.onloadedmetadata = feito; setTimeout(feito, 700);
+        if (comecar) { tocar(); }
+    }
+    function tocar() { tocando = true; btPlay.textContent = '⏸'; btPlay.setAttribute('aria-label', 'Pausar'); audio.playbackRate = vel; audio.play().catch(function () { pausar(); }); }
+    function pausar() { tocando = false; btPlay.textContent = '▶'; btPlay.setAttribute('aria-label', 'Reproduzir'); audio.pause(); }
+    audio.addEventListener('timeupdate', function () {
+        var el = prog.children[idx]; if (el && audio.duration) { el.firstChild.style.width = (audio.currentTime * 100 / audio.duration) + '%'; }
+    });
+    audio.addEventListener('ended', function () {
+        var p = -1;
+        (dados.paradas || []).forEach(function (q, i) { if (q.apos_slide === idx + 1 && !feitas[i]) { p = i; } });
+        if (p >= 0) { mostrarParada(p); return; }
+        if (idx < dados.slides.length - 1) { ir(idx + 1, true); } else { fim(); }
+    });
+    function mostrarParada(i) {
+        pausar();
+        var q = dados.paradas[i];
+        parada.innerHTML = '<div class="va-parada__box"><span class="va-parada__selo">⏸ Parada do combatente · responda para continuar</span><p id="vaParadaPerg">' + esc(q.pergunta) + '</p>'
+            + q.alternativas.map(function (a, k) { return '<button type="button" class="va-alt" data-k="' + k + '">' + String.fromCharCode(65 + k) + ') ' + esc(a) + '</button>'; }).join('') + '<div id="vaParadaFim"></div></div>';
+        parada.hidden = false;
+        var primeiro = parada.querySelector('.va-alt'); if (primeiro) { primeiro.focus(); }
+        parada.querySelectorAll('.va-alt').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var k = parseInt(b.getAttribute('data-k'), 10);
+                parada.querySelectorAll('.va-alt').forEach(function (x) { x.disabled = true; });
+                api({aula_id: aulaId, acao: 'responder', parada: i, alt: k}).then(function (r) {
+                    feitas[i] = true;
+                    parada.querySelector('[data-k="' + r.certa + '"]').classList.add('certa');
+                    if (!r.correta) { b.classList.add('errada'); }
+                    document.getElementById('vaParadaFim').innerHTML = '<div class="va-exp"><strong>' + (r.correta ? '✅ Isso, combatente!' : '❌ Quase! Veja o porquê:') + '</strong> ' + esc(r.explicacao) + '</div><button type="button" class="va-continuar" id="vaContinuar">Continuar a aula ▶</button>';
+                    var c = document.getElementById('vaContinuar'); c.focus();
+                    c.addEventListener('click', function () { if (idx < dados.slides.length - 1) { ir(idx + 1, true); } else { fim(); } });
+                }).catch(function (e) { parada.querySelectorAll('.va-alt').forEach(function (x) { x.disabled = false; }); alert(e.message); });
+            });
+        });
+    }
+    function fim() {
+        pausar(); idx = dados.slides.length - 1; marcarProgresso(); prog.lastChild.className = 'feito';
+        parada.innerHTML = '<div class="va-parada__box" style="text-align:center;justify-items:center"><img src="' + esc(logo.getAttribute('src')) + '" alt="Projeto Gabaritando" style="height:70px;width:auto"><p><strong>Videoaula concluída! 🎯</strong></p><p style="font-size:15px;color:#c9c9cf">Agora leia o material e resolva pelo menos 5 questões do assunto. Fé na missão: a farda é questão de tempo!</p><button type="button" class="va-continuar" id="vaRever">↺ Assistir de novo</button></div>';
+        parada.hidden = false;
+        document.getElementById('vaRever').addEventListener('click', function () { feitas = {}; ir(0, true); });
+    }
+    btPlay.addEventListener('click', function () { if (!parada.hidden) { return; } tocando ? pausar() : tocar(); });
+    document.getElementById('vaAnt').addEventListener('click', function () { ir(idx - 1, tocando); });
+    document.getElementById('vaProx').addEventListener('click', function () { ir(idx + 1, tocando); });
+    document.getElementById('vaVel').addEventListener('click', function () {
+        var l = [1, 1.25, 1.5, 2]; vel = l[(l.indexOf(vel) + 1) % l.length]; audio.playbackRate = vel; this.textContent = String(vel).replace('.', ',') + 'x';
+    });
+    document.getElementById('vaTela').addEventListener('click', function () {
+        if (document.fullscreenElement) { document.exitFullscreen(); } else if (va.requestFullscreen) { va.requestFullscreen().catch(function () {}); }
+    });
+    document.getElementById('vaFechar').addEventListener('click', function () { pausar(); if (document.fullscreenElement) { document.exitFullscreen(); } va.hidden = true; if (intro) { intro.hidden = false; } abrir.focus(); });
+    va.addEventListener('keydown', function (e) { if (e.key === ' ' && e.target === va) { e.preventDefault(); btPlay.click(); } });
+})();
+</script>
+<script>
+// Marca-texto no PDF: o aluno arrasta sobre o trecho; as marcações ficam salvas na conta (por página).
+(function () {
+    var camada = document.getElementById('pdfMarcaCamada'), bt = document.getElementById('pdfMarcarBtn'), dica = document.getElementById('pdfMarcaDica');
+    var cfg = window.aulasConfig || {}, aulaId = cfg.aulaId || 0;
+    if (!camada || !bt || !aulaId) { return; }
+    var marcas = [], pagina = 1, ativo = false, inicio = null, atual = null;
+    function salvar() {
+        fetch('api/aula-marcacoes.php?tipo=pdf', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({aula_id: aulaId, marcacoes: marcas})}).catch(function () {});
+    }
+    function desenhar() {
+        camada.innerHTML = '';
+        marcas.forEach(function (m, i) {
+            if (m.p !== pagina) { return; }
+            var d = document.createElement('div');
+            d.className = 'pdf-marca'; d.setAttribute('data-i', i);
+            d.style.left = (m.x * 100) + '%'; d.style.top = (m.y * 100) + '%'; d.style.width = (m.w * 100) + '%'; d.style.height = (m.h * 100) + '%';
+            camada.appendChild(d);
+        });
+    }
+    function ponto(e) { var r = camada.getBoundingClientRect(); return {x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))}; }
+    bt.addEventListener('click', function () {
+        ativo = !ativo; bt.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+        camada.classList.toggle('ativa', ativo); dica.hidden = !ativo;
+    });
+    camada.addEventListener('pointerdown', function (e) {
+        if (!ativo) { return; }
+        var alvo = e.target.closest('.pdf-marca');
+        if (alvo) { marcas.splice(+alvo.getAttribute('data-i'), 1); desenhar(); salvar(); return; }
+        e.preventDefault(); camada.setPointerCapture(e.pointerId);
+        inicio = ponto(e);
+        atual = document.createElement('div'); atual.className = 'pdf-marca'; camada.appendChild(atual);
+    });
+    camada.addEventListener('pointermove', function (e) {
+        if (!inicio || !atual) { return; }
+        var p = ponto(e), x = Math.min(p.x, inicio.x), y = Math.min(p.y, inicio.y);
+        atual.style.left = x * 100 + '%'; atual.style.top = y * 100 + '%';
+        atual.style.width = Math.abs(p.x - inicio.x) * 100 + '%'; atual.style.height = Math.max(Math.abs(p.y - inicio.y), .012) * 100 + '%';
+    });
+    function terminar(e) {
+        if (!inicio) { return; }
+        var p = ponto(e), w = Math.abs(p.x - inicio.x), h = Math.max(Math.abs(p.y - inicio.y), .012);
+        if (w > .01) {
+            marcas.push({p: pagina, x: +Math.min(p.x, inicio.x).toFixed(4), y: +(Math.abs(p.y - inicio.y) < .012 ? inicio.y - .006 : Math.min(p.y, inicio.y)).toFixed(4), w: +w.toFixed(4), h: +h.toFixed(4)});
+            salvar();
+        }
+        inicio = null; atual = null; desenhar();
+    }
+    camada.addEventListener('pointerup', terminar);
+    camada.addEventListener('pointercancel', function () { inicio = null; atual = null; desenhar(); });
+    document.addEventListener('gab:pdf-pagina', function (e) { pagina = e.detail.pagina; desenhar(); });
+    fetch('api/aula-marcacoes.php?tipo=pdf&aula_id=' + encodeURIComponent(aulaId), {credentials: 'same-origin'})
+        .then(function (r) { return r.json(); }).then(function (j) { marcas = j.marcacoes || []; desenhar(); }).catch(function () {});
 })();
 </script>
 </body>

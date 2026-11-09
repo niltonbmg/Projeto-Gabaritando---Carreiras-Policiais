@@ -296,13 +296,24 @@ if (!function_exists('meta_desempenho_materias')) {
      */
     function meta_desempenho_materias(PDO $pdo, int $usuarioId): array
     {
-        $st = $pdo->prepare('SELECT q.materia_id, m.nome, COUNT(*) total, SUM(r.correta) acertos
-                               FROM banco_questoes_respostas_usuario r
-                               JOIN admin_banco_questoes q ON q.id = r.questao_id
-                               LEFT JOIN admin_materias m ON m.id = q.materia_id
-                              WHERE r.usuario_id = :u AND q.materia_id IS NOT NULL
-                              GROUP BY q.materia_id, m.nome');
-        $st->execute([':u' => $usuarioId]);
+        // Questões do banco + perguntas das paradas da Videoaula IA (as duas contam).
+        try {
+            $st = $pdo->prepare('SELECT t.materia_id, m.nome, COUNT(*) total, SUM(t.correta) acertos FROM (
+                                    SELECT q.materia_id, r.correta FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u
+                                    UNION ALL
+                                    SELECT a.materia_id, v.correta FROM aula_videoaula_respostas v JOIN admin_curso_aulas a ON a.id = v.aula_id WHERE v.usuario_id = :u2
+                                  ) t LEFT JOIN admin_materias m ON m.id = t.materia_id
+                                  WHERE t.materia_id IS NOT NULL GROUP BY t.materia_id, m.nome');
+            $st->execute([':u' => $usuarioId, ':u2' => $usuarioId]);
+        } catch (PDOException $e) {
+            $st = $pdo->prepare('SELECT q.materia_id, m.nome, COUNT(*) total, SUM(r.correta) acertos
+                                   FROM banco_questoes_respostas_usuario r
+                                   JOIN admin_banco_questoes q ON q.id = r.questao_id
+                                   LEFT JOIN admin_materias m ON m.id = q.materia_id
+                                  WHERE r.usuario_id = :u AND q.materia_id IS NOT NULL
+                                  GROUP BY q.materia_id, m.nome');
+            $st->execute([':u' => $usuarioId]);
+        }
         $lista = [];
         foreach ($st->fetchAll() as $r) {
             $total = (int)$r['total'];
