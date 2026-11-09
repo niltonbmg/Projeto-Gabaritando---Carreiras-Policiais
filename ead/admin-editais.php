@@ -14,7 +14,7 @@ auth_admin_require_login();
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
 require_once __DIR__ . '/includes/ia-fila-lib.php';
 require_once __DIR__ . '/includes/edital-lib.php';
-@set_time_limit(200);
+@set_time_limit(320);
 
 $pdo = admin_cursos_db();
 edital_bootstrap($pdo);
@@ -174,6 +174,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ed_ir($concursoId, 'aulas', $msg);
             }
             ed_ir($concursoId, 'andamento', $msg);
+        }
+        if ($acao === 'sugerir_plano') {
+            edital_plano_bootstrap($pdo);
+            $cargoId = (int)($_POST['cargo_id'] ?? 0);
+            $pdf = '';
+            if (!empty($_FILES['prova']['tmp_name']) && is_uploaded_file($_FILES['prova']['tmp_name'])) {
+                if ((int)$_FILES['prova']['size'] > 8 * 1024 * 1024) { throw new RuntimeException('PDF da prova acima de 8 MB.'); }
+                $pdf = base64_encode((string)file_get_contents($_FILES['prova']['tmp_name']));
+            }
+            // Usa a última prova já encontrada, a menos que venha um PDF novo.
+            $st = $pdo->prepare('SELECT ultima_prova FROM concursos WHERE id = :id');
+            $st->execute([':id' => $concursoId]);
+            $prova = json_decode((string)$st->fetchColumn(), true);
+            if ($pdf !== '' || !is_array($prova) || empty($prova['encontrada'])) {
+                $prova = edital_ultima_prova($pdo, $concursoId, $pdf);
+                $pdo = podcast_reconectar($pdo);
+            }
+            $planoId = edital_sugerir_plano($pdo, $concursoId, $cargoId, $prova);
+            $cursoDoCargo = $pdo->prepare('SELECT curso_id FROM concurso_cargos WHERE id = :id');
+            $cursoDoCargo->execute([':id' => $cargoId]);
+            $_SESSION['edital_msg'] = 'Plano-Mestre sugerido (rascunho). '
+                . (!empty($prova['encontrada']) ? 'Base: última prova ' . trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '')) . ' (' . ($prova['fonte'] ?? '') . ').' : 'Não encontrei a última prova: os pesos foram estimados. Envie o PDF da prova para refazer com a recorrência real.')
+                . ' Confira a justificativa de cada assunto e aprove.';
+            header('Location: admin-meta-plano.php?curso_id=' . (int)$cursoDoCargo->fetchColumn());
+            exit;
         }
         if ($acao === 'limpar_sugestoes') {
             unset($_SESSION['edital_sugestoes'][$concursoId]);
@@ -378,6 +403,11 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <section class="admin-panel">
                         <div class="admin-panel-title"><h2><?php echo admin_esc((string)$an['cargo']['nome']); ?></h2><strong><?php echo $an['cobertos']; ?>/<?php echo $an['total']; ?> assuntos com aula · <?php echo $pct; ?>%</strong></div>
                         <?php if (empty($an['cargo']['curso_id'])): ?><p class="ed-falta">Este cargo ainda não está ligado a um curso. <a href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=concurso">Ligar agora</a></p><?php endif; ?>
+                        <form method="post" enctype="multipart/form-data" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0">
+                            <input type="hidden" name="acao" value="sugerir_plano"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$an['cargo']['id']; ?>">
+                            <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" <?php echo empty($an['cargo']['curso_id']) ? 'disabled' : ''; ?>><i data-lucide="sparkles"></i>Sugerir Plano-Mestre deste cargo</button>
+                            <label class="admin-form-hint" style="display:flex;gap:6px;align-items:center">PDF da última prova (opcional, se a IA não achar): <input type="file" name="prova" accept="application/pdf"></label>
+                        </form>
                         <div class="ed-barra" role="progressbar" aria-valuenow="<?php echo $pct; ?>" aria-valuemin="0" aria-valuemax="100"><i style="width:<?php echo $pct; ?>%"></i></div>
                         <?php $grupo = []; foreach ($an['itens'] as $it) { $grupo[$it['materia']][] = $it; } foreach ($grupo as $mat => $lista): $ok = count(array_filter($lista, static fn($x) => $x['aulas'])); ?>
                             <details class="ed-materia"<?php echo $ok < count($lista) ? ' open' : ''; ?>><summary><span><?php echo admin_esc($mat); ?></span><small><?php echo $ok; ?>/<?php echo count($lista); ?></small></summary>

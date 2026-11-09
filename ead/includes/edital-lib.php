@@ -303,3 +303,189 @@ if (!function_exists('edital_criar_aula')) {
         return $ids;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Plano-Mestre automático a partir do edital do cargo.
+// ---------------------------------------------------------------------------
+
+if (!function_exists('edital_plano_bootstrap')) {
+    function edital_plano_bootstrap(PDO $pdo): void
+    {
+        foreach (['justificativa' => 'TEXT NULL', 'recorrencia' => 'DECIMAL(5,2) NULL'] as $col => $def) {
+            if (!$pdo->query('SHOW COLUMNS FROM meta_plano_itens LIKE ' . $pdo->quote($col))->fetch()) {
+                $pdo->exec("ALTER TABLE meta_plano_itens ADD COLUMN `$col` $def");
+            }
+        }
+        foreach (['ultima_prova' => 'MEDIUMTEXT NULL'] as $col => $def) {
+            if (!$pdo->query('SHOW COLUMNS FROM concursos LIKE ' . $pdo->quote($col))->fetch()) {
+                $pdo->exec("ALTER TABLE concursos ADD COLUMN `$col` $def");
+            }
+        }
+    }
+}
+
+if (!function_exists('edital_json_do_texto')) {
+    /** Extrai o primeiro objeto JSON de um texto (respostas com busca não vêm em modo JSON). */
+    function edital_json_do_texto(string $t): ?array
+    {
+        $t = (string)preg_replace('~^```(?:json)?|```$~m', '', $t);
+        $ini = strpos($t, '{');
+        $fim = strrpos($t, '}');
+        if ($ini === false || $fim === false) {
+            return null;
+        }
+        $j = json_decode(substr($t, $ini, $fim - $ini + 1), true);
+        return is_array($j) ? $j : null;
+    }
+}
+
+if (!function_exists('edital_ultima_prova')) {
+    /**
+     * Distribuição de questões da última prova por assunto do edital.
+     * Fonte, em ordem: PDF da prova enviado pelo mentor > busca na internet (Gemini + Google).
+     * Retorna {encontrada, fonte, ano, banca, itens:{edital_item_id: questoes}, observacao}.
+     */
+    function edital_ultima_prova(PDO $pdo, int $concursoId, string $pdfBase64 = ''): array
+    {
+        $st = $pdo->prepare('SELECT c.*, b.nome AS banca FROM concursos c LEFT JOIN admin_bancas b ON b.id = c.banca_id WHERE c.id = :id');
+        $st->execute([':id' => $concursoId]);
+        $c = $st->fetch();
+        $cg = $pdo->prepare('SELECT nome FROM concurso_cargos WHERE concurso_id = :c');
+        $cg->execute([':c' => $concursoId]);
+        $cargos = implode(', ', $cg->fetchAll(PDO::FETCH_COLUMN));
+        $itens = array_map(static fn(array $i): array => ['id' => (int)$i['id'], 'assunto' => $i['materia'] . ' › ' . $i['assunto']], edital_itens($pdo, $concursoId));
+
+        $pedido = "Concurso: {$c['nome']} (cargos: $cargos; banca: " . ($c['banca'] ?: 'não informada') . ")"
+            . ($c['base_edital'] ? "; edital de referência: {$c['base_edital']}" : '') . ".\n"
+            . "Quero a DISTRIBUIÇÃO DE QUESTÕES DA ÚLTIMA PROVA OBJETIVA aplicada para este concurso, por assunto do edital abaixo.\n"
+            . "Para cada assunto, quantas questões caíram (0 se nenhuma). Não invente: se não tiver a prova, diga encontrada=false.\n"
+            . "Responda SOMENTE em JSON: {\"encontrada\":true|false,\"ano\":2022,\"banca\":\"...\",\"fonte\":\"link ou nome do documento\",\"itens\":[{\"id\":n,\"questoes\":n}],\"observacao\":\"1 frase\"}\n\n"
+            . "ASSUNTOS DO EDITAL: " . json_encode($itens, JSON_UNESCAPED_UNICODE);
+        if ($pdfBase64 !== '') {
+            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "A prova está no PDF anexo.\n" . $pedido], ['inlineData' => ['mimeType' => 'application/pdf', 'data' => $pdfBase64]]]]]], 150);
+        } else {
+            // Busca na internet (Grounding com Google Search).
+            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Pesquise na internet a prova mais recente deste concurso (site da banca, Diário Oficial ou PCI Concursos).\n" . $pedido]]]], 'tools' => [['google_search' => new stdClass()]]], 150);
+        }
+        $texto = '';
+        foreach ((array)($resp['candidates'][0]['content']['parts'] ?? []) as $p) {
+            $texto .= (string)($p['text'] ?? '');
+        }
+        $j = edital_json_do_texto($texto) ?? ['encontrada' => false];
+        $ids = array_column($itens, 'id');
+        $dist = [];
+        foreach ((array)($j['itens'] ?? []) as $i) {
+            if (in_array((int)($i['id'] ?? 0), $ids, true)) {
+                $dist[(int)$i['id']] = max(0, (int)($i['questoes'] ?? 0));
+            }
+        }
+        $res = [
+            'encontrada' => !empty($j['encontrada']) && array_sum($dist) > 0,
+            'fonte' => $pdfBase64 !== '' ? 'PDF da prova enviado pelo mentor' : mb_substr((string)($j['fonte'] ?? ''), 0, 300),
+            'ano' => (int)($j['ano'] ?? 0) ?: null,
+            'banca' => mb_substr((string)($j['banca'] ?? ''), 0, 120),
+            'itens' => $dist,
+            'observacao' => mb_substr((string)($j['observacao'] ?? ''), 0, 300),
+        ];
+        $pdo = podcast_reconectar($pdo);
+        $pdo->prepare('UPDATE concursos SET ultima_prova = :u WHERE id = :id')->execute([':u' => json_encode($res, JSON_UNESCAPED_UNICODE), ':id' => $concursoId]);
+        return $res;
+    }
+}
+
+if (!function_exists('edital_banco_por_assunto')) {
+    /** No banco de questões da plataforma: quantidade e % de questões difíceis por assunto. */
+    function edital_banco_por_assunto(PDO $pdo, array $topicoIds): array
+    {
+        if (!$topicoIds) {
+            return [];
+        }
+        $in = implode(',', array_map('intval', $topicoIds));
+        $res = [];
+        foreach ($pdo->query("SELECT materia_topico_id t, COUNT(*) n, SUM(dificuldade = 'dificil') d, SUM(concurso_passado_id IS NOT NULL) reais FROM admin_banco_questoes WHERE materia_topico_id IN ($in) GROUP BY materia_topico_id") as $r) {
+            $res[(int)$r['t']] = ['total' => (int)$r['n'], 'dificeis_pct' => $r['n'] ? (int)round($r['d'] * 100 / $r['n']) : 0, 'reais' => (int)$r['reais']];
+        }
+        return $res;
+    }
+}
+
+if (!function_exists('edital_sugerir_plano')) {
+    /**
+     * IA monta o Plano-Mestre do cargo (rascunho) com ordem didática, peso,
+     * complexidade e justificativa de cada assunto. Retorna o id do plano.
+     */
+    function edital_sugerir_plano(PDO $pdo, int $concursoId, int $cargoId, array $prova): int
+    {
+        edital_plano_bootstrap($pdo);
+        $cg = $pdo->prepare('SELECT * FROM concurso_cargos WHERE id = :id AND concurso_id = :c');
+        $cg->execute([':id' => $cargoId, ':c' => $concursoId]);
+        $cargo = $cg->fetch();
+        if (!$cargo || empty($cargo['curso_id'])) {
+            throw new RuntimeException('Ligue o cargo a um curso antes de gerar o Plano-Mestre.');
+        }
+        $itens = array_values(array_filter(edital_itens($pdo, $concursoId), static function (array $i) use ($cargoId): bool {
+            $ids = array_filter(array_map('intval', explode(',', (string)$i['cargos'])));
+            return !$ids || in_array($cargoId, $ids, true);
+        }));
+        if (!$itens) {
+            throw new RuntimeException('Este cargo não tem assuntos no edital.');
+        }
+        $banco = edital_banco_por_assunto($pdo, array_column($itens, 'topico_id'));
+        $totalProva = array_sum($prova['itens'] ?? []);
+        $dados = [];
+        foreach ($itens as $i) {
+            $q = (int)(($prova['itens'] ?? [])[(int)$i['id']] ?? 0);
+            $b = $banco[(int)$i['topico_id']] ?? ['total' => 0, 'dificeis_pct' => 0, 'reais' => 0];
+            $dados[] = ['id' => (int)$i['id'], 'materia' => $i['materia'], 'assunto' => $i['assunto'],
+                'questoes_ultima_prova' => $q, 'recorrencia_pct' => $totalProva ? round($q * 100 / $totalProva, 1) : null,
+                'banco_questoes' => $b['total'], 'banco_dificeis_pct' => $b['dificeis_pct']];
+        }
+        $prompt = "Você é o coordenador pedagógico do Projeto Gabaritando (Método META: teoria mínima, questões comentadas, simulados e redação, com acompanhamento).\n"
+            . "Monte o PLANO-MESTRE do cargo \"{$cargo['nome']}\" com TODOS os assuntos abaixo.\n"
+            . "Para cada assunto defina:\n"
+            . "- ordem: sequência didática DENTRO da matéria (pré-requisitos antes: ex. classes de palavras antes de concordância; princípios antes de crimes em espécie). As matérias andam em paralelo no cronograma, então só a ordem dentro de cada matéria importa.\n"
+            . "- peso: 1 (pouco cobrado), 2 (médio) ou 3 (muito cobrado), pela recorrência na última prova; sem dado de prova, use a importância típica no concurso.\n"
+            . "- complexidade: facil, media, dificil ou muito_dificil, pelo conteúdo e pela dificuldade das questões.\n"
+            . "- justificativa: 1 a 2 frases DIDÁTICAS para o mentor: por que nesta posição, por que este peso e esta complexidade, citando os números quando houver.\n"
+            . ($prova['encontrada'] ?? false ? "Última prova: " . ($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '') . " (fonte: " . ($prova['fonte'] ?? '') . ").\n" : "Não há distribuição da última prova: diga isso na justificativa quando o peso for estimado.\n")
+            . "Responda SOMENTE em JSON: {\"itens\":[{\"id\":n,\"ordem\":n,\"peso\":1|2|3,\"complexidade\":\"...\",\"justificativa\":\"...\"}]}\n\n"
+            . "ASSUNTOS (com dados): " . json_encode($dados, JSON_UNESCAPED_UNICODE);
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => $prompt]]]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.2]], 150);
+        $pdo = podcast_reconectar($pdo);
+        $j = json_decode((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? ''), true);
+        $porId = [];
+        foreach ((array)($j['itens'] ?? []) as $r) {
+            $porId[(int)($r['id'] ?? 0)] = $r;
+        }
+        if (!$porId) {
+            throw new RuntimeException('A IA não devolveu o plano. Tente de novo.');
+        }
+
+        // Novo rascunho do Plano-Mestre do curso do cargo.
+        $cursoId = (int)$cargo['curso_id'];
+        $pdo->prepare("INSERT INTO meta_planos (curso_id, titulo, status) VALUES (:c, :t, 'rascunho')")
+            ->execute([':c' => $cursoId, ':t' => 'Plano-Mestre ' . $cargo['nome'] . ' (sugerido pela IA em ' . date('d/m/Y') . ')']);
+        $planoId = (int)$pdo->lastInsertId();
+        $aula = $pdo->prepare('SELECT id FROM admin_curso_aulas WHERE curso_id = :c AND topico_id = :t ORDER BY ordem, id LIMIT 1');
+        $ins = $pdo->prepare('INSERT INTO meta_plano_itens (plano_id, ordem, materia_id, topico_id, titulo, aula_id, peso, complexidade, justificativa, recorrencia)
+                              VALUES (:p, :o, :m, :t, :ti, :a, :pe, :cx, :j, :r)');
+        $materiaOrdem = [];
+        foreach ($itens as $k => $i) {
+            $r = $porId[(int)$i['id']] ?? [];
+            $materiaOrdem[$i['materia']] = $materiaOrdem[$i['materia']] ?? count($materiaOrdem);
+            $aula->execute([':c' => $cursoId, ':t' => (int)$i['topico_id']]);
+            $cx = in_array($r['complexidade'] ?? '', ['facil', 'media', 'dificil', 'muito_dificil'], true) ? $r['complexidade'] : 'media';
+            $rec = $dados[$k]['recorrencia_pct'];
+            $ins->execute([
+                ':p' => $planoId,
+                ':o' => $materiaOrdem[$i['materia']] * 1000 + (int)($r['ordem'] ?? ($k + 1)),
+                ':m' => (int)$i['materia_id'], ':t' => (int)$i['topico_id'], ':ti' => $i['assunto'],
+                ':a' => ((int)$aula->fetchColumn()) ?: null,
+                ':pe' => max(1, min(3, (int)($r['peso'] ?? 1))), ':cx' => $cx,
+                ':j' => mb_substr((string)($r['justificativa'] ?? ''), 0, 1000),
+                ':r' => $rec,
+            ]);
+        }
+        return $planoId;
+    }
+}

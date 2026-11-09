@@ -182,6 +182,13 @@ $mensagens = [
     'rascunho' => 'Plano voltou para rascunho. Os alunos deixam de ver o plano até nova aprovação.',
     'regras' => 'Regras do método atualizadas.',
 ];
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!empty($_SESSION['edital_msg'])) {
+    $sucesso = (string)$_SESSION['edital_msg'];
+    unset($_SESSION['edital_msg']);
+}
 $sk = (string)($_GET['sucesso'] ?? '');
 if (isset($mensagens[$sk])) {
     $sucesso = $mensagens[$sk];
@@ -259,6 +266,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         .meta-num{max-width:80px}
         .meta-regras{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
         .meta-tempo strong{display:block}.meta-tempo span{display:block;font-size:12px;color:#5b6170;white-space:nowrap}.meta-tempo .meta-fonte{color:#8a8f9c;font-size:11px;white-space:normal}
+        .meta-just{display:block;margin-top:6px;font-size:12px;color:#5b6170;line-height:1.4;max-width:420px}
         .meta-resumo{display:flex;flex-wrap:wrap;gap:16px;color:#5b6170;font-size:14px}
     </style>
 </head>
@@ -320,11 +328,11 @@ $menuBarInclude = admin_cursos_get_menubar();
                                 <?php foreach ($itens as $i): $id = (int)$i['id']; ?>
                                     <tr>
                                         <td><input class="meta-num" type="number" name="itens[<?php echo $id; ?>][ordem]" value="<?php echo (int)$i['ordem']; ?>" aria-label="Ordem"></td>
-                                        <td><strong><?php echo admin_esc((string)$i['titulo']); ?></strong><br><span><?php echo admin_esc((string)($i['materia_nome'] ?? '')); ?></span></td>
+                                        <td><strong><?php echo admin_esc((string)$i['titulo']); ?></strong><br><span><?php echo admin_esc((string)($i['materia_nome'] ?? '')); ?><?php echo isset($i['recorrencia']) && $i['recorrencia'] !== null ? ' · ' . number_format((float)$i['recorrencia'], 1, ',', '') . '% da última prova' : ''; ?> · peso <?php echo (int)$i['peso']; ?></span><?php if (!empty($i['justificativa'])): ?><span class="meta-just">💡 <?php echo admin_esc((string)$i['justificativa']); ?></span><?php endif; ?></td>
                                         <td><select name="itens[<?php echo $id; ?>][topico_id]" aria-label="Tópico"><option value="0">— sem tópico —</option><?php foreach ($topicos as $t): ?><option value="<?php echo (int)$t['id']; ?>" <?php echo (int)$t['id'] === (int)$i['topico_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$t['materia'] . ' › ' . (string)$t['titulo']); ?></option><?php endforeach; ?></select>
                                             <?php if (empty($i['topico_id'])): ?><span class="admin-form-hint">Sem tópico, as questões não contam.</span><?php endif; ?></td>
                                         <td><select name="itens[<?php echo $id; ?>][aula_id]" aria-label="Aula"><option value="0">— sem aula —</option><?php foreach ($aulas as $a): ?><option value="<?php echo (int)$a['id']; ?>" <?php echo (int)$a['id'] === (int)$i['aula_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$a['titulo']); ?></option><?php endforeach; ?></select></td>
-                                        <td><select name="itens[<?php echo $id; ?>][complexidade]" aria-label="Complexidade"><?php foreach (META_COMPLEXIDADES as $ck => $cv): ?><option value="<?php echo $ck; ?>" <?php echo ($i['complexidade'] ?? 'media') === $ck ? 'selected' : ''; ?>><?php echo $cv['nome']; ?></option><?php endforeach; ?></select><input type="hidden" name="itens[<?php echo $id; ?>][peso]" value="<?php echo admin_esc((string)$i['peso']); ?>"></td>
+                                        <td><select name="itens[<?php echo $id; ?>][complexidade]" aria-label="Complexidade"><?php foreach (META_COMPLEXIDADES as $ck => $cv): ?><option value="<?php echo $ck; ?>" <?php echo ($i['complexidade'] ?? 'media') === $ck ? 'selected' : ''; ?>><?php echo $cv['nome']; ?></option><?php endforeach; ?></select><select name="itens[<?php echo $id; ?>][peso]" aria-label="Peso" style="margin-top:6px"><?php foreach ([1 => 'Peso 1', 2 => 'Peso 2', 3 => 'Peso 3'] as $pk => $pn): ?><option value="<?php echo $pk; ?>" <?php echo (int)round((float)$i['peso']) === $pk ? 'selected' : ''; ?>><?php echo $pn; ?></option><?php endforeach; ?></select></td>
                                         <?php $tp = $tempos[$id] ?? null; ?>
                                         <td class="meta-tempo"><?php if ($tp): ?><strong><?php echo mp_min((int)$tp['total']); ?></strong><span>🎥 <?php echo mp_min((int)$tp['video']); ?> · 📄 <?php echo mp_min((int)$tp['pdf']); ?><?php echo $tp['paginas'] ? ' (' . (int)$tp['paginas'] . ' pág.)' : ''; ?> · ✍️ <?php echo mp_min((int)$tp['questoes']); ?></span><span class="meta-fonte"><?php echo admin_esc($tp['fonte_video']); ?><?php echo $tp['fator_aprendido'] != 1.0 ? ' · aprendido ×' . number_format((float)$tp['fator_aprendido'], 2, ',', '') : ''; ?></span><?php endif; ?></td>
                                         <td><input class="meta-num" type="number" min="10" name="itens[<?php echo $id; ?>][ajuste]" value="<?php echo $i['tempo_ajustado_min'] ? (int)$i['tempo_ajustado_min'] : ''; ?>" placeholder="<?php echo $tp ? (int)$tp['calculado'] : ''; ?>" aria-label="Seu ajuste em minutos"></td>
