@@ -94,6 +94,7 @@ $menuBarInclude = admin_cursos_get_menubar();
             <div class="admin-page-heading"><h1>🎯 Desafio do Dia</h1><p>20 questões por dia, escolhidas pela IA, com ranking geral. Só as questões do desafio contam no ranking; as do ciclo de estudo ficam no histórico do aluno.</p></div>
             <div class="admin-page-actions"><a class="admin-btn admin-btn-light" href="desafio.php" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Ver como aluno</a></div>
         </section>
+        <?php if ($hoje < DESAFIO_INICIO): ?><div class="admin-alert admin-alert-success"><i data-lucide="calendar"></i>Estreia para os alunos em <?php echo date('d/m/Y', strtotime(DESAFIO_INICIO)); ?>. Até lá, esta tela é só pré-visualização (os alunos veem o aviso de estreia).</div><?php endif; ?>
         <?php if ($erro !== ''): ?><div class="admin-alert admin-alert-error"><i data-lucide="alert-circle"></i><?php echo admin_esc($erro); ?></div><?php endif; ?>
         <?php if ($sucesso !== ''): ?><div class="admin-alert admin-alert-success"><i data-lucide="check-circle-2"></i><?php echo admin_esc($sucesso); ?></div><?php endif; ?>
 

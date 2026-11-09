@@ -36,7 +36,9 @@ $pdo = db();
 // Desafio do Dia já pronto quando o primeiro aluno abrir (e a mensagem do WhatsApp também).
 try {
     date_default_timezone_set('America/Bahia');
-    desafio_gerar($pdo, date('Y-m-d'));
+    if (date('Y-m-d') >= DESAFIO_INICIO) {
+        desafio_gerar($pdo, date('Y-m-d'));
+    }
 } catch (Throwable $e) {
     echo 'Desafio do dia: ' . $e->getMessage() . "\n";
 }

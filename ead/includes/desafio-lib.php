@@ -12,6 +12,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/podcast-lib.php';
 
 const DESAFIO_QTD = 20;
+// Data de estreia: antes dela os alunos veem só o aviso (o admin pode testar).
+const DESAFIO_INICIO = '2026-12-01';
 const DESAFIO_MIX = ['facil' => 0.3, 'medio' => 0.5, 'dificil' => 0.2];
 
 if (!function_exists('desafio_bootstrap')) {

@@ -28,7 +28,9 @@ $questoes = [];
 try {
     $pdo = db();
     desafio_bootstrap($pdo);
-    if ($dia === $hoje) {
+    if ($hoje < DESAFIO_INICIO) {
+        $desafio = null;
+    } elseif ($dia === $hoje) {
         $desafio = desafio_gerar($pdo, $hoje);
     } else {
         $st = $pdo->prepare('SELECT * FROM desafios WHERE data = :d');
@@ -155,7 +157,8 @@ $meses = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho
     </section>
 
     <?php if ($erro !== ''): ?><div class="dz-alerta" role="alert"><?php echo dz_e($erro); ?></div><?php endif; ?>
-    <?php if (!$desafio && $erro === ''): ?><div class="dz-vazio">Não houve desafio neste dia.</div><?php endif; ?>
+    <?php if ($hoje < DESAFIO_INICIO): ?><div class="dz-vazio">🎯 O Desafio do Dia começa em <strong><?php echo date('d/m', strtotime(DESAFIO_INICIO)); ?></strong>! 20 questões por dia, Ranking Geral e prêmio para o campeão do mês. Prepare-se, combatente!</div>
+    <?php elseif (!$desafio && $erro === ''): ?><div class="dz-vazio">Não houve desafio neste dia.</div><?php endif; ?>
 
     <?php if ($podeResponder): ?>
         <form method="post" id="formDesafio">
