@@ -1,7 +1,7 @@
 <?php
 // includes/videoaula-lib.php
 // Videoaula IA: para aulas que só têm PDF (ou sem vídeo), a IA lê o material e
-// monta 6 a 10 slides com narração do "Sargento" + paradas com pergunta.
+// monta 6 a 10 slides com narração do Antigão (a IA do Projeto Gabaritando) + paradas com pergunta.
 // O aluno vê como um vídeo (slides trocando sincronizados com a voz), mas é
 // página + áudio: leve e sem custo (mesma voz do podcast, Gemini TTS).
 declare(strict_types=1);
@@ -76,7 +76,7 @@ if (!function_exists('videoaula_bootstrap')) {
         $prompt = "Você é professor e designer didático do Projeto Gabaritando, cursinho para carreiras policiais e militares da Bahia.\n"
             . "Monte uma VIDEOAULA CURTA (4 a 7 minutos) sobre a aula abaixo: slides + narração + paradas com pergunta.\n\n"
             . "DIDÁTICA (obrigatória)\n"
-            . "- Slide 1: abertura. Narração começa com \"Fala, combatente! Aqui é o Projeto Gabaritando\" e diz o que o aluno vai aprender e por que cai na prova.\n"
+            . "- Slide 1: abertura. Narração começa com \"Fala, combatente! Aqui é o Antigão, do Projeto Gabaritando\" (o Antigão é a IA professora: veterano experiente e bem-humorado) e diz o que o aluno vai aprender e por que cai na prova.\n"
             . "- Do 2º ao penúltimo: um conceito por slide, do mais simples ao mais difícil. Título curto, 2 a 4 tópicos de no máximo 12 palavras, e um 'destaque' (macete, pegadinha da banca ou exemplo).\n"
             . "- Último slide: resumo em 3 tópicos e a chamada: resolver pelo menos 5 questões do assunto. Termine a narração com \"Fé na missão: a farda é questão de tempo!\".\n"
             . "- Narração: fala natural de professor, 40 a 90 palavras por slide, sem ler os tópicos palavra por palavra, números e datas por extenso.\n"
@@ -151,7 +151,7 @@ if (!function_exists('videoaula_bootstrap')) {
         return $st->fetch() ?: null;
     }
 
-    /** Passo 2: narração do slide $n (uma voz: o Sargento). */
+    /** Passo 2: narração do slide $n (uma voz: o Antigão). */
     function videoaula_parte(PDO $pdo, int $aulaId, int $n): array
     {
         $pdo = podcast_reconectar($pdo);

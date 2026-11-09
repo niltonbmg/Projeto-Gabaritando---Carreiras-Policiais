@@ -3612,7 +3612,7 @@ if ($aulas) {
                                     <p>Esta aula é de leitura. Leia o material com atenção, faça suas marcações e depois siga para as questões.</p>
                                     <?php if (!empty($aulaAtual['pdf_duracao'])): ?><p class="aula-somente-pdf__tempo"><i data-lucide="clock-3" aria-hidden="true"></i>Tempo estimado de leitura: <?php echo esc((string)$aulaAtual['pdf_duracao']); ?></p><?php endif; ?>
                                     <div class="aula-somente-pdf__acoes">
-                                        <button type="button" class="aula-somente-pdf__botao" id="vaAbrir"><span aria-hidden="true">▶</span>Assistir à Videoaula IA</button>
+                                        <button type="button" class="aula-somente-pdf__botao" id="vaAbrir"><span aria-hidden="true">▶</span>Assistir à videoaula do Antigão</button>
                                         <button type="button" class="aula-somente-pdf__botao aula-somente-pdf__botao--sec" onclick="var b=document.getElementById('abrirPdfAula'); if(b){b.click();}">
                                             <i data-lucide="file-text" aria-hidden="true"></i>Ler o material
                                         </button>
@@ -3708,7 +3708,7 @@ if ($aulas) {
                         <?php $aulaDescricaoHtml = aula_descricao_html($aulaDescricao); ?>
                         <?php if ($aulaAtual && ($aulaDescricaoHtml !== '' || $pdfAtual['arquivo'] !== '')): ?>
                         <div class="pod" style="margin-bottom:20px" id="aulaPodcast" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>">
-                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast desta aula</span></button>
+                                <button type="button" class="pod-btn" id="podBtn"><span aria-hidden="true">🎧</span><span id="podBtnTxt">Ouvir o podcast: Antigão e Recruta Bia</span></button>
                                 <div class="pod-progresso" id="podProg" hidden><div class="pod-barra"><i id="podBarra"></i></div><span id="podMsg">Preparando o roteiro…</span></div>
                                 <div class="pod-player" id="podPlayer" hidden>
                                     <audio id="podAudio" controls preload="metadata"></audio>
@@ -5838,7 +5838,7 @@ if ($aulas) {
     function progresso(ok, total, msg) { ger.hidden = false; gerBarra.style.width = Math.max(5, Math.round(ok * 100 / Math.max(1, total))) + '%'; gerMsg.textContent = msg; }
     function gerar() {
         abrir.disabled = true;
-        progresso(0, 1, 'A IA está lendo o PDF e montando os slides… (cerca de 1 minuto)');
+        progresso(0, 1, 'O Antigão está lendo o PDF e montando os slides… (cerca de 1 minuto)');
         return api({aula_id: aulaId, acao: 'iniciar'}).then(function proximo(r) {
             if (r.status === 'pronto') { return situacao(); }
             var total = r.partes || 1, ok = r.partes_ok || 0;
@@ -5876,7 +5876,7 @@ if ($aulas) {
         var itens = (sl.topicos || []).map(function (t, i) { return '<li style="animation-delay:' + ((i + 1) * passo).toFixed(1) + 's">' + esc(t) + '</li>'; }).join('');
         var dest = sl.destaque ? '<div class="va-slide__dest" style="animation-delay:' + (((sl.topicos || []).length + 1) * passo).toFixed(1) + 's">💡 ' + esc(sl.destaque) + '</div>' : '';
         if (idx === 0) {
-            palco.innerHTML = '<div class="va-slide va-abertura"><img src="' + esc(logo.getAttribute('src')) + '" alt="Projeto Gabaritando"><small>Projeto Gabaritando · Videoaula</small><h3>' + esc(sl.titulo) + '</h3><ul>' + itens + '</ul>' + dest + '</div>';
+            palco.innerHTML = '<div class="va-slide va-abertura"><img src="' + esc(logo.getAttribute('src')) + '" alt="Projeto Gabaritando"><small>Projeto Gabaritando · Videoaula com o Antigão</small><h3>' + esc(sl.titulo) + '</h3><ul>' + itens + '</ul>' + dest + '</div>';
         } else {
             palco.innerHTML = '<div class="va-slide"><div class="va-slide__emoji" aria-hidden="true">' + esc(sl.emoji) + '</div><h3>' + esc(sl.titulo) + '</h3><ul>' + itens + '</ul>' + dest + '</div>';
         }

@@ -27,7 +27,7 @@ if ($temChave && ($_POST['testar'] ?? '') !== '') {
         $teste['texto_ms'] = (int)((microtime(true) - $t0) * 1000);
 
         $t0 = microtime(true);
-        $pcm = podcast_tts([['quem' => 'Sargento', 'texto' => 'Fala, combatente! Teste de voz do Gabaritando.'], ['quem' => 'Ana', 'texto' => 'Funcionou, Sargento!']]);
+        $pcm = podcast_tts([['quem' => 'Sargento', 'texto' => 'Fala, combatente! Aqui é o Antigão, teste de voz do Projeto Gabaritando.'], ['quem' => 'Ana', 'texto' => 'Funcionou, Antigão!']]);
         if ($pcm) {
             $wav = 'RIFF' . pack('V', 36 + strlen($pcm)) . 'WAVEfmt ' . pack('VvvVVvv', 16, 1, 1, PODCAST_TAXA, PODCAST_TAXA * 2, 2, 16) . 'data' . pack('V', strlen($pcm)) . $pcm;
             $teste['voz'] = 'data:audio/wav;base64,' . base64_encode($wav);
