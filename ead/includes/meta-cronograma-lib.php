@@ -154,10 +154,10 @@ if (!function_exists('meta_cronograma_minutos_item')) {
     {
         // Tempo calculado (vídeo + PDF + questões); ver meta-tempo-lib.php.
         if (isset($item['tempo'])) {
-            return ['teoria' => max(10, (int)$item['tempo']['teoria']), 'questoes' => max(15, (int)$item['tempo']['questoes'])];
+            return ['teoria' => max(10, meta_arred5((float)$item['tempo']['teoria'])), 'questoes' => max(15, meta_arred5((float)$item['tempo']['questoes']))];
         }
-        $total = max(30, (int)round((float)$item['horas'] * 60));
-        $teoria = (int)round($total * META_FRACAO_TEORIA);
+        $total = max(30, meta_arred5((float)$item['horas'] * 60));
+        $teoria = meta_arred5($total * META_FRACAO_TEORIA);
         return ['teoria' => $teoria, 'questoes' => $total - $teoria];
     }
 }
@@ -261,7 +261,7 @@ if (!function_exists('meta_cronograma_distribuir')) {
             if (!in_array($dow, $cfg['dias'], true)) {
                 continue;
             }
-            $livre = (int)($cfg['minutos'][$dow] ?? 0);
+            $livre = (int)(floor((int)($cfg['minutos'][$dow] ?? 0) / 5) * 5); // dia em múltiplos de 5
             // Simulado e redação semanais (no dia definido pelo mentor).
             foreach ($eventos as $ev) {
                 $semanas = max(1, (int)$ev['cada_semanas']);
@@ -288,7 +288,10 @@ if (!function_exists('meta_cronograma_distribuir')) {
                     }
                 }
                 $t = $filas[$escolha][0];
-                $usar = min($livre, $restanteTarefa[$escolha], META_BLOCO_MIN);
+                $usar = (int)(floor(min($livre, $restanteTarefa[$escolha], META_BLOCO_MIN) / 5) * 5);
+                if ($usar < 5) {
+                    break;
+                }
                 $ultimo = isset($agenda[$data]) ? count($agenda[$data]) - 1 : -1;
                 if ($ultimo >= 0 && ($agenda[$data][$ultimo]['tipo'] ?? '') === $t['tipo'] && (int)($agenda[$data][$ultimo]['item']['id'] ?? -1) === (int)$t['item']['id']) {
                     $agenda[$data][$ultimo]['minutos'] += $usar; // mesmo assunto em sequência: um cartão só

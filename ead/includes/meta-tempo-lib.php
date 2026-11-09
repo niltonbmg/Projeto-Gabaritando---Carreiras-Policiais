@@ -60,6 +60,20 @@ if (!function_exists('meta_tempo_bootstrap')) {
     }
 }
 
+if (!function_exists('meta_arred5')) {
+    /**
+     * Regra da casa: tempos sempre terminados em 0 ou 5 minutos.
+     * Arredonda para o múltiplo de 5 mais próximo (2,5 sobe); nada fica abaixo de 5.
+     */
+    function meta_arred5(float $minutos): int
+    {
+        if ($minutos <= 0) {
+            return 0;
+        }
+        return max(5, (int)(floor($minutos / 5 + 0.5) * 5));
+    }
+}
+
 if (!function_exists('meta_tempo_texto_para_seg')) {
     /** "34:36", "1:02:10", "12 min", "1h 5min", "30min", "45s" -> segundos. */
     function meta_tempo_texto_para_seg(string $v): int
@@ -189,12 +203,16 @@ if (!function_exists('meta_tempo_item')) {
         $base = (int)ceil($video + $pdfBase + $questoesBase);
 
         // Com o aprendizado: PDF e questões seguem o fator da matéria; o vídeo é fixo.
-        $pdf = (int)ceil($pdfBase * $fatorAprendido);
+        // Todos os tempos terminam em 0 ou 5 (meta_arred5).
+        $minQuestoes = meta_arred5($minQuestoes);
+        $video = meta_arred5($video);
+        $pdf = meta_arred5($pdfBase * $fatorAprendido);
         $teoria = $video + $pdf;
-        $questoes = max($minQuestoes, (int)ceil($questoesBase * $fatorAprendido));
+        $questoes = max($minQuestoes, meta_arred5($questoesBase * $fatorAprendido));
         $calculado = $teoria + $questoes;
+        $base = meta_arred5($base);
 
-        $ajustado = !empty($item['tempo_ajustado_min']) ? (int)$item['tempo_ajustado_min'] : null;
+        $ajustado = !empty($item['tempo_ajustado_min']) ? meta_arred5((int)$item['tempo_ajustado_min']) : null;
         if ($ajustado !== null && $ajustado > 0) {
             // Mentor definiu o total: mantém a teoria e ajusta as questões, sem cair do mínimo.
             $questoes = max($minQuestoes, $ajustado - $teoria);
