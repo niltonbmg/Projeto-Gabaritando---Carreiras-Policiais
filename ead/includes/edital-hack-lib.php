@@ -544,11 +544,17 @@ if (!function_exists('hack_bootstrap')) {
         $cgN = $pdo->prepare('SELECT nome FROM concurso_cargos WHERE concurso_id = :c');
         $cgN->execute([':c' => (int)$it['concurso_id']]);
         $cargosTxt = implode(', ', $cgN->fetchAll(PDO::FETCH_COLUMN)) ?: 'carreiras policiais e militares';
-        // Antes de criar, a IA procura questões REAIS em rodadas, do mais parecido ao mais amplo.
+        // Somos especialistas: a busca vai do MESMO CARGO para os cargos CORRELATOS da mesma área, e só depois amplia.
+        $nCargos = mb_strtolower($cargosTxt);
+        $area = str_contains($nCargos, 'bombeir') ? 'bombeiros militares (CBM de todos os estados) e, em seguida, policiais militares'
+            : (str_contains($nCargos, 'civil') || str_contains($nCargos, 'escriv') || str_contains($nCargos, 'investig') || str_contains($nCargos, 'delegad') ? 'Polícia Civil de todos os estados, Polícia Federal e Polícia Rodoviária Federal'
+            : (str_contains($nCargos, 'penal') || str_contains($nCargos, 'agente penitenci') ? 'Polícia Penal e agentes penitenciários de todos os estados'
+            : 'policiais militares (PM de todos os estados) e, em seguida, bombeiros militares, Polícia Civil, Polícia Penal, PRF e Forças Armadas (EsSA, EEAR, Marinha)'));
         $rodadas = [
-            "provas da banca $banca para cargos equivalentes a ($cargosTxt) em QUALQUER ESTADO do Brasil (PM, Corpo de Bombeiros, Polícia Civil e Penal de todos os estados)",
-            "provas de QUALQUER BANCA para cargos equivalentes a ($cargosTxt) em TODOS OS ESTADOS do Brasil (PM, CBM, Polícia Civil, Polícia Penal, Guarda Municipal, Forças Armadas)",
-            "provas de concursos públicos de nível médio de qualquer banca e de qualquer estado do Brasil",
+            "provas do MESMO CARGO ($cargosTxt) aplicadas pela banca $banca em qualquer estado do Brasil",
+            "provas do MESMO CARGO ($cargosTxt) em TODOS OS ESTADOS do Brasil, de qualquer banca",
+            "provas de cargos CORRELATOS da mesma área: $area, de qualquer banca e estado",
+            "provas de concursos públicos de nível médio da área de segurança pública e, por último, de nível médio em geral",
         ];
         $reais = 0;
         foreach ($rodadas as $onde) {
@@ -557,7 +563,7 @@ if (!function_exists('hack_bootstrap')) {
                 break;
             }
             try {
-                $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Pesquise na internet QUESTÕES REAIS já aplicadas em $onde, sobre o assunto abaixo.\n" . $base
+                $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Pesquise na internet QUESTÕES REAIS já aplicadas em $onde, sobre o assunto abaixo. Prefira as mais recentes e as que cobram o assunto do jeito que cai para esse cargo.\n" . $base
                     . "Traga até $resta questões objetivas COMPLETAS, copiadas fielmente, com o gabarito oficial e a fonte (banca, órgão, estado, ano). Só traga questões que você realmente encontrou; não invente e não repita. Se não encontrar, devolva lista vazia.\n"
                     . "Responda SOMENTE em JSON: " . HACK_FORMATO_Q]]]], 'tools' => [['google_search' => new stdClass()]]], 150);
                 $pdo = podcast_reconectar($pdo);
@@ -569,7 +575,7 @@ if (!function_exists('hack_bootstrap')) {
         $geradas = 0;
         if ($reais < $falta) {
             $n = $falta - $reais;
-            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Você é elaborador de provas da banca $banca. Crie $n questões INÉDITAS de múltipla escolha, no MESMO nível e estilo da prova deste concurso.\n" . $base
+            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Você é elaborador de provas da banca $banca, especialista no cargo ($cargosTxt). Crie $n questões INÉDITAS de múltipla escolha, no MESMO nível e estilo da prova deste cargo, com situações do dia a dia da profissão quando o assunto permitir.\n" . $base
                 . "Regras: 5 alternativas (A a E) plausíveis, só uma correta, cobrindo pegadinhas clássicas do assunto; misture fácil, médio e difícil (30/50/20); conteúdo correto e atual; comentário didático.\n"
                 . "Responda SOMENTE em JSON: " . HACK_FORMATO_Q]]]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.6]], 150);
             $pdo = podcast_reconectar($pdo);

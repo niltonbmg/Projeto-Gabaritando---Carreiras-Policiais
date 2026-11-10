@@ -65,6 +65,10 @@ if (!function_exists('job_bootstrap')) {
         // Tarefa "rodando" há mais de 6 min travou: volta para a fila (até 3 tentativas).
         $pdo->exec("UPDATE edital_jobs SET status = IF(tentativas >= 3, 'erro', 'pendente'), mensagem = IF(tentativas >= 3, 'A IA não respondeu a tempo. Tente de novo.', mensagem)
                     WHERE status = 'rodando' AND atualizado_em < NOW() - INTERVAL 6 MINUTE");
+        if (function_exists('ia_fila_pausa_texto') && ia_fila_pausa_texto()) {
+            return null; // cota do Google: espera
+        }
+        $pdo->exec("UPDATE edital_jobs SET status = 'pendente', mensagem = 'Aguardando a cota do Google renovar.' WHERE status = 'erro' AND mensagem LIKE '%Limite di%rio%'");
         $sql = "SELECT * FROM edital_jobs WHERE status = 'pendente'" . ($concursoId ? ' AND concurso_id = ' . (int)$concursoId : '') . ' ORDER BY id LIMIT 1';
         $job = $pdo->query($sql)->fetch();
         if (!$job) {
@@ -84,6 +88,14 @@ if (!function_exists('job_bootstrap')) {
             $job['mensagem'] = $msg;
         } catch (Throwable $e) {
             $pdo = podcast_reconectar($pdo);
+            if (preg_match('~\(429\)|Limite di[aá]rio|Limite por minuto~i', $e->getMessage())) {
+                // Cota do Google, não erro da tarefa: volta para a fila e espera.
+                $pdo->prepare("UPDATE edital_jobs SET status = 'pendente', tentativas = GREATEST(tentativas - 1, 0), mensagem = :m WHERE id = :id")->execute([':m' => 'Aguardando a cota do Google renovar.', ':id' => (int)$job['id']]);
+                @file_put_contents(dirname(__DIR__) . '/uploads/.ia-pausa-texto', (string)(time() + (stripos($e->getMessage(), 'diário') !== false ? 1800 : 120)));
+                $job['status'] = 'pendente';
+                $job['mensagem'] = 'Aguardando a cota do Google renovar.';
+                return $job;
+            }
             $pdo->prepare("UPDATE edital_jobs SET status = 'erro', mensagem = :m WHERE id = :id")->execute([':m' => mb_substr($e->getMessage(), 0, 600), ':id' => (int)$job['id']]);
             $job['status'] = 'erro';
             $job['mensagem'] = $e->getMessage();
@@ -406,6 +418,8 @@ if (!function_exists('job_bootstrap')) {
         return [
             'recentes' => $recentes,
             'agora' => job_agora_ler(),
+            'uso' => podcast_uso_resumo(),
+            'prioridade' => ia_prioridade(),
             'pausa_voz' => ia_fila_pausa() ? date('H:i', ia_fila_pausa()) : '',
             'pausa_texto' => ia_fila_pausa_texto() ? date('H:i', ia_fila_pausa_texto()) : '',
             'fila' => $porTipo,

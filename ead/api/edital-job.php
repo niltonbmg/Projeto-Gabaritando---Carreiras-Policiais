@@ -25,6 +25,10 @@ $concursoId = (int)($_GET['concurso_id'] ?? 0);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $e = json_decode((string)file_get_contents('php://input'), true) ?: [];
     $concursoId = (int)($e['concurso_id'] ?? 0);
+    if (($e['acao'] ?? '') === 'prioridade') {
+        ia_prioridade_salvar(['podcasts_pausados' => !empty($e['podcasts_pausados']), 'primeiro' => (string)($e['primeiro'] ?? 'videoaula')]);
+        exit('{"ok":true}');
+    }
     session_write_close(); // não trava as outras páginas do mentor enquanto a IA trabalha
     @ignore_user_abort(true);
     @set_time_limit(320);
