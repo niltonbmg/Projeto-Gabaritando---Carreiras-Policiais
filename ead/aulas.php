@@ -3687,18 +3687,18 @@ if ($travaMeta) {
                                 referrerpolicy="strict-origin-when-cross-origin"
                                 allowfullscreen>
                             </iframe>
-                        <?php elseif ($pdfAtual['arquivo'] !== ''): ?>
-                            <?php // Aula só com PDF: apresentação própria, sem vídeo improvisado. ?>
+                        <?php elseif ($pdfAtual['arquivo'] !== '' || ($aulaAtual && $aulaDescricao !== '-')): $soTexto = $pdfAtual['arquivo'] === ''; ?>
+                            <?php // Aula sem vídeo (só PDF, ou aula do Antigão só com a teoria): videoaula do Antigão + leitura. ?>
                             <div class="aula-somente-pdf">
                                 <div class="aula-somente-pdf__conteudo">
-                                    <span class="aula-somente-pdf__selo"><i data-lucide="book-open-text" aria-hidden="true"></i>Teoria mínima em PDF</span>
+                                    <span class="aula-somente-pdf__selo"><i data-lucide="book-open-text" aria-hidden="true"></i><?php echo $soTexto ? 'Aula do Antigão' : 'Teoria mínima em PDF'; ?></span>
                                     <h2><?php echo esc($aulaTitulo); ?></h2>
                                     <p>Esta aula é de leitura. Leia o material com atenção, faça suas marcações e depois siga para as questões.</p>
                                     <?php if (!empty($aulaAtual['pdf_duracao'])): ?><p class="aula-somente-pdf__tempo"><i data-lucide="clock-3" aria-hidden="true"></i>Tempo estimado de leitura: <?php echo esc((string)$aulaAtual['pdf_duracao']); ?></p><?php endif; ?>
                                     <div class="aula-somente-pdf__acoes">
                                         <button type="button" class="aula-somente-pdf__botao" id="vaAbrir"><span aria-hidden="true">▶</span>Assistir à videoaula do Antigão</button>
-                                        <button type="button" class="aula-somente-pdf__botao aula-somente-pdf__botao--sec" onclick="var b=document.getElementById('abrirPdfAula'); if(b){b.click();}">
-                                            <i data-lucide="file-text" aria-hidden="true"></i>Ler o material
+                                        <button type="button" class="aula-somente-pdf__botao aula-somente-pdf__botao--sec" onclick="var b=document.getElementById('abrirPdfAula'); if(b){b.click();}else{var t=document.getElementById('aulaDescricao'); if(t){t.scrollIntoView({behavior:'smooth'});}}">
+                                            <i data-lucide="file-text" aria-hidden="true"></i><?php echo $soTexto ? 'Ler a teoria' : 'Ler o material'; ?>
                                         </button>
                                     </div>
                                     <p class="va-gerando" id="vaGerando" hidden role="status" aria-live="polite"><span class="va-gerando__barra"><i id="vaGerandoBarra"></i></span><span id="vaGerandoMsg">Preparando a videoaula…</span></p>
