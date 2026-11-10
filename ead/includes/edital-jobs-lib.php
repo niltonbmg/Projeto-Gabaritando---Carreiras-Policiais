@@ -383,7 +383,17 @@ if (!function_exists('job_bootstrap')) {
         $itens = array_map('intval', array_column(edital_itens($pdo, $concursoId), 'id')) ?: [0];
         $q = $pdo->query("SELECT status, COUNT(*) n FROM ia_fila WHERE tipo = 'questoes' AND aula_id IN (" . implode(',', $itens) . ') GROUP BY status')->fetchAll(PDO::FETCH_KEY_PAIR);
         $qs = hack_questoes_situacao($pdo, $concursoId);
+        // Aulas do Antigão, videoaulas e podcasts das aulas dos cursos deste concurso.
+        $cursos = $pdo->prepare('SELECT DISTINCT curso_id FROM concurso_cargos WHERE concurso_id = :c AND curso_id IS NOT NULL');
+        $cursos->execute([':c' => $concursoId]);
+        $cIds = array_map('intval', $cursos->fetchAll(PDO::FETCH_COLUMN)) ?: [0];
+        $porTipo = [];
+        foreach ($pdo->query("SELECT f.tipo, f.status, COUNT(*) n FROM ia_fila f JOIN admin_curso_aulas a ON a.id = f.aula_id
+                               WHERE f.tipo IN ('aula_ia','apostila','videoaula','podcast') AND a.curso_id IN (" . implode(',', $cIds) . ") GROUP BY f.tipo, f.status") as $r) {
+            $porTipo[$r['tipo']][$r['status']] = (int)$r['n'];
+        }
         return [
+            'fila' => $porTipo,
             'jobs' => $jobs,
             'ativos' => count(array_filter($jobs, static fn($j) => in_array($j['status'], ['pendente', 'rodando'], true))),
             'questoes' => ['assuntos_ok' => $qs['ok'], 'assuntos_total' => $qs['total'], 'na_fila' => (int)($q['pendente'] ?? 0), 'feitos' => (int)($q['feito'] ?? 0), 'erros' => (int)($q['erro'] ?? 0),

@@ -432,6 +432,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <h2><?php echo admin_esc((string)$concurso['nome']); ?> <span class="ed-tag <?php echo admin_esc((string)$concurso['situacao']); ?>"><?php echo admin_esc($situacoes[$concurso['situacao']] ?? ''); ?></span></h2>
                     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
                         <span class="ed-salvo">✓ Tudo salvo · pode sair e voltar</span>
+                        <?php foreach ($cargos as $cgv): ?><a class="admin-btn admin-btn-light admin-btn-small" target="_blank" href="meu-concurso.php?ver_cargo=<?php echo (int)$cgv['id']; ?>">👁 Ver como o aluno · <?php echo admin_esc((string)$cgv['nome']); ?></a><?php endforeach; ?>
                         <?php if ($prog['proxima'] !== $aba): ?><a class="admin-btn admin-btn-primary admin-btn-small" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=<?php echo $prog['proxima']; ?>">▶ Continuar de onde parei</a><?php endif; ?>
                     </div>
                 </div>
@@ -448,6 +449,7 @@ $menuBarInclude = admin_cursos_get_menubar();
 
             <section class="admin-panel" id="centralIA" data-concurso="<?php echo $concursoId; ?>" aria-live="polite">
                 <div class="admin-panel-title"><h2>🤖 Central da IA</h2><small id="ciaStatus">verificando…</small></div>
+                <div id="ciaAulas" class="admin-form-hint" style="display:grid;gap:2px;margin-bottom:6px"></div>
                 <div id="ciaQuestoes" class="admin-form-hint"></div>
                 <div class="ed-barra" style="height:8px;margin:6px 0" aria-hidden="true"><i id="ciaQBarra" style="width:0"></i></div>
                 <ul id="ciaJobs" style="list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px;font-size:14px"></ul>
@@ -555,27 +557,43 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <?php if (!empty($prova['encontrada'])): ?><p class="admin-form-hint" style="margin-top:8px">Base em uso no "Hackeando a Prova": <?php echo admin_esc(trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? ''))); ?> (<?php echo admin_esc((string)($prova['fonte'] ?? '')); ?>).</p><?php endif; ?>
                 </section>
 
-            <?php elseif ($aba === 'aulas'): $andamento = edital_andamento($pdo, $concursoId); $sugestoes = hack_rascunho_get($pdo, $concursoId, 'sugestoes', []); $links = (string)hack_rascunho_get($pdo, $concursoId, 'links_restantes', ''); ?>
+            <?php elseif ($aba === 'aulas'): $andamento = edital_andamento($pdo, $concursoId); $sugestoes = hack_rascunho_get($pdo, $concursoId, 'sugestoes', []); $links = (string)hack_rascunho_get($pdo, $concursoId, 'links_restantes', '');
+                $vaStatus = [];
+                try { foreach ($pdo->query("SELECT aula_id, status FROM aula_videoaulas") as $vr) { $vaStatus[(int)$vr['aula_id']] = (string)$vr['status']; } } catch (Throwable $e) {}
+            ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>4. Aulas por assunto do conteúdo programático</h2>
-                        <form method="post" onsubmit="return confirm('A IA vai preparar a aula (teoria mínima + videoaula do Antigão) de todos os assuntos que ainda não têm aula. Continuar?');"><input type="hidden" name="acao" value="gerar_faltantes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary admin-btn-small" type="submit"><i data-lucide="sparkles"></i>A IA gera o que falta</button></form></div>
-                    <p class="admin-form-hint">Em cada assunto: cole o link do vídeo e/ou envie o PDF. O que ficar sem aula, a IA gera (teoria mínima + videoaula do Antigão) e você troca quando a aula do professor chegar.</p>
-                    <?php foreach ($andamento as $an): $pct = $an['total'] ? (int)round($an['cobertos'] * 100 / $an['total']) : 0; ?>
-                        <h3 style="margin:14px 0 6px"><?php echo admin_esc((string)$an['cargo']['nome']); ?> · <?php echo $an['cobertos']; ?>/<?php echo $an['total']; ?> (<?php echo $pct; ?>%)</h3>
-                        <?php if (empty($an['cargo']['curso_id'])): ?><p class="ed-falta">Cargo sem curso. <a href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=concurso">Ligar no passo 1</a></p><?php endif; ?>
-                        <?php $grupo = []; foreach ($an['itens'] as $it) { $grupo[$it['materia']][] = $it; } foreach ($grupo as $mat => $lista): $ok = count(array_filter($lista, static fn($x) => $x['aulas'])); ?>
-                            <details class="ed-materia"<?php echo $ok < count($lista) ? ' open' : ''; ?>><summary><span><?php echo admin_esc($mat); ?></span><small><?php echo $ok; ?>/<?php echo count($lista); ?></small></summary>
-                            <?php foreach ($lista as $it): $temProf = array_filter($it['aulas'], static fn($a) => trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== ''); ?>
-                                <div class="ed-assunto"><span><?php echo $temProf ? '✅' : ($it['aulas'] ? '🤖' : '⬜'); ?></span>
-                                    <div><?php echo admin_esc((string)$it['assunto']); ?><small><?php echo $it['aulas'] ? admin_esc(implode(' · ', array_column($it['aulas'], 'titulo'))) : 'sem aula'; ?></small></div>
-                                    <form method="post" enctype="multipart/form-data"><input type="hidden" name="acao" value="aula_item"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="item_id" value="<?php echo (int)$it['id']; ?>">
-                                        <input type="url" name="video" placeholder="Link do vídeo (opcional)" aria-label="Link do vídeo de <?php echo admin_esc((string)$it['assunto']); ?>">
-                                        <input type="file" name="pdf_aula" accept="application/pdf" aria-label="PDF de <?php echo admin_esc((string)$it['assunto']); ?>">
-                                        <button class="admin-btn admin-btn-light admin-btn-small" type="submit"><?php echo $temProf ? 'Adicionar' : 'Salvar'; ?></button></form>
-                                </div>
+                    <div class="admin-panel-title"><h2>4. Aulas de cada assunto</h2></div>
+                    <p class="admin-form-hint" style="margin-bottom:10px">Três caminhos, nesta ordem: <strong>1)</strong> usar vídeos que já existem na plataforma (abaixo), <strong>2)</strong> cadastrar vídeo/PDF do professor no assunto, <strong>3)</strong> o que faltar, a IA gera (teoria mínima + videoaula do Antigão). Legenda: ✅ aula do professor · 🤖 aula do Antigão · ⬜ falta.</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+                        <form method="post"><input type="hidden" name="acao" value="sugerir_existentes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="search"></i>1. Procurar vídeos já gravados</button></form>
+                        <form method="post" onsubmit="return confirm('A IA vai preparar a aula (teoria mínima + videoaula do Antigão) de todos os assuntos sem aula. Continuar?');"><input type="hidden" name="acao" value="gerar_faltantes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>3. A IA gera o que falta</button></form>
+                        <a class="admin-btn admin-btn-light" style="margin-left:auto" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=questoes">Próximo: questões ▶</a>
+                    </div>
+                    <?php foreach ($andamento as $an): $pct = $an['total'] ? (int)round($an['cobertos'] * 100 / $an['total']) : 0;
+                        $nProf = 0; $nIa = 0; foreach ($an['itens'] as $x) { if (array_filter($x['aulas'], static fn($a) => trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '')) { $nProf++; } elseif ($x['aulas']) { $nIa++; } } ?>
+                        <div style="border:1px solid #eef0f3;border-radius:12px;padding:12px 14px;margin-top:12px">
+                            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center"><h3 style="margin:0"><?php echo admin_esc((string)$an['cargo']['nome']); ?></h3><span><strong><?php echo $an['cobertos']; ?>/<?php echo $an['total']; ?></strong> com aula · ✅ <?php echo $nProf; ?> do professor · 🤖 <?php echo $nIa; ?> do Antigão · ⬜ <?php echo $an['total'] - $an['cobertos']; ?> faltam</span></div>
+                            <div class="ed-barra" style="height:8px;margin:8px 0"><i style="width:<?php echo $pct; ?>%"></i></div>
+                            <?php if (empty($an['cargo']['curso_id'])): ?>
+                                <p class="ed-falta">Este cargo ainda não tem curso, então não dá para cadastrar aulas. <a href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=concurso">Vá ao passo 1 e escolha "+ Criar curso novo para este cargo"</a>.</p>
+                            <?php else: ?>
+                            <?php $grupo = []; foreach ($an['itens'] as $it) { $grupo[$it['materia']][] = $it; } foreach ($grupo as $mat => $lista): $ok = count(array_filter($lista, static fn($x) => $x['aulas'])); ?>
+                                <details class="ed-materia"><summary><span><?php echo $ok === count($lista) ? '✅' : '⬜'; ?> <?php echo admin_esc($mat); ?></span><small><?php echo $ok; ?>/<?php echo count($lista); ?> com aula</small></summary>
+                                <?php foreach ($lista as $it): $prof = array_values(array_filter($it['aulas'], static fn($a) => trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '')); $a0 = $prof[0] ?? ($it['aulas'][0] ?? null); ?>
+                                    <div class="ed-assunto"><span><?php echo $prof ? '✅' : ($it['aulas'] ? '🤖' : '⬜'); ?></span>
+                                        <div><?php echo admin_esc((string)$it['assunto']); ?>
+                                            <small><?php if ($a0): ?><?php echo admin_esc((string)$a0['titulo']); ?><?php if (!$prof): $vs = $vaStatus[(int)$a0['id']] ?? ''; ?> · 🎬 videoaula do Antigão: <?php echo $vs === 'pronto' ? 'pronta' : 'em preparo (Central da IA)'; ?><?php endif; ?> · <a class="admin-link-inline" target="_blank" href="aulas.php?curso_id=<?php echo (int)$a0['curso_id']; ?>&modulo_id=<?php echo (int)$a0['modulo_id']; ?>&aula_id=<?php echo (int)$a0['id']; ?>">▶ ver como aluno</a><?php else: ?>sem aula<?php endif; ?></small></div>
+                                        <details><summary class="admin-btn admin-btn-light admin-btn-small" style="list-style:none;cursor:pointer"><?php echo $prof ? 'Trocar' : '+ Vídeo/PDF do professor'; ?></summary>
+                                            <form method="post" enctype="multipart/form-data" style="display:grid;gap:6px;margin-top:6px;min-width:260px"><input type="hidden" name="acao" value="aula_item"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="item_id" value="<?php echo (int)$it['id']; ?>">
+                                                <input type="url" name="video" placeholder="Link do vídeo (YouTube)" aria-label="Link do vídeo de <?php echo admin_esc((string)$it['assunto']); ?>">
+                                                <label class="admin-form-hint">ou PDF: <input type="file" name="pdf_aula" accept="application/pdf"></label>
+                                                <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">Salvar</button></form></details>
+                                    </div>
+                                <?php endforeach; ?>
+                                </details>
                             <?php endforeach; ?>
-                            </details>
-                        <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
                     <?php endforeach; ?>
                 </section>
                 <?php $exist = hack_rascunho_get($pdo, $concursoId, 'existentes', []); ?>
@@ -619,23 +637,24 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <?php endif; ?>
                 </details>
 
-            <?php elseif ($aba === 'questoes'): $qs = hack_questoes_situacao($pdo, $concursoId); ?>
+            <?php elseif ($aba === 'questoes'): $qs = hack_questoes_situacao($pdo, $concursoId); $pctQ = $qs['total'] ? (int)round($qs['ok'] * 100 / $qs['total']) : 0; $totQ = array_sum(array_column($qs['itens'], 'questoes')); ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>5. Questões por assunto</h2><strong><?php echo $qs['ok']; ?>/<?php echo $qs['total']; ?> assuntos com 10+ questões</strong></div>
-                    <div class="ed-opcoes">
-                        <div><h3>📤 Enviar questões</h3><p class="admin-form-hint">PDF de provas/listas ou texto colado. A IA separa por assunto, confere o gabarito e comenta.</p>
-                            <form method="post" enctype="multipart/form-data" style="display:grid;gap:6px"><input type="hidden" name="acao" value="enviar_questoes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
-                                <input type="file" name="arquivo" accept="application/pdf" aria-label="PDF de questões"><textarea name="texto" rows="3" placeholder="ou cole as questões" aria-label="Questões em texto"></textarea>
-                                <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">Enviar</button></form></div>
-                        <div><h3>🔎 Pesquisar na internet</h3><p class="admin-form-hint">Para cada assunto com menos de 10: a IA busca <strong>questões reais</strong> de provas anteriores (mesma banca primeiro), com fonte.</p></div>
-                        <div><h3>🤖 Gerar no nível da prova</h3><p class="admin-form-hint">Se a pesquisa não achar o suficiente, a IA cria questões inéditas no estilo e no nível da banca, marcadas como "Questão do Antigão".</p></div>
+                    <div class="admin-panel-title"><h2>5. Questões de cada assunto</h2><strong><?php echo $qs['ok']; ?>/<?php echo $qs['total']; ?> assuntos prontos (10+ questões) · <?php echo $totQ; ?> questões</strong></div>
+                    <div class="ed-barra" style="height:10px;margin-bottom:12px"><i style="width:<?php echo $pctQ; ?>%"></i></div>
+                    <p class="admin-form-hint" style="margin-bottom:10px">O jeito mais simples: clique no botão amarelo. A IA faz assunto por assunto: <strong>pesquisa questões reais</strong> de provas anteriores (mesma banca primeiro) e, se não achar 10, <strong>cria no nível da prova</strong>. O andamento aparece na Central da IA, acima. Pode fechar a página: ela continua.</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                        <form method="post"><input type="hidden" name="acao" value="completar_questoes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>Completar todos os assuntos com a IA</button></form>
+                        <details><summary class="admin-btn admin-btn-light" style="list-style:none;cursor:pointer">📤 Tenho questões para enviar</summary>
+                            <form method="post" enctype="multipart/form-data" style="display:grid;gap:6px;margin-top:8px;min-width:300px"><input type="hidden" name="acao" value="enviar_questoes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                                <label class="admin-form-hint">PDF (prova ou lista): <input type="file" name="arquivo" accept="application/pdf"></label><textarea name="texto" rows="3" placeholder="ou cole as questões aqui" aria-label="Questões em texto"></textarea>
+                                <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">Enviar: a IA separa por assunto</button></form></details>
+                        <a class="admin-btn admin-btn-light" style="margin-left:auto" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=plano">Próximo: Plano-Mestre ▶</a>
                     </div>
-                    <form method="post" style="margin-top:12px"><input type="hidden" name="acao" value="completar_questoes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>Completar todos os assuntos (pesquisa → gera o que faltar)</button></form>
                     <?php $grupo = []; foreach ($qs['itens'] as $it) { $grupo[$it['materia']][] = $it; } foreach ($grupo as $mat => $lista): $ok = count(array_filter($lista, static fn($x) => $x['questoes'] >= 10)); ?>
-                        <details class="ed-materia"<?php echo $ok < count($lista) ? ' open' : ''; ?>><summary><span><?php echo admin_esc($mat); ?></span><small><?php echo $ok; ?>/<?php echo count($lista); ?></small></summary>
+                        <details class="ed-materia"><summary><span><?php echo $ok === count($lista) ? '✅' : '⬜'; ?> <?php echo admin_esc($mat); ?></span><small><?php echo $ok; ?>/<?php echo count($lista); ?> prontos · <?php echo array_sum(array_column($lista, 'questoes')); ?> questões</small></summary>
                         <?php foreach ($lista as $it): ?>
-                            <div class="ed-assunto"><span><?php echo $it['questoes'] >= 10 ? '✅' : '⬜'; ?></span><div><?php echo admin_esc((string)$it['assunto']); ?><small><?php echo (int)$it['questoes']; ?> questões no banco</small></div>
-                            <?php if ($it['questoes'] < 10): ?><form method="post"><input type="hidden" name="acao" value="questoes_item"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="item_id" value="<?php echo (int)$it['id']; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">Completar agora</button></form><?php endif; ?></div>
+                            <div class="ed-assunto"><span><?php echo $it['questoes'] >= 10 ? '✅' : '⬜'; ?></span><div><?php echo admin_esc((string)$it['assunto']); ?><small><?php echo (int)$it['questoes']; ?> questões<?php if ($it['questoes']): ?> · <a class="admin-link-inline" target="_blank" href="banco-questoes.php?topico_id=<?php echo (int)$it['topico_id']; ?>">ver como aluno</a><?php endif; ?></small></div>
+                            <?php if ($it['questoes'] < 10): ?><form method="post"><input type="hidden" name="acao" value="questoes_item"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="item_id" value="<?php echo (int)$it['id']; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">Fazer só este</button></form><?php endif; ?></div>
                         <?php endforeach; ?></details>
                     <?php endforeach; ?>
                 </section>
@@ -696,7 +715,11 @@ $menuBarInclude = admin_cursos_get_menubar();
             document.getElementById('ciaQuestoes').innerHTML = '📚 Questões: <strong>' + (q.assuntos_ok || 0) + '/' + (q.assuntos_total || 0) + '</strong> assuntos com 10+ · ' + (q.total_questoes || 0) + ' questões no banco · ' + (q.na_fila || 0) + ' assunto(s) na fila' + (q.erros ? ' · ' + q.erros + ' com erro' : '');
             document.getElementById('ciaQBarra').style.width = (q.assuntos_total ? Math.round(q.assuntos_ok * 100 / q.assuntos_total) : 0) + '%';
             document.getElementById('ciaJobs').innerHTML = (d.jobs || []).map(function (j) { return '<li>' + ico[j.status] + ' <strong>' + esc(j.rotulo) + '</strong>' + (j.mensagem ? ' · ' + esc(j.mensagem) : (j.status === 'rodando' ? ' · trabalhando…' : '')) + '</li>'; }).join('') || '<li class="admin-form-hint">Nenhuma tarefa agora.</li>';
-            var ativos = (d.ativos || 0) + (q.na_fila || 0);
+            var nomes = {aula_ia: '🤖 Aulas do Antigão (teoria)', apostila: '📄 Apostilas', videoaula: '🎬 Videoaulas do Antigão', podcast: '🎧 Podcasts'}, filaPend = 0, linhas = '';
+            Object.keys(nomes).forEach(function (t) { var f = (d.fila || {})[t]; if (!f) { return; } var feito = f.feito || 0, pend = f.pendente || 0, err = f.erro || 0, tot = feito + pend + err; filaPend += pend;
+                linhas += '<div>' + nomes[t] + ': <strong>' + feito + '/' + tot + '</strong> prontas' + (pend ? ' · ' + pend + ' na fila' : '') + (err ? ' · ' + err + ' com erro (tenta de novo sozinho)' : '') + '</div>'; });
+            document.getElementById('ciaAulas').innerHTML = linhas;
+            var ativos = (d.ativos || 0) + (q.na_fila || 0) + filaPend;
             document.getElementById('ciaStatus').textContent = ativos ? 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua' : 'Tudo em dia';
             if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) { location.reload(); return; }
             ativosAntes = d.ativos || 0;

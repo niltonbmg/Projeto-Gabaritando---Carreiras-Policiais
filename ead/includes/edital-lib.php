@@ -171,7 +171,7 @@ if (!function_exists('edital_andamento')) {
         $cargos = $pdo->prepare('SELECT * FROM concurso_cargos WHERE concurso_id = :c ORDER BY id');
         $cargos->execute([':c' => $concursoId]);
         $itens = edital_itens($pdo, $concursoId);
-        $aulas = $pdo->prepare('SELECT id, titulo, video_url, pdf_arquivo FROM admin_curso_aulas WHERE curso_id = :curso AND topico_id = :t ORDER BY id');
+        $aulas = $pdo->prepare('SELECT id, curso_id, modulo_id, titulo, video_url, pdf_arquivo FROM admin_curso_aulas WHERE curso_id = :curso AND topico_id = :t ORDER BY id');
         $res = [];
         foreach ($cargos->fetchAll() as $cg) {
             $lista = [];

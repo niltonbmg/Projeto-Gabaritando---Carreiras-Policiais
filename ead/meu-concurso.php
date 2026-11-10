@@ -40,6 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'escolhe
 
 $trocar = isset($_GET['trocar']);
 $esc = $trocar ? null : hack_escolha_aluno($pdo, $usuarioId);
+// Mentor/admin: "Ver como o aluno" de qualquer cargo, sem mudar nada.
+$preview = 0;
+$ehAdminMc = !empty($_SESSION['admin_usuario_id']) || strtolower((string)($_SESSION['usuario_tipo'] ?? '')) === 'admin';
+if ($ehAdminMc && (int)($_GET['ver_cargo'] ?? 0) > 0) {
+    $stP = $pdo->prepare('SELECT cg.concurso_id, cg.id AS cargo_id, c.nome AS concurso, c.situacao, c.base_edital, c.data_prova, cg.nome AS cargo, cg.curso_id FROM concurso_cargos cg JOIN concursos c ON c.id = cg.concurso_id WHERE cg.id = :g');
+    $stP->execute([':g' => (int)$_GET['ver_cargo']]);
+    $esc = $stP->fetch() ?: $esc;
+    $preview = (int)$_GET['ver_cargo'];
+}
 $aba = in_array($_GET['aba'] ?? '', ['edital', 'prova', 'conteudo'], true) ? $_GET['aba'] : 'edital';
 
 $concursos = [];
@@ -51,7 +60,9 @@ if (!$esc) {
         $concursos[] = $c;
     }
 } else {
-    hack_registrar_visita($pdo, $usuarioId);
+    if (!$preview) {
+        hack_registrar_visita($pdo, $usuarioId);
+    }
     $st = $pdo->prepare('SELECT c.*, b.nome AS banca_nome FROM concursos c LEFT JOIN admin_bancas b ON b.id = c.banca_id WHERE c.id = :id');
     $st->execute([':id' => (int)$esc['concurso_id']]);
     $conc = $st->fetch();
@@ -167,6 +178,7 @@ function mc2_v($v): string
 <body>
 <?php if (is_file(__DIR__ . '/includes/barra-superior.php')) { include_once __DIR__ . '/includes/barra-superior.php'; } ?>
 <main class="mcz">
+<?php if (!empty($preview)): ?><div class="card" role="note" style="border-color:#fbb928">👁 <strong>Pré-visualização do mentor</strong>: é exatamente o que o aluno de <?php echo mc2_e($esc['cargo'] ?? ''); ?> vê. Nada aqui é salvo.</div><?php endif; ?>
 <?php if (!$esc): ?>
     <header><h1>🕵️ Escolha seu concurso</h1><p class="sub">Toque no cargo que você vai prestar. Seu curso, seu cronograma e tudo do edital passam a seguir esse cargo. Dá para trocar depois.</p></header>
     <div class="esc-lista">
@@ -188,7 +200,7 @@ function mc2_v($v): string
             <p class="sub"><?php echo mc2_e($esc['concurso']); ?> · <span class="tag <?php echo $esc['situacao'] === 'aberto' ? 'aberto' : ''; ?>"><?php echo $esc['situacao'] === 'aberto' ? 'Edital aberto' : 'Edital previsto · tudo com base no ' . mc2_e($esc['base_edital'] ?: 'último edital'); ?></span></p>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="bt" href="edital-verticalizado.php">📋 Edital verticalizado</a>
+            <a class="bt" href="edital-verticalizado.php<?php echo $preview ? '?concurso_id=' . (int)$esc['concurso_id'] . '&cargo_id=' . $preview : ''; ?>">📋 Edital verticalizado</a>
             <?php if (!empty($conc['edital_pdf'])): ?><button class="bt linha" type="button" data-pdf-marca="<?php echo mc2_e($conc['edital_pdf']); ?>" data-nome="Edital - <?php echo mc2_e($esc['concurso']); ?> - Projeto Gabaritando.pdf">📄 Baixar edital</button><?php endif; ?>
             <?php $provaCargo = (json_decode((string)($conc['provas'] ?? ''), true) ?: [])[(string)$esc['cargo_id']] ?? null; if ($provaCargo && ($provaCargo['status'] ?? '') === 'confere'): ?><button class="bt linha" type="button" data-pdf-marca="<?php echo mc2_e($provaCargo['arquivo']); ?>" data-nome="Prova <?php echo mc2_e(trim(($provaCargo['banca'] ?? '') . ' ' . ($provaCargo['ano'] ?? ''))); ?> - <?php echo mc2_e($esc['cargo']); ?> - Projeto Gabaritando.pdf">📝 Baixar prova anterior</button><?php endif; ?>
             <a class="bt linha" href="meu-concurso.php?trocar=1">Trocar cargo</a>
@@ -217,9 +229,9 @@ function mc2_v($v): string
     </section>
 
     <nav class="abas" aria-label="Seções">
-        <a href="?aba=edital" <?php echo $aba === 'edital' ? 'aria-current="page"' : ''; ?>>🕵️ Hackeando o Edital</a>
-        <a href="?aba=prova" <?php echo $aba === 'prova' ? 'aria-current="page"' : ''; ?>>🎯 Hackeando a Prova</a>
-        <a href="?aba=conteudo" <?php echo $aba === 'conteudo' ? 'aria-current="page"' : ''; ?>>📚 Conteúdo programático</a>
+        <a href="?aba=edital<?php echo !empty($preview) ? '&amp;ver_cargo=' . (int)$preview : ''; ?>" <?php echo $aba === 'edital' ? 'aria-current="page"' : ''; ?>>🕵️ Hackeando o Edital</a>
+        <a href="?aba=prova<?php echo !empty($preview) ? '&amp;ver_cargo=' . (int)$preview : ''; ?>" <?php echo $aba === 'prova' ? 'aria-current="page"' : ''; ?>>🎯 Hackeando a Prova</a>
+        <a href="?aba=conteudo<?php echo !empty($preview) ? '&amp;ver_cargo=' . (int)$preview : ''; ?>" <?php echo $aba === 'conteudo' ? 'aria-current="page"' : ''; ?>>📚 Conteúdo programático</a>
     </nav>
 
     <?php if ($aba === 'edital'): ?>

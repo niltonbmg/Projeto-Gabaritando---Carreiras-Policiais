@@ -28,15 +28,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     session_write_close(); // não trava as outras páginas do mentor enquanto a IA trabalha
     @ignore_user_abort(true);
     @set_time_limit(320);
-    $job = job_rodar_proximo($pdo, $concursoId);
-    if (!$job) {
-        // Sem tarefa do cadastro: adianta a fila do robô (questões, aulas do Antigão...).
-        $pdo = podcast_reconectar($pdo);
-        $r = ia_fila_processar_um($pdo);
-        echo json_encode(['rodou' => $r ? 'fila' : 'nada'], JSON_UNESCAPED_UNICODE);
+    // Uma execução por vez (a mesma trava do robô do cron): nada é feito em dobro.
+    $trava = fopen(__DIR__ . '/../uploads/.ia-robo.lock', 'c');
+    if ($trava === false || !flock($trava, LOCK_EX | LOCK_NB)) {
+        echo '{"rodou":"ocupado"}';
         exit;
     }
-    echo json_encode(['rodou' => 'job', 'job' => ['id' => (int)$job['id'], 'status' => $job['status'], 'mensagem' => $job['mensagem']]], JSON_UNESCAPED_UNICODE);
+    $inicio = time();
+    $feitos = 0;
+    // Trabalha até ~4 min por chamada: tarefas do cadastro primeiro, depois a fila (questões, aulas, vídeos).
+    while (time() - $inicio < 230) {
+        $job = job_rodar_proximo($pdo, $concursoId);
+        $pdo = podcast_reconectar($pdo);
+        if (!$job && !ia_fila_processar_um($pdo)) {
+            break;
+        }
+        $pdo = podcast_reconectar($pdo);
+        $feitos++;
+    }
+    flock($trava, LOCK_UN);
+    echo json_encode(['rodou' => $feitos], JSON_UNESCAPED_UNICODE);
     exit;
 }
 echo json_encode(job_painel($pdo, $concursoId), JSON_UNESCAPED_UNICODE);
