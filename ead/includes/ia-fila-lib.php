@@ -73,7 +73,7 @@ if (!function_exists('ia_fila_processar_um')) {
         $pdo = podcast_reconectar($pdo);
         // Apostilas antes de podcasts; até 3 tentativas por item.
         $item = $pdo->query("SELECT * FROM ia_fila WHERE status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE)
-                              ORDER BY (tipo IN ('apostila','aula_ia')) DESC, id ASC LIMIT 1")->fetch();
+                              ORDER BY FIELD(tipo, 'redacao', 'apostila', 'aula_ia', 'videoaula', 'questoes', 'podcast'), id ASC LIMIT 1")->fetch();
         if (!$item) {
             return null;
         }

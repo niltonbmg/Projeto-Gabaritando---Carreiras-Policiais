@@ -486,15 +486,31 @@ if (!function_exists('hack_bootstrap')) {
         }
         $banca = $it['banca'] ?: 'a banca do concurso';
         $base = "Concurso: {$it['concurso']} · Banca: $banca · Matéria: {$it['materia']} · Assunto: {$it['assunto']}.\n";
+        // Cargos que este assunto atende (ex.: Soldado PM, Soldado Bombeiro) para buscar provas equivalentes em todo o Brasil.
+        $cgN = $pdo->prepare('SELECT nome FROM concurso_cargos WHERE concurso_id = :c');
+        $cgN->execute([':c' => (int)$it['concurso_id']]);
+        $cargosTxt = implode(', ', $cgN->fetchAll(PDO::FETCH_COLUMN)) ?: 'carreiras policiais e militares';
+        // Antes de criar, a IA procura questões REAIS em rodadas, do mais parecido ao mais amplo.
+        $rodadas = [
+            "provas da banca $banca para cargos equivalentes a ($cargosTxt) em QUALQUER ESTADO do Brasil (PM, Corpo de Bombeiros, Polícia Civil e Penal de todos os estados)",
+            "provas de QUALQUER BANCA para cargos equivalentes a ($cargosTxt) em TODOS OS ESTADOS do Brasil (PM, CBM, Polícia Civil, Polícia Penal, Guarda Municipal, Forças Armadas)",
+            "provas de concursos públicos de nível médio de qualquer banca e de qualquer estado do Brasil",
+        ];
         $reais = 0;
-        try {
-            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Pesquise na internet QUESTÕES REAIS de provas anteriores (de preferência da banca $banca e de concursos policiais/militares) sobre o assunto abaixo.\n" . $base
-                . "Traga até $falta questões objetivas COMPLETAS, copiadas fielmente, com o gabarito oficial. Só traga questões que você realmente encontrou, com a fonte (banca, órgão, ano). Se não encontrar, devolva lista vazia.\n"
-                . "Responda SOMENTE em JSON: " . HACK_FORMATO_Q]]]], 'tools' => [['google_search' => new stdClass()]]], 150);
-            $pdo = podcast_reconectar($pdo);
-            $reais = hack_gravar_questoes($pdo, $it, array_slice(hack_questoes_json($resp), 0, $falta), $it['banca_id'] ? (int)$it['banca_id'] : null, 'real');
-        } catch (RuntimeException $e) {
-            $pdo = podcast_reconectar($pdo);
+        foreach ($rodadas as $onde) {
+            $resta = $falta - $reais;
+            if ($resta <= 0) {
+                break;
+            }
+            try {
+                $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Pesquise na internet QUESTÕES REAIS já aplicadas em $onde, sobre o assunto abaixo.\n" . $base
+                    . "Traga até $resta questões objetivas COMPLETAS, copiadas fielmente, com o gabarito oficial e a fonte (banca, órgão, estado, ano). Só traga questões que você realmente encontrou; não invente e não repita. Se não encontrar, devolva lista vazia.\n"
+                    . "Responda SOMENTE em JSON: " . HACK_FORMATO_Q]]]], 'tools' => [['google_search' => new stdClass()]]], 150);
+                $pdo = podcast_reconectar($pdo);
+                $reais += hack_gravar_questoes($pdo, $it, array_slice(hack_questoes_json($resp), 0, $resta), $it['banca_id'] ? (int)$it['banca_id'] : null, 'real');
+            } catch (RuntimeException $e) {
+                $pdo = podcast_reconectar($pdo);
+            }
         }
         $geradas = 0;
         if ($reais < $falta) {
