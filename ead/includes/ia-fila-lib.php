@@ -80,6 +80,19 @@ if (!function_exists('ia_fila_processar_um')) {
         $id = (int)$item['id'];
         $aulaId = (int)$item['aula_id'];
         $pdo->prepare('UPDATE ia_fila SET tentativas = tentativas + 1 WHERE id = :id')->execute([':id' => $id]);
+        // "O que a IA está fazendo agora" (Central da IA), em português simples.
+        try {
+            if ($item['tipo'] === 'questoes') {
+                $stN = $pdo->prepare('SELECT t.titulo FROM edital_itens e JOIN admin_materia_topicos t ON t.id = e.topico_id WHERE e.id = :id');
+            } else {
+                $stN = $pdo->prepare('SELECT titulo FROM admin_curso_aulas WHERE id = :id');
+            }
+            $stN->execute([':id' => $aulaId]);
+            $nomeN = (string)$stN->fetchColumn();
+            $verbo = ['questoes' => 'Buscando/criando questões de', 'aula_ia' => 'Escrevendo a teoria da aula', 'apostila' => 'Montando a apostila da aula', 'videoaula' => 'Gravando a videoaula', 'podcast' => 'Gravando o podcast', 'redacao' => 'Lendo uma redação'][$item['tipo']] ?? 'Trabalhando em';
+            @file_put_contents(dirname(__DIR__) . '/uploads/.ia-agora.json', json_encode(['texto' => $verbo . ($nomeN !== '' ? ': ' . $nomeN : ''), 'em' => time()], JSON_UNESCAPED_UNICODE));
+        } catch (Throwable $e) {
+        }
         try {
             if ($item['tipo'] === 'apostila') {
                 $stmt = $pdo->prepare('SELECT * FROM admin_curso_aulas WHERE id = :id');

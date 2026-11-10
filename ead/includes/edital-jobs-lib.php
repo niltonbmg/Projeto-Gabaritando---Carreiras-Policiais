@@ -70,6 +70,7 @@ if (!function_exists('job_bootstrap')) {
         if (!$job) {
             return null;
         }
+        job_agora_gravar((string)$job['rotulo']);
         $upd = $pdo->prepare("UPDATE edital_jobs SET status = 'rodando', tentativas = tentativas + 1 WHERE id = :id AND status = 'pendente'");
         $upd->execute([':id' => (int)$job['id']]);
         if ($upd->rowCount() === 0) {
@@ -393,11 +394,65 @@ if (!function_exists('job_bootstrap')) {
             $porTipo[$r['tipo']][$r['status']] = (int)$r['n'];
         }
         return [
+            'agora' => job_agora_ler(),
             'fila' => $porTipo,
             'jobs' => $jobs,
             'ativos' => count(array_filter($jobs, static fn($j) => in_array($j['status'], ['pendente', 'rodando'], true))),
             'questoes' => ['assuntos_ok' => $qs['ok'], 'assuntos_total' => $qs['total'], 'na_fila' => (int)($q['pendente'] ?? 0), 'feitos' => (int)($q['feito'] ?? 0), 'erros' => (int)($q['erro'] ?? 0),
                 'total_questoes' => array_sum(array_column($qs['itens'], 'questoes'))],
         ];
+    }
+
+    // ---------------- Curso novo a partir de cursos prontos ----------------
+    /** Copia matérias (módulos com as aulas, apostilas, vídeos e PDFs) de cursos prontos para o curso do cargo. */
+    function job_copiar_modulos(PDO $pdo, int $cursoDestino, array $moduloIds): array
+    {
+        $colsM = array_values(array_diff($pdo->query('SHOW COLUMNS FROM admin_curso_modulos')->fetchAll(PDO::FETCH_COLUMN), ['id', 'curso_id', 'criado_em', 'atualizado_em']));
+        $colsA = array_values(array_diff($pdo->query('SHOW COLUMNS FROM admin_curso_aulas')->fetchAll(PDO::FETCH_COLUMN), ['id', 'curso_id', 'modulo_id', 'criado_em', 'atualizado_em']));
+        $lm = implode(',', array_map(static fn($c) => "`$c`", $colsM));
+        $la = implode(',', array_map(static fn($c) => "`$c`", $colsA));
+        $nm = 0;
+        $na = 0;
+        foreach (array_unique(array_map('intval', $moduloIds)) as $mid) {
+            $st = $pdo->prepare('SELECT curso_id FROM admin_curso_modulos WHERE id = :id');
+            $st->execute([':id' => $mid]);
+            $origem = (int)$st->fetchColumn();
+            if (!$origem || $origem === $cursoDestino) {
+                continue;
+            }
+            $pdo->prepare("INSERT INTO admin_curso_modulos (curso_id, $lm, criado_em) SELECT :d, $lm, NOW() FROM admin_curso_modulos WHERE id = :id")->execute([':d' => $cursoDestino, ':id' => $mid]);
+            $novo = (int)$pdo->lastInsertId();
+            $ins = $pdo->prepare("INSERT INTO admin_curso_aulas (curso_id, modulo_id, $la, criado_em) SELECT :d, :m, $la, NOW() FROM admin_curso_aulas WHERE modulo_id = :o");
+            $ins->execute([':d' => $cursoDestino, ':m' => $novo, ':o' => $mid]);
+            $na += $ins->rowCount();
+            $nm++;
+        }
+        return [$nm, $na];
+    }
+
+    /** Cursos prontos (com aulas) e suas matérias, para escolher o que copiar. */
+    function job_cursos_prontos(PDO $pdo, int $exceto = 0): array
+    {
+        $r = [];
+        foreach ($pdo->query('SELECT m.id, m.titulo, m.curso_id, c.nome AS curso, (SELECT COUNT(*) FROM admin_curso_aulas a WHERE a.modulo_id = m.id) AS aulas
+                               FROM admin_curso_modulos m JOIN admin_cursos c ON c.id = m.curso_id ORDER BY c.nome, m.ordem, m.id') as $m) {
+            if ((int)$m['curso_id'] === $exceto || (int)$m['aulas'] === 0) {
+                continue;
+            }
+            $r[$m['curso']][] = $m;
+        }
+        return $r;
+    }
+
+    // ---------------- "O que a IA está fazendo agora" ----------------
+    function job_agora_gravar(string $texto): void
+    {
+        @file_put_contents(dirname(__DIR__) . '/uploads/.ia-agora.json', json_encode(['texto' => $texto, 'em' => time()], JSON_UNESCAPED_UNICODE));
+    }
+
+    function job_agora_ler(): string
+    {
+        $j = json_decode((string)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-agora.json'), true);
+        return ($j && ($j['em'] ?? 0) > time() - 360) ? (string)$j['texto'] : '';
     }
 }

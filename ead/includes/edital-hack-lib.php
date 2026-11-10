@@ -316,6 +316,20 @@ if (!function_exists('hack_bootstrap')) {
             'plano' => ['nome' => 'Plano-Mestre', 'ok' => $cargos && $planos >= count($cargos), 'det' => $planos . '/' . count($cargos) . ' cargo(s) com plano aprovado'],
             'publicar' => ['nome' => 'Hackeando para o aluno', 'ok' => $cargos && count($hacks) >= count($cargos) && count($vert) >= count($cargos), 'det' => count($vert) . '/' . count($cargos) . ' verticalizado(s) · ' . count($hacks) . '/' . count($cargos) . ' com textos do Antigão'],
         ];
+        $nc = max(1, count($cargos));
+        $pcts = [
+            'concurso' => $cargos ? $ligados * 100 / $nc : 0,
+            'edital' => ($itens ? 50 : 0) + (is_array($info) ? 50 : 0),
+            'prova' => (!empty($prova['encontrada']) || ($c['prova_status'] ?? '') === 'sem_prova') ? 100 : $provasOk * 100 / $nc,
+            'aulas' => $tot ? $cob * 100 / $tot : 0,
+            'questoes' => $qs['total'] ? $qs['ok'] * 100 / $qs['total'] : 0,
+            'plano' => $planos * 100 / $nc,
+            'publicar' => (min(count($vert), $nc) + min(count($hacks), $nc)) * 50 / $nc,
+        ];
+        foreach ($e as $k => &$x) {
+            $x['pct'] = $x['ok'] ? 100 : (int)min(99, round($pcts[$k] ?? 0));
+        }
+        unset($x);
         $feitas = count(array_filter($e, static fn($x) => $x['ok']));
         // Peso extra das aulas (é a etapa mais longa): conta a fração coberta.
         $pct = (int)round((($feitas - ($e['aulas']['ok'] ? 1 : 0)) + ($tot ? $cob / $tot : 0)) * 100 / count($e));

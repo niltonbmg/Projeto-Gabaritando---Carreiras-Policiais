@@ -127,6 +127,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ed_ir($concursoId, 'edital', 'Concurso salvo. Próximo passo: o edital.');
         }
 
+        if ($acao === 'copiar_modulos') {
+            $cg = $pdo->prepare('SELECT curso_id, nome FROM concurso_cargos WHERE id = :id AND concurso_id = :c');
+            $cg->execute([':id' => (int)($_POST['cargo_id'] ?? 0), ':c' => $concursoId]);
+            $cargoC = $cg->fetch();
+            if (!$cargoC || empty($cargoC['curso_id'])) { throw new RuntimeException('Escolha ou crie o curso do cargo primeiro.'); }
+            if (empty($_POST['modulos'])) { throw new RuntimeException('Marque pelo menos uma matéria para copiar.'); }
+            [$nm, $na] = job_copiar_modulos($pdo, (int)$cargoC['curso_id'], (array)$_POST['modulos']);
+            ed_ir($concursoId, 'concurso', "Copiado para {$cargoC['nome']}: $nm matéria(s) com $na aula(s). O que faltar, a IA completa no passo 4.");
+        }
+
         // 2 · Edital
         if ($acao === 'ler_edital') {
             $texto = trim((string)($_POST['conteudo'] ?? ''));
@@ -355,6 +365,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         .ed-passos a.ok b{background:#16a34a;color:#fff}
         .ed-passos a.ativo{border-color:#fbb928;background:#fff8e6;box-shadow:0 0 0 1px #fbb928 inset}
         .ed-passos a.ativo b{background:#fbb928;color:#111}
+        .ed-mini{display:block;height:5px;border-radius:99px;background:#eef0f3;overflow:hidden}.ed-mini i{display:block;height:100%;background:#16a34a}
         .ed-salvo{font-size:12.5px;color:#16a34a;font-weight:700}
         .ed-tag{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:#eef0f3;color:#374151}
         .ed-tag.aberto{background:#e7f7ec;color:#17803d}.ed-tag.previsto{background:#fff6dd;color:#8a6300}
@@ -442,6 +453,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <?php $n = 0; foreach (ED_PASSOS as $k => $v): $n++; $e = $prog['etapas'][$k]; ?>
                         <a class="<?php echo $e['ok'] ? 'ok' : ''; ?> <?php echo $aba === $k ? 'ativo' : ''; ?>" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=<?php echo $k; ?>" <?php echo $aba === $k ? 'aria-current="step"' : ''; ?>>
                             <strong><b><?php echo $e['ok'] ? '✓' : $n; ?></b><?php echo admin_esc($v); ?></strong><small><?php echo admin_esc($e['det']); ?></small>
+                            <span class="ed-mini" role="progressbar" aria-valuenow="<?php echo (int)$e['pct']; ?>" aria-valuemin="0" aria-valuemax="100" aria-label="<?php echo admin_esc($v); ?>: <?php echo (int)$e['pct']; ?>%"><i style="width:<?php echo (int)$e['pct']; ?>%"></i></span><small style="font-weight:700"><?php echo (int)$e['pct']; ?>%</small>
                         </a>
                     <?php endforeach; ?>
                 </nav>
@@ -449,6 +461,18 @@ $menuBarInclude = admin_cursos_get_menubar();
 
             <section class="admin-panel" id="centralIA" data-concurso="<?php echo $concursoId; ?>" aria-live="polite">
                 <div class="admin-panel-title"><h2>🤖 Central da IA</h2><small id="ciaStatus">verificando…</small></div>
+                <p id="ciaAgora" style="margin:4px 0 8px;font-size:15px"></p>
+                <details style="margin-bottom:8px"><summary class="admin-form-hint" style="cursor:pointer">O que são essas tarefas?</summary>
+                    <ul class="admin-form-hint" style="margin:6px 0 0 18px;display:grid;gap:3px">
+                        <li><strong>🤖 Aulas do Antigão (teoria):</strong> o assunto não tinha aula; a IA escreve a teoria mínima (texto da aula).</li>
+                        <li><strong>📄 Apostilas:</strong> a aula tem vídeo ou PDF do professor; a IA transforma em apostila resumida.</li>
+                        <li><strong>🎬 Videoaulas do Antigão:</strong> slides narrados com perguntas, para aulas que não têm vídeo.</li>
+                        <li><strong>🎧 Podcasts:</strong> áudio extra de cada aula (Antigão e Recruta 01).</li>
+                        <li><strong>📚 Questões:</strong> para cada assunto, a IA busca questões reais e, se faltar, cria no nível da prova.</li>
+                        <li><strong>Lista abaixo:</strong> tarefas do cadastro (ler edital, conferir prova, verticalizado, textos do Antigão).</li>
+                    </ul>
+                    <p class="admin-form-hint" style="margin-top:6px">A IA faz uma tarefa por vez. Com a página aberta ela trabalha sem parar; fechada, o robô continua a cada 5 minutos.</p>
+                </details>
                 <div id="ciaAulas" class="admin-form-hint" style="display:grid;gap:2px;margin-bottom:6px"></div>
                 <div id="ciaQuestoes" class="admin-form-hint"></div>
                 <div class="ed-barra" style="height:8px;margin:6px 0" aria-hidden="true"><i id="ciaQBarra" style="width:0"></i></div>
@@ -468,13 +492,29 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <div class="admin-form-field full"><label>Cargos e o curso de cada um</label>
                             <?php foreach ($cargos as $cg): ?>
                                 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px"><strong style="min-width:180px"><?php echo admin_esc((string)$cg['nome']); ?></strong>
-                                <select name="cargo_curso[<?php echo (int)$cg['id']; ?>]" aria-label="Curso do cargo <?php echo admin_esc((string)$cg['nome']); ?>"><option value="0">— sem curso —</option><option value="novo">+ Criar curso novo para este cargo</option><?php foreach ($cursos as $cu): ?><option value="<?php echo (int)$cu['id']; ?>" <?php echo (int)$cu['id'] === (int)$cg['curso_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$cu['nome']); ?></option><?php endforeach; ?></select></div>
+                                <select name="cargo_curso[<?php echo (int)$cg['id']; ?>]" aria-label="Curso do cargo <?php echo admin_esc((string)$cg['nome']); ?>"><option value="0">— escolha —</option><option value="novo">+ Curso novo (depois copio matérias de cursos prontos)</option><optgroup label="Usar um curso que já existe"><?php foreach ($cursos as $cu): ?><option value="<?php echo (int)$cu['id']; ?>" <?php echo (int)$cu['id'] === (int)$cg['curso_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$cu['nome']); ?></option><?php endforeach; ?></optgroup></select></div>
                             <?php endforeach; ?>
+                            <p class="admin-form-hint">Se já existe um curso pronto para o cargo, escolha ele. Se não existe, escolha "Curso novo": logo abaixo você copia as matérias que já estão prontas em outros cursos, e o resto a IA completa (ou você, manualmente).</p>
                             <input name="novo_cargo" placeholder="Adicionar cargo (ex.: Soldado Bombeiro)" style="margin-top:6px" aria-label="Novo cargo">
                         </div>
                         <div class="admin-form-actions" style="position:static"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="save"></i>Salvar e ir para o edital</button></div>
                     </form>
                 </section>
+                <?php $prontos = job_cursos_prontos($pdo); if ($prontos): foreach ($cargos as $cg): if (empty($cg['curso_id'])) { continue; }
+                    $stQ = $pdo->prepare('SELECT COUNT(*) FROM admin_curso_aulas WHERE curso_id = :c'); $stQ->execute([':c' => (int)$cg['curso_id']]); $qtdAulas = (int)$stQ->fetchColumn(); ?>
+                <details class="admin-panel"<?php echo $qtdAulas === 0 ? ' open' : ''; ?>>
+                    <summary style="font-weight:700;cursor:pointer">📚 <?php echo admin_esc((string)$cg['nome']); ?>: copiar matérias de cursos prontos <?php echo $qtdAulas === 0 ? '(curso ainda vazio)' : '(' . $qtdAulas . ' aulas no curso)'; ?></summary>
+                    <p class="admin-form-hint" style="margin:8px 0">Marque as matérias que já servem para este cargo. Elas são copiadas com aulas, apostilas, vídeos e PDFs. O que faltar, a IA completa no passo 4.</p>
+                    <form method="post"><input type="hidden" name="acao" value="copiar_modulos"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$cg['id']; ?>">
+                        <?php foreach ($prontos as $nomeCurso => $mods): if ((int)$mods[0]['curso_id'] === (int)$cg['curso_id']) { continue; } ?>
+                            <fieldset style="border:1px solid #eef0f3;border-radius:10px;padding:8px 12px;margin:6px 0"><legend style="font-weight:700;padding:0 6px"><?php echo admin_esc((string)$nomeCurso); ?></legend>
+                                <?php foreach ($mods as $m): ?><label style="display:inline-flex;gap:6px;align-items:center;margin:4px 14px 4px 0;font-size:14px"><input type="checkbox" name="modulos[]" value="<?php echo (int)$m['id']; ?>"> <?php echo admin_esc((string)$m['titulo']); ?> <small class="admin-form-hint">(<?php echo (int)$m['aulas']; ?> aulas)</small></label><?php endforeach; ?>
+                            </fieldset>
+                        <?php endforeach; ?>
+                        <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">Copiar as matérias marcadas</button>
+                    </form>
+                </details>
+                <?php endforeach; endif; ?>
 
             <?php elseif ($aba === 'edital'): $rascunho = (string)hack_rascunho_get($pdo, $concursoId, 'edital_texto', ''); $info = json_decode((string)($concurso['edital_info'] ?? ''), true); ?>
                 <section class="admin-panel">
@@ -719,6 +759,7 @@ $menuBarInclude = admin_cursos_get_menubar();
             Object.keys(nomes).forEach(function (t) { var f = (d.fila || {})[t]; if (!f) { return; } var feito = f.feito || 0, pend = f.pendente || 0, err = f.erro || 0, tot = feito + pend + err; filaPend += pend;
                 linhas += '<div>' + nomes[t] + ': <strong>' + feito + '/' + tot + '</strong> prontas' + (pend ? ' · ' + pend + ' na fila' : '') + (err ? ' · ' + err + ' com erro (tenta de novo sozinho)' : '') + '</div>'; });
             document.getElementById('ciaAulas').innerHTML = linhas;
+            document.getElementById('ciaAgora').innerHTML = d.agora ? '⚙️ <strong>Agora:</strong> ' + esc(d.agora) + '…' : '';
             var ativos = (d.ativos || 0) + (q.na_fila || 0) + filaPend;
             document.getElementById('ciaStatus').textContent = ativos ? 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua' : 'Tudo em dia';
             if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) { location.reload(); return; }
