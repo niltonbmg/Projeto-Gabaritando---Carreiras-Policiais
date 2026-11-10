@@ -213,7 +213,8 @@ if (!function_exists('podcast_gemini')) {
         if ($codigo === 429) {
             $det = is_array($json) ? json_encode($json['error'] ?? [], JSON_UNESCAPED_UNICODE) : '';
             $porDia = stripos($det, 'PerDay') !== false || stripos($det, 'per day') !== false || stripos($det, 'daily') !== false;
-            throw new RuntimeException($porDia ? 'Limite diário gratuito do Gemini atingido (429). Renova à meia-noite do Pacífico.' : 'Limite por minuto do Gemini (429). Tenta de novo em instantes.');
+            $tipoCota = stripos($modelo, 'tts') !== false ? 'voz' : (isset($corpo['tools']) ? 'busca' : 'texto');
+            throw new RuntimeException(($porDia ? 'Limite diário gratuito do Gemini atingido (429)' : 'Limite por minuto do Gemini (429)') . " [cota:$tipoCota]. " . ($porDia ? 'Renova à meia-noite do Pacífico.' : 'Tenta de novo em instantes.'));
         }
         if ($codigo >= 400 || !is_array($json)) {
             $msg = is_array($json) ? (string)($json['error']['message'] ?? 'erro desconhecido') : 'resposta inválida';
@@ -249,7 +250,9 @@ if (!function_exists('podcast_uso_registrar')) {
         $u['ok'] = ($u['ok'] ?? 0) + ($codigo === 429 ? 0 : 1);
         if ($codigo === 429) {
             $u['bloqueios'] = ($u['bloqueios'] ?? 0) + 1;
-            $u['limite_observado'] = $u['limite_observado'] ?? $u['ok']; // quantas passaram antes do 1º bloqueio
+            if (!isset($u['limite_observado']) && $u['ok'] > 0) {
+                $u['limite_observado'] = $u['ok']; // quantas passaram antes do 1º bloqueio
+            }
             $u['bloqueado_em'] = $u['bloqueado_em'] ?? date('H:i');
         }
         $u['modelos'][$modelo] = ($u['modelos'][$modelo] ?? 0) + 1;

@@ -79,6 +79,9 @@ if (!function_exists('ia_fila_processar_um')) {
         $pausa = ia_fila_pausa();
         $pri = ia_prioridade();
         $semVoz = $pausa ? " AND tipo NOT IN ('videoaula','podcast')" : ($pri['podcasts_pausados'] ? " AND tipo <> 'podcast'" : '');
+        if (ia_fila_pausa_busca()) {
+            $semVoz .= " AND tipo <> 'questoes'"; // sem pesquisa na internet, questões esperam (não criamos antes de buscar as reais)
+        }
         $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','apostila','aula_ia','videoaula','questoes','podcast'";
         $item = $pdo->query("SELECT * FROM ia_fila WHERE (status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE))$semVoz
                               ORDER BY FIELD(tipo, $ordem), id ASC LIMIT 1")->fetch();
@@ -166,11 +169,10 @@ if (!function_exists('ia_fila_processar_um')) {
                 // Limite DIÁRIO: espera a renovação da cota (meia-noite do Pacífico); limite por minuto: poucos minutos.
                 $diario = stripos($m, 'diário') !== false || stripos($m, 'per day') !== false || stripos($m, 'PerDay') !== false;
                 $ate = $diario ? (int)podcast_uso_resumo()['renova_ts'] : time() + 120;
-                if (in_array($item['tipo'], ['videoaula', 'podcast'], true)) {
-                    @file_put_contents(dirname(__DIR__) . '/uploads/.ia-pausa-voz', (string)$ate);
-                } else {
-                    @file_put_contents(dirname(__DIR__) . '/uploads/.ia-pausa-texto', (string)min($ate, time() + 1800));
-                }
+                $cota = preg_match('~\[cota:(\w+)\]~', $m, $mc) ? $mc[1] : (in_array($item['tipo'], ['videoaula', 'podcast'], true) ? 'voz' : 'texto');
+                // Cada cota pausa só o que depende dela: voz -> videoaulas/podcasts; pesquisa -> questões; texto -> tudo por pouco tempo.
+                $arqPausa = ['voz' => '.ia-pausa-voz', 'busca' => '.ia-pausa-busca', 'texto' => '.ia-pausa-texto'][$cota] ?? '.ia-pausa-texto';
+                @file_put_contents(dirname(__DIR__) . '/uploads/' . $arqPausa, (string)($cota === 'texto' ? min($ate, time() + 1800) : $ate));
                 return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => false, 'erro' => 'Limite do Google atingido: pausado e retoma sozinho.'];
             }
             podcast_reconectar($pdo)->prepare("UPDATE ia_fila SET status = 'erro', erro = :e WHERE id = :id")->execute([':e' => mb_substr($e->getMessage(), 0, 500), ':id' => $id]);
@@ -184,6 +186,12 @@ if (!function_exists('ia_fila_pausa')) {
     function ia_fila_pausa(): int
     {
         $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-pausa-voz');
+        return $ate > time() ? $ate : 0;
+    }
+
+    function ia_fila_pausa_busca(): int
+    {
+        $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-pausa-busca');
         return $ate > time() ? $ate : 0;
     }
 

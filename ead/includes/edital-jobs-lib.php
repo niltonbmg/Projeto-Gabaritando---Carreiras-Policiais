@@ -69,7 +69,8 @@ if (!function_exists('job_bootstrap')) {
             return null; // cota do Google: espera
         }
         $pdo->exec("UPDATE edital_jobs SET status = 'pendente', mensagem = 'Aguardando a cota do Google renovar.' WHERE status = 'erro' AND mensagem LIKE '%Limite di%rio%'");
-        $sql = "SELECT * FROM edital_jobs WHERE status = 'pendente'" . ($concursoId ? ' AND concurso_id = ' . (int)$concursoId : '') . ' ORDER BY id LIMIT 1';
+        $semBusca = function_exists('ia_fila_pausa_busca') && ia_fila_pausa_busca() ? " AND tipo NOT IN ('buscar_prova')" : '';
+        $sql = "SELECT * FROM edital_jobs WHERE status = 'pendente'$semBusca" . ($concursoId ? ' AND concurso_id = ' . (int)$concursoId : '') . ' ORDER BY id LIMIT 1';
         $job = $pdo->query($sql)->fetch();
         if (!$job) {
             return null;
@@ -91,7 +92,9 @@ if (!function_exists('job_bootstrap')) {
             if (preg_match('~\(429\)|Limite di[aá]rio|Limite por minuto~i', $e->getMessage())) {
                 // Cota do Google, não erro da tarefa: volta para a fila e espera.
                 $pdo->prepare("UPDATE edital_jobs SET status = 'pendente', tentativas = GREATEST(tentativas - 1, 0), mensagem = :m WHERE id = :id")->execute([':m' => 'Aguardando a cota do Google renovar.', ':id' => (int)$job['id']]);
-                @file_put_contents(dirname(__DIR__) . '/uploads/.ia-pausa-texto', (string)(time() + (stripos($e->getMessage(), 'diário') !== false ? 1800 : 120)));
+                $ehBusca = str_contains($e->getMessage(), '[cota:busca]');
+                $diario = stripos($e->getMessage(), 'diário') !== false;
+                @file_put_contents(dirname(__DIR__) . '/uploads/' . ($ehBusca ? '.ia-pausa-busca' : '.ia-pausa-texto'), (string)($ehBusca && $diario ? (int)podcast_uso_resumo()['renova_ts'] : time() + ($diario ? 1800 : 120)));
                 $job['status'] = 'pendente';
                 $job['mensagem'] = 'Aguardando a cota do Google renovar.';
                 return $job;
@@ -422,6 +425,7 @@ if (!function_exists('job_bootstrap')) {
             'prioridade' => ia_prioridade(),
             'pausa_voz' => ia_fila_pausa() ? date('H:i', ia_fila_pausa()) : '',
             'pausa_texto' => ia_fila_pausa_texto() ? date('H:i', ia_fila_pausa_texto()) : '',
+            'pausa_busca' => ia_fila_pausa_busca() ? date('d/m H:i', ia_fila_pausa_busca()) : '',
             'fila' => $porTipo,
             'jobs' => $jobs,
             'ativos' => count(array_filter($jobs, static fn($j) => in_array($j['status'], ['pendente', 'rodando'], true))),

@@ -811,7 +811,7 @@ $menuBarInclude = admin_cursos_get_menubar();
             var u = d.uso || {}, pr = d.prioridade || {}, fl = d.fila || {};
             var falta = function (t) { return ((fl[t] || {}).pendente || 0) + ((fl[t] || {}).erro || 0); };
             var vozFalta = falta('videoaula') * 8 + (pr.podcasts_pausados ? 0 : falta('podcast') * 4);
-            var linhaUso = function (rot, x) { x = x || {}; return '<div>' + rot + ': <strong>' + (x.hoje || 0) + '</strong> chamadas hoje' + (x.limite ? ' · limite grátis observado ≈ <strong>' + x.limite + '/dia</strong>' : ' · limite ainda não atingido') + (x.bloqueado ? ' · <span style="color:#b42318;font-weight:700">⛔ esgotado hoje (desde ' + x.bloqueado_em + ')</span>' : '') + '</div>'; };
+            var linhaUso = function (rot, x) { x = x || {}; return '<div>' + rot + ': <strong>' + (x.hoje || 0) + '</strong> chamadas hoje' + (x.bloqueado ? ' · <span style="color:#b42318;font-weight:700">⛔ cota grátis de hoje esgotada (desde ' + x.bloqueado_em + ') · volta ' + esc(u.renova || '') + '</span>' : (x.limite ? ' · limite grátis observado ≈ <strong>' + x.limite + '/dia</strong>' : ' · ✅ ainda tem cota hoje')) + '</div>'; };
             var prev = !vozFalta ? '' : u.voz && u.voz.limite ? '≈ <strong>' + Math.max(1, Math.ceil(vozFalta / u.voz.limite)) + ' dia(s)</strong> para terminar as videoaulas' + (pr.podcasts_pausados ? '' : ' e podcasts') + ' no plano grátis (' + vozFalta + ' falas na fila)' : (vozFalta ? vozFalta + ' falas de voz na fila; a previsão aparece quando o limite for medido' : '');
             document.getElementById('ciaUso').innerHTML = '<strong>📊 Uso da IA grátis (Google) · renova ' + esc(u.renova || '') + '</strong>'
                 + '<div class="admin-form-hint" style="display:grid;gap:2px;margin-top:4px">' + linhaUso('✍️ Texto (teorias, questões criadas, leituras)', u.texto) + linhaUso('🎙️ Voz (videoaulas e podcasts)', u.voz) + linhaUso('🔎 Pesquisa na internet (questões reais, provas)', u.busca) + (prev ? '<div>⏱️ ' + prev + '</div>' : '') + '</div>'
@@ -827,7 +827,8 @@ $menuBarInclude = admin_cursos_get_menubar();
             }
             document.getElementById('ciaAgora').innerHTML = (d.agora ? '⚙️ <strong>Agora:</strong> ' + esc(d.agora) + '…' : '')
                 + (d.pausa_voz ? '<br>⏸ <strong>Voz em pausa até ' + d.pausa_voz + '</strong>: o Google limita quantas falas grátis por dia. Videoaulas e podcasts continuam sozinhos depois; o resto segue normalmente.' : '')
-                + (d.pausa_texto ? '<br>⏸ <strong>IA em pausa até ' + d.pausa_texto + '</strong> (limite do Google): retoma sozinha.' : '');
+                + (d.pausa_busca ? '<br>⏸ <strong>Questões aguardando a pesquisa na internet (volta ' + d.pausa_busca + ')</strong>: a IA não cria questão antes de procurar as reais.' : '')
+                + (d.pausa_texto ? '<br>⏸ <strong>Texto em pausa até ' + d.pausa_texto + '</strong> (limite do Google): retoma sozinho.' : '');
             var ativos = (d.ativos || 0) + (q.na_fila || 0) + filaPend;
             document.getElementById('ciaStatus').textContent = ativos ? 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua' : 'Tudo em dia';
             if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) { location.reload(); return; }

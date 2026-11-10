@@ -596,6 +596,9 @@ if (!function_exists('hack_bootstrap')) {
                 $pdo = podcast_reconectar($pdo);
                 $reais += hack_gravar_questoes($pdo, $it, array_slice(hack_questoes_json($resp), 0, $resta), $it['banca_id'] ? (int)$it['banca_id'] : null, 'real');
             } catch (RuntimeException $e) {
+                if (str_contains($e->getMessage(), '(429)')) {
+                    throw $e; // sem cota de pesquisa: o assunto espera; nada é criado antes de procurar as reais
+                }
                 $pdo = podcast_reconectar($pdo);
             }
         }
