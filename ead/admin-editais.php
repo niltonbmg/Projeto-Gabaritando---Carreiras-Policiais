@@ -765,7 +765,9 @@ $menuBarInclude = admin_cursos_get_menubar();
             document.getElementById('ciaAulas').innerHTML = linhas;
             var rot = {aula_ia: '🤖 Teoria pronta', apostila: '📄 Apostila pronta', videoaula: '🎬 Videoaula pronta', questoes: '📚 Questões prontas'};
             document.getElementById('ciaRecentes').innerHTML = (d.recentes || []).length ? '<strong style="font-size:14px">Acabou de ficar pronto (clique para conferir):</strong><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + d.recentes.map(function (r) { return '<button type="button" class="admin-btn admin-btn-light admin-btn-small" data-pv="' + r.pv + '" data-id="' + r.id + '">👁 ' + rot[r.tipo] + ': ' + esc(r.titulo) + '</button>'; }).join('') + '</div>' : '';
-            document.getElementById('ciaAgora').innerHTML = d.agora ? '⚙️ <strong>Agora:</strong> ' + esc(d.agora) + '…' : '';
+            document.getElementById('ciaAgora').innerHTML = (d.agora ? '⚙️ <strong>Agora:</strong> ' + esc(d.agora) + '…' : '')
+                + (d.pausa_voz ? '<br>⏸ <strong>Voz em pausa até ' + d.pausa_voz + '</strong>: o Google limita quantas falas grátis por dia. Videoaulas e podcasts continuam sozinhos depois; o resto segue normalmente.' : '')
+                + (d.pausa_texto ? '<br>⏸ <strong>IA em pausa até ' + d.pausa_texto + '</strong> (limite do Google): retoma sozinha.' : '');
             var ativos = (d.ativos || 0) + (q.na_fila || 0) + filaPend;
             document.getElementById('ciaStatus').textContent = ativos ? 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua' : 'Tudo em dia';
             if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) { location.reload(); return; }

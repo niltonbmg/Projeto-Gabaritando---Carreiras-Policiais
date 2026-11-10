@@ -72,7 +72,13 @@ if (!function_exists('ia_fila_processar_um')) {
         videoaula_bootstrap($pdo);
         $pdo = podcast_reconectar($pdo);
         // Apostilas antes de podcasts; até 3 tentativas por item.
-        $item = $pdo->query("SELECT * FROM ia_fila WHERE status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE)
+        // Limite diário do Google atingido? Pausa só o que usa voz (videoaula/podcast) e segue com o resto.
+        if (ia_fila_pausa_texto()) {
+            return null; // cota de texto do Google: espera uns minutos
+        }
+        $pausa = ia_fila_pausa();
+        $semVoz = $pausa ? " AND tipo NOT IN ('videoaula','podcast')" : '';
+        $item = $pdo->query("SELECT * FROM ia_fila WHERE (status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE))$semVoz
                               ORDER BY FIELD(tipo, 'redacao', 'apostila', 'aula_ia', 'videoaula', 'questoes', 'podcast'), id ASC LIMIT 1")->fetch();
         if (!$item) {
             return null;
@@ -151,9 +157,35 @@ if (!function_exists('ia_fila_processar_um')) {
             $pdo->prepare("UPDATE ia_fila SET status = 'feito', erro = NULL WHERE id = :id")->execute([':id' => $id]);
             return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => true];
         } catch (Throwable $e) {
+            $m = $e->getMessage();
+            if (preg_match('~\(429\)|Limite di[aá]rio|quota|RESOURCE_EXHAUSTED~i', $m)) {
+                // Não é erro da tarefa: é a cota do Google. Volta para a fila sem gastar tentativa e pausa por 1 hora.
+                podcast_reconectar($pdo)->prepare("UPDATE ia_fila SET status = 'pendente', tentativas = GREATEST(tentativas - 1, 0), erro = NULL WHERE id = :id")->execute([':id' => $id]);
+                if (in_array($item['tipo'], ['videoaula', 'podcast'], true)) {
+                    @file_put_contents(dirname(__DIR__) . '/uploads/.ia-pausa-voz', (string)(time() + 3600));
+                } else {
+                    @file_put_contents(dirname(__DIR__) . '/uploads/.ia-pausa-texto', (string)(time() + 900));
+                }
+                return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => false, 'erro' => 'Limite do Google atingido: pausado e retoma sozinho.'];
+            }
             podcast_reconectar($pdo)->prepare("UPDATE ia_fila SET status = 'erro', erro = :e WHERE id = :id")->execute([':e' => mb_substr($e->getMessage(), 0, 500), ':id' => $id]);
             return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => false, 'erro' => $e->getMessage()];
         }
+    }
+}
+
+if (!function_exists('ia_fila_pausa')) {
+    /** Até quando a voz (TTS) está pausada por limite diário do Google (0 = não está). */
+    function ia_fila_pausa(): int
+    {
+        $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-pausa-voz');
+        return $ate > time() ? $ate : 0;
+    }
+
+    function ia_fila_pausa_texto(): int
+    {
+        $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-pausa-texto');
+        return $ate > time() ? $ate : 0;
     }
 }
 

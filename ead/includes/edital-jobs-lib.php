@@ -406,6 +406,8 @@ if (!function_exists('job_bootstrap')) {
         return [
             'recentes' => $recentes,
             'agora' => job_agora_ler(),
+            'pausa_voz' => ia_fila_pausa() ? date('H:i', ia_fila_pausa()) : '',
+            'pausa_texto' => ia_fila_pausa_texto() ? date('H:i', ia_fila_pausa_texto()) : '',
             'fila' => $porTipo,
             'jobs' => $jobs,
             'ativos' => count(array_filter($jobs, static fn($j) => in_array($j['status'], ['pendente', 'rodando'], true))),
