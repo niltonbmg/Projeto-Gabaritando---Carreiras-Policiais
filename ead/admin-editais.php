@@ -267,6 +267,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$sa, $sq] = job_sincronizar_concurso($pdo, $concursoId);
             ed_ir($concursoId, (string)($_POST['volta'] ?? 'aulas'), "🔄 Sincronizado com a plataforma: $sa aula(s) e $sq questão(ões) aproveitadas dos mesmos assuntos.");
         }
+        if ($acao === 'refazer_formato') {
+            $cg = $pdo->prepare('SELECT DISTINCT curso_id FROM concurso_cargos WHERE concurso_id = :c AND curso_id IS NOT NULL');
+            $cg->execute([':c' => $concursoId]);
+            $cIds = array_map('intval', $cg->fetchAll(PDO::FETCH_COLUMN)) ?: [0];
+            $n = 0;
+            foreach ($pdo->query('SELECT a.id, a.video_url, a.pdf_arquivo, a.descricao FROM admin_curso_aulas a JOIN aula_videoaulas v ON v.aula_id = a.id WHERE a.curso_id IN (' . implode(',', $cIds) . ')') as $a) {
+                $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :id')->execute([':id' => (int)$a['id']]);
+                $antigao = trim((string)$a['video_url']) === '' && trim((string)$a['pdf_arquivo']) === '' && str_contains((string)$a['descricao'], 'aula-ia-aviso');
+                if ($antigao) {
+                    try { $pdo->prepare('DELETE FROM aula_podcasts WHERE aula_id = :id')->execute([':id' => (int)$a['id']]); } catch (Throwable $e) {}
+                }
+                ia_fila_adicionar($pdo, $antigao ? 'aula_ia' : 'videoaula', (int)$a['id']);
+                $n++;
+            }
+            ed_ir($concursoId, 'aulas', "🔁 $n aula(s) na fila para refazer no formato novo (videoaula de 10 a 15 min, ritmo calmo; assunto grande vira mais de uma aula).");
+        }
         if ($acao === 'gerar_faltantes') {
             job_sincronizar_concurso($pdo, $concursoId); // aproveita o que já existe antes de gerar
             $n = hack_gerar_faltantes($pdo, $concursoId);
@@ -629,6 +645,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <div class="admin-panel-title"><h2>4. Aulas de cada assunto</h2></div>
                     <p class="admin-form-hint" style="margin-bottom:10px">Três caminhos, nesta ordem: <strong>1)</strong> usar vídeos que já existem na plataforma (abaixo), <strong>2)</strong> cadastrar vídeo/PDF do professor no assunto, <strong>3)</strong> o que faltar, a IA gera (teoria mínima + videoaula do Antigão). Legenda: ✅ aula do professor · 🤖 aula do Antigão · ⬜ falta.</p>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+                        <form method="post" onsubmit="return confirm('Refazer as videoaulas já prontas no formato novo (10 a 15 min, ritmo calmo)? As aulas do Antigão também têm a teoria refeita e podem virar mais de uma aula. Gasta cota de voz de novo.');"><input type="hidden" name="acao" value="refazer_formato"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit">🔁 Refazer videoaulas no formato novo</button></form>
                         <form method="post"><input type="hidden" name="acao" value="sincronizar"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit" title="Copia aulas e libera questões dos mesmos assuntos que já existem em qualquer curso">🔄 Sincronizar com a plataforma</button></form>
                         <form method="post"><input type="hidden" name="acao" value="sugerir_existentes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="search"></i>1. Procurar vídeos já gravados</button></form>
                         <form method="post" onsubmit="return confirm('A IA vai preparar a aula (teoria mínima + videoaula do Antigão) de todos os assuntos sem aula. Continuar?');"><input type="hidden" name="acao" value="gerar_faltantes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>3. A IA gera o que falta</button></form>

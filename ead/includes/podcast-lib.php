@@ -455,7 +455,7 @@ if (!function_exists('podcast_tts')) {
                 ['speaker' => 'Ana', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_ANA]]],
             ]]],
         ];
-        $dialogo = "Leia em português do Brasil, como uma conversa descontraída e natural de podcast do Projeto Gabaritando: Sargento é o Antigão, veterano calmo e bem-humorado; Ana é o Recruta Zero Um, jovem, curioso e animado. Ritmo de conversa real, com reações e pausas naturais:\n";
+        $dialogo = "TTS the following conversation between Sargento and Ana, at a calm, natural pace:\n";
         $partesNovas = [];
         foreach ($falas as $f) {
             $dialogo .= $f['quem'] . ': ' . $f['texto'] . "\n";

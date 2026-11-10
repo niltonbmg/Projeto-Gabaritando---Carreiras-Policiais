@@ -253,15 +253,42 @@ if (!function_exists('hack_bootstrap')) {
             ia_fila_adicionar($pdo, 'apostila', $aulaId); // ganhou material de verdade: segue o fluxo normal
             return;
         }
+        // Assunto grande vira mais de uma aula (cada uma rende uma videoaula de 10 a 15 minutos).
+        $foco = '';
+        if (preg_match('~ · Parte \d+: (.+)$~u', (string)$a['titulo'], $mP)) {
+            $foco = trim($mP[1]);
+        } else {
+            try {
+                $plano = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Você planeja aulas do Projeto Gabaritando. Cada aula vira uma videoaula de 10 a 15 minutos.\n"
+                    . "Matéria: {$a['materia']} · Assunto do edital: {$a['assunto']} · Curso: {$a['curso']}.\n"
+                    . "Quantas aulas esse assunto precisa para ser bem ensinado para a prova (1 a 4)? Assunto curto = 1 aula. Assunto amplo (ex.: classes de palavras, crimes contra a administração) = 2 a 4, cada uma com um foco claro, do básico ao avançado.\n"
+                    . "Responda SOMENTE em JSON: {\"partes\":[{\"foco\":\"título curto do foco da aula\"}]}"]]]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.2]], 60);
+                $pdo = podcast_reconectar($pdo);
+                $partes = array_values(array_filter(array_map(static fn($x) => trim((string)($x['foco'] ?? '')), (array)(edital_json_do_texto((string)($plano['candidates'][0]['content']['parts'][0]['text'] ?? ''))['partes'] ?? []))));
+            } catch (RuntimeException $e) {
+                $partes = [];
+            }
+            $partes = array_slice($partes, 0, 4);
+            if (count($partes) > 1) {
+                $base = trim((string)$a['titulo']);
+                $foco = $partes[0];
+                $pdo->prepare('UPDATE admin_curso_aulas SET titulo = :t WHERE id = :id')->execute([':t' => mb_substr($base . ' · Parte 1: ' . $partes[0], 0, 180), ':id' => $aulaId]);
+                foreach (array_slice($partes, 1) as $k => $f) {
+                    $pdo->prepare('INSERT INTO admin_curso_aulas (curso_id, modulo_id, materia_id, topico_id, titulo, ordem, criado_em) VALUES (:c, :m, :ma, :t, :ti, :o, NOW())')
+                        ->execute([':c' => (int)$a['curso_id'], ':m' => (int)$a['modulo_id'], ':ma' => (int)$a['materia_id'], ':t' => (int)$a['topico_id'], ':ti' => mb_substr($base . ' · Parte ' . ($k + 2) . ': ' . $f, 0, 180), ':o' => (int)$a['ordem'] + $k + 1]);
+                    ia_fila_adicionar($pdo, 'aula_ia', (int)$pdo->lastInsertId());
+                }
+            }
+        }
         $prompt = "Você é professor do Projeto Gabaritando (cursinho para carreiras policiais e militares da Bahia) e escreve a TEORIA MÍNIMA de uma aula que ainda não tem vídeo nem PDF.\n"
-            . "Curso: {$a['curso']} · Matéria: {$a['materia']} · Assunto do edital: {$a['assunto']}.\n"
+            . "Curso: {$a['curso']} · Matéria: {$a['materia']} · Assunto do edital: {$a['assunto']}" . ($foco !== '' ? " · FOCO DESTA AULA: $foco (as outras partes do assunto ficam para as outras aulas)" : '') . ".\n"
             . "Escreva em HTML simples (h2, h3, p, ul, li, strong, table), em português do Brasil, linguagem direta para o aluno (\"combatente\"):\n"
             . "1. <h2>O que cai na prova</h2>: em 2 frases, por que o assunto importa.\n"
             . "2. <h2>Teoria mínima</h2>: os conceitos essenciais, do simples ao difícil, com um exemplo para cada um.\n"
             . "3. <h2>Pegadinhas da banca</h2>: 3 a 5 pegadinhas clássicas com o macete para não cair.\n"
             . "4. <h2>Resumo para revisão</h2>: 5 a 8 tópicos curtos.\n"
             . "5. <h2>Sua missão</h2>: resolver pelo menos 5 questões do assunto.\n"
-            . "Seja fiel ao conteúdo consagrado da matéria (leis citadas pelo nome e artigo apenas quando tiver certeza). Sempre \"Projeto Gabaritando\" por extenso. Entre 700 e 1400 palavras. Responda só o HTML.";
+            . "Seja fiel ao conteúdo consagrado da matéria (leis citadas pelo nome e artigo apenas quando tiver certeza). Sempre \"Projeto Gabaritando\" por extenso. Entre 1200 e 2000 palavras, com bastante exemplo. Responda só o HTML.";
         $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => $prompt]]]], 'generationConfig' => ['temperature' => 0.4]], 150);
         $pdo = podcast_reconectar($pdo);
         $html = '';

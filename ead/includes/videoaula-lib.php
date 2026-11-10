@@ -74,13 +74,13 @@ if (!function_exists('videoaula_bootstrap')) {
 
         $aula = videoaula_material($pdo, $aulaId);
         $prompt = "Você é professor e designer didático do Projeto Gabaritando, cursinho para carreiras policiais e militares da Bahia.\n"
-            . "Monte uma VIDEOAULA CURTA (4 a 7 minutos) sobre a aula abaixo: slides + narração + paradas com pergunta.\n\n"
+            . "Monte uma VIDEOAULA COMPLETA de 10 a 15 minutos sobre a aula abaixo: slides + narração + paradas com pergunta. Explique com calma, como numa aula presencial: conceito, exemplo, contraexemplo e como a banca cobra.\n\n"
             . "DIDÁTICA (obrigatória)\n"
             . "- Slide 1: abertura. Narração começa com \"Fala, combatente! Aqui é o Antigão, do Projeto Gabaritando\" (o Antigão é a IA professora: veterano experiente e bem-humorado) e diz o que o aluno vai aprender e por que cai na prova.\n"
             . "- Do 2º ao penúltimo: um conceito por slide, do mais simples ao mais difícil. Título curto, 2 a 4 tópicos de no máximo 12 palavras, e um 'destaque' (macete, pegadinha da banca ou exemplo).\n"
             . "- Último slide: resumo em 3 tópicos e a chamada: resolver pelo menos 5 questões do assunto. Termine a narração com \"Fé na missão: a farda é questão de tempo!\".\n"
-            . "- Narração: fala natural de professor, 40 a 90 palavras por slide, sem ler os tópicos palavra por palavra, números e datas por extenso.\n"
-            . "- Entre 6 e 10 slides. Depois dos slides 3 e 6 (e do 9, se houver), uma PARADA: pergunta de múltipla escolha estilo banca, 4 alternativas, com explicação curta do porquê.\n"
+            . "- Narração: fala natural e PAUSADA de professor, 120 a 170 palavras por slide (cerca de 1 minuto falado), frases curtas, com pelo menos um exemplo concreto por slide, sem ler os tópicos palavra por palavra, números e datas por extenso. A narração é só o que o professor fala: nada de instruções, rubricas, marcações ou títulos entre colchetes.\n"
+            . "- Entre 10 e 14 slides. Depois dos slides 4, 8 e 12 (se houver), uma PARADA: pergunta de múltipla escolha estilo banca, 4 alternativas, com explicação curta do porquê.\n"
             . "- Use SOMENTE o conteúdo do material (texto e PDF anexo). Não invente leis, números ou datas.\n"
             . "- Sempre \"Projeto Gabaritando\" por extenso; o aluno é \"combatente\".\n\n"
             . "Responda SOMENTE em JSON:\n"
@@ -124,12 +124,12 @@ if (!function_exists('videoaula_bootstrap')) {
                 }
             }
             $slides[] = ['emoji' => mb_substr(trim((string)($s['emoji'] ?? '📌')), 0, 4) ?: '📌', 'titulo' => mb_substr($titulo, 0, 120), 'topicos' => $top,
-                'destaque' => mb_substr(trim((string)($s['destaque'] ?? '')), 0, 240), 'narracao' => mb_substr($narr, 0, 1500)];
+                'destaque' => mb_substr(trim((string)($s['destaque'] ?? '')), 0, 240), 'narracao' => mb_substr($narr, 0, 2500)];
         }
         if (count($slides) < 3) {
             throw new RuntimeException('A IA não montou slides suficientes. Tente de novo.');
         }
-        $slides = array_slice($slides, 0, 12);
+        $slides = array_slice($slides, 0, 16);
         $paradas = [];
         foreach ((array)($d['paradas'] ?? []) as $p) {
             $alt = array_values(array_filter(array_map(static fn($a) => mb_substr(trim((string)$a), 0, 300), (array)($p['alternativas'] ?? [])), 'strlen'));
@@ -141,7 +141,7 @@ if (!function_exists('videoaula_bootstrap')) {
             $paradas[] = ['apos_slide' => $apos, 'pergunta' => mb_substr(trim((string)$p['pergunta']), 0, 600), 'alternativas' => array_slice($alt, 0, 5),
                 'correta' => $c, 'explicacao' => mb_substr(trim((string)($p['explicacao'] ?? '')), 0, 600)];
         }
-        return ['slides' => $slides, 'paradas' => array_slice($paradas, 0, 4)];
+        return ['slides' => $slides, 'paradas' => array_slice($paradas, 0, 5)];
     }
 
     function videoaula_linha(PDO $pdo, int $aulaId): ?array
@@ -171,7 +171,7 @@ if (!function_exists('videoaula_bootstrap')) {
         $audios = json_decode((string)($v['audios'] ?: '[]'), true) ?: [];
         if (empty($audios[$n])) {
             $resp = podcast_gemini(PODCAST_MODELO_VOZ, [
-                'contents' => [['parts' => [['text' => 'Narre em português do Brasil, como um professor animado e claro de cursinho policial: ' . $slide['narracao']]]]],
+                'contents' => [['parts' => [['text' => 'Say slowly, calmly and clearly, like a patient teacher: ' . $slide['narracao']]]]],
                 'generationConfig' => ['responseModalities' => ['AUDIO'], 'speechConfig' => ['voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_SARGENTO]]]],
             ], 85);
             $pdo = podcast_reconectar($pdo);

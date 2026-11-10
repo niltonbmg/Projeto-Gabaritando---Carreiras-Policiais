@@ -6101,7 +6101,7 @@ if ($travaMeta) {
     document.getElementById('vaAnt').addEventListener('click', function () { ir(idx - 1, tocando); });
     document.getElementById('vaProx').addEventListener('click', function () { ir(idx + 1, tocando); });
     document.getElementById('vaVel').addEventListener('click', function () {
-        var l = [1, 1.25, 1.5, 2]; vel = l[(l.indexOf(vel) + 1) % l.length]; audio.playbackRate = vel; this.textContent = String(vel).replace('.', ',') + 'x';
+        var l = [1, 1.25, 1.5, 0.85]; vel = l[(l.indexOf(vel) + 1) % l.length]; audio.playbackRate = vel; this.textContent = String(vel).replace('.', ',') + 'x';
     });
     document.getElementById('vaTela').addEventListener('click', function () {
         if (document.fullscreenElement) { document.exitFullscreen(); } else if (va.requestFullscreen) { va.requestFullscreen().catch(function () {}); }
