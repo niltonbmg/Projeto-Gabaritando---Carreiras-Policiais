@@ -47,6 +47,10 @@ if (!function_exists('hack_bootstrap')) {
             dia DATE NOT NULL,
             PRIMARY KEY (usuario_id, dia)
         ) ENGINE=InnoDB");
+        try {
+            hack_corrigir_geradas($pdo);
+        } catch (Throwable $e) {
+        }
         // Títulos limpos: tira o "· aula do Antigão" das aulas criadas antes (o selo aparece dentro da aula).
         try {
             $pdo->exec("UPDATE admin_curso_aulas SET titulo = TRIM(REPLACE(titulo, ' · aula do Antigão', '')) WHERE titulo LIKE '% · aula do Antigão%'");
@@ -396,6 +400,49 @@ if (!function_exists('hack_bootstrap')) {
         return $agenda;
     }
     // ---------------- Questões por assunto ----------------
+    /** "Banca" própria das questões geradas: "Antigão · estilo <banca de referência>". */
+    function hack_banca_estilo(PDO $pdo, ?int $bancaRef): int
+    {
+        $ref = '';
+        if ($bancaRef) {
+            $st = $pdo->prepare('SELECT nome FROM admin_bancas WHERE id = :id');
+            $st->execute([':id' => $bancaRef]);
+            $ref = (string)$st->fetchColumn();
+        }
+        $sigla = $ref !== '' && preg_match('~/\s*([A-Z]{2,})\s*$~', $ref, $m) ? $m[1] : $ref;
+        $nome = 'Antigão · estilo ' . ($sigla !== '' && $sigla !== 'A definir' ? $sigla : 'da banca');
+        $st = $pdo->prepare('SELECT id FROM admin_bancas WHERE nome = :n LIMIT 1');
+        $st->execute([':n' => $nome]);
+        if ($id = (int)$st->fetchColumn()) {
+            return $id;
+        }
+        $pdo->prepare('INSERT INTO admin_bancas (nome, descricao, criado_em) VALUES (:n, :d, NOW())')->execute([':n' => $nome, ':d' => 'Questões inéditas criadas pelo Antigão (IA) no estilo da banca de referência. Não são questões da banca.']);
+        return (int)$pdo->lastInsertId();
+    }
+
+    function hack_rotulo_gerada(PDO $pdo, ?int $bancaRef, ?string $data = null): string
+    {
+        $ref = 'da banca do concurso';
+        if ($bancaRef) {
+            $st = $pdo->prepare('SELECT nome FROM admin_bancas WHERE id = :id');
+            $st->execute([':id' => $bancaRef]);
+            $ref = (string)$st->fetchColumn() ?: $ref;
+        }
+        return '🤖 Questão inédita do Antigão, no estilo ' . ($ref === 'A definir' ? 'da banca do concurso' : $ref) . ', gerada em ' . date('d/m/Y', strtotime($data ?? 'now')) . '. Não é questão de prova.';
+    }
+
+    /** Corrige as questões geradas antes desta regra: tira banca e ano de prova, põe estilo e data de geração. */
+    function hack_corrigir_geradas(PDO $pdo): void
+    {
+        $st = $pdo->query("SELECT q.id, q.banca_id, q.criado_em, q.explicacao FROM admin_banco_questoes q JOIN admin_bancas b ON b.id = q.banca_id
+                            WHERE q.explicacao LIKE '%Questão inédita do Antigão, no nível da prova.%' AND b.nome NOT LIKE 'Antigão · estilo%' LIMIT 500");
+        $upd = $pdo->prepare('UPDATE admin_banco_questoes SET banca_id = :b, ano = NULL, explicacao = :x WHERE id = :id');
+        foreach ($st->fetchAll() as $q) {
+            $x = str_replace('🤖 Questão inédita do Antigão, no nível da prova.', hack_rotulo_gerada($pdo, (int)$q['banca_id'], (string)$q['criado_em']), (string)$q['explicacao']);
+            $upd->execute([':b' => hack_banca_estilo($pdo, (int)$q['banca_id']), ':x' => $x, ':id' => (int)$q['id']]);
+        }
+    }
+
     /** Cursos (dos cargos) que cobrem o assunto do edital. */
     function hack_cursos_do_item(PDO $pdo, array $item): array
     {
@@ -415,6 +462,7 @@ if (!function_exists('hack_bootstrap')) {
     function hack_gravar_questoes(PDO $pdo, array $item, array $questoes, ?int $bancaId, string $origem): int
     {
         $cursos = hack_cursos_do_item($pdo, $item);
+        $bancaRef = $bancaId;
         if (!$bancaId) {
             // O banco de questões exige banca: usa "A definir" quando o concurso ainda não tem.
             $bancaId = (int)$pdo->query("SELECT id FROM admin_bancas WHERE nome = 'A definir' LIMIT 1")->fetchColumn();
@@ -442,10 +490,11 @@ if (!function_exists('hack_bootstrap')) {
             }
             $fonte = trim((string)($q['fonte'] ?? ''));
             $exp = trim((string)($q['comentario'] ?? ''));
-            $exp = ($origem === 'gerada' ? '🤖 Questão inédita do Antigão, no nível da prova. ' : ($fonte !== '' ? '📌 Fonte: ' . $fonte . '. ' : '')) . $exp;
+            $exp = ($origem === 'gerada' ? hack_rotulo_gerada($pdo, $bancaRef) . ' ' : ($fonte !== '' ? '📌 Fonte: ' . $fonte . '. ' : '')) . $exp;
             $dif = in_array($q['dificuldade'] ?? '', ['facil', 'medio', 'dificil'], true) ? $q['dificuldade'] : 'medio';
-            $insQ->execute([':c' => $cursos[0] ?? null, ':b' => $bancaId, ':m' => (int)$item['materia_id'], ':t' => (int)$item['topico_id'],
-                ':a' => ((int)($q['ano'] ?? 0)) ?: null, ':e' => mb_substr($enun, 0, 6000), ':x' => mb_substr($exp, 0, 6000), ':d' => $dif]);
+            // Gerada: não é da banca nem de um ano de prova. Vai na "banca" "Antigão · estilo X", sem ano.
+            $insQ->execute([':c' => $cursos[0] ?? null, ':b' => $origem === 'gerada' ? hack_banca_estilo($pdo, $bancaRef) : $bancaId, ':m' => (int)$item['materia_id'], ':t' => (int)$item['topico_id'],
+                ':a' => $origem === 'gerada' ? null : (((int)($q['ano'] ?? 0)) ?: null), ':e' => mb_substr($enun, 0, 6000), ':x' => mb_substr($exp, 0, 6000), ':d' => $dif]);
             $qid = (int)$pdo->lastInsertId();
             foreach ($alts as $k => $alt) {
                 $insO->execute([':q' => $qid, ':l' => chr(65 + $k), ':t' => mb_substr($alt, 0, 3000), ':c' => $k === $cor ? 1 : 0, ':o' => $k + 1]);
