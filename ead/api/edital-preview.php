@@ -63,9 +63,17 @@ if ($tipo === 'aula') {
     echo '<p style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="pv-bt pv-bt-l" data-pv-acao="refazer_aula" data-id="' . (int)$a['id'] . '">🔁 Pedir para a IA refazer esta aula</button></p>';
     echo '<p><a class="pv-bt" target="_blank" href="aulas.php?curso_id=' . (int)$a['curso_id'] . '&modulo_id=' . (int)$a['modulo_id'] . '&aula_id=' . (int)$a['id'] . '">▶ Abrir como o aluno vê (videoaula, podcast, PDF)</a></p>';
     if ($slides) {
-        echo '<h3>Roteiro da videoaula</h3><ol class="pv-slides">';
-        foreach ($slides as $sl) {
-            echo '<li><strong>' . $e(($sl['emoji'] ?? '') . ' ' . ($sl['titulo'] ?? '')) . '</strong> — ' . $e(implode(' · ', (array)($sl['topicos'] ?? []))) . '</li>';
+        $audios = $va && $va['status'] === 'pronto' ? (json_decode((string)($pdo->query('SELECT audios FROM aula_videoaulas WHERE aula_id = ' . (int)$a['id'])->fetchColumn() ?: '[]'), true) ?: []) : [];
+        echo '<h3>🎬 Videoaula do Antigão' . ($audios ? ' · ouça cada slide aqui mesmo' : '') . '</h3><ol class="pv-slides">';
+        foreach ($slides as $i => $sl) {
+            echo '<li><strong>' . $e(($sl['emoji'] ?? '') . ' ' . ($sl['titulo'] ?? '')) . '</strong> — ' . $e(implode(' · ', (array)($sl['topicos'] ?? [])));
+            if (!empty($sl['destaque'])) {
+                echo '<br><small>💡 ' . $e($sl['destaque']) . '</small>';
+            }
+            if (!empty($audios[$i])) {
+                echo '<br><audio controls preload="none" style="width:100%;max-width:420px;margin-top:4px" src="' . $e($audios[$i]) . '"></audio>';
+            }
+            echo '</li>';
         }
         echo '</ol>';
     }
