@@ -468,4 +468,59 @@ if (!function_exists('job_bootstrap')) {
         $j = json_decode((string)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-agora.json'), true);
         return ($j && ($j['em'] ?? 0) > time() - 360) ? (string)$j['texto'] : '';
     }
+
+    // ---------------- Aproveitar aulas entre cargos ----------------
+    /**
+     * Para o cargo de destino: em cada assunto do edital que ele não tem aula e que outro cargo do
+     * concurso já tem, copia a aula (vídeo, PDF, apostila, videoaula e podcast prontos). Retorna quantas.
+     */
+    function job_aproveitar_entre_cargos(PDO $pdo, int $concursoId, int $cargoDestino, bool $soContar = false): int
+    {
+        $and = edital_andamento($pdo, $concursoId);
+        $destino = null;
+        foreach ($and as $an) {
+            if ((int)$an['cargo']['id'] === $cargoDestino) { $destino = $an; }
+        }
+        if (!$destino || empty($destino['cargo']['curso_id'])) {
+            return 0;
+        }
+        // Aulas por assunto (topico) nos outros cargos, dando preferência à aula do professor.
+        $fonte = [];
+        foreach ($and as $an) {
+            if ((int)$an['cargo']['id'] === $cargoDestino) { continue; }
+            foreach ($an['itens'] as $it) {
+                foreach ($it['aulas'] as $a) {
+                    $prof = trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '';
+                    if (!isset($fonte[(int)$it['topico_id']]) || ($prof && !$fonte[(int)$it['topico_id']]['prof'])) {
+                        $fonte[(int)$it['topico_id']] = ['id' => (int)$a['id'], 'prof' => $prof];
+                    }
+                }
+            }
+        }
+        $n = 0;
+        foreach ($destino['itens'] as $it) {
+            if ($it['aulas'] || !isset($fonte[(int)$it['topico_id']])) { continue; }
+            $n++;
+            if ($soContar) { continue; }
+            $st = $pdo->prepare('SELECT * FROM admin_curso_aulas WHERE id = :id');
+            $st->execute([':id' => $fonte[(int)$it['topico_id']]['id']]);
+            $a = $st->fetch();
+            $ids = edital_criar_aula($pdo, (int)$it['id'], [$cargoDestino], (string)$a['titulo'], (string)$a['video_url']);
+            foreach ($ids as $novo) {
+                $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d, pdf_arquivo = :p, pdf_nome = :pn, duracao = :du, pdf_duracao = :pd WHERE id = :id')
+                    ->execute([':d' => $a['descricao'], ':p' => $a['pdf_arquivo'], ':pn' => $a['pdf_nome'], ':du' => $a['duracao'], ':pd' => $a['pdf_duracao'], ':id' => $novo]);
+                // Videoaula e podcast já gravados valem para a cópia (mesmos áudios).
+                try { $pdo->prepare('INSERT IGNORE INTO aula_videoaulas (aula_id, status, roteiro, partes, partes_ok, audios, erro) SELECT :n, status, roteiro, partes, partes_ok, audios, erro FROM aula_videoaulas WHERE aula_id = :o')->execute([':n' => $novo, ':o' => (int)$a['id']]); } catch (Throwable $e) {}
+                try { $pdo->prepare('INSERT IGNORE INTO aula_podcasts (aula_id, status, roteiro, partes, partes_ok, arquivo, duracao_seg, erro) SELECT :n, status, roteiro, partes, partes_ok, arquivo, duracao_seg, erro FROM aula_podcasts WHERE aula_id = :o')->execute([':n' => $novo, ':o' => (int)$a['id']]); } catch (Throwable $e) {}
+                $pdo->prepare("DELETE FROM ia_fila WHERE aula_id = :id AND tipo IN ('apostila','aula_ia')")->execute([':id' => $novo]);
+                // Se a original ainda está na fila (videoaula/podcast), a cópia também entra.
+                $fila = $pdo->prepare("SELECT tipo FROM ia_fila WHERE aula_id = :o AND status <> 'feito' AND tipo IN ('videoaula','podcast','aula_ia')");
+                $fila->execute([':o' => (int)$a['id']]);
+                foreach ($fila->fetchAll(PDO::FETCH_COLUMN) as $t) {
+                    ia_fila_adicionar($pdo, $t === 'aula_ia' ? 'aula_ia' : $t, $novo);
+                }
+            }
+        }
+        return $n;
+    }
 }

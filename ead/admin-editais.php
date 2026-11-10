@@ -257,6 +257,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             hack_rascunho_set($pdo, $concursoId, 'sugestoes', null);
             ed_ir($concursoId, 'aulas');
         }
+        if ($acao === 'aproveitar_cargos') {
+            $n = job_aproveitar_entre_cargos($pdo, $concursoId, (int)($_POST['cargo_id'] ?? 0));
+            ed_ir($concursoId, 'aulas', $n . ' aula(s) aproveitadas de outro cargo nos assuntos em comum (com vídeo, PDF, apostila, videoaula e podcast). Para o que é só deste cargo: "1. Procurar vídeos já gravados" e depois "3. A IA gera o que falta".');
+        }
         if ($acao === 'gerar_faltantes') {
             $n = hack_gerar_faltantes($pdo, $concursoId);
             ed_ir($concursoId, 'aulas', $n . ' aula(s) do Antigão na fila: a IA escreve a teoria mínima e grava a videoaula. Quando a aula do professor chegar, é só cadastrar por cima.');
@@ -618,6 +622,11 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <div style="border:1px solid #eef0f3;border-radius:12px;padding:12px 14px;margin-top:12px">
                             <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center"><h3 style="margin:0"><?php echo admin_esc((string)$an['cargo']['nome']); ?></h3><span><strong><?php echo $an['cobertos']; ?>/<?php echo $an['total']; ?></strong> com aula · ✅ <?php echo $nProf; ?> do professor · 🤖 <?php echo $nIa; ?> do Antigão · ⬜ <?php echo $an['total'] - $an['cobertos']; ?> faltam</span></div>
                             <div class="ed-barra" style="height:8px;margin:8px 0"><i style="width:<?php echo $pct; ?>%"></i></div>
+                            <?php $aprov = !empty($an['cargo']['curso_id']) ? job_aproveitar_entre_cargos($pdo, $concursoId, (int)$an['cargo']['id'], true) : 0; if ($aprov > 0): ?>
+                                <form method="post" style="margin:4px 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff8e6;border:1px solid #fbb928;border-radius:10px;padding:10px 12px"><input type="hidden" name="acao" value="aproveitar_cargos"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$an['cargo']['id']; ?>">
+                                    <span>💡 <strong><?php echo $aprov; ?> assunto(s)</strong> deste cargo já têm aula em outro cargo do concurso (assuntos em comum).</span>
+                                    <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">📋 Usar essas aulas aqui também</button></form>
+                            <?php endif; ?>
                             <?php if (empty($an['cargo']['curso_id'])): ?>
                                 <p class="ed-falta">Este cargo ainda não tem curso, então não dá para cadastrar aulas. <a href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=concurso">Vá ao passo 1 e escolha "+ Criar curso novo para este cargo"</a>.</p>
                             <?php else: ?>
