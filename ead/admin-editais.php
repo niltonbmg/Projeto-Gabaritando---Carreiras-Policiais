@@ -124,7 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->prepare('INSERT INTO concurso_cargos (concurso_id, nome) VALUES (:c, :n)')->execute([':c' => $concursoId, ':n' => trim((string)$_POST['novo_cargo'])]);
                 ed_ir($concursoId, 'concurso', 'Cargo adicionado. Ligue-o a um curso.');
             }
-            ed_ir($concursoId, 'edital', 'Concurso salvo. Próximo passo: o edital.');
+            [$sa, $sq] = job_sincronizar_concurso($pdo, $concursoId);
+            ed_ir($concursoId, 'edital', 'Concurso salvo.' . ($sa || $sq ? " Aproveitado da plataforma: $sa aula(s) e $sq questão(ões) dos mesmos assuntos." : '') . ' Próximo passo: o edital.');
         }
 
         if ($acao === 'copiar_modulos') {
@@ -161,7 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$materias) { throw new RuntimeException('Nada para salvar. Use "## Matéria" e "- assunto".'); }
             $n = edital_salvar($pdo, $concursoId, $materias);
             hack_rascunho_set($pdo, $concursoId, 'edital_texto', null);
-            ed_ir($concursoId, 'edital', $n . ' assuntos no conteúdo programático.');
+            [$sa, $sq] = job_sincronizar_concurso($pdo, $concursoId);
+            ed_ir($concursoId, 'edital', $n . ' assuntos no conteúdo programático.' . ($sa || $sq ? " Já aproveitado da plataforma: $sa aula(s) e $sq questão(ões) dos mesmos assuntos." : ''));
         }
         if ($acao === 'salvar_info') {
             $j = json_decode((string)($_POST['info'] ?? ''), true);
@@ -261,7 +263,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $n = job_aproveitar_entre_cargos($pdo, $concursoId, (int)($_POST['cargo_id'] ?? 0));
             ed_ir($concursoId, 'aulas', $n . ' aula(s) aproveitadas de outro cargo nos assuntos em comum (com vídeo, PDF, apostila, videoaula e podcast). Para o que é só deste cargo: "1. Procurar vídeos já gravados" e depois "3. A IA gera o que falta".');
         }
+        if ($acao === 'sincronizar') {
+            [$sa, $sq] = job_sincronizar_concurso($pdo, $concursoId);
+            ed_ir($concursoId, (string)($_POST['volta'] ?? 'aulas'), "🔄 Sincronizado com a plataforma: $sa aula(s) e $sq questão(ões) aproveitadas dos mesmos assuntos.");
+        }
         if ($acao === 'gerar_faltantes') {
+            job_sincronizar_concurso($pdo, $concursoId); // aproveita o que já existe antes de gerar
             $n = hack_gerar_faltantes($pdo, $concursoId);
             ed_ir($concursoId, 'aulas', $n . ' aula(s) do Antigão na fila: a IA escreve a teoria mínima e grava a videoaula. Quando a aula do professor chegar, é só cadastrar por cima.');
         }
@@ -279,6 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ed_ir($concursoId, 'questoes', '🤖 A IA está lendo as questões enviadas e separando por assunto.');
         }
         if ($acao === 'completar_questoes') {
+            job_sincronizar_concurso($pdo, $concursoId); // libera as questões que já existem nos mesmos assuntos
             $n = 0;
             foreach (hack_questoes_situacao($pdo, $concursoId)['itens'] as $it) {
                 if ($it['questoes'] < 10) { ia_fila_adicionar($pdo, 'questoes', (int)$it['id']); $n++; }
@@ -497,7 +505,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <div class="admin-form-field full"><label>Cargos e o curso de cada um</label>
                             <?php foreach ($cargos as $cg): ?>
                                 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px"><strong style="min-width:180px"><?php echo admin_esc((string)$cg['nome']); ?></strong>
-                                <select name="cargo_curso[<?php echo (int)$cg['id']; ?>]" aria-label="Curso do cargo <?php echo admin_esc((string)$cg['nome']); ?>"><option value="0">— escolha —</option><option value="novo">+ Curso novo (depois copio matérias de cursos prontos)</option><optgroup label="Usar um curso que já existe"><?php foreach ($cursos as $cu): ?><option value="<?php echo (int)$cu['id']; ?>" <?php echo (int)$cu['id'] === (int)$cg['curso_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$cu['nome']); ?></option><?php endforeach; ?></optgroup></select></div>
+                                <select name="cargo_curso[<?php echo (int)$cg['id']; ?>]" aria-label="Curso do cargo <?php echo admin_esc((string)$cg['nome']); ?>"><option value="0">— escolha —</option><option value="novo" <?php echo empty($cg['curso_id']) ? 'selected' : ''; ?>>+ Curso novo (o que já existe na plataforma é aproveitado sozinho)</option><optgroup label="Usar um curso que já existe"><?php foreach ($cursos as $cu): ?><option value="<?php echo (int)$cu['id']; ?>" <?php echo (int)$cu['id'] === (int)$cg['curso_id'] ? 'selected' : ''; ?>><?php echo admin_esc((string)$cu['nome']); ?></option><?php endforeach; ?></optgroup></select></div>
                             <?php endforeach; ?>
                             <p class="admin-form-hint">Se já existe um curso pronto para o cargo, escolha ele. Se não existe, escolha "Curso novo": logo abaixo você copia as matérias que já estão prontas em outros cursos, e o resto a IA completa (ou você, manualmente).</p>
                             <input name="novo_cargo" placeholder="Adicionar cargo (ex.: Soldado Bombeiro)" style="margin-top:6px" aria-label="Novo cargo">
@@ -613,6 +621,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <div class="admin-panel-title"><h2>4. Aulas de cada assunto</h2></div>
                     <p class="admin-form-hint" style="margin-bottom:10px">Três caminhos, nesta ordem: <strong>1)</strong> usar vídeos que já existem na plataforma (abaixo), <strong>2)</strong> cadastrar vídeo/PDF do professor no assunto, <strong>3)</strong> o que faltar, a IA gera (teoria mínima + videoaula do Antigão). Legenda: ✅ aula do professor · 🤖 aula do Antigão · ⬜ falta.</p>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+                        <form method="post"><input type="hidden" name="acao" value="sincronizar"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit" title="Copia aulas e libera questões dos mesmos assuntos que já existem em qualquer curso">🔄 Sincronizar com a plataforma</button></form>
                         <form method="post"><input type="hidden" name="acao" value="sugerir_existentes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="search"></i>1. Procurar vídeos já gravados</button></form>
                         <form method="post" onsubmit="return confirm('A IA vai preparar a aula (teoria mínima + videoaula do Antigão) de todos os assuntos sem aula. Continuar?');"><input type="hidden" name="acao" value="gerar_faltantes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>3. A IA gera o que falta</button></form>
                         <a class="admin-btn admin-btn-light" style="margin-left:auto" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=questoes">Próximo: questões ▶</a>
@@ -624,7 +633,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                             <div class="ed-barra" style="height:8px;margin:8px 0"><i style="width:<?php echo $pct; ?>%"></i></div>
                             <?php $aprov = !empty($an['cargo']['curso_id']) ? job_aproveitar_entre_cargos($pdo, $concursoId, (int)$an['cargo']['id'], true) : 0; if ($aprov > 0): ?>
                                 <form method="post" style="margin:4px 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff8e6;border:1px solid #fbb928;border-radius:10px;padding:10px 12px"><input type="hidden" name="acao" value="aproveitar_cargos"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$an['cargo']['id']; ?>">
-                                    <span>💡 <strong><?php echo $aprov; ?> assunto(s)</strong> deste cargo já têm aula em outro cargo do concurso (assuntos em comum).</span>
+                                    <span>💡 <strong><?php echo $aprov; ?> assunto(s)</strong> deste cargo já têm aula em outro curso da plataforma (mesmo assunto, de qualquer cargo ou concurso).</span>
                                     <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">📋 Usar essas aulas aqui também</button></form>
                             <?php endif; ?>
                             <?php if (empty($an['cargo']['curso_id'])): ?>

@@ -484,17 +484,15 @@ if (!function_exists('job_bootstrap')) {
         if (!$destino || empty($destino['cargo']['curso_id'])) {
             return 0;
         }
-        // Aulas por assunto (topico) nos outros cargos, dando preferência à aula do professor.
+        // Aulas do mesmo assunto em QUALQUER curso da plataforma (outros cargos e outros concursos),
+        // preferindo a aula do professor à aula do Antigão.
         $fonte = [];
-        foreach ($and as $an) {
-            if ((int)$an['cargo']['id'] === $cargoDestino) { continue; }
-            foreach ($an['itens'] as $it) {
-                foreach ($it['aulas'] as $a) {
-                    $prof = trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '';
-                    if (!isset($fonte[(int)$it['topico_id']]) || ($prof && !$fonte[(int)$it['topico_id']]['prof'])) {
-                        $fonte[(int)$it['topico_id']] = ['id' => (int)$a['id'], 'prof' => $prof];
-                    }
-                }
+        $topicos = array_map(static fn($it) => (int)$it['topico_id'], $destino['itens']) ?: [0];
+        foreach ($pdo->query('SELECT id, topico_id, video_url, pdf_arquivo FROM admin_curso_aulas WHERE topico_id IN (' . implode(',', $topicos) . ') AND curso_id <> ' . (int)$destino['cargo']['curso_id'] . ' ORDER BY id') as $a) {
+            $prof = trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '';
+            $t = (int)$a['topico_id'];
+            if (!isset($fonte[$t]) || ($prof && !$fonte[$t]['prof'])) {
+                $fonte[$t] = ['id' => (int)$a['id'], 'prof' => $prof];
             }
         }
         $n = 0;
@@ -522,5 +520,41 @@ if (!function_exists('job_bootstrap')) {
             }
         }
         return $n;
+    }
+
+    /**
+     * Sincroniza o cargo com o que já existe na plataforma (fluxo automático, vale para qualquer concurso):
+     *  1) aulas do mesmo assunto em qualquer curso -> copiadas para o curso do cargo;
+     *  2) questões do mesmo assunto -> liberadas para o curso do cargo.
+     * Retorna [aulas, questões].
+     */
+    function job_sincronizar_cargo(PDO $pdo, int $concursoId, int $cargoId): array
+    {
+        $cg = $pdo->prepare('SELECT curso_id FROM concurso_cargos WHERE id = :id AND concurso_id = :c');
+        $cg->execute([':id' => $cargoId, ':c' => $concursoId]);
+        $curso = (int)$cg->fetchColumn();
+        if (!$curso) {
+            return [0, 0];
+        }
+        $aulas = job_aproveitar_entre_cargos($pdo, $concursoId, $cargoId);
+        $topicos = array_map(static fn($i) => (int)$i['topico_id'], hack_itens_do_cargo($pdo, $concursoId, $cargoId)) ?: [0];
+        $ins = $pdo->prepare('INSERT IGNORE INTO admin_banco_questao_acessos (questao_id, curso_id) SELECT q.id, :c FROM admin_banco_questoes q
+                               WHERE q.materia_topico_id IN (' . implode(',', $topicos) . ") AND q.status = 'ativo' AND (q.curso_id IS NULL OR q.curso_id <> :c2)");
+        $ins->execute([':c' => $curso, ':c2' => $curso]);
+        return [$aulas, $ins->rowCount()];
+    }
+
+    /** Sincroniza todos os cargos do concurso. */
+    function job_sincronizar_concurso(PDO $pdo, int $concursoId): array
+    {
+        $tot = [0, 0];
+        $cg = $pdo->prepare('SELECT id FROM concurso_cargos WHERE concurso_id = :c AND curso_id IS NOT NULL');
+        $cg->execute([':c' => $concursoId]);
+        foreach ($cg->fetchAll(PDO::FETCH_COLUMN) as $id) {
+            [$a, $q] = job_sincronizar_cargo($pdo, $concursoId, (int)$id);
+            $tot[0] += $a;
+            $tot[1] += $q;
+        }
+        return $tot;
     }
 }
