@@ -43,6 +43,13 @@ try {
     echo 'Desafio do dia: ' . $e->getMessage() . "\n";
 }
 $feitos = 0;
+// Tarefas do cadastro do concurso (edital, provas, verticalizado...) que o mentor deixou na fila.
+require_once __DIR__ . '/includes/edital-jobs-lib.php';
+while (time() - $inicio < $limite - 120 && ($j = job_rodar_proximo($pdo)) !== null) {
+    $pdo = podcast_reconectar($pdo);
+    $feitos++;
+    echo date('H:i:s') . ' cadastro: ' . $j['rotulo'] . ' -> ' . $j['status'] . "\n";
+}
 while (time() - $inicio < $limite - 60) { // deixa margem para o item em andamento
     $r = ia_fila_processar_um($pdo);
     $pdo = podcast_reconectar($pdo);

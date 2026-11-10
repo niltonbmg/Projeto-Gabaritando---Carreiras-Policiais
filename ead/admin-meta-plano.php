@@ -275,6 +275,29 @@ $menuBarInclude = admin_cursos_get_menubar();
 <div class="admin-dashboard-shell">
     <?php if (is_file($menuBarInclude)) { include $menuBarInclude; } ?>
     <main class="admin-dashboard-main">
+        <?php
+        // Veio do Cadastro do concurso? Mostra o caminho de volta com o progresso.
+        $voltaConcurso = null;
+        try {
+            require_once __DIR__ . '/includes/edital-hack-lib.php';
+            $stV = $pdo->prepare('SELECT c.id, c.nome FROM concurso_cargos cg JOIN concursos c ON c.id = cg.concurso_id WHERE cg.curso_id = :cu ORDER BY c.id DESC LIMIT 1');
+            $stV->execute([':cu' => (int)$cursoId]);
+            $voltaConcurso = $stV->fetch() ?: null;
+            if ($voltaConcurso) { $voltaConcurso['prog'] = hack_progresso($pdo, (int)$voltaConcurso['id']); }
+        } catch (Throwable $e) {
+            $voltaConcurso = null;
+        }
+        ?>
+        <?php if ($voltaConcurso): ?>
+            <section class="admin-panel" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+                <div style="flex:1;min-width:240px"><strong>📋 Cadastro do concurso: <?php echo admin_esc((string)$voltaConcurso['nome']); ?></strong> · passo 6 de 7 (Plano-Mestre) · <?php echo (int)$voltaConcurso['prog']['pct']; ?>% concluído
+                    <div style="height:8px;background:#eef0f3;border-radius:99px;margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:<?php echo (int)$voltaConcurso['prog']['pct']; ?>%;background:linear-gradient(90deg,#fbb928,#16a34a)"></i></div></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <a class="admin-btn admin-btn-light admin-btn-small" href="admin-editais.php?concurso_id=<?php echo (int)$voltaConcurso['id']; ?>&aba=plano">← Voltar ao cadastro</a>
+                    <a class="admin-btn admin-btn-primary admin-btn-small" href="admin-editais.php?concurso_id=<?php echo (int)$voltaConcurso['id']; ?>">▶ Continuar de onde parei</a>
+                </div>
+            </section>
+        <?php endif; ?>
         <section class="admin-page-header">
             <div class="admin-page-heading">
                 <h1>Plano-Mestre · Método META</h1>

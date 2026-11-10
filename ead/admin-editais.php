@@ -14,11 +14,12 @@ require_once __DIR__ . '/api/admin-auth.php';
 auth_admin_require_login();
 
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
-require_once __DIR__ . '/includes/edital-hack-lib.php';
+require_once __DIR__ . '/includes/edital-jobs-lib.php';
 @set_time_limit(320);
 
 $pdo = admin_cursos_db();
 hack_bootstrap($pdo);
+job_bootstrap($pdo);
 ia_fila_bootstrap($pdo);
 
 const ED_PASSOS = ['concurso' => 'Concurso e cargos', 'edital' => 'Edital', 'prova' => 'Última prova', 'aulas' => 'Aulas', 'questoes' => 'Questões', 'plano' => 'Plano-Mestre', 'publicar' => 'Hackeando'];
@@ -136,21 +137,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ((int)$_FILES['pdf']['size'] > 15 * 1024 * 1024) { throw new RuntimeException('PDF acima de 15 MB.'); }
                 $pdfUrl = hack_salvar_pdf_edital($pdo, $concursoId, $_FILES['pdf']['tmp_name']);
             }
-            $pdf = hack_pdf_base64($pdfUrl);
-            if ($texto === '' && $pdf === '') { throw new RuntimeException('Envie o PDF do edital ou cole o texto.'); }
-            $cg = $pdo->prepare('SELECT nome FROM concurso_cargos WHERE concurso_id = :c');
-            $cg->execute([':c' => $concursoId]);
-            $nomesCargos = $cg->fetchAll(PDO::FETCH_COLUMN);
-            if (($_POST['parte'] ?? 'conteudo') === 'info') {
-                $info = hack_ia_info($texto, $pdf, $nomesCargos);
-                $pdo = podcast_reconectar($pdo);
-                $pdo->prepare('UPDATE concursos SET edital_info = :i WHERE id = :id')->execute([':i' => json_encode($info, JSON_UNESCAPED_UNICODE), ':id' => $concursoId]);
-                ed_ir($concursoId, 'edital', 'Informações do edital lidas (vagas, salário, requisitos, etapas, datas). Confira abaixo.');
-            }
-            $lido = edital_ia_ler($texto, $pdf, $nomesCargos);
-            $pdo = podcast_reconectar($pdo);
-            hack_rascunho_set($pdo, $concursoId, 'edital_texto', ed_para_texto($lido));
-            ed_ir($concursoId, 'edital', 'A IA leu o conteúdo programático. Confira, ajuste e confirme. (Fica salvo se você sair.)');
+            if ($texto === '' && $pdfUrl === '') { throw new RuntimeException('Envie o PDF do edital ou cole o texto.'); }
+            $parte = ($_POST['parte'] ?? 'conteudo') === 'info' ? 'ler_info' : 'ler_conteudo';
+            job_criar($pdo, $concursoId, $parte, $parte === 'ler_info' ? 'Lendo as informações do edital (vagas, salário, requisitos, etapas, datas)' : 'Lendo o conteúdo programático do edital', ['texto' => mb_substr($texto, 0, 80000)]);
+            ed_ir($concursoId, 'edital', '🤖 A IA começou a ler o edital. Acompanhe na Central da IA: quando terminar, a página atualiza sozinha.');
         }
         if ($acao === 'salvar_rascunho_edital') {
             hack_rascunho_set($pdo, $concursoId, 'edital_texto', (string)($_POST['rascunho'] ?? ''));
@@ -171,11 +161,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // 3 · Última prova
+        if ($acao === 'enviar_prova') {
+            $cargoId = (int)($_POST['cargo_id'] ?? 0);
+            if (empty($_FILES['prova']['tmp_name']) || !is_uploaded_file($_FILES['prova']['tmp_name'])) { throw new RuntimeException('Escolha o PDF da prova.'); }
+            if ((int)$_FILES['prova']['size'] > 15 * 1024 * 1024) { throw new RuntimeException('PDF acima de 15 MB.'); }
+            job_salvar_prova_pdf($pdo, $concursoId, $cargoId, $_FILES['prova']['tmp_name']);
+            job_criar($pdo, $concursoId, 'verificar_prova', 'Conferindo a prova de ' . ($_POST['cargo_nome'] ?? 'cargo'), ['cargo_id' => $cargoId]);
+            ed_ir($concursoId, 'prova', '🤖 Prova recebida. A IA está conferindo se é a prova certa e contando as questões por assunto.');
+        }
         if ($acao === 'buscar_prova') {
-            $prova = edital_ultima_prova($pdo, $concursoId, ed_pdf_enviado('prova'));
-            $pdo = podcast_reconectar($pdo);
-            $pdo->prepare('UPDATE concursos SET prova_status = NULL WHERE id = :id')->execute([':id' => $concursoId]);
-            ed_ir($concursoId, 'prova', !empty($prova['encontrada']) ? 'Última prova encontrada: ' . trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '')) . '.' : 'Não encontrei a última prova. Envie o PDF ou marque "sem prova anterior".');
+            job_criar($pdo, $concursoId, 'buscar_prova', 'Pesquisando a última prova na internet');
+            ed_ir($concursoId, 'prova', '🤖 A IA está pesquisando a prova na internet.');
         }
         if ($acao === 'sem_prova') {
             $pdo->prepare("UPDATE concursos SET prova_status = 'sem_prova' WHERE id = :id")->execute([':id' => $concursoId]);
@@ -212,20 +208,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($acao === 'sugerir_aulas') {
             $linhas = array_values(array_filter(array_map('trim', preg_split('/\R/', (string)($_POST['links'] ?? '')))));
-            $sug = hack_rascunho_get($pdo, $concursoId, 'sugestoes', []);
-            $t0 = time();
-            $restantes = [];
-            foreach ($linhas as $l) {
-                [$url, $tit] = array_pad(array_map('trim', explode('|', $l, 2)), 2, '');
-                if (!preg_match('~^https?://~i', $url)) { continue; }
-                if (time() - $t0 > 120) { $restantes[] = $l; continue; }
-                $s = edital_ia_sugerir_aula($pdo, $concursoId, $url, $tit);
-                $pdo = podcast_reconectar($pdo);
-                $sug[] = $s + ['url' => $url];
+            foreach (array_chunk($linhas, 4) as $k => $lote) {
+                job_criar($pdo, $concursoId, 'sugerir_links', 'Analisando links de vídeo (' . ($k * 4 + 1) . ' a ' . ($k * 4 + count($lote)) . ')', ['links' => $lote]);
             }
-            hack_rascunho_set($pdo, $concursoId, 'sugestoes', $sug);
-            hack_rascunho_set($pdo, $concursoId, 'links_restantes', $restantes ? implode("\n", $restantes) : null);
-            ed_ir($concursoId, 'aulas', count($sug) . ' sugestão(ões) para conferir.' . ($restantes ? ' ' . count($restantes) . ' link(s) ficaram para a próxima rodada.' : ''));
+            ed_ir($concursoId, 'aulas', '🤖 ' . count($linhas) . ' link(s) na fila da IA. As sugestões aparecem abaixo conforme ficam prontas.');
+        }
+        if ($acao === 'sugerir_existentes') {
+            hack_rascunho_set($pdo, $concursoId, 'existentes', null);
+            job_criar($pdo, $concursoId, 'sugerir_existentes', 'Procurando vídeos já gravados na plataforma', ['lote' => 0]);
+            ed_ir($concursoId, 'aulas', '🤖 A IA está comparando as aulas já gravadas com o edital.');
+        }
+        if ($acao === 'aceitar_existentes') {
+            $sug = hack_rascunho_get($pdo, $concursoId, 'existentes', []);
+            $marcadas = isset($_POST['todas']) ? array_keys($sug) : array_map('intval', (array)($_POST['e'] ?? []));
+            $n = 0;
+            foreach ($marcadas as $i) {
+                if (isset($sug[$i])) { $n += job_aceitar_existente($pdo, $concursoId, (int)$sug[$i]['aula_id'], (int)$sug[$i]['item_id']); unset($sug[$i]); }
+            }
+            hack_rascunho_set($pdo, $concursoId, 'existentes', array_values($sug));
+            ed_ir($concursoId, 'aulas', $n . ' aula(s) já gravadas ligadas ao edital.');
+        }
+        if ($acao === 'descartar_existentes') {
+            hack_rascunho_set($pdo, $concursoId, 'existentes', null);
+            ed_ir($concursoId, 'aulas');
         }
         if ($acao === 'cadastrar_aulas') {
             $sug = hack_rascunho_get($pdo, $concursoId, 'sugestoes', []);
@@ -249,8 +254,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 5 · Questões
         if ($acao === 'enviar_questoes') {
-            $n = hack_questoes_enviadas($pdo, $concursoId, trim((string)($_POST['texto'] ?? '')), ed_pdf_enviado('arquivo'));
-            ed_ir($concursoId, 'questoes', $n . ' questão(ões) separadas por assunto e gravadas no banco.');
+            $arq = '';
+            if (!empty($_FILES['arquivo']['tmp_name']) && is_uploaded_file($_FILES['arquivo']['tmp_name'])) {
+                $dir = __DIR__ . '/uploads/provas';
+                if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+                $arq = 'uploads/provas/questoes-' . $concursoId . '-' . substr(sha1((string)microtime(true)), 0, 8) . '.pdf';
+                move_uploaded_file($_FILES['arquivo']['tmp_name'], __DIR__ . '/' . $arq);
+            }
+            job_criar($pdo, $concursoId, 'enviar_questoes', 'Separando por assunto as questões enviadas', ['arquivo' => $arq, 'texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 60000)]);
+            ed_ir($concursoId, 'questoes', '🤖 A IA está lendo as questões enviadas e separando por assunto.');
         }
         if ($acao === 'completar_questoes') {
             $n = 0;
@@ -260,37 +272,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ed_ir($concursoId, 'questoes', $n . ' assunto(s) na fila: a IA pesquisa questões reais na internet e, se não achar, cria no nível da prova.');
         }
         if ($acao === 'questoes_item') {
-            [$r, $g] = hack_questoes_do_item($pdo, (int)($_POST['item_id'] ?? 0));
-            ed_ir($concursoId, 'questoes', "Feito: $r questão(ões) reais encontradas e $g criadas no nível da prova.");
+            ia_fila_adicionar($pdo, 'questoes', (int)($_POST['item_id'] ?? 0));
+            ed_ir($concursoId, 'questoes', '🤖 Assunto na fila: a IA pesquisa questões reais e, se faltar, cria no nível da prova.');
         }
 
         // 6 · Plano-Mestre
         if ($acao === 'sugerir_plano') {
             $cargoId = (int)($_POST['cargo_id'] ?? 0);
-            $st = $pdo->prepare('SELECT ultima_prova FROM concursos WHERE id = :id');
-            $st->execute([':id' => $concursoId]);
-            $prova = json_decode((string)$st->fetchColumn(), true) ?: ['encontrada' => false];
-            edital_sugerir_plano($pdo, $concursoId, $cargoId, $prova);
-            $cursoDoCargo = $pdo->prepare('SELECT curso_id FROM concurso_cargos WHERE id = :id');
-            $cursoDoCargo->execute([':id' => $cargoId]);
-            $_SESSION['edital_msg'] = 'Plano-Mestre sugerido (rascunho). Confira a justificativa de cada assunto e aprove. Depois volte ao cadastro do concurso pelo menu.';
-            header('Location: admin-meta-plano.php?curso_id=' . (int)$cursoDoCargo->fetchColumn());
-            exit;
+            job_criar($pdo, $concursoId, 'plano', 'Montando o Plano-Mestre · ' . ($_POST['cargo_nome'] ?? 'cargo'), ['cargo_id' => $cargoId]);
+            ed_ir($concursoId, 'plano', '🤖 O Antigão está montando o Plano-Mestre. Quando terminar, aparece o botão "Abrir e aprovar".');
         }
 
-        // 7 · Hackeando para o aluno
-        if ($acao === 'gerar_hacks') {
-            $cg = $pdo->prepare('SELECT id FROM concurso_cargos WHERE concurso_id = :c');
+        if ($acao === 'gerar_hacks' || $acao === 'gerar_vertical') {
+            $cg = $pdo->prepare('SELECT id, nome FROM concurso_cargos WHERE concurso_id = :c');
             $cg->execute([':c' => $concursoId]);
             $alvo = (int)($_POST['cargo_id'] ?? 0);
-            $n = 0;
-            foreach ($cg->fetchAll(PDO::FETCH_COLUMN) as $cid) {
-                if ($alvo && $alvo !== (int)$cid) { continue; }
-                hack_ia_gerar($pdo, $concursoId, (int)$cid);
-                $pdo = podcast_reconectar($pdo);
-                $n++;
+            foreach ($cg->fetchAll() as $x) {
+                if ($alvo && $alvo !== (int)$x['id']) { continue; }
+                job_criar($pdo, $concursoId, 'verticalizado', 'Edital verticalizado · ' . $x['nome'], ['cargo_id' => (int)$x['id']]);
+                if ($acao === 'gerar_hacks') { job_criar($pdo, $concursoId, 'hacks', 'Hackeando o Edital e a Prova · ' . $x['nome'], ['cargo_id' => (int)$x['id']]); }
             }
-            ed_ir($concursoId, 'publicar', 'Antigão escreveu "Hackeando o Edital" e "Hackeando a Prova" para ' . $n . ' cargo(s). Já aparece para os alunos em "Meu concurso".');
+            ed_ir($concursoId, 'publicar', '🤖 O Antigão está escrevendo. Acompanhe na Central da IA.');
         }
     } catch (Throwable $e) {
         $erro = $e->getMessage();
@@ -444,6 +446,13 @@ $menuBarInclude = admin_cursos_get_menubar();
                 </nav>
             </section>
 
+            <section class="admin-panel" id="centralIA" data-concurso="<?php echo $concursoId; ?>" aria-live="polite">
+                <div class="admin-panel-title"><h2>🤖 Central da IA</h2><small id="ciaStatus">verificando…</small></div>
+                <div id="ciaQuestoes" class="admin-form-hint"></div>
+                <div class="ed-barra" style="height:8px;margin:6px 0" aria-hidden="true"><i id="ciaQBarra" style="width:0"></i></div>
+                <ul id="ciaJobs" style="list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px;font-size:14px"></ul>
+            </section>
+
             <?php if ($aba === 'concurso'): ?>
                 <section class="admin-panel">
                     <div class="admin-panel-title"><h2>1. Concurso e cargos</h2></div>
@@ -518,20 +527,32 @@ $menuBarInclude = admin_cursos_get_menubar();
                 </section>
                 <?php endif; ?>
 
-            <?php elseif ($aba === 'prova'): $prova = json_decode((string)($concurso['ultima_prova'] ?? ''), true); ?>
+            <?php elseif ($aba === 'prova'): $prova = json_decode((string)($concurso['ultima_prova'] ?? ''), true); $provas = job_provas($concurso); ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>3. Última prova (base do "Hackeando a Prova" e dos pesos do plano)</h2></div>
-                    <?php if (!empty($prova['encontrada'])): ?>
-                        <p>✅ <strong><?php echo admin_esc(trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? ''))); ?></strong> · fonte: <?php echo admin_esc((string)($prova['fonte'] ?? '')); ?> · <?php echo array_sum((array)$prova['itens']); ?> questões distribuídas pelos assuntos.</p>
-                    <?php elseif (($concurso['prova_status'] ?? '') === 'sem_prova'): ?>
-                        <p>Marcado como <strong>sem prova anterior</strong>: os pesos serão estimados.</p>
-                    <?php endif; ?>
-                    <form method="post" enctype="multipart/form-data" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                        <input type="hidden" name="acao" value="buscar_prova"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
-                        <label class="admin-form-hint">PDF da prova (opcional): <input type="file" name="prova" accept="application/pdf"></label>
-                        <button class="admin-btn admin-btn-primary" type="submit" <?php echo $itens ? '' : 'disabled'; ?>><i data-lucide="search"></i>Sem PDF: a IA pesquisa na internet</button>
-                    </form>
-                    <form method="post" style="margin-top:10px"><input type="hidden" name="acao" value="sem_prova"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">Não há prova anterior: seguir com pesos estimados</button></form>
+                    <div class="admin-panel-title"><h2>3. Prova anterior de cada cargo</h2></div>
+                    <p class="admin-form-hint">Envie o PDF da prova de <strong>cada cargo</strong>. A IA confere se é mesmo a prova certa e conta as questões por assunto. A prova fica disponível para os alunos com a marca d'água do Projeto Gabaritando.</p>
+                    <?php foreach ($cargos as $cg): $pv = $provas[(string)$cg['id']] ?? null; ?>
+                        <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;align-items:center;padding:12px 0;border-top:1px solid #f3f4f6">
+                            <strong><?php echo admin_esc((string)$cg['nome']); ?></strong>
+                            <div style="display:grid;gap:6px">
+                                <?php if ($pv): ?>
+                                    <span><?php echo ($pv['status'] ?? '') === 'confere' ? '✅ Prova conferida' : (($pv['status'] ?? '') === 'nao_confere' ? '⚠️ A IA acha que NÃO é a prova certa' : '🤖 Conferindo…'); ?>
+                                        <?php if (!empty($pv['motivo'])): ?> · <?php echo admin_esc((string)$pv['motivo']); ?><?php endif; ?>
+                                        <?php if (($pv['status'] ?? '') === 'confere'): ?> · <?php echo admin_esc(trim(($pv['banca'] ?? '') . ' ' . ($pv['ano'] ?? ''))); ?> · <?php echo array_sum((array)($pv['itens'] ?? [])); ?> questões distribuídas<?php endif; ?>
+                                        · <a class="admin-link-inline" href="<?php echo admin_esc((string)$pv['arquivo']); ?>" target="_blank" rel="noopener">ver PDF</a></span>
+                                <?php endif; ?>
+                                <form method="post" enctype="multipart/form-data" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><input type="hidden" name="acao" value="enviar_prova"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$cg['id']; ?>"><input type="hidden" name="cargo_nome" value="<?php echo admin_esc((string)$cg['nome']); ?>">
+                                    <input type="file" name="prova" accept="application/pdf" required aria-label="PDF da prova de <?php echo admin_esc((string)$cg['nome']); ?>">
+                                    <button class="admin-btn admin-btn-primary admin-btn-small" type="submit"><?php echo $pv ? 'Trocar e conferir' : 'Enviar e conferir'; ?></button></form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center">
+                        <form method="post"><input type="hidden" name="acao" value="buscar_prova"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit" <?php echo $itens ? '' : 'disabled'; ?>><i data-lucide="search"></i>Não tenho o PDF: a IA pesquisa na internet</button></form>
+                        <form method="post"><input type="hidden" name="acao" value="sem_prova"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">Não há prova anterior: pesos estimados</button></form>
+                        <a class="admin-btn admin-btn-primary admin-btn-small" style="margin-left:auto" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=aulas">Próximo: aulas ▶</a>
+                    </div>
+                    <?php if (!empty($prova['encontrada'])): ?><p class="admin-form-hint" style="margin-top:8px">Base em uso no "Hackeando a Prova": <?php echo admin_esc(trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? ''))); ?> (<?php echo admin_esc((string)($prova['fonte'] ?? '')); ?>).</p><?php endif; ?>
                 </section>
 
             <?php elseif ($aba === 'aulas'): $andamento = edital_andamento($pdo, $concursoId); $sugestoes = hack_rascunho_get($pdo, $concursoId, 'sugestoes', []); $links = (string)hack_rascunho_get($pdo, $concursoId, 'links_restantes', ''); ?>
@@ -556,6 +577,24 @@ $menuBarInclude = admin_cursos_get_menubar();
                             </details>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
+                </section>
+                <?php $exist = hack_rascunho_get($pdo, $concursoId, 'existentes', []); ?>
+                <section class="admin-panel">
+                    <div class="admin-panel-title"><h2>🎬 Vídeos que já estão na plataforma</h2>
+                        <form method="post"><input type="hidden" name="acao" value="sugerir_existentes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit"><i data-lucide="sparkles"></i><?php echo $exist ? 'Procurar de novo' : 'A IA procura vídeos já gravados'; ?></button></form></div>
+                    <?php if (!$exist): ?><p class="admin-form-hint">A IA compara as aulas já gravadas (de todos os cursos) com o conteúdo programático e sugere onde usar cada uma.</p>
+                    <?php else: ?>
+                    <form method="post"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                        <?php $nomeItem = []; foreach ($itens as $it) { $nomeItem[(int)$it['id']] = $it['materia'] . ' › ' . $it['assunto']; } foreach ($exist as $i => $e): ?>
+                            <label class="ed-assunto" style="cursor:pointer"><input type="checkbox" name="e[]" value="<?php echo $i; ?>" checked><div><?php echo admin_esc((string)$e['aula']); ?><small>→ <?php echo admin_esc($nomeItem[(int)$e['item_id']] ?? ''); ?> · <?php echo admin_esc((string)$e['motivo']); ?></small></div><span class="ed-tag"><?php echo (int)$e['confianca']; ?>%</span></label>
+                        <?php endforeach; ?>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                            <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" name="acao" value="aceitar_existentes" onclick="this.form.insertAdjacentHTML('beforeend','<input type=hidden name=todas value=1>')">✓ Aceitar todas (<?php echo count($exist); ?>)</button>
+                            <button class="admin-btn admin-btn-light admin-btn-small" type="submit" name="acao" value="aceitar_existentes">Aceitar só as marcadas</button>
+                            <button class="admin-btn admin-btn-light admin-btn-small" type="submit" name="acao" value="descartar_existentes">Descartar</button>
+                        </div>
+                    </form>
+                    <?php endif; ?>
                 </section>
                 <details class="admin-panel"<?php echo $sugestoes ? ' open' : ''; ?>>
                     <summary style="font-weight:700;cursor:pointer">Tem muitos vídeos? Cole vários links e a IA diz o assunto de cada um</summary>
@@ -611,7 +650,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #f3f4f6">
                             <strong style="min-width:200px"><?php echo admin_esc((string)$cg['nome']); ?></strong>
                             <span class="ed-tag <?php echo $ap === 'aprovado' ? 'aberto' : 'previsto'; ?>"><?php echo $ap === 'aprovado' ? 'Plano aprovado' : ($ap ? 'Rascunho para aprovar' : 'Sem plano'); ?></span>
-                            <form method="post"><input type="hidden" name="acao" value="sugerir_plano"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$cg['id']; ?>"><button class="admin-btn admin-btn-primary admin-btn-small" type="submit" <?php echo empty($cg['curso_id']) || !$itens ? 'disabled' : ''; ?>><i data-lucide="sparkles"></i><?php echo $ap ? 'Sugerir de novo' : 'Sugerir plano'; ?></button></form>
+                            <form method="post"><input type="hidden" name="acao" value="sugerir_plano"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$cg['id']; ?>"><input type="hidden" name="cargo_nome" value="<?php echo admin_esc((string)$cg['nome']); ?>"><button class="admin-btn admin-btn-primary admin-btn-small" type="submit" <?php echo empty($cg['curso_id']) || !$itens ? 'disabled' : ''; ?>><i data-lucide="sparkles"></i><?php echo $ap ? 'Sugerir de novo' : 'Sugerir plano'; ?></button></form>
                             <?php if ($ap): ?><a class="admin-btn admin-btn-light admin-btn-small" href="admin-meta-plano.php?curso_id=<?php echo (int)$cg['curso_id']; ?>">Abrir e aprovar</a><?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -621,7 +660,10 @@ $menuBarInclude = admin_cursos_get_menubar();
                 <section class="admin-panel">
                     <div class="admin-panel-title"><h2>7. Hackeando o Edital e a Prova (o que o aluno vê)</h2>
                         <form method="post"><input type="hidden" name="acao" value="gerar_hacks"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary admin-btn-small" type="submit"><i data-lucide="sparkles"></i><?php echo $hacks ? 'Refazer para todos os cargos' : 'Antigão escreve para todos os cargos'; ?></button></form></div>
-                    <p class="admin-form-hint">Use depois do edital e da última prova. O aluno vê em "Meu concurso", ao escolher o cargo.</p>
+                    <p class="admin-form-hint">Use depois do edital e das provas. O Antigão gera, para cada cargo, o <strong>edital verticalizado</strong> (assuntos por disciplina com complexidade, peso e custo-benefício) e os textos <strong>Hackeando o Edital/Prova</strong>. O aluno vê tudo em "Meu concurso" e baixa o verticalizado em PDF com a logo.</p>
+                    <?php $vert = json_decode((string)($concurso['verticalizado'] ?? ''), true) ?: []; foreach ($cargos as $cg): $v = $vert[(string)$cg['id']] ?? null; ?>
+                        <p>📋 <strong><?php echo admin_esc((string)$cg['nome']); ?></strong> · verticalizado: <?php echo $v ? 'pronto (' . admin_esc((string)$v['gerado_em']) . ') · <a class="admin-link-inline" target="_blank" href="edital-verticalizado.php?concurso_id=' . $concursoId . '&cargo_id=' . (int)$cg['id'] . '">ver / PDF</a>' : 'pendente'; ?></p>
+                    <?php endforeach; ?>
                     <?php foreach ($cargos as $cg): $h = $hacks[(string)$cg['id']] ?? null; ?>
                         <details class="ed-materia"><summary><span><?php echo admin_esc((string)$cg['nome']); ?></span><small><?php echo $h ? 'pronto · ' . admin_esc((string)$h['gerado_em']) : 'pendente'; ?></small></summary>
                             <?php if ($h): ?><div style="padding:10px 14px"><p><em><?php echo admin_esc((string)$h['resumo_antigao']); ?></em></p>
@@ -635,6 +677,36 @@ $menuBarInclude = admin_cursos_get_menubar();
         <?php endif; ?>
     </main>
 </div>
+<script>
+// Central da IA: mostra as tarefas ao vivo, faz a fila andar e atualiza a página quando algo termina.
+(function () {
+    var box = document.getElementById('centralIA');
+    if (!box) { return; }
+    var c = box.dataset.concurso, rodando = false, ativosAntes = null, ico = {pendente: '⏳', rodando: '🤖', feito: '✅', erro: '⚠️'};
+    function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; }
+    function rodar() {
+        if (rodando) { return; }
+        rodando = true;
+        fetch('api/edital-job.php', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({concurso_id: c})})
+            .catch(function () {}).then(function () { rodando = false; atualizar(); });
+    }
+    function atualizar() {
+        fetch('api/edital-job.php?concurso_id=' + c, {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (d) {
+            var q = d.questoes || {};
+            document.getElementById('ciaQuestoes').innerHTML = '📚 Questões: <strong>' + (q.assuntos_ok || 0) + '/' + (q.assuntos_total || 0) + '</strong> assuntos com 10+ · ' + (q.total_questoes || 0) + ' questões no banco · ' + (q.na_fila || 0) + ' assunto(s) na fila' + (q.erros ? ' · ' + q.erros + ' com erro' : '');
+            document.getElementById('ciaQBarra').style.width = (q.assuntos_total ? Math.round(q.assuntos_ok * 100 / q.assuntos_total) : 0) + '%';
+            document.getElementById('ciaJobs').innerHTML = (d.jobs || []).map(function (j) { return '<li>' + ico[j.status] + ' <strong>' + esc(j.rotulo) + '</strong>' + (j.mensagem ? ' · ' + esc(j.mensagem) : (j.status === 'rodando' ? ' · trabalhando…' : '')) + '</li>'; }).join('') || '<li class="admin-form-hint">Nenhuma tarefa agora.</li>';
+            var ativos = (d.ativos || 0) + (q.na_fila || 0);
+            document.getElementById('ciaStatus').textContent = ativos ? 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua' : 'Tudo em dia';
+            if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) { location.reload(); return; }
+            ativosAntes = d.ativos || 0;
+            if (ativos) { rodar(); }
+        }).catch(function () {});
+    }
+    atualizar();
+    setInterval(atualizar, 5000);
+})();
+</script>
 <?php admin_cursos_scripts(); ?>
 </body>
 </html>

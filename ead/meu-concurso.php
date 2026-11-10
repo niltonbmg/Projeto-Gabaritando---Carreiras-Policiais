@@ -11,12 +11,13 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/api/authenticador.php';
 auth_require_login();
 require_once __DIR__ . '/api/conexao.php';
-require_once __DIR__ . '/includes/edital-hack-lib.php';
+require_once __DIR__ . '/includes/edital-jobs-lib.php';
 
 $usuarioId = (int)auth_user_id();
 $erro = '';
 $pdo = db();
 hack_bootstrap($pdo);
+job_bootstrap($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'jornada') {
     hack_jornada_avancar($pdo, $usuarioId, (string)($_POST['etapa'] ?? 'preparacao'));
@@ -187,7 +188,9 @@ function mc2_v($v): string
             <p class="sub"><?php echo mc2_e($esc['concurso']); ?> · <span class="tag <?php echo $esc['situacao'] === 'aberto' ? 'aberto' : ''; ?>"><?php echo $esc['situacao'] === 'aberto' ? 'Edital aberto' : 'Edital previsto · tudo com base no ' . mc2_e($esc['base_edital'] ?: 'último edital'); ?></span></p>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <?php if (!empty($conc['edital_pdf'])): ?><a class="bt linha" href="<?php echo mc2_e($conc['edital_pdf']); ?>" target="_blank" rel="noopener">📄 Edital em PDF</a><?php endif; ?>
+            <a class="bt" href="edital-verticalizado.php">📋 Edital verticalizado</a>
+            <?php if (!empty($conc['edital_pdf'])): ?><button class="bt linha" type="button" data-pdf-marca="<?php echo mc2_e($conc['edital_pdf']); ?>" data-nome="Edital - <?php echo mc2_e($esc['concurso']); ?> - Projeto Gabaritando.pdf">📄 Baixar edital</button><?php endif; ?>
+            <?php $provaCargo = (json_decode((string)($conc['provas'] ?? ''), true) ?: [])[(string)$esc['cargo_id']] ?? null; if ($provaCargo && ($provaCargo['status'] ?? '') === 'confere'): ?><button class="bt linha" type="button" data-pdf-marca="<?php echo mc2_e($provaCargo['arquivo']); ?>" data-nome="Prova <?php echo mc2_e(trim(($provaCargo['banca'] ?? '') . ' ' . ($provaCargo['ano'] ?? ''))); ?> - <?php echo mc2_e($esc['cargo']); ?> - Projeto Gabaritando.pdf">📝 Baixar prova anterior</button><?php endif; ?>
             <a class="bt linha" href="meu-concurso.php?trocar=1">Trocar cargo</a>
         </div>
     </header>
@@ -257,5 +260,6 @@ function mc2_v($v): string
     <?php endif; ?>
 <?php endif; ?>
 </main>
+<script src="assets/js/gab-marca-dagua.js"></script>
 </body>
 </html>

@@ -302,17 +302,19 @@ if (!function_exists('hack_bootstrap')) {
             }
         }
         $hacks = json_decode((string)($c['hacks'] ?? ''), true) ?: [];
+        $vert = json_decode((string)($c['verticalizado'] ?? ''), true) ?: [];
+        $provasOk = count(array_filter(json_decode((string)($c['provas'] ?? ''), true) ?: [], static fn($x) => ($x['status'] ?? '') === 'confere'));
         $qs = hack_questoes_situacao($pdo, $concursoId);
         $rascEdital = hack_rascunho_get($pdo, $concursoId, 'edital_texto', '');
         $rascAulas = hack_rascunho_get($pdo, $concursoId, 'sugestoes', []);
         $e = [
             'concurso' => ['nome' => 'Concurso e cargos', 'ok' => $cargos && $ligados === count($cargos), 'det' => count($cargos) . ' cargo(s) · ' . $ligados . ' ligado(s) a curso'],
             'edital' => ['nome' => 'Edital', 'ok' => $itens && is_array($info), 'det' => ($itens ? count($itens) . ' assuntos' : 'conteúdo programático pendente') . ' · ' . (is_array($info) ? 'informações lidas' : 'informações pendentes') . ($rascEdital ? ' · rascunho salvo' : '')],
-            'prova' => ['nome' => 'Hackeando a prova', 'ok' => !empty($prova['encontrada']) || ($c['prova_status'] ?? '') === 'sem_prova', 'det' => !empty($prova['encontrada']) ? 'última prova: ' . trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '')) : (($c['prova_status'] ?? '') === 'sem_prova' ? 'sem prova anterior (pesos estimados)' : 'última prova pendente')],
+            'prova' => ['nome' => 'Última prova', 'ok' => $provasOk >= count($cargos) && $cargos || !empty($prova['encontrada']) || ($c['prova_status'] ?? '') === 'sem_prova', 'det' => !empty($prova['encontrada']) ? 'última prova: ' . trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '')) : (($c['prova_status'] ?? '') === 'sem_prova' ? 'sem prova anterior (pesos estimados)' : 'última prova pendente')],
             'aulas' => ['nome' => 'Aulas por assunto', 'ok' => $tot > 0 && $cob >= $tot, 'det' => $cob . '/' . $tot . ' assuntos com aula' . ($rascAulas ? ' · ' . count($rascAulas) . ' sugestão(ões) para conferir' : '')],
             'questoes' => ['nome' => 'Questões por assunto', 'ok' => $qs['total'] > 0 && $qs['ok'] >= $qs['total'], 'det' => $qs['ok'] . '/' . $qs['total'] . ' assuntos com 10+ questões'],
             'plano' => ['nome' => 'Plano-Mestre', 'ok' => $cargos && $planos >= count($cargos), 'det' => $planos . '/' . count($cargos) . ' cargo(s) com plano aprovado'],
-            'publicar' => ['nome' => 'Hackeando para o aluno', 'ok' => $cargos && count($hacks) >= count($cargos), 'det' => count($hacks) . '/' . count($cargos) . ' cargo(s) com textos do Antigão'],
+            'publicar' => ['nome' => 'Hackeando para o aluno', 'ok' => $cargos && count($hacks) >= count($cargos) && count($vert) >= count($cargos), 'det' => count($vert) . '/' . count($cargos) . ' verticalizado(s) · ' . count($hacks) . '/' . count($cargos) . ' com textos do Antigão'],
         ];
         $feitas = count(array_filter($e, static fn($x) => $x['ok']));
         // Peso extra das aulas (é a etapa mais longa): conta a fração coberta.
