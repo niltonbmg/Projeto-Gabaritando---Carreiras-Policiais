@@ -39,8 +39,18 @@ try {
     if (date('Y-m-d') >= DESAFIO_INICIO) {
         desafio_gerar($pdo, date('Y-m-d'));
     }
+    // Monta o de amanhã antes da meia-noite: na virada o servidor só entrega, não monta nada.
+    if ((int)date('G') >= 22 && date('Y-m-d', strtotime('+1 day')) >= DESAFIO_INICIO) {
+        desafio_gerar($pdo, date('Y-m-d', strtotime('+1 day')));
+    }
 } catch (Throwable $e) {
     echo 'Desafio do dia: ' . $e->getMessage() . "\n";
+}
+// Pico do Desafio do Dia (23:50 às 00:30): a IA espera, todo o processador fica para os alunos.
+$hm = (int)date('Hi');
+if ($hm >= 2350 || $hm < 30) {
+    echo "Pausa do pico do Desafio do Dia (23:50 às 00:30).\n";
+    exit;
 }
 $feitos = 0;
 // Tarefas do cadastro do concurso (edital, provas, verticalizado...) que o mentor deixou na fila.

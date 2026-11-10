@@ -20,6 +20,10 @@ const META_ETAPA_BLOQUEADO = 'bloqueado';
 if (!function_exists('meta_bootstrap')) {
     function meta_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         static $feito = false;
         if ($feito) {
             return;
@@ -83,11 +87,14 @@ if (!function_exists('meta_bootstrap')) {
 
 if (!function_exists('meta_config')) {
     /** @return array<string,int> */
-    function meta_config(PDO $pdo): array
+    function meta_config(PDO $pdo, bool $recarregar = false): array
     {
-        $cfg = [];
-        foreach ($pdo->query('SELECT chave, valor FROM meta_config') as $r) {
-            $cfg[(string)$r['chave']] = (int)$r['valor'];
+        static $cfg = null; // lida uma vez por visita (era lida 5 vezes por página)
+        if ($cfg === null || $recarregar) {
+            $cfg = [];
+            foreach ($pdo->query('SELECT chave, valor FROM meta_config') as $r) {
+                $cfg[(string)$r['chave']] = (int)$r['valor'];
+            }
         }
         return $cfg;
     }
@@ -143,6 +150,15 @@ if (!function_exists('meta_plano_do_curso')) {
     /** Plano aprovado do curso (o mais recente). */
     function meta_plano_do_curso(PDO $pdo, int $cursoId): ?array
     {
+        static $memo = [];
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST' && PHP_SAPI !== 'cli' && array_key_exists($cursoId, $memo)) {
+            return $memo[$cursoId];
+        }
+        return $memo[$cursoId] = meta_plano_do_curso_banco($pdo, $cursoId);
+    }
+
+    function meta_plano_do_curso_banco(PDO $pdo, int $cursoId): ?array
+    {
         $stmt = $pdo->prepare("SELECT * FROM meta_planos WHERE curso_id = :c AND status = 'aprovado' ORDER BY aprovado_em DESC, id DESC LIMIT 1");
         $stmt->execute([':c' => $cursoId]);
         return $stmt->fetch() ?: null;
@@ -155,6 +171,16 @@ if (!function_exists('meta_estado_aluno')) {
      * Retorna ['plano'=>..., 'itens'=>[...], 'atual'=>item|null, 'nivel_geral'=>float, 'dominio_pct'=>int].
      */
     function meta_estado_aluno(PDO $pdo, int $usuarioId, int $cursoId): array
+    {
+        // Numa página (GET) o estado não muda: calcula uma vez só (era calculado 3 vezes).
+        static $memo = [];
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' || PHP_SAPI === 'cli') {
+            return meta_estado_aluno_calc($pdo, $usuarioId, $cursoId);
+        }
+        return $memo[$usuarioId . ':' . $cursoId] ??= meta_estado_aluno_calc($pdo, $usuarioId, $cursoId);
+    }
+
+    function meta_estado_aluno_calc(PDO $pdo, int $usuarioId, int $cursoId): array
     {
         meta_bootstrap($pdo);
         $cfg = meta_config($pdo);

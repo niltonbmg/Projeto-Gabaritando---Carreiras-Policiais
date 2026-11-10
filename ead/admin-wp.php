@@ -441,7 +441,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $loginDigitado = trim((string)($_POST['login'] ?? $_POST['email'] ?? ''));
     $senhaDigitada = (string)($_POST['senha'] ?? $_POST['password'] ?? '');
 
-    if ($loginDigitado === '' || $senhaDigitada === '') {
+    if (($espera = gab_seg_login_bloqueado()) > 0) {
+        $erroLogin = 'Muitas tentativas erradas. Tente de novo em ' . $espera . ' minuto(s).';
+    } elseif ($loginDigitado === '' || $senhaDigitada === '') {
         $erroLogin = 'Informe o login e a senha para continuar.';
     } else {
         $loginOk = false;
@@ -493,11 +495,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($loginOk && is_array($usuarioAdmin)) {
+            gab_seg_login_ok();
             admin_login_create_session($usuarioAdmin, $loginDigitado);
             header('Location: ' . admin_login_location($redirectPedido));
             exit;
         }
 
+        gab_seg_login_erro();
         $erroLogin = 'Login ou senha inválidos. Confira login, senha e se o usuário está ativo. Se não existir nenhum admin no banco, o primeiro usuário ativo será liberado como admin automaticamente.';
     }
 }

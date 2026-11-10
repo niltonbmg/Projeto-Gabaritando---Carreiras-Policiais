@@ -11,6 +11,10 @@ require_once __DIR__ . '/podcast-lib.php';
 if (!function_exists('videoaula_bootstrap')) {
     function videoaula_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS aula_videoaulas (
             aula_id INT UNSIGNED NOT NULL PRIMARY KEY,
             status ENUM('gerando','pronto','erro') NOT NULL DEFAULT 'gerando',

@@ -3,6 +3,9 @@
 // Autenticador das páginas administrativas.
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/includes/seguranca.php';
+gab_seg_post_mesma_origem();
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

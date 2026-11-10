@@ -163,6 +163,10 @@ if (!function_exists('materiais_arquivos_da_aula')) {
 if (!function_exists('materiais_bootstrap_admin_materiais')) {
     function materiais_bootstrap_admin_materiais(PDO $pdo): void
     {
+        require_once __DIR__ . '/includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS admin_material_pastas (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             curso_id INT UNSIGNED NULL,
@@ -220,6 +224,10 @@ if (!function_exists('materiais_usuario_id')) {
 if (!function_exists('materiais_bootstrap_simulados')) {
     function materiais_bootstrap_simulados(PDO $pdo): void
     {
+        require_once __DIR__ . '/includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS admin_simulados (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             curso_id INT UNSIGNED DEFAULT NULL,

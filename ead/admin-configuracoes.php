@@ -15,6 +15,10 @@ $pdo = null;
 if (!function_exists('admin_config_bootstrap')) {
     function admin_config_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS admin_configuracoes (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             chave VARCHAR(120) NOT NULL,

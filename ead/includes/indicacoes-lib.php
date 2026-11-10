@@ -19,6 +19,10 @@ const INDICACAO_TIPOS = [
 if (!function_exists('indicacoes_bootstrap')) {
     function indicacoes_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS assunto_indicacoes (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             topico_id INT UNSIGNED NOT NULL,

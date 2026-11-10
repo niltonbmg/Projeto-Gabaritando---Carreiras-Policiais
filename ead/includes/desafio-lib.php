@@ -19,6 +19,10 @@ const DESAFIO_MIX = ['facil' => 0.3, 'medio' => 0.5, 'dificil' => 0.2];
 if (!function_exists('desafio_bootstrap')) {
     function desafio_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         static $feito = false;
         if ($feito) {
             return;
@@ -119,6 +123,27 @@ if (!function_exists('desafio_gerar')) {
         if ($existe && !$refazer) {
             return $existe;
         }
+        // Na virada vários alunos chegam juntos: só um monta, os outros esperam e usam o mesmo.
+        $trava = 'gab_desafio_' . $data;
+        $pdo->query('SELECT GET_LOCK(' . $pdo->quote($trava) . ', 45)')->fetchColumn();
+        try {
+            if (!$refazer) {
+                $st->execute([':d' => $data]);
+                if ($existe = $st->fetch()) {
+                    return $existe;
+                }
+            }
+            return desafio_gerar_montar($pdo, $data, $refazer, $st);
+        } finally {
+            try {
+                $pdo->query('SELECT RELEASE_LOCK(' . $pdo->quote($trava) . ')');
+            } catch (Throwable $e) {
+            }
+        }
+    }
+
+    function desafio_gerar_montar(PDO $pdo, string $data, bool $refazer, PDOStatement $st): array
+    {
         $cand = desafio_candidatas($pdo, $data);
         if (count($cand) < 5) {
             throw new RuntimeException('O banco tem poucas questões ativas com gabarito (' . count($cand) . '). Cadastre mais questões para o desafio.');
@@ -162,8 +187,9 @@ if (!function_exists('desafio_gerar')) {
             $por = 'regras';
         }
         $ids = array_slice($ids, 0, DESAFIO_QTD);
-        $pdo->prepare('INSERT INTO desafios (data, questoes, chamada, escolhido_por) VALUES (:d, :q, :c, :p)
-                       ON DUPLICATE KEY UPDATE questoes = VALUES(questoes), chamada = VALUES(chamada), escolhido_por = VALUES(escolhido_por)')
+        $pdo->prepare('INSERT INTO desafios (data, questoes, chamada, escolhido_por) VALUES (:d, :q, :c, :p)'
+                       . ($refazer ? ' ON DUPLICATE KEY UPDATE questoes = VALUES(questoes), chamada = VALUES(chamada), escolhido_por = VALUES(escolhido_por)'
+                                   : ' ON DUPLICATE KEY UPDATE id = id')) // sem "trocar questões" do admin, nunca sobrescreve
             ->execute([':d' => $data, ':q' => json_encode($ids), ':c' => $chamada, ':p' => $por]);
         $st->execute([':d' => $data]);
         return $st->fetch();
@@ -173,6 +199,13 @@ if (!function_exists('desafio_gerar')) {
 if (!function_exists('desafio_questoes')) {
     /** Questões do desafio com alternativas, na ordem escolhida. */
     function desafio_questoes(PDO $pdo, array $desafio): array
+    {
+        // As 20 questões do dia são as mesmas para todos: lê do banco uma vez a cada 5 min.
+        require_once __DIR__ . '/cache-lib.php';
+        return gab_cache('desafio-q-' . (int)$desafio['id'] . '-' . md5((string)$desafio['questoes']), 300, static fn(): array => desafio_questoes_banco($pdo, $desafio));
+    }
+
+    function desafio_questoes_banco(PDO $pdo, array $desafio): array
     {
         $ids = array_map('intval', (array)json_decode((string)$desafio['questoes'], true));
         if (!$ids) {
@@ -274,10 +307,14 @@ if (!function_exists('desafio_nome_publico')) {
 if (!function_exists('desafio_ranking_dia')) {
     function desafio_ranking_dia(PDO $pdo, int $desafioId, int $limite = 50): array
     {
+        // No pico (meia-noite), centenas de alunos pedem o mesmo ranking: recalcula no máximo a cada 30 s.
+        require_once __DIR__ . '/cache-lib.php';
+        return gab_cache('rank-dia-' . $desafioId . '-' . $limite, 30, static function () use ($pdo, $desafioId, $limite): array {
         $st = $pdo->prepare('SELECT t.usuario_id, t.acertos, t.total, t.tempo_seg, u.nome FROM desafio_tentativas t JOIN usuarios u ON u.id = t.usuario_id
                               WHERE t.desafio_id = :d AND t.finalizado_em IS NOT NULL ORDER BY t.acertos DESC, t.tempo_seg ASC, t.finalizado_em ASC LIMIT ' . (int)$limite);
         $st->execute([':d' => $desafioId]);
         return $st->fetchAll();
+        });
     }
 }
 
@@ -285,12 +322,15 @@ if (!function_exists('desafio_ranking_mes')) {
     /** Ranking do mês: soma de acertos; desempate por dias participados e menor tempo total. */
     function desafio_ranking_mes(PDO $pdo, string $mes, int $limite = 50): array
     {
+        require_once __DIR__ . '/cache-lib.php';
+        return gab_cache('rank-mes-' . $mes . '-' . $limite, 60, static function () use ($pdo, $mes, $limite): array {
         $st = $pdo->prepare("SELECT t.usuario_id, u.nome, SUM(t.acertos) acertos, COUNT(*) dias, SUM(t.tempo_seg) tempo
                                FROM desafio_tentativas t JOIN desafios d ON d.id = t.desafio_id JOIN usuarios u ON u.id = t.usuario_id
                               WHERE t.finalizado_em IS NOT NULL AND DATE_FORMAT(d.data, '%Y-%m') = :m
                               GROUP BY t.usuario_id, u.nome ORDER BY acertos DESC, dias DESC, tempo ASC LIMIT " . (int)$limite);
         $st->execute([':m' => $mes]);
         return $st->fetchAll();
+        });
     }
 }
 

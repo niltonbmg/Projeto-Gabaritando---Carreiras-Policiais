@@ -26,6 +26,10 @@ const META_BLOCO_MIN = 60; // máximo de minutos seguidos da mesma matéria
 if (!function_exists('meta_cronograma_bootstrap')) {
     function meta_cronograma_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         meta_bootstrap($pdo);
         $pdo->exec("CREATE TABLE IF NOT EXISTS meta_aluno_config (
             usuario_id BIGINT UNSIGNED NOT NULL,
@@ -358,9 +362,13 @@ if (!function_exists('meta_cronograma_montar')) {
         $revisoes = meta_cronograma_revisoes($estado, meta_revisoes_feitas($pdo, $usuarioId));
 
         // Simulado e redação fixos na semana (0 minutos = desligado).
-        $ins = $pdo->prepare('INSERT IGNORE INTO meta_config (chave, valor) VALUES (:c, :v)');
-        foreach (['simulado_dia' => '6', 'simulado_min' => '120', 'simulado_semanas' => '1', 'redacao_dia' => '3', 'redacao_min' => '60', 'redacao_semanas' => '1'] as $c => $v) {
-            $ins->execute([':c' => $c, ':v' => $v]);
+        require_once __DIR__ . '/schema-cache.php';
+        if (!gab_schema_ok('meta_cron_padroes_eventos', __FILE__)) {
+            $ins = $pdo->prepare('INSERT IGNORE INTO meta_config (chave, valor) VALUES (:c, :v)');
+            foreach (['simulado_dia' => '6', 'simulado_min' => '120', 'simulado_semanas' => '1', 'redacao_dia' => '3', 'redacao_min' => '60', 'redacao_semanas' => '1'] as $c => $v) {
+                $ins->execute([':c' => $c, ':v' => $v]);
+            }
+            meta_config($pdo, true);
         }
         $cfgEv = meta_config($pdo);
         $cfg['eventos'] = [];

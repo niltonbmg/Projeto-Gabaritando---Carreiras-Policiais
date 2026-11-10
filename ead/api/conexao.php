@@ -6,6 +6,9 @@ declare(strict_types=1);
 
 date_default_timezone_set('America/Sao_Paulo');
 
+require_once dirname(__DIR__) . '/includes/seguranca.php';
+gab_seg_post_mesma_origem();
+
 if (!function_exists('gab_starts_with')) {
     function gab_starts_with(string $haystack, string $needle): bool
     {

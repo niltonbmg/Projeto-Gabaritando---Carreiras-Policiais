@@ -5,6 +5,10 @@ declare(strict_types=1);
 if (!function_exists('gab_curso_acesso_bootstrap')) {
     function gab_curso_acesso_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS usuario_cursos (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             usuario_id BIGINT UNSIGNED NOT NULL,

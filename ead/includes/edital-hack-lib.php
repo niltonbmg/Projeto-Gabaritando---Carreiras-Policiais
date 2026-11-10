@@ -18,6 +18,10 @@ const HACK_FORMATO_Q = '{"questoes":[{"enunciado":"texto completo","alternativas
 if (!function_exists('hack_bootstrap')) {
     function hack_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         static $feito = false;
         if ($feito) {
             return;

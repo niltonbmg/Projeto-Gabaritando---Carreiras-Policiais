@@ -39,6 +39,10 @@ if (!function_exists('admin_bq_try_exec')) {
 if (!function_exists('admin_bq_bootstrap')) {
     function admin_bq_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS admin_bancas (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             nome VARCHAR(180) NOT NULL,

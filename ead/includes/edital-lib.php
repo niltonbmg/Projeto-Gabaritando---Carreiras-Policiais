@@ -11,6 +11,10 @@ require_once __DIR__ . '/podcast-lib.php';
 if (!function_exists('edital_bootstrap')) {
     function edital_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         static $feito = false;
         if ($feito) {
             return;
@@ -317,6 +321,10 @@ if (!function_exists('edital_criar_aula')) {
 if (!function_exists('edital_plano_bootstrap')) {
     function edital_plano_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         foreach (['justificativa' => 'TEXT NULL', 'recorrencia' => 'DECIMAL(5,2) NULL'] as $col => $def) {
             if (!$pdo->query('SHOW COLUMNS FROM meta_plano_itens LIKE ' . $pdo->quote($col))->fetch()) {
                 $pdo->exec("ALTER TABLE meta_plano_itens ADD COLUMN `$col` $def");

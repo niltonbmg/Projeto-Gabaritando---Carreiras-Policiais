@@ -32,6 +32,7 @@ $adminMenuGrupos = [
     ]],
     ['titulo' => 'Alunos', 'itens' => [
         ['label' => 'Redação', 'href' => 'admin-redacao.php', 'icon' => 'pen-line', 'pages' => ['admin-redacao.php', 'admin-redacao']],
+        ['label' => 'Saúde da plataforma', 'href' => 'saude.php', 'icon' => 'activity', 'pages' => ['saude.php', 'saude']],
         ['label' => 'LGPD e privacidade', 'href' => 'admin-lgpd.php', 'icon' => 'shield-check', 'pages' => ['admin-lgpd.php', 'admin-lgpd']],
         ['label' => 'Desafio do dia', 'href' => 'admin-desafio.php', 'icon' => 'target', 'pages' => ['admin-desafio.php', 'admin-desafio']],
         ['label' => 'Usuários', 'href' => 'admin-usuarios.php', 'icon' => 'users', 'pages' => ['admin-usuarios.php', 'admin-usuarios']],

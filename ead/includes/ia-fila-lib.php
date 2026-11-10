@@ -13,6 +13,10 @@ require_once __DIR__ . '/videoaula-lib.php';
 if (!function_exists('ia_fila_bootstrap')) {
     function ia_fila_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS ia_fila (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             tipo VARCHAR(20) NOT NULL,

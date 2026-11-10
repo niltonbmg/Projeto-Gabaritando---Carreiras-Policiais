@@ -14,6 +14,10 @@ const LGPD_PRAZO_DIAS = 15;                 // prazo de resposta ao titular (art
 if (!function_exists('lgpd_bootstrap')) {
     function lgpd_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         static $feito = false;
         if ($feito) {
             return;

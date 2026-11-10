@@ -223,6 +223,10 @@ try {
 
     function api_data_banco_questoes_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/../includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         if (!api_data_has($pdo, 'admin_banco_questoes')) return;
         api_data_try_exec($pdo, "ALTER TABLE admin_banco_questoes ADD COLUMN curso_id INT UNSIGNED DEFAULT NULL AFTER id");
         api_data_try_exec($pdo, "ALTER TABLE admin_banco_questoes ADD COLUMN concurso_passado_id INT UNSIGNED DEFAULT NULL AFTER curso_id");
@@ -1470,6 +1474,10 @@ try {
 
     function api_data_ensure_aulas_tables(PDO $pdo): void
     {
+        require_once __DIR__ . '/../includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS aulas_progresso (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             usuario_id BIGINT UNSIGNED NOT NULL,
@@ -1744,6 +1752,10 @@ try {
 
     function api_data_material_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/../includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         api_data_try_exec($pdo, "CREATE TABLE IF NOT EXISTS admin_material_pastas (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             curso_id INT UNSIGNED NULL,

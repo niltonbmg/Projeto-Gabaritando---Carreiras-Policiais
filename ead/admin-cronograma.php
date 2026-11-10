@@ -31,6 +31,10 @@ if (!function_exists('admin_crono_exec')) {
 if (!function_exists('admin_crono_bootstrap')) {
     function admin_crono_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         admin_cursos_bootstrap($pdo);
         admin_bq_bootstrap($pdo);
 

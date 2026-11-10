@@ -349,7 +349,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $senha = (string)($_POST['senha'] ?? $_POST['password'] ?? '');
     $redirect = login_safe_redirect((string)($_POST['redirect'] ?? 'dashboard.php'));
 
-    if ($loginDigitado === '' || $senha === '') {
+    require_once __DIR__ . '/includes/seguranca.php';
+    if (($espera = gab_seg_login_bloqueado()) > 0) {
+        $erro = 'Muitas tentativas erradas. Por segurança, tente de novo em ' . $espera . ' minuto(s) ou use "Esqueci minha senha".';
+    } elseif ($loginDigitado === '' || $senha === '') {
         $erro = 'Preencha o login e a senha para continuar.';
     } else {
         try {
@@ -357,10 +360,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = login_find_user($pdo, $loginDigitado);
 
             if (!$user || !login_password_ok($user, $senha)) {
+                gab_seg_login_erro();
                 $erro = 'Login ou senha inválidos. Confira seus dados e tente novamente.';
             } elseif (!login_user_is_active($user)) {
                 $erro = 'Sua conta não está ativa. Entre em contato com o suporte.';
             } else {
+                gab_seg_login_ok();
                 login_create_session($user);
 
                 try {

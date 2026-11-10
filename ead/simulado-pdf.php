@@ -31,6 +31,10 @@ if (!function_exists('sim_pdf_clean_filename')) {
 if (!function_exists('sim_pdf_bootstrap')) {
     function sim_pdf_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/includes/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         admin_cursos_bootstrap($pdo);
 
         $pdo->exec("CREATE TABLE IF NOT EXISTS admin_simulados (

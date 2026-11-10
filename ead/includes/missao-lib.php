@@ -134,7 +134,8 @@ if (!function_exists('missao_link_aula')) {
     /** Já viu a apresentação do método (Antigão, primeiro acesso)? */
     function missao_viu_tour(PDO $pdo, int $usuarioId): bool
     {
-        $pdo->exec('CREATE TABLE IF NOT EXISTS meta_aluno_tour (usuario_id BIGINT UNSIGNED NOT NULL PRIMARY KEY, visto_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
+        require_once __DIR__ . '/schema-cache.php';
+        if (!gab_schema_ok('missao_tour_tabela', __FILE__)) $pdo->exec('CREATE TABLE IF NOT EXISTS meta_aluno_tour (usuario_id BIGINT UNSIGNED NOT NULL PRIMARY KEY, visto_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
         $st = $pdo->prepare('SELECT 1 FROM meta_aluno_tour WHERE usuario_id = :u');
         $st->execute([':u' => $usuarioId]);
         return (bool)$st->fetchColumn();

@@ -5,6 +5,9 @@
 // Quando é chamado diretamente por POST, ele processa o login normal.
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/includes/seguranca.php';
+gab_seg_post_mesma_origem();
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -175,6 +178,9 @@ $redirect = (string)($_POST['redirect'] ?? 'dashboard.php');
 if ($email === '' || $senha === '') {
     gab_redirect('../login.php?erro=campos&email=' . urlencode($email));
 }
+if (gab_seg_login_bloqueado() > 0) {
+    gab_redirect('../login.php?erro=login&email=' . urlencode($email));
+}
 
 try {
     $pdo = db();
@@ -194,6 +200,7 @@ try {
     }
 
     if (!$user || !$senhaOk) {
+        gab_seg_login_erro();
         gab_redirect('../login.php?erro=login&email=' . urlencode($email));
     }
 

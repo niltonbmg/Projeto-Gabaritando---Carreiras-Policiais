@@ -180,6 +180,10 @@ if (!function_exists('aula_desc_corpo')) {
 if (!function_exists('aula_marcacoes_bootstrap')) {
     function aula_marcacoes_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS aula_marcacoes (
             usuario_id BIGINT UNSIGNED NOT NULL,
             aula_id INT UNSIGNED NOT NULL,

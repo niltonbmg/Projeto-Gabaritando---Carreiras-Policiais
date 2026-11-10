@@ -111,6 +111,10 @@ if (!function_exists('recompensas_table_exists')) {
 if (!function_exists('recompensas_bootstrap')) {
     function recompensas_bootstrap(PDO $pdo): void
     {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
         $pdo->exec("CREATE TABLE IF NOT EXISTS admin_recompensas_regras (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             codigo VARCHAR(80) NOT NULL,
