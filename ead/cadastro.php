@@ -204,7 +204,7 @@ function old_value(string $key): string
 
                 <label class="check">
                     <input type="checkbox" name="aceite_termos" required>
-                    <span>Li e aceito os termos de uso e política de privacidade da plataforma.</span>
+                    <span>Li e aceito os <a href="termos.php" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.php" target="_blank" rel="noopener">Política de Privacidade</a> da plataforma.</span>
                 </label>
 
                 <input type="hidden" name="redirect" value="<?php echo e($redirect); ?>">

@@ -254,8 +254,15 @@ if (!function_exists('desafio_finalizar')) {
 
 if (!function_exists('desafio_nome_publico')) {
     /** "Maria Souza Lima" -> "Maria S." (ranking sem expor o nome completo). */
-    function desafio_nome_publico(string $nome): string
+    function desafio_nome_publico(string $nome, int $usuarioId = 0): string
     {
+        // LGPD: o aluno pode escolher não aparecer pelo nome no ranking (Meus dados).
+        if ($usuarioId > 0 && function_exists('db')) {
+            require_once __DIR__ . '/lgpd-lib.php';
+            if (!lgpd_ranking_publico(db(), $usuarioId)) {
+                return 'Combatente anônimo';
+            }
+        }
         $p = preg_split('/\s+/', trim($nome)) ?: [];
         if (!$p || $p[0] === '') {
             return 'Combatente';
@@ -326,7 +333,7 @@ if (!function_exists('desafio_mensagem_whatsapp')) {
             if ($top) {
                 $msg .= "\n🥇🥈🥉 *Pódio de ontem*\n";
                 foreach ($top as $k => $r) {
-                    $msg .= ['🥇', '🥈', '🥉'][$k] . ' ' . desafio_nome_publico((string)$r['nome']) . ' – ' . (int)$r['acertos'] . '/' . (int)$r['total'] . "\n";
+                    $msg .= ['🥇', '🥈', '🥉'][$k] . ' ' . desafio_nome_publico((string)$r['nome'], (int)($r['usuario_id'] ?? 0)) . ' – ' . (int)$r['acertos'] . '/' . (int)$r['total'] . "\n";
                 }
             }
         }

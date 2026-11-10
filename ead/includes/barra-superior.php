@@ -44,6 +44,7 @@ $menuItens = $menuItens ?? [
     ['titulo' => 'Cadernos', 'link' => 'cadernos.php', 'externo' => false],
     ['titulo' => 'Flashcards', 'link' => 'flashcards.php', 'externo' => false],
     ['titulo' => 'Recompensas', 'link' => 'recompensas.php', 'externo' => false],
+    ['titulo' => '🔒 Meus dados e privacidade', 'link' => 'meus-dados.php', 'externo' => false],
     ['titulo' => 'QUEM SOMOS', 'link' => 'https://www.instagram.com/projeto.gabaritando/', 'externo' => true],
     ['titulo' => 'ANTIGÃO IA', 'link' => 'https://typebotapi.adscompany.app.br/antigao-38a8ulb', 'externo' => true],
 ];
@@ -990,3 +991,32 @@ if ($usuarioLogado) {
         document.head.appendChild(script);
     })();
 </script>
+<?php
+// LGPD: quem ainda não aceitou a versão atual dos Termos/Política vê o aviso antes de continuar.
+if ($usuarioLogado && !$usuarioEhAdmin && function_exists('db')) {
+    $lgpdPaginaAtual = basename((string)parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH));
+    $lgpdPendente = false;
+    if (!in_array(preg_replace('~\.php$~', '', $lgpdPaginaAtual), ['meus-dados', 'privacidade', 'termos'], true)) {
+        try {
+            require_once __DIR__ . '/lgpd-lib.php';
+            $lgpdPendente = !lgpd_aceitou_versao_atual(db(), (int)($usuarioAtual['id'] ?? 0));
+        } catch (Throwable $e) {
+            $lgpdPendente = false;
+        }
+    }
+    if ($lgpdPendente):
+        $lgpdVolta = preg_replace('~\.php$~', '', $lgpdPaginaAtual) . '.php' . (($_SERVER['QUERY_STRING'] ?? '') !== '' ? '?' . $_SERVER['QUERY_STRING'] : '');
+?>
+<div style="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:16px">
+    <form method="post" action="meus-dados.php" style="max-width:520px;width:100%;background:#151a22;color:#eef2f7;border:1px solid #c9a227;border-radius:14px;padding:22px;font:15px/1.5 system-ui,sans-serif">
+        <h2 style="margin:0 0 8px;color:#e8c55a;font-size:20px">🔒 Seus dados, suas regras</h2>
+        <p style="margin:0 0 10px">Atualizamos nossos <a href="termos.php" target="_blank" style="color:#e8c55a">Termos de Uso</a> e a <a href="privacidade.php" target="_blank" style="color:#e8c55a">Política de Privacidade</a>, conforme a LGPD. Lá explicamos quais dados usamos, para quê, com quem compartilhamos (inclusive a IA do Google) e como pedir cópia ou exclusão.</p>
+        <label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0"><input type="checkbox" name="aceite" value="1" required style="margin-top:4px"> <span>Li e aceito os Termos de Uso e a Política de Privacidade.</span></label>
+        <input type="hidden" name="acao" value="aceitar">
+        <input type="hidden" name="volta" value="<?php echo htmlspecialchars($lgpdVolta, ENT_QUOTES, 'UTF-8'); ?>">
+        <button type="submit" style="background:#c9a227;color:#111;border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer">Aceitar e continuar</button>
+        <a href="meus-dados.php" style="color:#aab4c3;margin-left:12px;font-size:13px">Meus dados</a>
+    </form>
+</div>
+<?php endif;
+}

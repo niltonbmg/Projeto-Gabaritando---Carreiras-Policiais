@@ -216,6 +216,14 @@ try {
 
     $usuarioId = (int)$pdo->lastInsertId();
 
+    // LGPD: guarda a prova do aceite dos Termos e da Política (versão, data, IP parcial).
+    try {
+        require_once dirname(__DIR__) . '/includes/lgpd-lib.php';
+        lgpd_registrar_aceite($pdo, $usuarioId, 'cadastro');
+    } catch (Throwable $e) {
+        error_log('LGPD aceite cadastro: ' . $e->getMessage());
+    }
+
     // Regra atual: cadastro normal começa sem nenhum curso liberado.
     // O admin atribui os cursos depois em admin-usuarios.php.
     if (function_exists('gab_curso_acesso_marcar_usuario_sem_cursos')) {

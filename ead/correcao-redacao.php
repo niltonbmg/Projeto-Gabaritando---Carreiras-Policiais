@@ -142,7 +142,7 @@ function cr_e($v): string
             <h2>Redação do aluno</h2>
             <?php if (trim((string)$r['proposta']) !== ''): ?><p class="sub" style="margin-bottom:8px"><?php echo cr_e($r['tema']); ?></p><?php endif; ?>
             <?php if (!empty($r['arquivo'])): $a = (string)$r['arquivo']; ?>
-                <div class="arquivo"><?php if (str_ends_with($a, '.pdf')): ?><iframe src="<?php echo cr_e($a); ?>" title="PDF da redação"></iframe><?php else: ?><img src="<?php echo cr_e($a); ?>" alt="Foto da redação manuscrita"><?php endif; ?></div>
+                <div class="arquivo"><?php if (str_ends_with($a, '.pdf')): ?><iframe src="arquivo-redacao.php?id=<?php echo (int)$r['id']; ?>" title="PDF da redação"></iframe><?php else: ?><img src="arquivo-redacao.php?id=<?php echo (int)$r['id']; ?>" alt="Foto da redação manuscrita"><?php endif; ?></div>
             <?php endif; ?>
             <?php if (trim((string)$r['texto']) !== '' && ($r['status'] !== 'enviada' || empty($r['arquivo']))): ?><div class="texto" style="margin-top:10px"><?php echo cr_e($r['texto']); ?></div><?php endif; ?>
         </section>

@@ -203,7 +203,7 @@ $meses = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho
             <h2>🏆 Ranking Geral · hoje</h2>
             <?php if (!$rankDia): ?><div class="dz-vazio">Ninguém terminou ainda. Seja o primeiro!</div><?php endif; ?>
             <?php foreach ($rankDia as $k => $r): ?>
-                <div class="dz-linha <?php echo (int)$r['usuario_id'] === $usuarioId ? 'eu' : ''; ?>"><strong><?php echo $k < 3 ? ['🥇', '🥈', '🥉'][$k] : ($k + 1) . 'º'; ?></strong><div><?php echo dz_e(desafio_nome_publico((string)$r['nome'])); ?></div><strong><?php echo (int)$r['acertos']; ?>/<?php echo (int)$r['total']; ?></strong><span><?php echo dz_tempo((int)$r['tempo_seg']); ?></span></div>
+                <div class="dz-linha <?php echo (int)$r['usuario_id'] === $usuarioId ? 'eu' : ''; ?>"><strong><?php echo $k < 3 ? ['🥇', '🥈', '🥉'][$k] : ($k + 1) . 'º'; ?></strong><div><?php echo dz_e(desafio_nome_publico((string)$r['nome'], (int)$r['usuario_id'])); ?></div><strong><?php echo (int)$r['acertos']; ?>/<?php echo (int)$r['total']; ?></strong><span><?php echo dz_tempo((int)$r['tempo_seg']); ?></span></div>
             <?php endforeach; ?>
         </section>
 
@@ -238,14 +238,14 @@ $meses = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho
     <section class="dz-premio" aria-label="Prêmio do mês">
         <span>🎁 Prêmio de <?php echo $meses[(int)substr($mes, 5, 2)]; ?></span>
         <strong><?php echo !empty($premio['premio']) ? dz_e((string)$premio['premio']) : 'Em breve o mentor anuncia o brinde do mês.'; ?></strong>
-        <?php if (!empty($premioAnterior['ganhador'])): ?><span>👑 Ganhador de <?php echo $meses[(int)substr($mesAnterior, 5, 2)]; ?>: <?php echo dz_e(desafio_nome_publico((string)$premioAnterior['ganhador'])); ?></span><?php endif; ?>
+        <?php if (!empty($premioAnterior['ganhador'])): ?><span>👑 Ganhador de <?php echo $meses[(int)substr($mesAnterior, 5, 2)]; ?>: <?php echo dz_e(desafio_nome_publico((string)$premioAnterior['ganhador'], (int)($premioAnterior['ganhador_id'] ?? $premioAnterior['usuario_id'] ?? 0))); ?></span><?php endif; ?>
     </section>
 
     <section class="dz-rank" aria-label="Ranking do mês">
         <h2>🏆 Ranking Geral · mês (soma dos acertos)</h2>
         <?php if (!$rankMes): ?><div class="dz-vazio">O ranking do mês aparece quando os primeiros desafios forem concluídos.</div><?php endif; ?>
         <?php foreach ($rankMes as $k => $r): ?>
-            <div class="dz-linha <?php echo (int)$r['usuario_id'] === $usuarioId ? 'eu' : ''; ?>"><strong><?php echo $k < 3 ? ['🥇', '🥈', '🥉'][$k] : ($k + 1) . 'º'; ?></strong><div><?php echo dz_e(desafio_nome_publico((string)$r['nome'])); ?></div><strong><?php echo (int)$r['acertos']; ?> acertos</strong><span><?php echo (int)$r['dias']; ?> dia(s)</span></div>
+            <div class="dz-linha <?php echo (int)$r['usuario_id'] === $usuarioId ? 'eu' : ''; ?>"><strong><?php echo $k < 3 ? ['🥇', '🥈', '🥉'][$k] : ($k + 1) . 'º'; ?></strong><div><?php echo dz_e(desafio_nome_publico((string)$r['nome'], (int)$r['usuario_id'])); ?></div><strong><?php echo (int)$r['acertos']; ?> acertos</strong><span><?php echo (int)$r['dias']; ?> dia(s)</span></div>
         <?php endforeach; ?>
     </section>
 </main>

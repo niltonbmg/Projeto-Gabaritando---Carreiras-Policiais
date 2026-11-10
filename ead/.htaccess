@@ -2,6 +2,15 @@
 # Redireciona /ead/ para /ead/login e mantém URLs sem .php sem quebrar POST de formulários.
 
 Options -Indexes
+
+# Segurança/LGPD: arquivos ocultos (.env, .git, .ia-uso.json...), backups e logs nunca são servidos.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(sql|sql\.gz|zip|tar|gz|bak|log|ini|sh)$">
+    Require all denied
+</FilesMatch>
+RedirectMatch 404 /\.git
 RewriteEngine On
 RewriteBase /ead/
 

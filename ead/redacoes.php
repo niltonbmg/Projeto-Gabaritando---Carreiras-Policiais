@@ -122,6 +122,7 @@ function rd_e($v): string
             <div class="ou">ou</div>
             <label class="sub" for="arquivo">📷 Foto ou PDF da folha escrita à mão (até 10 MB)</label><br>
             <input id="arquivo" type="file" name="arquivo" accept="image/*,application/pdf" capture="environment">
+            <p class="sub" style="margin-top:12px;font-size:12px">🔒 Não escreva seu nome, CPF ou outros dados pessoais na redação. Antes do professor, o texto (ou a foto) é pré-lido por inteligência artificial do Google, sem o seu nome; a nota final é sempre do professor. <a href="privacidade.php" target="_blank" style="color:var(--ouro)">Saiba mais</a>.</p>
             <div style="margin-top:14px"><button class="bt" type="submit">Enviar para correção</button></div>
         </form>
         <?php endif; ?>
@@ -141,11 +142,11 @@ function rd_e($v): string
                         <div class="crit"><span><?php echo rd_e($g['nome']); ?></span><strong><?php echo redacao_fmt((float)($f['nota'] ?? 0)); ?>/<?php echo redacao_fmt((float)$g['max']); ?></strong><?php if (!empty($f['comentario'])): ?><small><?php echo rd_e($f['comentario']); ?></small><?php endif; ?></div>
                     <?php endforeach; ?>
                     <?php if (trim((string)$m['comentario']) !== ''): ?><p><strong>Professor:</strong> <?php echo nl2br(rd_e($m['comentario'])); ?></p><?php endif; ?>
-                    <?php if (!empty($m['audio'])): ?><audio controls preload="none" src="<?php echo rd_e($m['audio']); ?>"></audio><?php endif; ?>
+                    <?php if (!empty($m['audio'])): ?><audio controls preload="none" src="arquivo-redacao.php?id=<?php echo (int)$m['id']; ?>&amp;tipo=audio"></audio><?php endif; ?>
                 <?php else: ?>
                     <p class="sub">O professor corrige em até <?php echo REDACAO_PRAZO_HORAS; ?>h.</p>
                 <?php endif; ?>
-                <?php if (!empty($m['arquivo'])): ?><a href="<?php echo rd_e($m['arquivo']); ?>" target="_blank" rel="noopener" style="color:var(--ouro);font-size:13px">Ver o que enviei</a><?php endif; ?>
+                <?php if (!empty($m['arquivo'])): ?><a href="arquivo-redacao.php?id=<?php echo (int)$m['id']; ?>" target="_blank" rel="noopener" style="color:var(--ouro);font-size:13px">Ver o que enviei</a><?php endif; ?>
             </article>
         <?php endforeach; ?>
         </div>
