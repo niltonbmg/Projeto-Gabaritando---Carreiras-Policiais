@@ -476,6 +476,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                 <div id="ciaAulas" class="admin-form-hint" style="display:grid;gap:2px;margin-bottom:6px"></div>
                 <div id="ciaQuestoes" class="admin-form-hint"></div>
                 <div class="ed-barra" style="height:8px;margin:6px 0" aria-hidden="true"><i id="ciaQBarra" style="width:0"></i></div>
+                <div id="ciaRecentes" style="margin:8px 0"></div>
                 <ul id="ciaJobs" style="list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px;font-size:14px"></ul>
             </section>
 
@@ -582,6 +583,9 @@ $menuBarInclude = admin_cursos_get_menubar();
                                         <?php if (!empty($pv['motivo'])): ?> · <?php echo admin_esc((string)$pv['motivo']); ?><?php endif; ?>
                                         <?php if (($pv['status'] ?? '') === 'confere'): ?> · <?php echo admin_esc(trim(($pv['banca'] ?? '') . ' ' . ($pv['ano'] ?? ''))); ?> · <?php echo array_sum((array)($pv['itens'] ?? [])); ?> questões distribuídas<?php endif; ?>
                                         · <a class="admin-link-inline" href="<?php echo admin_esc((string)$pv['arquivo']); ?>" target="_blank" rel="noopener">ver PDF</a></span>
+                                    <?php if (!empty($pv['itens'])): $porMat = []; $nomeIt = []; foreach ($itens as $it) { $nomeIt[(int)$it['id']] = $it['materia']; } foreach ((array)$pv['itens'] as $iid => $qn) { if ($qn) { $porMat[$nomeIt[(int)$iid] ?? '?'] = ($porMat[$nomeIt[(int)$iid] ?? '?'] ?? 0) + (int)$qn; } } arsort($porMat); ?>
+                                        <details><summary class="admin-form-hint" style="cursor:pointer">👁 Pré-visualizar: questões por matéria que a IA contou</summary><p class="admin-form-hint"><?php echo admin_esc(implode(' · ', array_map(static fn($m, $q) => "$m: $q", array_keys($porMat), $porMat))); ?></p></details>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                                 <form method="post" enctype="multipart/form-data" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><input type="hidden" name="acao" value="enviar_prova"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$cg['id']; ?>"><input type="hidden" name="cargo_nome" value="<?php echo admin_esc((string)$cg['nome']); ?>">
                                     <input type="file" name="prova" accept="application/pdf" required aria-label="PDF da prova de <?php echo admin_esc((string)$cg['nome']); ?>">
@@ -622,7 +626,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                                 <?php foreach ($lista as $it): $prof = array_values(array_filter($it['aulas'], static fn($a) => trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '')); $a0 = $prof[0] ?? ($it['aulas'][0] ?? null); ?>
                                     <div class="ed-assunto"><span><?php echo $prof ? '✅' : ($it['aulas'] ? '🤖' : '⬜'); ?></span>
                                         <div><?php echo admin_esc((string)$it['assunto']); ?>
-                                            <small><?php if ($a0): ?><?php echo admin_esc((string)$a0['titulo']); ?><?php if (!$prof): $vs = $vaStatus[(int)$a0['id']] ?? ''; ?> · 🎬 videoaula do Antigão: <?php echo $vs === 'pronto' ? 'pronta' : 'em preparo (Central da IA)'; ?><?php endif; ?> · <a class="admin-link-inline" target="_blank" href="aulas.php?curso_id=<?php echo (int)$a0['curso_id']; ?>&modulo_id=<?php echo (int)$a0['modulo_id']; ?>&aula_id=<?php echo (int)$a0['id']; ?>">▶ ver como aluno</a><?php else: ?>sem aula<?php endif; ?></small></div>
+                                            <small><?php if ($a0): ?><?php echo admin_esc((string)$a0['titulo']); ?><?php if (!$prof): $vs = $vaStatus[(int)$a0['id']] ?? ''; ?> · 🎬 videoaula do Antigão: <?php echo $vs === 'pronto' ? 'pronta' : 'em preparo (Central da IA)'; ?><?php endif; ?> · <button type="button" class="admin-link-inline" style="background:none;border:0;padding:0;cursor:pointer;font:inherit" data-pv="aula" data-id="<?php echo (int)$a0['id']; ?>">👁 pré-visualizar</button> · <a class="admin-link-inline" target="_blank" href="aulas.php?curso_id=<?php echo (int)$a0['curso_id']; ?>&modulo_id=<?php echo (int)$a0['modulo_id']; ?>&aula_id=<?php echo (int)$a0['id']; ?>">▶ abrir como aluno</a><?php else: ?>sem aula<?php endif; ?></small></div>
                                         <details><summary class="admin-btn admin-btn-light admin-btn-small" style="list-style:none;cursor:pointer"><?php echo $prof ? 'Trocar' : '+ Vídeo/PDF do professor'; ?></summary>
                                             <form method="post" enctype="multipart/form-data" style="display:grid;gap:6px;margin-top:6px;min-width:260px"><input type="hidden" name="acao" value="aula_item"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="item_id" value="<?php echo (int)$it['id']; ?>">
                                                 <input type="url" name="video" placeholder="Link do vídeo (YouTube)" aria-label="Link do vídeo de <?php echo admin_esc((string)$it['assunto']); ?>">
@@ -644,7 +648,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <?php else: ?>
                     <form method="post"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
                         <?php $nomeItem = []; foreach ($itens as $it) { $nomeItem[(int)$it['id']] = $it['materia'] . ' › ' . $it['assunto']; } foreach ($exist as $i => $e): ?>
-                            <label class="ed-assunto" style="cursor:pointer"><input type="checkbox" name="e[]" value="<?php echo $i; ?>" checked><div><?php echo admin_esc((string)$e['aula']); ?><small>→ <?php echo admin_esc($nomeItem[(int)$e['item_id']] ?? ''); ?> · <?php echo admin_esc((string)$e['motivo']); ?></small></div><span class="ed-tag"><?php echo (int)$e['confianca']; ?>%</span></label>
+                            <label class="ed-assunto" style="cursor:pointer"><input type="checkbox" name="e[]" value="<?php echo $i; ?>" checked><div><?php echo admin_esc((string)$e['aula']); ?><small>→ <?php echo admin_esc($nomeItem[(int)$e['item_id']] ?? ''); ?> · <?php echo admin_esc((string)$e['motivo']); ?> · <button type="button" class="admin-link-inline" style="background:none;border:0;padding:0;cursor:pointer;font:inherit" data-pv="aula" data-id="<?php echo (int)$e['aula_id']; ?>">👁 ver a aula</button></small></div><span class="ed-tag"><?php echo (int)$e['confianca']; ?>%</span></label>
                         <?php endforeach; ?>
                         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
                             <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" name="acao" value="aceitar_existentes" onclick="this.form.insertAdjacentHTML('beforeend','<input type=hidden name=todas value=1>')">✓ Aceitar todas (<?php echo count($exist); ?>)</button>
@@ -693,7 +697,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <?php $grupo = []; foreach ($qs['itens'] as $it) { $grupo[$it['materia']][] = $it; } foreach ($grupo as $mat => $lista): $ok = count(array_filter($lista, static fn($x) => $x['questoes'] >= 10)); ?>
                         <details class="ed-materia"><summary><span><?php echo $ok === count($lista) ? '✅' : '⬜'; ?> <?php echo admin_esc($mat); ?></span><small><?php echo $ok; ?>/<?php echo count($lista); ?> prontos · <?php echo array_sum(array_column($lista, 'questoes')); ?> questões</small></summary>
                         <?php foreach ($lista as $it): ?>
-                            <div class="ed-assunto"><span><?php echo $it['questoes'] >= 10 ? '✅' : '⬜'; ?></span><div><?php echo admin_esc((string)$it['assunto']); ?><small><?php echo (int)$it['questoes']; ?> questões<?php if ($it['questoes']): ?> · <a class="admin-link-inline" target="_blank" href="banco-questoes.php?topico_id=<?php echo (int)$it['topico_id']; ?>">ver como aluno</a><?php endif; ?></small></div>
+                            <div class="ed-assunto"><span><?php echo $it['questoes'] >= 10 ? '✅' : '⬜'; ?></span><div><?php echo admin_esc((string)$it['assunto']); ?><small><?php echo (int)$it['questoes']; ?> questões<?php if ($it['questoes']): ?> · <button type="button" class="admin-link-inline" style="background:none;border:0;padding:0;cursor:pointer;font:inherit" data-pv="questoes" data-id="<?php echo (int)$it['topico_id']; ?>">👁 pré-visualizar questões</button><?php endif; ?></small></div>
                             <?php if ($it['questoes'] < 10): ?><form method="post"><input type="hidden" name="acao" value="questoes_item"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="item_id" value="<?php echo (int)$it['id']; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">Fazer só este</button></form><?php endif; ?></div>
                         <?php endforeach; ?></details>
                     <?php endforeach; ?>
@@ -759,6 +763,8 @@ $menuBarInclude = admin_cursos_get_menubar();
             Object.keys(nomes).forEach(function (t) { var f = (d.fila || {})[t]; if (!f) { return; } var feito = f.feito || 0, pend = f.pendente || 0, err = f.erro || 0, tot = feito + pend + err; filaPend += pend;
                 linhas += '<div>' + nomes[t] + ': <strong>' + feito + '/' + tot + '</strong> prontas' + (pend ? ' · ' + pend + ' na fila' : '') + (err ? ' · ' + err + ' com erro (tenta de novo sozinho)' : '') + '</div>'; });
             document.getElementById('ciaAulas').innerHTML = linhas;
+            var rot = {aula_ia: '🤖 Teoria pronta', apostila: '📄 Apostila pronta', videoaula: '🎬 Videoaula pronta', questoes: '📚 Questões prontas'};
+            document.getElementById('ciaRecentes').innerHTML = (d.recentes || []).length ? '<strong style="font-size:14px">Acabou de ficar pronto (clique para conferir):</strong><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + d.recentes.map(function (r) { return '<button type="button" class="admin-btn admin-btn-light admin-btn-small" data-pv="' + r.pv + '" data-id="' + r.id + '">👁 ' + rot[r.tipo] + ': ' + esc(r.titulo) + '</button>'; }).join('') + '</div>' : '';
             document.getElementById('ciaAgora').innerHTML = d.agora ? '⚙️ <strong>Agora:</strong> ' + esc(d.agora) + '…' : '';
             var ativos = (d.ativos || 0) + (q.na_fila || 0) + filaPend;
             document.getElementById('ciaStatus').textContent = ativos ? 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua' : 'Tudo em dia';
@@ -770,6 +776,42 @@ $menuBarInclude = admin_cursos_get_menubar();
     atualizar();
     setInterval(atualizar, 5000);
 })();
+</script>
+<dialog id="pvDlg" style="margin:auto;max-width:860px;width:calc(100% - 32px);border:0;border-radius:16px;padding:0;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eef0f3;position:sticky;top:0;background:#fff"><strong>👁 Pré-visualização</strong><button type="button" class="admin-btn admin-btn-light admin-btn-small" onclick="document.getElementById('pvDlg').close()">Fechar ✕</button></div>
+    <div id="pvCorpo" style="padding:16px;max-height:75vh;overflow:auto"></div>
+</dialog>
+<style>
+    #pvCorpo h2{margin:0 0 4px;font-size:20px}#pvCorpo h3{margin:16px 0 6px;font-size:16px}.pv-sub{color:#6b7280;margin:0 0 8px}
+    .pv-status{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.pv-status span{background:#f3f4f6;border-radius:99px;padding:4px 10px;font-size:13px}
+    .pv-bt-l{background:#fff!important;border:1px solid #e5e7eb!important;color:#111;cursor:pointer;font:inherit}
+    .pv-bt{display:inline-block;background:#fbb928;color:#111;font-weight:700;border-radius:10px;padding:8px 12px;text-decoration:none}
+    .pv-texto{border:1px solid #eef0f3;border-radius:10px;padding:12px;line-height:1.6}.pv-slides li{margin:4px 0}
+    .pv-q{border:1px solid #eef0f3;border-radius:10px;padding:12px;margin:10px 0}.pv-q ul{margin:6px 0 6px 18px}.pv-certa{color:#15803d;font-weight:700}
+    .pv-tag{font-size:12px;color:#6b7280;margin:0 0 6px}.pv-com{font-size:13.5px;background:#fffaf0;border-radius:8px;padding:8px;margin:6px 0 0}
+</style>
+<script>
+document.addEventListener('click', function (ev) {
+    var ac = ev.target.closest('[data-pv-acao]');
+    if (ac) {
+        var acao = ac.dataset.pvAcao;
+        if (!confirm(acao === 'apagar_questao' ? 'Apagar esta questão do banco?' : 'Pedir para a IA refazer esta aula (teoria, videoaula e podcast)?')) { return; }
+        var fd = new FormData(); fd.append('acao', acao); fd.append('id', ac.dataset.id);
+        fetch('api/edital-preview.php', {method: 'POST', credentials: 'same-origin', body: fd}).then(function (r) { return r.text(); }).then(function (t) {
+            if (acao === 'apagar_questao') { var art = ac.closest('article'); if (art) { art.innerHTML = '<p>🗑 Questão apagada. Para repor, use "Fazer só este" no assunto (passo 5).</p>'; } }
+            else { ac.closest('p').innerHTML = t; }
+        });
+        return;
+    }
+    var b = ev.target.closest('[data-pv]');
+    if (!b) { return; }
+    ev.preventDefault();
+    var dlg = document.getElementById('pvDlg'), corpo = document.getElementById('pvCorpo');
+    corpo.innerHTML = '<p>Carregando…</p>';
+    if (dlg.showModal) { dlg.showModal(); } else { dlg.setAttribute('open', ''); }
+    var url = 'api/edital-preview.php?tipo=' + b.dataset.pv + (b.dataset.pv === 'aula' ? '&id=' : '&topico=') + encodeURIComponent(b.dataset.id);
+    fetch(url, {credentials: 'same-origin'}).then(function (r) { return r.text(); }).then(function (h) { corpo.innerHTML = h; }).catch(function () { corpo.innerHTML = '<p>Não foi possível carregar.</p>'; });
+});
 </script>
 <?php admin_cursos_scripts(); ?>
 </body>

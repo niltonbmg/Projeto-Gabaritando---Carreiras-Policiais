@@ -393,7 +393,18 @@ if (!function_exists('job_bootstrap')) {
                                WHERE f.tipo IN ('aula_ia','apostila','videoaula','podcast') AND a.curso_id IN (" . implode(',', $cIds) . ") GROUP BY f.tipo, f.status") as $r) {
             $porTipo[$r['tipo']][$r['status']] = (int)$r['n'];
         }
+        // Últimos itens prontos (para o mentor pré-visualizar na hora).
+        $recentes = [];
+        foreach ($pdo->query("SELECT f.tipo, f.aula_id, a.titulo FROM ia_fila f JOIN admin_curso_aulas a ON a.id = f.aula_id
+                               WHERE f.status = 'feito' AND f.tipo IN ('aula_ia','apostila','videoaula') AND a.curso_id IN (" . implode(',', $cIds) . ") ORDER BY f.atualizado_em DESC LIMIT 6") as $r) {
+            $recentes[] = ['tipo' => $r['tipo'], 'pv' => 'aula', 'id' => (int)$r['aula_id'], 'titulo' => (string)$r['titulo']];
+        }
+        foreach ($pdo->query("SELECT f.aula_id, e.topico_id, t.titulo FROM ia_fila f JOIN edital_itens e ON e.id = f.aula_id JOIN admin_materia_topicos t ON t.id = e.topico_id
+                               WHERE f.status = 'feito' AND f.tipo = 'questoes' AND e.concurso_id = " . (int)$concursoId . ' ORDER BY f.atualizado_em DESC LIMIT 4') as $r) {
+            $recentes[] = ['tipo' => 'questoes', 'pv' => 'questoes', 'id' => (int)$r['topico_id'], 'titulo' => (string)$r['titulo']];
+        }
         return [
+            'recentes' => $recentes,
             'agora' => job_agora_ler(),
             'fila' => $porTipo,
             'jobs' => $jobs,
