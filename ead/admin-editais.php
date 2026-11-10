@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$cargosItem) { throw new RuntimeException('Ligue os cargos a um curso no passo 1.'); }
             // Substitui a aula provisória da IA, se houver.
             $titulo = trim((string)($_POST['titulo'] ?? '')) ?: ($url !== '' ? (edital_youtube_titulo($url) ?: $item['assunto']) : $item['assunto']);
-            $pdo->prepare("DELETE FROM admin_curso_aulas WHERE topico_id = :t AND COALESCE(video_url,'') = '' AND COALESCE(pdf_arquivo,'') = '' AND titulo LIKE '%aula do Antigão%'")->execute([':t' => (int)$item['topico_id']]);
+            $pdo->prepare("DELETE FROM admin_curso_aulas WHERE topico_id = :t AND COALESCE(video_url,'') = '' AND COALESCE(pdf_arquivo,'') = '' AND descricao LIKE '%aula-ia-aviso%'")->execute([':t' => (int)$item['topico_id']]);
             hack_aula_do_item($pdo, $itemId, $cargosItem, $titulo, $url, $pdf);
             ed_ir($concursoId, 'aulas', 'Aula de "' . $item['assunto'] . '" cadastrada. A IA prepara apostila, podcast e (sem vídeo) a videoaula do Antigão.');
         }

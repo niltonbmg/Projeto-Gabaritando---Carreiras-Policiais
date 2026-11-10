@@ -47,6 +47,11 @@ if (!function_exists('hack_bootstrap')) {
             dia DATE NOT NULL,
             PRIMARY KEY (usuario_id, dia)
         ) ENGINE=InnoDB");
+        // Títulos limpos: tira o "· aula do Antigão" das aulas criadas antes (o selo aparece dentro da aula).
+        try {
+            $pdo->exec("UPDATE admin_curso_aulas SET titulo = TRIM(REPLACE(titulo, ' · aula do Antigão', '')) WHERE titulo LIKE '% · aula do Antigão%'");
+        } catch (Throwable $e) {
+        }
         $feito = true;
     }
 
@@ -219,7 +224,7 @@ if (!function_exists('hack_bootstrap')) {
                 if ($it['aulas']) {
                     continue;
                 }
-                $ids = edital_criar_aula($pdo, (int)$it['id'], [(int)$an['cargo']['id']], $it['assunto'] . ' · aula do Antigão', '');
+                $ids = edital_criar_aula($pdo, (int)$it['id'], [(int)$an['cargo']['id']], $it['assunto'], '');
                 foreach ($ids as $aid) {
                     ia_fila_adicionar($pdo, 'aula_ia', $aid);
                     $n++;
