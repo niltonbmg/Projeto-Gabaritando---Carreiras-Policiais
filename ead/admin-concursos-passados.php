@@ -149,7 +149,7 @@ $concursoForm = $concursoEditando ?: ['id' => 0, 'titulo' => '', 'banca_id' => 0
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
     <?php admin_cursos_assets(); ?>
     <style>.bq-pill{display:inline-flex;align-items:center;border-radius:999px;background:#fff7db;color:#8a6100;padding:6px 10px;font-size:.78rem;font-weight:700;line-height:1}.bq-muted{color:#667085;font-size:.85rem;font-weight:500}</style>
 </head>

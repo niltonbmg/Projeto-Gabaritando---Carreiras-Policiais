@@ -986,7 +986,7 @@ if ($usuarioLogado) {
         }
 
         const script = document.createElement('script');
-        script.src = 'https://unpkg.com/lucide@latest';
+        script.src = 'https://unpkg.com/lucide@0.469.0';
         script.onload = iniciarBarraSuperior;
         document.head.appendChild(script);
     })();

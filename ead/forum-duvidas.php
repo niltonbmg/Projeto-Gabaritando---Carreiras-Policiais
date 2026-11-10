@@ -1231,7 +1231,7 @@ try {
         </form>
     </div>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
     <script>
         (function () {
             function criarIcones() {

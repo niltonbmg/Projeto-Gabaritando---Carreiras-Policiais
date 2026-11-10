@@ -215,7 +215,7 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0"></script>
     <style>
         :root{--yellow:#fab528;--yellow-dark:#d89a08;--page:#f5f5f6;--panel:#fff;--text:#111827;--muted:#667085;--line:#d9d9d9}
         *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;min-height:100%}body{font-family:'Ubuntu',Arial,sans-serif;background:var(--page);color:var(--text)}a{text-decoration:none;color:inherit}button,select{font-family:inherit}
