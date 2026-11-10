@@ -1147,6 +1147,64 @@ if ($aulas) {
         $linkProximo = $linkBaseAula . '&aula_id=' . (int)$aulas[$aulaAtualIndex + 1]['id'];
     }
 }
+
+// Método META: trava de verdade. A aula de um assunto bloqueado não abre até o aluno
+// cumprir o mínimo de questões do assunto anterior da mesma matéria (mentor/admin passam direto).
+$travaMeta = null;
+try {
+    $ehAdminAula = strtolower((string)($_SESSION['usuario_tipo'] ?? '')) === 'admin' || !empty($_SESSION['admin_usuario_id']);
+    if ($aulaAtual && !$ehAdminAula && $usuarioId > 0 && function_exists('db') && is_file(__DIR__ . '/includes/meta-lib.php')) {
+        require_once __DIR__ . '/includes/meta-lib.php';
+        $pdoTrava = db();
+        meta_bootstrap($pdoTrava);
+        $estadoTrava = meta_estado_aluno($pdoTrava, (int)$usuarioId, (int)$cursoId);
+        $stTop = $pdoTrava->prepare('SELECT topico_id FROM admin_curso_aulas WHERE id = :id');
+        $stTop->execute([':id' => (int)$aulaAtual['id']]);
+        $topicoAula = (int)$stTop->fetchColumn();
+        foreach ($estadoTrava['itens'] as $itT) {
+            $mesma = (int)($itT['aula_id'] ?? 0) === (int)$aulaAtual['id'] || ($topicoAula > 0 && (int)($itT['topico_id'] ?? 0) === $topicoAula);
+            if ($mesma && $itT['etapa'] === META_ETAPA_BLOQUEADO) {
+                $falta = null;
+                foreach ($estadoTrava['atuais'] as $at) {
+                    if ((int)($at['materia_id'] ?? 0) === (int)($itT['materia_id'] ?? 0)) { $falta = $at; }
+                }
+                $travaMeta = ['assunto' => (string)$itT['titulo'], 'falta' => $falta, 'min' => (int)($estadoTrava['config']['min_questoes'] ?? 5)];
+                break;
+            }
+        }
+    }
+} catch (Throwable $e) {
+    $travaMeta = null;
+}
+if ($travaMeta) {
+    $f = $travaMeta['falta'];
+    $feitasT = $f ? (int)$f['nivel_info']['resolvidas'] : 0;
+    $teoriaT = $f ? !empty($f['teoria_ok']) : false;
+    $linkAulaT = ($f && !empty($f['aula_id'])) ? 'aulas.php?curso_id=' . (int)$f['aula_curso_id'] . '&modulo_id=' . (int)$f['aula_modulo_id'] . '&aula_id=' . (int)$f['aula_id'] : 'meu-plano.php';
+    $linkQT = ($f && !empty($f['topico_id'])) ? 'banco-questoes.php?topico_id=' . (int)$f['topico_id'] : 'meu-plano.php';
+    $eT = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+    ?><!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Aula bloqueada | Projeto Gabaritando</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0c0c0d;color:#f3f3f4;font-family:'Ubuntu',system-ui,sans-serif}.tv{max-width:620px;margin:40px auto;padding:0 16px}.tv-card{background:#161618;border:1px solid #4a3a10;border-radius:18px;padding:24px;display:grid;gap:14px;text-align:center}.tv-card h1{font-size:24px;margin:0}.tv-card p{margin:0;color:#c9c9cf;line-height:1.5}.tv-card strong{color:#fbb928}.tv-bar{height:10px;border-radius:99px;background:#2a2a2e;overflow:hidden}.tv-bar i{display:block;height:100%;background:#fbb928}.tv-bt{display:inline-block;border-radius:12px;padding:12px 18px;background:#fbb928;color:#111;font-weight:700;text-decoration:none}.tv-bt.l{background:transparent;color:#f3f3f4;border:1px solid #2a2a2e}.tv-bt:focus-visible{outline:2px solid #fff;outline-offset:2px}</style></head><body>
+<?php if (is_file(__DIR__ . '/includes/barra-superior.php')) { include __DIR__ . '/includes/barra-superior.php'; } ?>
+<main class="tv"><section class="tv-card" aria-labelledby="tvT">
+    <div style="font-size:44px" aria-hidden="true">🔒</div>
+    <h1 id="tvT"><?php echo $eT($travaMeta['assunto']); ?></h1>
+    <?php if ($f): ?>
+        <p><strong>Antigão:</strong> calma, combatente! Esta aula abre quando você fechar o assunto anterior da matéria: <strong><?php echo $eT($f['titulo']); ?></strong>.</p>
+        <p><?php echo $teoriaT ? '✅ Teoria concluída' : '📘 Falta a teoria'; ?> · ✅ <?php echo min($feitasT, $travaMeta['min']); ?> de <?php echo $travaMeta['min']; ?> questões</p>
+        <div class="tv-bar" role="progressbar" aria-valuenow="<?php echo min($feitasT, $travaMeta['min']); ?>" aria-valuemin="0" aria-valuemax="<?php echo $travaMeta['min']; ?>"><i style="width:<?php echo (int)round(min($feitasT, $travaMeta['min']) * 100 / max(1, $travaMeta['min'])); ?>%"></i></div>
+        <div><a class="tv-bt" href="<?php echo $eT($teoriaT ? $linkQT : $linkAulaT); ?>">▶ <?php echo $teoriaT ? 'Resolver as questões que faltam' : 'Ir para a aula de ' . $eT($f['titulo']); ?></a></div>
+    <?php else: ?>
+        <p>Esta aula abre quando você cumprir o assunto anterior da matéria (teoria + <?php echo $travaMeta['min']; ?> questões).</p>
+        <div><a class="tv-bt" href="meu-plano.php">▶ Ver minha missão</a></div>
+    <?php endif; ?>
+    <p style="font-size:13px">No Método META, cada assunto só abre com a base do anterior. É isso que faz o conteúdo ficar na cabeça até a prova.</p>
+    <div><a class="tv-bt l" href="<?php echo $eT($linkModulo); ?>">← Voltar às aulas</a></div>
+</section></main></body></html><?php
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
