@@ -69,6 +69,15 @@ if (!function_exists('podcast_pasta')) {
     }
 }
 
+if (!class_exists('GeminiCotaException')) {
+    /** Limite (cota) do Google atingido: não é erro da tarefa. $tipo = voz|busca|texto; $diario = limite por dia. */
+    class GeminiCotaException extends RuntimeException
+    {
+        public string $tipo = 'texto';
+        public bool $diario = false;
+    }
+}
+
 if (!function_exists('podcast_gemini')) {
     /** Chamada à API do Gemini. Base trocável por GEMINI_BASE_URL (testes). */
     function podcast_gemini(string $tipo, array $corpo, int $timeout = 55): array
@@ -82,12 +91,16 @@ if (!function_exists('podcast_gemini')) {
             $lista = array_values(array_unique(array_merge($tipo === PODCAST_MODELO_VOZ ? $disp['voz'] : $disp['texto'], $tipo === PODCAST_MODELO_VOZ ? PODCAST_MODELOS_VOZ : PODCAST_MODELOS_TEXTO)));
         }
         $ultimoErro = null;
+        $cota = null;
         foreach ($lista as $modelo) {
             for ($tentativa = 1; $tentativa <= 2; $tentativa++) {
                 try {
                     return podcast_gemini_modelo($modelo, $corpo, $timeout);
                 } catch (RuntimeException $e) {
                     $ultimoErro = $e;
+                    if ($e instanceof GeminiCotaException) {
+                        $cota = $e; // guarda: um 404/400 do próximo modelo não pode esconder que a cota acabou
+                    }
                     $m = $e->getMessage();
                     $temporario = (bool)preg_match('~\((500|502|503|504)\)|high demand|overloaded|unavailable~i', $m);
                     if ($temporario && $tentativa === 1) {
@@ -105,7 +118,7 @@ if (!function_exists('podcast_gemini')) {
                 }
             }
         }
-        throw $ultimoErro ?? new RuntimeException('Nenhum modelo do Gemini disponível.');
+        throw $cota ?? $ultimoErro ?? new RuntimeException('Nenhum modelo do Gemini disponível.');
     }
 
     /**
@@ -214,7 +227,10 @@ if (!function_exists('podcast_gemini')) {
             $det = is_array($json) ? json_encode($json['error'] ?? [], JSON_UNESCAPED_UNICODE) : '';
             $porDia = stripos($det, 'PerDay') !== false || stripos($det, 'per day') !== false || stripos($det, 'daily') !== false;
             $tipoCota = stripos($modelo, 'tts') !== false ? 'voz' : (isset($corpo['tools']) ? 'busca' : 'texto');
-            throw new RuntimeException(($porDia ? 'Limite diário gratuito do Gemini atingido (429)' : 'Limite por minuto do Gemini (429)') . " [cota:$tipoCota]. " . ($porDia ? 'Renova à meia-noite do Pacífico.' : 'Tenta de novo em instantes.'));
+            $ex = new GeminiCotaException(($porDia ? 'Limite diário gratuito do Gemini atingido (429)' : 'Limite por minuto do Gemini (429)') . " [cota:$tipoCota]. " . ($porDia ? 'Renova à meia-noite do Pacífico.' : 'Tenta de novo em instantes.'));
+            $ex->tipo = $tipoCota;
+            $ex->diario = $porDia;
+            throw $ex;
         }
         if ($codigo >= 400 || !is_array($json)) {
             $msg = is_array($json) ? (string)($json['error']['message'] ?? 'erro desconhecido') : 'resposta inválida';
@@ -281,6 +297,27 @@ if (!function_exists('podcast_uso_registrar')) {
         $r['renova'] = $renova->format('d/m H:i');
         $r['renova_ts'] = $renova->getTimestamp();
         return $r;
+    }
+
+    /**
+     * Um só lugar para tratar "a cota do Google acabou": grava a pausa certa (voz, pesquisa ou texto)
+     * e diz se era cota. Voz/pesquisa esperam a renovação diária; texto espera pouco.
+     */
+    function gemini_cota_pausar(Throwable $e, string $tipoPadrao = 'texto'): bool
+    {
+        if ($e instanceof GeminiCotaException) {
+            $tipo = $e->tipo;
+            $diario = $e->diario;
+        } elseif (preg_match('~\(429\)|RESOURCE_EXHAUSTED~i', $e->getMessage())) {
+            $tipo = preg_match('~\[cota:(\w+)\]~', $e->getMessage(), $m) ? $m[1] : $tipoPadrao;
+            $diario = stripos($e->getMessage(), 'diário') !== false || stripos($e->getMessage(), 'PerDay') !== false;
+        } else {
+            return false;
+        }
+        $ate = $diario ? (int)podcast_uso_resumo()['renova_ts'] : time() + 120;
+        $arq = ['voz' => '.ia-pausa-voz', 'busca' => '.ia-pausa-busca'][$tipo] ?? '.ia-pausa-texto';
+        @file_put_contents(dirname(__DIR__) . '/uploads/' . $arq, (string)($arq === '.ia-pausa-texto' ? min($ate, time() + 1800) : $ate));
+        return true;
     }
 
     /** Preferências do mentor para gastar a cota grátis. */

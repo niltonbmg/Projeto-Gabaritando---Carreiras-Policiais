@@ -47,14 +47,18 @@ if (!function_exists('hack_bootstrap')) {
             dia DATE NOT NULL,
             PRIMARY KEY (usuario_id, dia)
         ) ENGINE=InnoDB");
-        try {
-            hack_corrigir_geradas($pdo);
-        } catch (Throwable $e) {
-        }
-        // Títulos limpos: tira o "· aula do Antigão" das aulas criadas antes (o selo aparece dentro da aula).
-        try {
-            $pdo->exec("UPDATE admin_curso_aulas SET titulo = TRIM(REPLACE(titulo, ' · aula do Antigão', '')) WHERE titulo LIKE '% · aula do Antigão%'");
-        } catch (Throwable $e) {
+        // Correções de dados antigos: rodam UMA vez (marca em uploads), não a cada página.
+        $marca = dirname(__DIR__) . '/uploads/.migracao-edital-v2';
+        if (!is_file($marca)) {
+            try {
+                hack_corrigir_geradas($pdo);
+                // Títulos limpos: tira o "· aula do Antigão" das aulas criadas antes (o selo aparece dentro da aula).
+                $pdo->exec("UPDATE admin_curso_aulas SET titulo = TRIM(REPLACE(titulo, ' · aula do Antigão', '')) WHERE titulo LIKE '% · aula do Antigão%'");
+                // Itens que deram erro porque a cota estava escondida atrás de outro erro: voltam para a fila.
+                $pdo->exec("UPDATE ia_fila SET status = 'pendente', tentativas = 0, erro = NULL WHERE status = 'erro' AND tipo IN ('videoaula','podcast','questoes')");
+                @file_put_contents($marca, date('c'));
+            } catch (Throwable $e) {
+            }
         }
         $feito = true;
     }
@@ -272,6 +276,8 @@ if (!function_exists('hack_bootstrap')) {
             if (count($partes) > 1) {
                 $base = trim((string)$a['titulo']);
                 $foco = $partes[0];
+                // Abre espaço na ordem do módulo para as partes ficarem juntas, logo depois da Parte 1.
+                $pdo->prepare('UPDATE admin_curso_aulas SET ordem = ordem + :n WHERE modulo_id = :m AND ordem > :o')->execute([':n' => count($partes) - 1, ':m' => (int)$a['modulo_id'], ':o' => (int)$a['ordem']]);
                 $pdo->prepare('UPDATE admin_curso_aulas SET titulo = :t WHERE id = :id')->execute([':t' => mb_substr($base . ' · Parte 1: ' . $partes[0], 0, 180), ':id' => $aulaId]);
                 foreach (array_slice($partes, 1) as $k => $f) {
                     $pdo->prepare('INSERT INTO admin_curso_aulas (curso_id, modulo_id, materia_id, topico_id, titulo, ordem, criado_em) VALUES (:c, :m, :ma, :t, :ti, :o, NOW())')
@@ -421,6 +427,17 @@ if (!function_exists('hack_bootstrap')) {
             if ($n++ % 2 !== 0 || ($d === $hoje && $visitouHoje)) {
                 continue;
             }
+            // Os 10 min saem da maior tarefa do dia, para não passar do tempo que o aluno tem.
+            $maior = null;
+            foreach ($agenda[$d] as $k => $t) {
+                if (($t['tipo'] ?? '') !== 'edital' && (int)$t['minutos'] >= 20 && ($maior === null || (int)$t['minutos'] > (int)$agenda[$d][$maior]['minutos'])) {
+                    $maior = $k;
+                }
+            }
+            if ($maior === null) {
+                continue; // dia curto demais: o edital fica para o próximo dia de estudo
+            }
+            $agenda[$d][$maior]['minutos'] -= 10;
             array_unshift($agenda[$d], ['tipo' => 'edital', 'minutos' => 10,
                 'item' => ['id' => 0, 'titulo' => 'Hackeando o edital · ' . $esc['cargo'], 'materia_nome' => $esc['concurso'], 'materia_id' => 0, 'topico_id' => 0]]);
         }
@@ -596,7 +613,7 @@ if (!function_exists('hack_bootstrap')) {
                 $pdo = podcast_reconectar($pdo);
                 $reais += hack_gravar_questoes($pdo, $it, array_slice(hack_questoes_json($resp), 0, $resta), $it['banca_id'] ? (int)$it['banca_id'] : null, 'real');
             } catch (RuntimeException $e) {
-                if (str_contains($e->getMessage(), '(429)')) {
+                if ($e instanceof GeminiCotaException || str_contains($e->getMessage(), '(429)')) {
                     throw $e; // sem cota de pesquisa: o assunto espera; nada é criado antes de procurar as reais
                 }
                 $pdo = podcast_reconectar($pdo);
@@ -652,10 +669,15 @@ if (!function_exists('hack_bootstrap')) {
     function hack_questoes_situacao(PDO $pdo, int $concursoId, int $meta = 10): array
     {
         $r = ['total' => 0, 'ok' => 0, 'itens' => []];
-        $cnt = $pdo->prepare("SELECT COUNT(*) FROM admin_banco_questoes WHERE materia_topico_id = :t AND status = 'ativo'");
-        foreach (edital_itens($pdo, $concursoId) as $it) {
-            $cnt->execute([':t' => (int)$it['topico_id']]);
-            $n = (int)$cnt->fetchColumn();
+        $itens = edital_itens($pdo, $concursoId);
+        $cont = [];
+        if ($itens) {
+            // Uma consulta só (a Central da IA chama isto a cada poucos segundos).
+            $ids = implode(',', array_map(static fn($i) => (int)$i['topico_id'], $itens));
+            $cont = $pdo->query("SELECT materia_topico_id, COUNT(*) FROM admin_banco_questoes WHERE materia_topico_id IN ($ids) AND status = 'ativo' GROUP BY materia_topico_id")->fetchAll(PDO::FETCH_KEY_PAIR);
+        }
+        foreach ($itens as $it) {
+            $n = (int)($cont[(int)$it['topico_id']] ?? 0);
             $r['total']++;
             $r['ok'] += $n >= $meta ? 1 : 0;
             $r['itens'][] = $it + ['questoes' => $n];

@@ -38,6 +38,23 @@ try {
     if ($aulaId <= 0) {
         videoaula_resposta(400, ['erro' => 'Aula inválida.']);
     }
+    // Gerar gasta a cota da IA: só quem tem acesso ao curso desta aula (ou admin).
+    if (in_array((string)($e['acao'] ?? ''), ['iniciar', 'parte'], true)) {
+        $uid = (int)auth_user_id();
+        $stA = $pdo->prepare('SELECT curso_id FROM admin_curso_aulas WHERE id = :id');
+        $stA->execute([':id' => $aulaId]);
+        $cursoDaAula = (int)$stA->fetchColumn();
+        if (!$cursoDaAula) {
+            videoaula_resposta(404, ['erro' => 'Aula não encontrada.']);
+        }
+        $ehAdmin = strtolower((string)($_SESSION['usuario_tipo'] ?? '')) === 'admin' || !empty($_SESSION['admin_usuario_id']);
+        if (!$ehAdmin && is_file(__DIR__ . '/../includes/curso-acesso.php')) {
+            require_once __DIR__ . '/../includes/curso-acesso.php';
+            if (function_exists('gab_curso_acesso_configurado') && gab_curso_acesso_configurado($pdo, $uid) && !in_array($cursoDaAula, array_map('intval', gab_curso_acesso_ids($pdo, $uid)), true)) {
+                videoaula_resposta(403, ['erro' => 'Esta aula não faz parte dos seus cursos.']);
+            }
+        }
+    }
     switch ((string)($e['acao'] ?? '')) {
         case 'iniciar':
             videoaula_resposta(200, videoaula_iniciar($pdo, $aulaId));

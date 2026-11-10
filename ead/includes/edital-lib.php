@@ -171,9 +171,17 @@ if (!function_exists('edital_andamento')) {
         $cargos = $pdo->prepare('SELECT * FROM concurso_cargos WHERE concurso_id = :c ORDER BY id');
         $cargos->execute([':c' => $concursoId]);
         $itens = edital_itens($pdo, $concursoId);
-        $aulas = $pdo->prepare('SELECT id, curso_id, modulo_id, titulo, video_url, pdf_arquivo FROM admin_curso_aulas WHERE curso_id = :curso AND topico_id = :t ORDER BY id');
         $res = [];
         foreach ($cargos->fetchAll() as $cg) {
+            // Todas as aulas do curso do cargo de uma vez (antes: uma consulta por assunto).
+            $porTopico = [];
+            if (!empty($cg['curso_id'])) {
+                $aulas = $pdo->prepare('SELECT id, curso_id, modulo_id, topico_id, titulo, video_url, pdf_arquivo FROM admin_curso_aulas WHERE curso_id = :curso ORDER BY ordem, id');
+                $aulas->execute([':curso' => (int)$cg['curso_id']]);
+                foreach ($aulas->fetchAll() as $a) {
+                    $porTopico[(int)$a['topico_id']][] = $a;
+                }
+            }
             $lista = [];
             $cobertos = 0;
             foreach ($itens as $it) {
@@ -181,11 +189,7 @@ if (!function_exists('edital_andamento')) {
                 if ($ids && !in_array((int)$cg['id'], $ids, true)) {
                     continue; // assunto de outro cargo
                 }
-                $doItem = [];
-                if (!empty($cg['curso_id'])) {
-                    $aulas->execute([':curso' => (int)$cg['curso_id'], ':t' => (int)$it['topico_id']]);
-                    $doItem = $aulas->fetchAll();
-                }
+                $doItem = $porTopico[(int)$it['topico_id']] ?? [];
                 $cobertos += $doItem ? 1 : 0;
                 $lista[] = $it + ['aulas' => $doItem];
             }
@@ -283,8 +287,8 @@ if (!function_exists('edital_criar_aula')) {
                     ->execute([':c' => $cursoId, ':t' => $item['materia'], ':m' => (int)$item['materia_id']]);
                 $moduloId = (int)$pdo->lastInsertId();
             }
-            $dup = $pdo->prepare('SELECT id FROM admin_curso_aulas WHERE curso_id = :c AND video_url = :v LIMIT 1');
-            $dup->execute([':c' => $cursoId, ':v' => $url]);
+            $dup = $pdo->prepare('SELECT id FROM admin_curso_aulas WHERE curso_id = :c AND video_url = :v AND topico_id = :t LIMIT 1');
+            $dup->execute([':c' => $cursoId, ':v' => $url, ':t' => (int)$item['topico_id']]);
             if ($url !== '' && ($ja = $dup->fetchColumn())) {
                 $ids[] = (int)$ja;
                 continue; // a mesma aula já está neste curso

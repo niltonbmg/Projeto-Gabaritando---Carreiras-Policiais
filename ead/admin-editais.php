@@ -214,8 +214,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$cargosItem) { throw new RuntimeException('Ligue os cargos a um curso no passo 1.'); }
             // Substitui a aula provisória da IA, se houver.
             $titulo = trim((string)($_POST['titulo'] ?? '')) ?: ($url !== '' ? (edital_youtube_titulo($url) ?: $item['assunto']) : $item['assunto']);
-            $pdo->prepare("DELETE FROM admin_curso_aulas WHERE topico_id = :t AND COALESCE(video_url,'') = '' AND COALESCE(pdf_arquivo,'') = '' AND descricao LIKE '%aula-ia-aviso%'")->execute([':t' => (int)$item['topico_id']]);
-            hack_aula_do_item($pdo, $itemId, $cargosItem, $titulo, $url, $pdf);
+            // A aula do professor substitui a aula provisória do Antigão SÓ nos cursos destes cargos;
+            // o plano e o progresso dos alunos passam para a aula nova.
+            $cursosAlvo = [];
+            $stC = $pdo->prepare('SELECT curso_id FROM concurso_cargos WHERE id = :id');
+            foreach ($cargosItem as $cgId) { $stC->execute([':id' => $cgId]); $cursosAlvo[] = (int)$stC->fetchColumn(); }
+            $novas = hack_aula_do_item($pdo, $itemId, $cargosItem, $titulo, $url, $pdf);
+            $stP = $pdo->prepare("SELECT id, curso_id FROM admin_curso_aulas WHERE topico_id = :t AND curso_id IN (" . implode(',', array_map('intval', $cursosAlvo ?: [0])) . ") AND COALESCE(video_url,'') = '' AND COALESCE(pdf_arquivo,'') = '' AND descricao LIKE '%aula-ia-aviso%'");
+            $stP->execute([':t' => (int)$item['topico_id']]);
+            $novaPorCurso = [];
+            $stN = $pdo->prepare('SELECT curso_id FROM admin_curso_aulas WHERE id = :id');
+            foreach ($novas as $nid) { $stN->execute([':id' => $nid]); $novaPorCurso[(int)$stN->fetchColumn()] = $nid; }
+            foreach ($stP->fetchAll() as $prov) {
+                $nova = $novaPorCurso[(int)$prov['curso_id']] ?? 0;
+                if (!$nova || $nova === (int)$prov['id']) { continue; }
+                try { $pdo->prepare('UPDATE meta_plano_itens SET aula_id = :n WHERE aula_id = :o')->execute([':n' => $nova, ':o' => (int)$prov['id']]); } catch (Throwable $e) {}
+                try { $pdo->prepare('UPDATE IGNORE aulas_progresso SET aula_id = :n WHERE aula_id = :o')->execute([':n' => $nova, ':o' => (int)$prov['id']]); } catch (Throwable $e) {}
+                foreach (['aula_videoaulas', 'aula_podcasts'] as $tb) { try { $pdo->prepare("DELETE FROM $tb WHERE aula_id = :o")->execute([':o' => (int)$prov['id']]); } catch (Throwable $e) {} }
+                $pdo->prepare("DELETE FROM ia_fila WHERE aula_id = :o AND tipo IN ('aula_ia','apostila','videoaula','podcast')")->execute([':o' => (int)$prov['id']]);
+                $pdo->prepare('DELETE FROM admin_curso_aulas WHERE id = :o')->execute([':o' => (int)$prov['id']]);
+            }
             ed_ir($concursoId, 'aulas', 'Aula de "' . $item['assunto'] . '" cadastrada. A IA prepara apostila, podcast e (sem vídeo) a videoaula do Antigão.');
         }
         if ($acao === 'sugerir_aulas') {
@@ -489,6 +507,7 @@ $menuBarInclude = admin_cursos_get_menubar();
 
             <section class="admin-panel" id="centralIA" data-concurso="<?php echo $concursoId; ?>" aria-live="polite">
                 <div class="admin-panel-title"><h2>🤖 Central da IA</h2><small id="ciaStatus">verificando…</small></div>
+                <p id="ciaAtualizar" hidden class="admin-alert admin-alert-success" style="margin:0 0 8px">✅ A IA terminou uma tarefa. <button type="button" class="admin-btn admin-btn-light admin-btn-small" onclick="location.reload()">Atualizar a página</button> (salve o que está preenchendo antes)</p>
                 <p id="ciaAgora" style="margin:4px 0 8px;font-size:15px"></p>
                 <details style="margin-bottom:8px"><summary class="admin-form-hint" style="cursor:pointer">O que são essas tarefas?</summary>
                     <ul class="admin-form-hint" style="margin:6px 0 0 18px;display:grid;gap:3px">
@@ -656,7 +675,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <div style="border:1px solid #eef0f3;border-radius:12px;padding:12px 14px;margin-top:12px">
                             <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center"><h3 style="margin:0"><?php echo admin_esc((string)$an['cargo']['nome']); ?></h3><span><strong><?php echo $an['cobertos']; ?>/<?php echo $an['total']; ?></strong> com aula · ✅ <?php echo $nProf; ?> do professor · 🤖 <?php echo $nIa; ?> do Antigão · ⬜ <?php echo $an['total'] - $an['cobertos']; ?> faltam</span></div>
                             <div class="ed-barra" style="height:8px;margin:8px 0"><i style="width:<?php echo $pct; ?>%"></i></div>
-                            <?php $aprov = !empty($an['cargo']['curso_id']) ? job_aproveitar_entre_cargos($pdo, $concursoId, (int)$an['cargo']['id'], true) : 0; if ($aprov > 0): ?>
+                            <?php $aprov = !empty($an['cargo']['curso_id']) ? job_aproveitar_entre_cargos($pdo, $concursoId, (int)$an['cargo']['id'], true, $andamento) : 0; if ($aprov > 0): ?>
                                 <form method="post" style="margin:4px 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff8e6;border:1px solid #fbb928;border-radius:10px;padding:10px 12px"><input type="hidden" name="acao" value="aproveitar_cargos"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$an['cargo']['id']; ?>">
                                     <span>💡 <strong><?php echo $aprov; ?> assunto(s)</strong> deste cargo já têm aula em outro curso da plataforma (mesmo assunto, de qualquer cargo ou concurso).</span>
                                     <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">📋 Usar essas aulas aqui também</button></form>
@@ -796,6 +815,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         fetch('api/edital-job.php', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({concurso_id: c})})
             .catch(function () {}).then(function () { rodando = false; atualizar(); });
     }
+    document.addEventListener('input', function (ev) { if (ev.target.closest && ev.target.closest('form')) { window.ciaSujo = true; } });
     function atualizar() {
         fetch('api/edital-job.php?concurso_id=' + c, {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (d) {
             var q = d.questoes || {};
@@ -830,10 +850,18 @@ $menuBarInclude = admin_cursos_get_menubar();
                 + (d.pausa_busca ? '<br>⏸ <strong>Questões aguardando a pesquisa na internet (volta ' + d.pausa_busca + ')</strong>: a IA não cria questão antes de procurar as reais.' : '')
                 + (d.pausa_texto ? '<br>⏸ <strong>Texto em pausa até ' + d.pausa_texto + '</strong> (limite do Google): retoma sozinho.' : '');
             var ativos = (d.ativos || 0) + (q.na_fila || 0) + filaPend;
-            document.getElementById('ciaStatus').textContent = ativos ? 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua' : 'Tudo em dia';
-            if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) { location.reload(); return; }
+            if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) {
+                // Algo terminou: atualiza a página, MENOS se o mentor está preenchendo um formulário.
+                if (window.ciaSujo || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) {
+                    var av = document.getElementById('ciaAtualizar');
+                    if (av) { av.hidden = false; }
+                } else { location.reload(); return; }
+            }
             ativosAntes = d.ativos || 0;
-            if (ativos) { rodar(); }
+            // Só chama a IA se há algo que pode rodar agora (não insiste quando tudo espera a cota renovar).
+            var tudoPausado = (d.pausa_voz || pr.podcasts_pausados) && !d.ativos && !(q.na_fila && !d.pausa_busca) && !(d.fila && ((d.fila.aula_ia || {}).pendente || (d.fila.apostila || {}).pendente));
+            if (ativos && !tudoPausado && !d.pausa_texto) { rodar(); }
+            document.getElementById('ciaStatus').textContent = !ativos ? 'Tudo em dia' : (tudoPausado || d.pausa_texto ? '⏸ Aguardando a cota do Google · ' + ativos + ' tarefa(s) na fila' : 'IA trabalhando · ' + ativos + ' tarefa(s) · pode navegar, ela continua');
         }).catch(function () {});
     }
     atualizar();

@@ -162,17 +162,9 @@ if (!function_exists('ia_fila_processar_um')) {
             $pdo->prepare("UPDATE ia_fila SET status = 'feito', erro = NULL WHERE id = :id")->execute([':id' => $id]);
             return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => true];
         } catch (Throwable $e) {
-            $m = $e->getMessage();
-            if (preg_match('~\(429\)|Limite di[aá]rio|quota|RESOURCE_EXHAUSTED~i', $m)) {
-                // Não é erro da tarefa: é a cota do Google. Volta para a fila sem gastar tentativa e pausa por 1 hora.
+            if (gemini_cota_pausar($e, in_array($item['tipo'], ['videoaula', 'podcast'], true) ? 'voz' : 'texto')) {
+                // Não é erro da tarefa: é a cota do Google. Volta para a fila sem gastar tentativa; a pausa certa já foi gravada.
                 podcast_reconectar($pdo)->prepare("UPDATE ia_fila SET status = 'pendente', tentativas = GREATEST(tentativas - 1, 0), erro = NULL WHERE id = :id")->execute([':id' => $id]);
-                // Limite DIÁRIO: espera a renovação da cota (meia-noite do Pacífico); limite por minuto: poucos minutos.
-                $diario = stripos($m, 'diário') !== false || stripos($m, 'per day') !== false || stripos($m, 'PerDay') !== false;
-                $ate = $diario ? (int)podcast_uso_resumo()['renova_ts'] : time() + 120;
-                $cota = preg_match('~\[cota:(\w+)\]~', $m, $mc) ? $mc[1] : (in_array($item['tipo'], ['videoaula', 'podcast'], true) ? 'voz' : 'texto');
-                // Cada cota pausa só o que depende dela: voz -> videoaulas/podcasts; pesquisa -> questões; texto -> tudo por pouco tempo.
-                $arqPausa = ['voz' => '.ia-pausa-voz', 'busca' => '.ia-pausa-busca', 'texto' => '.ia-pausa-texto'][$cota] ?? '.ia-pausa-texto';
-                @file_put_contents(dirname(__DIR__) . '/uploads/' . $arqPausa, (string)($cota === 'texto' ? min($ate, time() + 1800) : $ate));
                 return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => false, 'erro' => 'Limite do Google atingido: pausado e retoma sozinho.'];
             }
             podcast_reconectar($pdo)->prepare("UPDATE ia_fila SET status = 'erro', erro = :e WHERE id = :id")->execute([':e' => mb_substr($e->getMessage(), 0, 500), ':id' => $id]);

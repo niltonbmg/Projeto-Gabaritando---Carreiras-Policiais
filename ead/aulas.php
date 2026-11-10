@@ -3687,11 +3687,11 @@ if ($travaMeta) {
                                 referrerpolicy="strict-origin-when-cross-origin"
                                 allowfullscreen>
                             </iframe>
-                        <?php elseif ($pdfAtual['arquivo'] !== '' || ($aulaAtual && $aulaDescricao !== '-')): $soTexto = $pdfAtual['arquivo'] === ''; ?>
+                        <?php elseif ($pdfAtual['arquivo'] !== '' || ($aulaAtual && $aulaDescricao !== '-')): $soTexto = $pdfAtual['arquivo'] === ''; $ehAntigao = $soTexto && str_contains((string)($aulaAtual['descricao'] ?? ''), 'aula-ia-aviso'); ?>
                             <?php // Aula sem vídeo (só PDF, ou aula do Antigão só com a teoria): videoaula do Antigão + leitura. ?>
                             <div class="aula-somente-pdf">
                                 <div class="aula-somente-pdf__conteudo">
-                                    <span class="aula-somente-pdf__selo"><i data-lucide="book-open-text" aria-hidden="true"></i><?php echo $soTexto ? 'Aula do Antigão' : 'Teoria mínima em PDF'; ?></span>
+                                    <span class="aula-somente-pdf__selo"><i data-lucide="book-open-text" aria-hidden="true"></i><?php echo $ehAntigao ? 'Aula do Antigão' : ($soTexto ? 'Aula em texto' : 'Teoria mínima em PDF'); ?></span>
                                     <h2><?php echo esc($aulaTitulo); ?></h2>
                                     <p>Esta aula é de leitura. Leia o material com atenção, faça suas marcações e depois siga para as questões.</p>
                                     <?php if (!empty($aulaAtual['pdf_duracao'])): ?><p class="aula-somente-pdf__tempo"><i data-lucide="clock-3" aria-hidden="true"></i>Tempo estimado de leitura: <?php echo esc((string)$aulaAtual['pdf_duracao']); ?></p><?php endif; ?>
