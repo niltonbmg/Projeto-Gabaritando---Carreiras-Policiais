@@ -49,7 +49,7 @@ if ($ehAdminMc && (int)($_GET['ver_cargo'] ?? 0) > 0) {
     $esc = $stP->fetch() ?: $esc;
     $preview = (int)$_GET['ver_cargo'];
 }
-$aba = in_array($_GET['aba'] ?? '', ['edital', 'prova', 'conteudo'], true) ? $_GET['aba'] : 'edital';
+$aba = in_array($_GET['aba'] ?? '', ['edital', 'prova', 'conteudo', 'radar'], true) ? $_GET['aba'] : 'edital';
 
 $concursos = [];
 if (!$esc) {
@@ -232,7 +232,26 @@ function mc2_v($v): string
         <a href="?aba=edital<?php echo !empty($preview) ? '&amp;ver_cargo=' . (int)$preview : ''; ?>" <?php echo $aba === 'edital' ? 'aria-current="page"' : ''; ?>>🕵️ Hackeando o Edital</a>
         <a href="?aba=prova<?php echo !empty($preview) ? '&amp;ver_cargo=' . (int)$preview : ''; ?>" <?php echo $aba === 'prova' ? 'aria-current="page"' : ''; ?>>🎯 Hackeando a Prova</a>
         <a href="?aba=conteudo<?php echo !empty($preview) ? '&amp;ver_cargo=' . (int)$preview : ''; ?>" <?php echo $aba === 'conteudo' ? 'aria-current="page"' : ''; ?>>📚 Conteúdo programático</a>
+        <?php require_once __DIR__ . '/includes/radar-lib.php'; $radar = radar_noticias($pdo, (int)$esc['concurso_id'], 30); $radarNovas = count(array_filter($radar, static fn($n) => strtotime((string)$n['criado_em']) > time() - 7 * 86400)); ?>
+        <a href="?aba=radar<?php echo !empty($preview) ? '&amp;ver_cargo=' . (int)$preview : ''; ?>" <?php echo $aba === 'radar' ? 'aria-current="page"' : ''; ?>>📡 Radar<?php echo $radarNovas ? ' (' . $radarNovas . ' nova' . ($radarNovas > 1 ? 's' : '') . ')' : ''; ?></a>
     </nav>
+
+    <?php if ($aba === 'radar'): $tiposR = radar_tipos(); $ultR = radar_ultima_busca($pdo, (int)$esc['concurso_id']); ?>
+        <section class="card">
+            <h2 style="font-size:18px">📡 Radar do seu concurso</h2>
+            <p class="aviso">O Antigão vigia a internet todos os dias pelo seu concurso: edital, datas, banca, convocações, Justiça e nomeações. Sempre com a fonte, para você conferir.<?php echo $ultR ? ' Última busca: ' . mc2_e(date('d/m H:i', strtotime($ultR))) . '.' : ''; ?></p>
+            <?php if (!$radar): ?><p style="margin-top:10px">Nenhuma novidade registrada ainda. Quando sair algo, aparece aqui e no seu sininho. Enquanto isso: foco na missão do dia, combatente!</p><?php endif; ?>
+            <?php foreach ($radar as $n): ?>
+                <article id="n<?php echo (int)$n['id']; ?>" style="border-top:1px solid rgba(255,255,255,.08);padding:12px 0">
+                    <small><?php echo mc2_e($tiposR[$n['tipo']] ?? '📰'); ?><?php echo $n['publicada_em'] ? ' · ' . mc2_e(date('d/m/Y', strtotime((string)$n['publicada_em']))) : ''; ?><?php echo $n['importante'] ? ' · <strong style="color:#e8c55a">importante</strong>' : ''; ?></small>
+                    <h3 style="font-size:16px;margin:4px 0"><?php echo mc2_e($n['titulo']); ?></h3>
+                    <?php if ($n['resumo']): ?><p style="margin:0 0 4px"><?php echo mc2_e($n['resumo']); ?></p><?php endif; ?>
+                    <?php if ($n['o_que_fazer']): ?><p style="margin:0 0 4px"><strong>👉 O que fazer:</strong> <?php echo mc2_e($n['o_que_fazer']); ?></p><?php endif; ?>
+                    <small>Fonte: <a href="<?php echo mc2_e($n['fonte_url']); ?>" target="_blank" rel="noopener nofollow" style="color:#e8c55a"><?php echo mc2_e($n['fonte_nome'] ?: 'abrir'); ?></a></small>
+                </article>
+            <?php endforeach; ?>
+        </section>
+    <?php endif; ?>
 
     <?php if ($aba === 'edital'): ?>
         <?php if ($hacks): ?><div class="hack"><?php foreach ($hacks['hack_edital'] as $b): ?><article><h3><?php echo mc2_e($b['icone'] . ' ' . $b['titulo']); ?></h3><p><?php echo mc2_e($b['texto']); ?></p></article><?php endforeach; ?></div><?php endif; ?>

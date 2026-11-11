@@ -19,7 +19,7 @@ if (!function_exists('esc')) {
 }
 
 if (!function_exists('admin_login_safe_redirect')) {
-    function admin_login_safe_redirect(string $redirect, string $default = 'admin-dashboard'): string
+    function admin_login_safe_redirect(string $redirect, string $default = 'admin-inicio'): string
     {
         $redirect = trim($redirect);
 
@@ -416,7 +416,7 @@ if (!function_exists('admin_login_config_ok')) {
     }
 }
 
-$redirectPedido = admin_login_safe_redirect((string)($_GET['redirect'] ?? $_POST['redirect'] ?? 'admin-dashboard'));
+$redirectPedido = admin_login_safe_redirect((string)($_GET['redirect'] ?? $_POST['redirect'] ?? 'admin-inicio'));
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && admin_login_is_logged()) {
     header('Location: ' . admin_login_location($redirectPedido));

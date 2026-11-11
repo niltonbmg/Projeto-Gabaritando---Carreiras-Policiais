@@ -88,7 +88,7 @@ if (!function_exists('ia_fila_processar_um')) {
         $pri = ia_prioridade();
         $semVoz = $pausa ? " AND tipo NOT IN ('videoaula','podcast')" : ($pri['podcasts_pausados'] ? " AND tipo <> 'podcast'" : '');
         if (ia_fila_pausa_busca()) {
-            $semVoz .= " AND tipo <> 'questoes'"; // sem pesquisa na internet, questões esperam (não criamos antes de buscar as reais)
+            $semVoz .= " AND tipo NOT IN ('questoes','radar')"; // sem pesquisa na internet, questões esperam (não criamos antes de buscar as reais)
         }
         // Controle rígido: tipos desligados pelo mentor nunca rodam (nem quando uma tarefa encadeia outra).
         require_once __DIR__ . '/ia-consumo-lib.php';
@@ -97,10 +97,10 @@ if (!function_exists('ia_fila_processar_um')) {
                 $semVoz .= ' AND tipo <> ' . $pdo->quote($tDesl);
             }
         }
-        $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','apostila','aula_ia','videoaula','questoes','podcast'";
+        $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','radar','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','radar','apostila','aula_ia','videoaula','questoes','podcast'";
         // Dentro de cada tipo, segue a ordem do curso (módulo e aula): a cota grátis vai primeiro para o que o aluno vê primeiro.
         $item = $pdo->query("SELECT f.* FROM ia_fila f
-                               LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id AND f.tipo NOT IN ('questoes','redacao')
+                               LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id AND f.tipo NOT IN ('questoes','redacao','radar')
                                LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
                                LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
                               WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
@@ -122,12 +122,14 @@ if (!function_exists('ia_fila_processar_um')) {
         try {
             if ($item['tipo'] === 'questoes') {
                 $stN = $pdo->prepare('SELECT t.titulo FROM edital_itens e JOIN admin_materia_topicos t ON t.id = e.topico_id WHERE e.id = :id');
+            } elseif ($item['tipo'] === 'radar') {
+                $stN = $pdo->prepare('SELECT nome FROM concursos WHERE id = :id');
             } else {
                 $stN = $pdo->prepare('SELECT titulo FROM admin_curso_aulas WHERE id = :id');
             }
             $stN->execute([':id' => $aulaId]);
             $nomeN = (string)$stN->fetchColumn();
-            $verbo = ['questoes' => 'Buscando/criando questões de', 'aula_ia' => 'Escrevendo a teoria da aula', 'apostila' => 'Montando a apostila da aula', 'videoaula' => 'Gravando a videoaula', 'podcast' => 'Gravando o podcast', 'redacao' => 'Lendo uma redação', 'conferir_pdf' => 'Conferindo se o PDF é da aula'][$item['tipo']] ?? 'Trabalhando em';
+            $verbo = ['questoes' => 'Buscando/criando questões de', 'aula_ia' => 'Escrevendo a teoria da aula', 'apostila' => 'Montando a apostila da aula', 'videoaula' => 'Gravando a videoaula', 'podcast' => 'Gravando o podcast', 'redacao' => 'Lendo uma redação', 'conferir_pdf' => 'Conferindo se o PDF é da aula', 'radar' => 'Radar: buscando novidades do concurso'][$item['tipo']] ?? 'Trabalhando em';
             @file_put_contents(dirname(__DIR__) . '/uploads/.ia-agora.json', json_encode(['texto' => $verbo . ($nomeN !== '' ? ': ' . $nomeN : ''), 'em' => time()], JSON_UNESCAPED_UNICODE));
         } catch (Throwable $e) {
         }
@@ -163,6 +165,10 @@ if (!function_exists('ia_fila_processar_um')) {
                     $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $aulaId]);
                     ia_fila_adicionar($pdo, 'videoaula', $aulaId);
                 }
+            } elseif ($item['tipo'] === 'radar') {
+                // aqui aula_id guarda o id do concurso
+                require_once __DIR__ . '/radar-lib.php';
+                radar_pesquisar($pdo, $aulaId);
             } elseif ($item['tipo'] === 'conferir_pdf') {
                 rev_conferir($pdo, $aulaId);
             } elseif ($item['tipo'] === 'redacao') {

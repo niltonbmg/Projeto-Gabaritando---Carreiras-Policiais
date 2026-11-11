@@ -29,6 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $n++;
             }
             $msg = "✅ $n aula(s) provisória(s) removidas. O progresso dos alunos passou para a aula real.";
+        } elseif ($acao === 'ocultar_noticia') {
+            $pdo->prepare("UPDATE concurso_noticias SET status = 'oculta' WHERE id = :id")->execute([':id' => (int)($_POST['id'] ?? 0)]);
+            $msg = '✅ Notícia ocultada para os alunos.';
         } elseif ($acao === 'titulos') {
             $msg = '✅ ' . padrao_corrigir($pdo, 'padrao_titulos') . ' título(s) agora seguem o nome do edital.';
         }
@@ -73,6 +76,11 @@ $feitasHoje = $seguro(fn() => $num("SELECT COUNT(DISTINCT execucao) FROM ia_cons
 $alunosAtivos = $seguro(fn() => $num("SELECT COUNT(*) FROM usuarios WHERE status = 'ativo'"));
 $desafioHoje = $seguro(fn() => $num("SELECT COUNT(*) FROM desafio_tentativas t JOIN desafios d ON d.id = t.desafio_id WHERE d.data = CURDATE() AND t.finalizado_em IS NOT NULL"));
 
+require_once __DIR__ . '/includes/radar-lib.php';
+$radarRecentes = $seguro(function () use ($pdo) {
+    radar_bootstrap($pdo);
+    return $pdo->query("SELECT n.*, c.nome concurso FROM concurso_noticias n JOIN concursos c ON c.id = n.concurso_id WHERE n.status = 'publicada' AND n.criado_em >= NOW() - INTERVAL 3 DAY ORDER BY n.id DESC LIMIT 8")->fetchAll();
+}, []);
 // ---------- o que fazer agora (ordem = urgência) ----------
 $tarefas = [];
 if ($roboMin === null || $roboMin > 15) {
@@ -117,7 +125,7 @@ $passos = [
     ['Toda aula com teoria escrita', $aud['total'] - count($aud['sem_teoria']) - count($aud['sem_material']), $aud['total'], 'a IA escreve a partir do vídeo/PDF (cota de texto, rende bem)'],
     ['Videoaulas do Antigão prontas', $vidFeitas, max($vidTotal, $vidFeitas), 'a IA grava ~1 a 2 por dia no plano grátis, começando pelas primeiras aulas'],
 ];
-$tipoNome = ['videoaula' => '🎬 Videoaulas', 'aula_ia' => '🤖 Teorias do Antigão', 'apostila' => '📄 Teorias a partir do material', 'conferir_pdf' => '🔎 Conferência de PDF', 'questoes' => '📚 Questões', 'podcast' => '🎧 Podcasts', 'redacao' => '✍️ Leituras de redação'];
+$tipoNome = ['radar' => '📡 Radar do concurso', 'videoaula' => '🎬 Videoaulas', 'aula_ia' => '🤖 Teorias do Antigão', 'apostila' => '📄 Teorias a partir do material', 'conferir_pdf' => '🔎 Conferência de PDF', 'questoes' => '📚 Questões', 'podcast' => '🎧 Podcasts', 'redacao' => '✍️ Leituras de redação'];
 $topbarInclude = admin_cursos_get_topbar();
 $menuBarInclude = admin_cursos_get_menubar();
 ?>
@@ -150,7 +158,7 @@ $menuBarInclude = admin_cursos_get_menubar();
     <?php if (is_file($menuBarInclude)) { include $menuBarInclude; } ?>
     <main class="admin-dashboard-main">
         <section class="admin-page-header">
-            <div class="admin-page-heading"><h1>🏠 Comece aqui</h1><p>Tudo o que importa numa página só: o que você precisa fazer e o que a plataforma já está fazendo sozinha.</p></div>
+            <div class="admin-page-heading"><h1>🏠 Comece aqui</h1><p>A plataforma acompanha o concurso e se adapta a cada aluno sozinha. Aqui aparece só o que precisa do seu olhar de especialista.</p></div>
         </section>
         <?php if ($msg !== ''): ?><div class="admin-alert <?php echo str_starts_with($msg, '✅') ? 'admin-alert-success' : 'admin-alert-error'; ?>"><?php echo admin_esc($msg); ?></div><?php endif; ?>
 
@@ -161,7 +169,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         </section>
 
         <section class="admin-panel">
-            <h2>1. O que você precisa fazer</h2>
+            <h2>1. Sua revisão de especialista <small style="font-weight:400;color:#6b7280">(só o que a IA não pode decidir)</small></h2>
             <?php if (!$tarefas): ?><p class="ci-ok">✓ Nenhuma tarefa agora. Pode acompanhar abaixo.</p><?php endif; ?>
             <?php foreach ($tarefas as [$cor, $titulo, $oque, $como, $link, $bt]): ?>
                 <div class="ci-t">
@@ -178,8 +186,22 @@ $menuBarInclude = admin_cursos_get_menubar();
             <?php endforeach; ?>
         </section>
 
+        <?php if ($radarRecentes): ?>
         <section class="admin-panel">
-            <h2>2. O que a IA está fazendo sozinha</h2>
+            <h2>📡 Radar: novidades publicadas para os alunos (últimos 3 dias)</h2>
+            <p style="font-size:13px;color:#4b5563;margin-top:0">A IA encontrou e publicou com a fonte. Dê uma olhada rápida; se algo estiver errado, oculte.</p>
+            <?php foreach ($radarRecentes as $n): ?>
+                <div style="display:flex;gap:10px;align-items:flex-start;border-top:1px solid #f0f1f3;padding:8px 0;font-size:14px">
+                    <div style="flex:1"><strong><?php echo admin_esc((string)$n['titulo']); ?></strong> <small style="color:#6b7280">· <?php echo admin_esc((string)$n['concurso']); ?></small><br>
+                        <small><?php echo admin_esc((string)$n['o_que_fazer']); ?> · <a href="<?php echo admin_esc((string)$n['fonte_url']); ?>" target="_blank" rel="noopener">fonte</a></small></div>
+                    <form method="post"><input type="hidden" name="acao" value="ocultar_noticia"><input type="hidden" name="id" value="<?php echo (int)$n['id']; ?>"><button class="admin-btn admin-btn-small admin-btn-light" type="submit">Ocultar</button></form>
+                </div>
+            <?php endforeach; ?>
+        </section>
+        <?php endif; ?>
+
+        <section class="admin-panel">
+            <h2>2. Bastidores: o que a IA faz sozinha</h2>
             <p style="font-size:14px;color:#4b5563;margin-top:0">Você não precisa fazer nada aqui, só acompanhar. Plano <?php echo ia_consumo_config()['plano'] === 'pago' ? 'pago' : '<strong>grátis</strong> (nada é cobrado)'; ?>. A cota do Google renova todo dia às <?php echo admin_esc(substr((string)$uso['renova'], -5)); ?>.</p>
             <div class="ci-grid">
                 <div class="ci-box"><span>Feito hoje</span><strong><?php echo (int)$feitasHoje; ?></strong><small>tarefas da IA concluídas</small></div>

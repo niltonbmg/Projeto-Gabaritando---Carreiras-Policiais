@@ -270,6 +270,25 @@ if (!function_exists('gab_notif_buscar')) {
         } catch (Throwable $e) {
         }
 
+        // 📡 Radar do Concurso: novidades importantes do concurso que o aluno escolheu
+        try {
+            $stR = $pdo->prepare("SELECT n.id, n.titulo, n.o_que_fazer, n.criado_em FROM concurso_noticias n JOIN aluno_concurso ac ON ac.concurso_id = n.concurso_id
+                                   WHERE ac.usuario_id = :u AND n.status = 'publicada' AND n.importante = 1 AND n.criado_em >= :desde ORDER BY n.id DESC LIMIT 10");
+            $stR->execute([':u' => $usuarioId, ':desde' => $desde]);
+            foreach ($stR->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $itens[] = [
+                    'tipo' => 'radar',
+                    'referencia_id' => (int)$row['id'],
+                    'titulo' => '📡 Seu concurso: ' . (string)$row['titulo'],
+                    'descricao' => gab_notif_resumir((string)($row['o_que_fazer'] ?: 'Veja a novidade em Meu concurso.')),
+                    'link' => 'meu-concurso.php?aba=radar#n' . (int)$row['id'],
+                    'icone' => 'radar',
+                    'data' => (string)$row['criado_em'],
+                ];
+            }
+        } catch (Throwable $e) {
+        }
+
         usort($itens, static function (array $a, array $b): int {
             return strcmp((string)$b['data'], (string)$a['data']);
         });

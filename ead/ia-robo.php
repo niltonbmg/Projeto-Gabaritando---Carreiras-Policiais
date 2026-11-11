@@ -62,6 +62,15 @@ try {
 } catch (Throwable $e) {
     echo 'Fórmulas: ' . $e->getMessage() . "\n";
 }
+// Radar do Concurso: 1 pesquisa por dia para cada concurso que tem aluno.
+try {
+    require_once __DIR__ . '/includes/radar-lib.php';
+    if ($n = radar_varrer($pdo)) {
+        echo "Radar na fila: $n concurso(s)\n";
+    }
+} catch (Throwable $e) {
+    echo 'Radar: ' . $e->getMessage() . "\n";
+}
 // Revisão: aula com PDF novo ou trocado entra na fila de conferência (barato, e destrava as videoaulas).
 try {
     require_once __DIR__ . '/includes/revisao-aulas-lib.php';
