@@ -31,7 +31,7 @@
     ev.stopImmediatePropagation(); // o confirm() antigo do formulário entra no nosso diálogo
     var antigo = (form.getAttribute('onsubmit') || '').match(/confirm\((['"])([\s\S]*?)\1\)/);
     var q = new URLSearchParams(location.search);
-    var p = new URLSearchParams({ acao: acao, concurso_id: campo(form, sub, 'concurso_id') || q.get('concurso_id') || '', cargo_id: campo(form, sub, 'cargo_id'), item_id: campo(form, sub, 'item_id') });
+    var p = new URLSearchParams({ acao: acao, concurso_id: campo(form, sub, 'concurso_id') || q.get('concurso_id') || '', cargo_id: campo(form, sub, 'cargo_id'), curso_id: campo(form, sub, 'curso_id') || q.get('curso_id') || '', item_id: campo(form, sub, 'item_id') });
     var nCampo = form.querySelector('[name="n"]'); if (nCampo) p.set('n', nCampo.value);
     var links = form.querySelector('[name="links"]');
     if (links) p.set('n', links.value.split(/\n/).filter(function (l) { return l.trim(); }).length);

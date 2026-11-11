@@ -920,6 +920,6 @@ document.addEventListener('click', function (ev) {
 });
 </script>
 <?php admin_cursos_scripts(); ?>
-<script src="assets/js/ia-custo.js?v=1" data-api="api/ia-estimativa.php"></script>
+<script src="assets/js/ia-custo.js?v=2" data-api="api/ia-estimativa.php"></script>
 </body>
 </html>

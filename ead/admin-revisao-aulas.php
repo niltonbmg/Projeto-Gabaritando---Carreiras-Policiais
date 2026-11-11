@@ -206,6 +206,6 @@ $menuBarInclude = admin_cursos_get_menubar();
     </main>
 </div>
 <script>window.lucide && lucide.createIcons();</script>
-<script src="assets/js/ia-custo.js?v=1" data-api="api/ia-estimativa.php"></script>
+<script src="assets/js/ia-custo.js?v=2" data-api="api/ia-estimativa.php"></script>
 </body>
 </html>

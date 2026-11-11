@@ -93,6 +93,19 @@ try {
         case 'reconferir':
             $partes = [['conferir_pdf', 1]];
             break;
+        // admin-padrao.php (Auditoria de padrão): conta na hora o que cada correção vai mandar para a IA
+        case 'padrao_teoria': case 'padrao_antigao': case 'padrao_videoaulas': case 'padrao_antigao_refazer': case 'padrao_podcasts': case 'padrao_assunto':
+            require_once dirname(__DIR__) . '/includes/padrao-lib.php';
+            $aud = padrao_auditar($pdo, (int)($_GET['curso_id'] ?? 0));
+            $partes = [
+                'padrao_teoria' => [['apostila', count($aud['sem_teoria'])], ['podcast', count($aud['sem_teoria'])]],
+                'padrao_antigao' => [['aula_ia', count($aud['sem_material'])], ['videoaula', count($aud['sem_material'])], ['podcast', count($aud['sem_material'])]],
+                'padrao_videoaulas' => [['videoaula', count($aud['videoaula_antiga'])]],
+                'padrao_antigao_refazer' => [['aula_ia', count($aud['antigao_antigo'])], ['videoaula', count($aud['antigao_antigo'])], ['podcast', count($aud['antigao_antigo'])]],
+                'padrao_podcasts' => [['podcast', count($aud['podcast_antigo'])]],
+                'padrao_assunto' => [['classificar', count($aud['sem_assunto']) + (int)($aud['questoes']['sem_assunto'] ?? 0)]],
+            ][$acao];
+            break;
         case 'conferir_todas':
             $partes = [['conferir_pdf', $n]];
             break;

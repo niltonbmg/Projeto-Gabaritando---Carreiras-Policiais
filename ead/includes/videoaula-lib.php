@@ -101,6 +101,7 @@ if (!function_exists('videoaula_bootstrap')) {
         ], 150);
         $pdo = podcast_reconectar($pdo);
         $roteiro = videoaula_validar(json_decode((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? ''), true));
+        $roteiro['formato'] = 2; // padrão atual (10 a 15 min, narração calma 120–170 palavras por slide); a Auditoria de padrão usa esta marca
         require_once __DIR__ . '/texto-limpo-lib.php';
         array_walk_recursive($roteiro, static function (&$v): void { // slides e narração sem LaTeX (a voz leria "barra times")
             if (is_string($v)) {

@@ -32,6 +32,7 @@ $adminMenuGrupos = [
     ]],
     ['titulo' => 'Alunos', 'itens' => [
         ['label' => 'Redação', 'href' => 'admin-redacao.php', 'icon' => 'pen-line', 'pages' => ['admin-redacao.php', 'admin-redacao']],
+        ['label' => 'Padrão da plataforma', 'href' => 'admin-padrao.php', 'icon' => 'list-checks', 'pages' => ['admin-padrao.php', 'admin-padrao']],
         ['label' => 'Revisão de aulas', 'href' => 'admin-revisao-aulas.php', 'icon' => 'scan-search', 'pages' => ['admin-revisao-aulas.php', 'admin-revisao-aulas']],
         ['label' => 'Consumo da IA', 'href' => 'admin-consumo-ia.php', 'icon' => 'coins', 'pages' => ['admin-consumo-ia.php', 'admin-consumo-ia']],
         ['label' => 'Saúde da plataforma', 'href' => 'saude.php', 'icon' => 'activity', 'pages' => ['saude.php', 'saude']],
