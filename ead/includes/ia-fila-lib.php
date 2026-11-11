@@ -37,6 +37,10 @@ if (!function_exists('ia_fila_bootstrap')) {
             criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY idx_hist_aula (aula_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        try {
+            $pdo->exec('ALTER TABLE ia_fila ADD COLUMN consumo VARCHAR(160) NULL'); // gasto real da última execução
+        } catch (Throwable $e) {
+        }
     }
 }
 
@@ -86,7 +90,7 @@ if (!function_exists('ia_fila_processar_um')) {
         if (ia_fila_pausa_busca()) {
             $semVoz .= " AND tipo <> 'questoes'"; // sem pesquisa na internet, questões esperam (não criamos antes de buscar as reais)
         }
-        $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','apostila','aula_ia','videoaula','questoes','podcast'";
+        $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','apostila','aula_ia','videoaula','questoes','podcast'";
         $item = $pdo->query("SELECT * FROM ia_fila WHERE (status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE))$semVoz
                               ORDER BY FIELD(tipo, $ordem), id ASC LIMIT 1")->fetch();
         if (!$item) {
@@ -94,7 +98,14 @@ if (!function_exists('ia_fila_processar_um')) {
         }
         $id = (int)$item['id'];
         $aulaId = (int)$item['aula_id'];
+        // Trava da revisão: não gera videoaula/apostila/podcast de aula com PDF não conferido.
+        require_once __DIR__ . '/revisao-aulas-lib.php';
+        if (rev_segurar_tarefa($pdo, $item)) {
+            return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => false, 'erro' => 'Aguardando a revisão do PDF da aula.'];
+        }
         $pdo->prepare('UPDATE ia_fila SET tentativas = tentativas + 1 WHERE id = :id')->execute([':id' => $id]);
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        $exec = ia_consumo_inicio((string)$item['tipo'], $aulaId); // todo gasto desta tarefa fica marcado nela
         // "O que a IA está fazendo agora" (Central da IA), em português simples.
         try {
             if ($item['tipo'] === 'questoes') {
@@ -104,7 +115,7 @@ if (!function_exists('ia_fila_processar_um')) {
             }
             $stN->execute([':id' => $aulaId]);
             $nomeN = (string)$stN->fetchColumn();
-            $verbo = ['questoes' => 'Buscando/criando questões de', 'aula_ia' => 'Escrevendo a teoria da aula', 'apostila' => 'Montando a apostila da aula', 'videoaula' => 'Gravando a videoaula', 'podcast' => 'Gravando o podcast', 'redacao' => 'Lendo uma redação'][$item['tipo']] ?? 'Trabalhando em';
+            $verbo = ['questoes' => 'Buscando/criando questões de', 'aula_ia' => 'Escrevendo a teoria da aula', 'apostila' => 'Montando a apostila da aula', 'videoaula' => 'Gravando a videoaula', 'podcast' => 'Gravando o podcast', 'redacao' => 'Lendo uma redação', 'conferir_pdf' => 'Conferindo se o PDF é da aula'][$item['tipo']] ?? 'Trabalhando em';
             @file_put_contents(dirname(__DIR__) . '/uploads/.ia-agora.json', json_encode(['texto' => $verbo . ($nomeN !== '' ? ': ' . $nomeN : ''), 'em' => time()], JSON_UNESCAPED_UNICODE));
         } catch (Throwable $e) {
         }
@@ -136,6 +147,8 @@ if (!function_exists('ia_fila_processar_um')) {
                     $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $aulaId]);
                     ia_fila_adicionar($pdo, 'videoaula', $aulaId);
                 }
+            } elseif ($item['tipo'] === 'conferir_pdf') {
+                rev_conferir($pdo, $aulaId);
             } elseif ($item['tipo'] === 'redacao') {
                 // aqui aula_id guarda o id da redação: leitura do Antigão (escondida até o corretor dar a nota)
                 require_once __DIR__ . '/redacao-lib.php';
@@ -163,8 +176,8 @@ if (!function_exists('ia_fila_processar_um')) {
                     }
                 }
             }
-            $pdo->prepare("UPDATE ia_fila SET status = 'feito', erro = NULL WHERE id = :id")->execute([':id' => $id]);
-            return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => true];
+            $pdo->prepare("UPDATE ia_fila SET status = 'feito', erro = NULL, consumo = :c WHERE id = :id")->execute([':c' => ia_consumo_da_execucao($pdo, $exec)['resumo'], ':id' => $id]);
+            return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => true, 'consumo' => ia_consumo_da_execucao($pdo, $exec)['resumo']];
         } catch (Throwable $e) {
             if (gemini_cota_pausar($e, in_array($item['tipo'], ['videoaula', 'podcast'], true) ? 'voz' : 'texto')) {
                 // Não é erro da tarefa: é a cota do Google. Volta para a fila sem gastar tentativa; a pausa certa já foi gravada.

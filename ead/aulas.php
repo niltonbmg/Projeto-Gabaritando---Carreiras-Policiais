@@ -1115,6 +1115,19 @@ $minhaNotaAula = (int)($avaliacaoAtual['minha_nota'] ?? 0);
 $mediaNotaAula = (float)($avaliacaoAtual['media'] ?? 0);
 $totalAvaliacoesAula = (int)($avaliacaoAtual['total'] ?? 0);
 $pdfAtual = $aulaAtual ? aulas_pdf_do_item($aulaAtual) : ['arquivo' => '', 'nome' => ''];
+// Revisão: PDF marcado como suspeito (de outro assunto) não aparece para o aluno até o mentor resolver.
+$pdfEmRevisao = false;
+$reporteEnviado = !empty($_GET['reportado']);
+if ($aulaAtual && $pdfAtual['arquivo'] !== '' && function_exists('db')) {
+    try {
+        require_once __DIR__ . '/includes/revisao-aulas-lib.php';
+        if (rev_status(db(), (int)$aulaAtual['id'], (string)($aulaAtual['pdf_arquivo'] ?? ''))['status'] === 'suspeita') {
+            $pdfEmRevisao = true;
+            $pdfAtual = ['arquivo' => '', 'nome' => ''];
+        }
+    } catch (Throwable $e) {
+    }
+}
 $videoDuracaoAtual = $aulaAtual ? trim((string)($aulaAtual['duracao'] ?? '')) : '';
 $pdfDuracaoAtual = $aulaAtual ? trim((string)($aulaAtual['pdf_duracao'] ?? '')) : '';
 $videoDuracaoSegundosManual = aulas_duracao_segundos($videoDuracaoAtual);
@@ -3937,8 +3950,28 @@ if ($travaMeta) {
                                     </button>
                                 </div>
                             </div>
+                        <?php elseif ($pdfEmRevisao): ?>
+                            <div class="aula-pdf-empty"><i data-lucide="file-search" aria-hidden="true"></i>Material em revisão pela equipe. Enquanto isso, siga com as questões do assunto.</div>
                         <?php else: ?>
                             <div class="aula-pdf-empty"><i data-lucide="file-x" aria-hidden="true"></i>Nenhum PDF cadastrado para esta aula.</div>
+                        <?php endif; ?>
+
+                        <?php if ($aulaAtual): ?>
+                        <details class="aula-reportar" style="margin:14px 0 4px">
+                            <summary style="cursor:pointer;font-size:13px;opacity:.85">⚠️ Reportar problema nesta aula</summary>
+                            <?php if ($reporteEnviado): ?><p style="font-size:13px;color:#e8c55a;margin:8px 0">Obrigado, combatente! A equipe vai revisar.</p><?php endif; ?>
+                            <form method="post" action="api/aula-reportar.php" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center">
+                                <input type="hidden" name="aula_id" value="<?php echo (int)$aulaAtual['id']; ?>">
+                                <select name="tipo" required style="padding:6px;border-radius:6px">
+                                    <option value="pdf_errado">PDF de outro assunto</option>
+                                    <option value="video">Vídeo com problema</option>
+                                    <option value="conteudo">Conteúdo errado ou desatualizado</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                                <input name="detalhe" maxlength="500" placeholder="Conte rapidinho o que viu (opcional)" style="flex:1;min-width:180px;padding:6px;border-radius:6px">
+                                <button type="submit" style="padding:6px 12px;border-radius:6px;background:#c9a227;border:0;font-weight:700;cursor:pointer">Enviar</button>
+                            </form>
+                        </details>
                         <?php endif; ?>
 
                         <div class="forum-head">

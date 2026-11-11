@@ -55,6 +55,17 @@ try {
             }
         }
     }
+    // Revisão: não gera videoaula de aula cujo PDF ainda não foi conferido (ou está suspeito).
+    if ((string)($e['acao'] ?? '') === 'iniciar') {
+        require_once __DIR__ . '/../includes/revisao-aulas-lib.php';
+        if (!rev_liberada($pdo, $aulaId)) {
+            require_once __DIR__ . '/../includes/ia-fila-lib.php';
+            if (rev_status($pdo, $aulaId)['status'] === 'pendente') {
+                ia_fila_adicionar($pdo, 'conferir_pdf', $aulaId);
+            }
+            videoaula_resposta(409, ['erro' => 'O material desta aula está em revisão pela equipe. A videoaula fica pronta logo depois.']);
+        }
+    }
     switch ((string)($e['acao'] ?? '')) {
         case 'iniciar':
             videoaula_resposta(200, videoaula_iniciar($pdo, $aulaId));

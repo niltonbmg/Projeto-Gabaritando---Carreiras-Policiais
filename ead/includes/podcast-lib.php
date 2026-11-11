@@ -209,6 +209,9 @@ if (!function_exists('podcast_gemini')) {
         if ($chave === '') {
             throw new RuntimeException('A chave do Gemini não está configurada (GEMINI_API_KEY no .env).');
         }
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        $cotaTipo = stripos($modelo, 'tts') !== false ? 'voz' : (isset($corpo['tools']) ? 'busca' : 'texto');
+        ia_consumo_checar_limite($cotaTipo); // teto de gasto do mês
         $base = rtrim(gab_env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'), '/');
         $ch = curl_init($base . '/v1beta/models/' . $modelo . ':generateContent');
         curl_setopt_array($ch, [
@@ -227,6 +230,7 @@ if (!function_exists('podcast_gemini')) {
         }
         $json = json_decode((string)$resp, true);
         podcast_uso_registrar($modelo, $corpo, $codigo);
+        ia_consumo_registrar($modelo, $cotaTipo, is_array($json) ? (array)($json['usageMetadata'] ?? []) : [], $codigo); // tokens reais devolvidos pelo Google
         if ($codigo === 429) {
             $det = is_array($json) ? json_encode($json['error'] ?? [], JSON_UNESCAPED_UNICODE) : '';
             $porDia = stripos($det, 'PerDay') !== false || stripos($det, 'per day') !== false || stripos($det, 'daily') !== false;

@@ -531,6 +531,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                 <div id="ciaAulas" class="admin-form-hint" style="display:grid;gap:2px;margin-bottom:6px"></div>
                 <div id="ciaQuestoes" class="admin-form-hint"></div>
                 <div class="ed-barra" style="height:8px;margin:6px 0" aria-hidden="true"><i id="ciaQBarra" style="width:0"></i></div>
+                <div id="ciaConsumo" style="margin:6px 0;font-size:13px"></div>
                 <div id="ciaRecentes" style="margin:8px 0"></div>
                 <ul id="ciaJobs" style="list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px;font-size:14px"></ul>
             </section>
@@ -827,7 +828,13 @@ $menuBarInclude = admin_cursos_get_menubar();
                 linhas += '<div>' + nomes[t] + ': <strong>' + feito + '/' + tot + '</strong> prontas' + (pend ? ' · ' + pend + ' na fila' : '') + (err ? ' · ' + err + ' com erro (tenta de novo sozinho)' : '') + '</div>'; });
             document.getElementById('ciaAulas').innerHTML = linhas;
             var rot = {aula_ia: '🤖 Teoria pronta', apostila: '📄 Apostila pronta', videoaula: '🎬 Videoaula pronta', questoes: '📚 Questões prontas'};
-            document.getElementById('ciaRecentes').innerHTML = (d.recentes || []).length ? '<strong style="font-size:14px">Acabou de ficar pronto (clique para conferir):</strong><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + d.recentes.map(function (r) { return '<button type="button" class="admin-btn admin-btn-light admin-btn-small" data-pv="' + r.pv + '" data-id="' + r.id + '">👁 ' + rot[r.tipo] + ': ' + esc(r.titulo) + '</button>'; }).join('') + '</div>' : '';
+            if (d.consumo_mes) {
+                var cm = d.consumo_mes, pct = cm.limite > 0 ? Math.round(cm.brl / cm.limite * 100) : 0;
+                document.getElementById('ciaConsumo').innerHTML = '💰 Gasto real da IA neste mês: <strong>R$ ' + cm.brl.toFixed(cm.brl > 0 && cm.brl < 0.1 ? 3 : 2).replace('.', ',') + '</strong>'
+                    + (cm.limite > 0 ? ' de R$ ' + cm.limite.toFixed(2).replace('.', ',') + ' (' + pct + '%)' + (pct >= 80 ? ' <strong style="color:#b42318">⚠️ perto do limite</strong>' : '') : ' · sem limite definido')
+                    + ' · <a href="admin-consumo-ia.php">ver detalhes</a>';
+            }
+            document.getElementById('ciaRecentes').innerHTML = (d.recentes || []).length ? '<strong style="font-size:14px">Acabou de ficar pronto (clique para conferir):</strong><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + d.recentes.map(function (r) { return '<button type="button" class="admin-btn admin-btn-light admin-btn-small" data-pv="' + r.pv + '" data-id="' + r.id + '"' + (r.consumo ? ' title="Gasto real: ' + esc(r.consumo) + '"' : '') + '>👁 ' + rot[r.tipo] + ': ' + esc(r.titulo) + (r.consumo ? ' <small style="opacity:.7">· ' + esc(r.consumo.split(' · ').pop()) + '</small>' : '') + '</button>'; }).join('') + '</div>' : '';
             var u = d.uso || {}, pr = d.prioridade || {}, fl = d.fila || {};
             var falta = function (t) { return ((fl[t] || {}).pendente || 0) + ((fl[t] || {}).erro || 0); };
             var vozFalta = falta('videoaula') * 8 + (pr.podcasts_pausados ? 0 : falta('podcast') * 4);
@@ -886,12 +893,20 @@ document.addEventListener('click', function (ev) {
     var ac = ev.target.closest('[data-pv-acao]');
     if (ac) {
         var acao = ac.dataset.pvAcao;
-        if (!confirm(acao === 'apagar_questao' ? 'Apagar esta questão do banco?' : 'Pedir para a IA refazer esta aula (teoria, videoaula e podcast)?')) { return; }
-        var fd = new FormData(); fd.append('acao', acao); fd.append('id', ac.dataset.id);
-        fetch('api/edital-preview.php', {method: 'POST', credentials: 'same-origin', body: fd}).then(function (r) { return r.text(); }).then(function (t) {
-            if (acao === 'apagar_questao') { var art = ac.closest('article'); if (art) { art.innerHTML = '<p>🗑 Questão apagada. Para repor, use "Fazer só este" no assunto (passo 5).</p>'; } }
-            else { ac.closest('p').innerHTML = t; }
-        });
+        var executar = function () {
+            var fd = new FormData(); fd.append('acao', acao); fd.append('id', ac.dataset.id);
+            fetch('api/edital-preview.php', {method: 'POST', credentials: 'same-origin', body: fd}).then(function (r) { return r.text(); }).then(function (t) {
+                if (acao === 'apagar_questao') { var art = ac.closest('article'); if (art) { art.innerHTML = '<p>🗑 Questão apagada. Para repor, use "Fazer só este" no assunto (passo 5).</p>'; } }
+                else { ac.closest('p').innerHTML = t; }
+            });
+        };
+        if (acao === 'apagar_questao') { if (confirm('Apagar esta questão do banco?')) { executar(); } return; }
+        // Refazer usa IA: mostra o custo estimado antes.
+        fetch('api/ia-estimativa.php?acao=refazer_aula', {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (e) {
+            var f = function (v) { return 'R$ ' + v.toFixed(v > 0 && v < 0.1 ? 3 : 2).replace('.', ','); };
+            var c = e && e.ia ? '\n\nCusto estimado: ' + f(e.brl) + ' (faixa ' + f(e.brl_min) + ' a ' + f(e.brl_max) + ')\n≈ ' + Number(e.tokens).toLocaleString('pt-BR') + ' tokens · ' + e.chamadas.join(' · ') : '';
+            if (confirm('Pedir para a IA refazer esta aula (teoria, videoaula e podcast)?' + c)) { executar(); }
+        }).catch(function () { if (confirm('Pedir para a IA refazer esta aula?')) { executar(); } });
         return;
     }
     var b = ev.target.closest('[data-pv]');
@@ -905,5 +920,6 @@ document.addEventListener('click', function (ev) {
 });
 </script>
 <?php admin_cursos_scripts(); ?>
+<script src="assets/js/ia-custo.js?v=1" data-api="api/ia-estimativa.php"></script>
 </body>
 </html>

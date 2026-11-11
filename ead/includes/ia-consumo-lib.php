@@ -1,0 +1,242 @@
+<?php
+// includes/ia-consumo-lib.php
+// Consumo da IA com precisão:
+//  - DEPOIS: cada chamada ao Google grava os tokens reais que ele devolve (usageMetadata) e o custo em US$/R$;
+//  - ANTES: estimativa de cada ação pela média real das últimas execuções do mesmo tipo (faixa mín–máx);
+//  - LIMITE: teto de gasto mensal em R$; ao atingir, a IA pausa sozinha (aviso em 80%).
+// Preços ficam num arquivo editável pela tela "Consumo da IA" (se o Google mudar, muda num lugar só).
+declare(strict_types=1);
+
+if (!function_exists('ia_consumo_bootstrap')) {
+    function ia_consumo_bootstrap(PDO $pdo): void
+    {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
+        $pdo->exec("CREATE TABLE IF NOT EXISTS ia_consumo (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            execucao VARCHAR(40) NOT NULL,
+            acao VARCHAR(40) NOT NULL,
+            ref_id INT UNSIGNED NOT NULL DEFAULT 0,
+            modelo VARCHAR(60) NOT NULL,
+            cota ENUM('texto','voz','busca') NOT NULL,
+            tokens_entrada INT UNSIGNED NOT NULL DEFAULT 0,
+            tokens_saida INT UNSIGNED NOT NULL DEFAULT 0,
+            custo_usd DECIMAL(12,6) NOT NULL DEFAULT 0,
+            ok TINYINT(1) NOT NULL DEFAULT 1,
+            KEY idx_consumo_data (criado_em),
+            KEY idx_consumo_acao (acao, execucao),
+            KEY idx_consumo_ref (acao, ref_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+
+    /** Nomes das ações em português (aparecem nas telas). */
+    function ia_consumo_acoes(): array
+    {
+        return [
+            'videoaula' => 'Videoaula do Antigão', 'podcast' => 'Podcast', 'apostila' => 'Apostila da aula',
+            'aula_ia' => 'Teoria escrita pelo Antigão', 'questoes' => 'Questões de um assunto (busca + criação)',
+            'redacao' => 'Leitura de redação', 'conferir_pdf' => 'Conferência do PDF da aula', 'classificar' => 'Classificação automática',
+            'desafio' => 'Montagem do Desafio do Dia', 'edital' => 'Leitura do edital / cadastro do concurso', 'outro' => 'Outras ações',
+        ];
+    }
+
+    function ia_consumo_config_arquivo(): string
+    {
+        return dirname(__DIR__) . '/uploads/.ia-consumo-config.json';
+    }
+
+    /**
+     * Preços oficiais do Gemini (US$ por 1 milhão de tokens) — CONFIRA em ai.google.dev/pricing e ajuste na tela.
+     * A regra é escolhida pelo nome do modelo (primeira que casar).
+     */
+    function ia_consumo_config(): array
+    {
+        $padrao = [
+            'dolar' => 5.50,
+            'limite_mensal_brl' => 0,      // 0 = sem limite
+            'precos' => [
+                ['contem' => 'tts', 'entrada' => 0.50, 'saida' => 10.00, 'rotulo' => 'Voz (TTS): saída é áudio'],
+                ['contem' => 'lite', 'entrada' => 0.10, 'saida' => 0.40, 'rotulo' => 'Flash-Lite'],
+                ['contem' => 'pro', 'entrada' => 1.25, 'saida' => 10.00, 'rotulo' => 'Pro'],
+                ['contem' => '', 'entrada' => 0.30, 'saida' => 2.50, 'rotulo' => 'Flash (padrão)'],
+            ],
+            'busca_por_chamada' => 0.0,    // pesquisa no Google: grátis até 1.500/dia no plano pago; depois US$ 0,035 cada
+        ];
+        $c = json_decode((string)@file_get_contents(ia_consumo_config_arquivo()), true);
+        return is_array($c) ? array_replace($padrao, $c) : $padrao;
+    }
+
+    function ia_consumo_salvar_config(array $c): void
+    {
+        @file_put_contents(ia_consumo_config_arquivo(), json_encode($c, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+
+    function ia_consumo_preco(string $modelo): array
+    {
+        foreach (ia_consumo_config()['precos'] as $p) {
+            if ((string)$p['contem'] === '' || stripos($modelo, (string)$p['contem']) !== false) {
+                return $p;
+            }
+        }
+        return ['entrada' => 0.30, 'saida' => 2.50];
+    }
+
+    function ia_consumo_custo_usd(string $modelo, string $cota, int $entrada, int $saida): float
+    {
+        $p = ia_consumo_preco($modelo);
+        $c = $entrada / 1e6 * (float)$p['entrada'] + $saida / 1e6 * (float)$p['saida'];
+        if ($cota === 'busca') {
+            $c += (float)ia_consumo_config()['busca_por_chamada'];
+        }
+        return $c;
+    }
+
+    // ---------- contexto: qual ação está gastando ----------
+    function ia_consumo_inicio(string $acao, int $refId = 0): string
+    {
+        $GLOBALS['gab_ia_ctx'] = ['acao' => $acao, 'ref' => $refId, 'exec' => $acao . '-' . $refId . '-' . substr(bin2hex(random_bytes(6)), 0, 12)];
+        return $GLOBALS['gab_ia_ctx']['exec'];
+    }
+
+    function ia_consumo_contexto(): array
+    {
+        return $GLOBALS['gab_ia_ctx'] ?? ['acao' => 'outro', 'ref' => 0, 'exec' => 'avulso-' . date('YmdHi')];
+    }
+
+    function ia_consumo_db(): ?PDO
+    {
+        try {
+            if (!function_exists('db')) {
+                require_once dirname(__DIR__) . '/api/conexao.php';
+            }
+            return db();
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    /** Chamado a cada resposta do Google (podcast_gemini_chamar). Nunca derruba a ação. */
+    function ia_consumo_registrar(string $modelo, string $cota, array $uso, int $codigo): void
+    {
+        try {
+            $pdo = ia_consumo_db();
+            if (!$pdo) {
+                return;
+            }
+            ia_consumo_bootstrap($pdo);
+            $ctx = ia_consumo_contexto();
+            $ent = (int)($uso['promptTokenCount'] ?? 0);
+            $sai = (int)($uso['candidatesTokenCount'] ?? 0) + (int)($uso['thoughtsTokenCount'] ?? 0); // "pensamento" é cobrado como saída
+            $ok = $codigo < 400 ? 1 : 0;
+            $custo = $ok ? ia_consumo_custo_usd($modelo, $cota, $ent, $sai) : 0.0;
+            $pdo->prepare('INSERT INTO ia_consumo (execucao, acao, ref_id, modelo, cota, tokens_entrada, tokens_saida, custo_usd, ok) VALUES (:e, :a, :r, :m, :c, :ti, :ts, :u, :ok)')
+                ->execute([':e' => $ctx['exec'], ':a' => $ctx['acao'], ':r' => (int)$ctx['ref'], ':m' => mb_substr($modelo, 0, 60), ':c' => $cota, ':ti' => $ent, ':ts' => $sai, ':u' => $custo, ':ok' => $ok]);
+        } catch (Throwable $e) {
+            error_log('ia_consumo_registrar: ' . $e->getMessage());
+        }
+    }
+
+    /** Gasto real de uma execução (para a mensagem "Concluído: gastou ..."). */
+    function ia_consumo_da_execucao(PDO $pdo, string $exec): array
+    {
+        ia_consumo_bootstrap($pdo);
+        $st = $pdo->prepare("SELECT COUNT(*) chamadas, SUM(cota='texto') texto, SUM(cota='voz') voz, SUM(cota='busca') busca,
+                                    COALESCE(SUM(tokens_entrada + tokens_saida),0) tokens, COALESCE(SUM(custo_usd),0) usd FROM ia_consumo WHERE execucao = :e AND ok = 1");
+        $st->execute([':e' => $exec]);
+        $r = $st->fetch() ?: [];
+        return ia_consumo_formatar((int)($r['chamadas'] ?? 0), (int)($r['texto'] ?? 0), (int)($r['voz'] ?? 0), (int)($r['busca'] ?? 0), (int)($r['tokens'] ?? 0), (float)($r['usd'] ?? 0));
+    }
+
+    /** R$ com precisão: abaixo de 10 centavos mostra 3 casas (R$ 0,006), para não virar "R$ 0,00". */
+    function ia_consumo_brl(float $brl): string
+    {
+        return 'R$ ' . number_format($brl, $brl > 0 && $brl < 0.1 ? 3 : 2, ',', '.');
+    }
+
+    function ia_consumo_formatar(int $chamadas, int $texto, int $voz, int $busca, int $tokens, float $usd): array
+    {
+        $brl = $usd * (float)ia_consumo_config()['dolar'];
+        return ['chamadas' => $chamadas, 'texto' => $texto, 'voz' => $voz, 'busca' => $busca, 'tokens' => $tokens, 'usd' => round($usd, 4), 'brl' => round($brl, 4),
+            'resumo' => number_format($tokens, 0, ',', '.') . ' tokens · ' . $chamadas . ' chamada(s)' . ($voz ? " ($voz de voz)" : '') . ($busca ? " ($busca de pesquisa)" : '') . ' · ' . ia_consumo_brl($brl)];
+    }
+
+    /**
+     * Estimativa ANTES da ação: média e faixa (mín–máx) das últimas 20 execuções reais do mesmo tipo.
+     * Sem histórico ainda, usa uma referência inicial e avisa que é aproximada.
+     */
+    function ia_consumo_estimar(PDO $pdo, string $acao, int $quantidade = 1): array
+    {
+        ia_consumo_bootstrap($pdo);
+        $st = $pdo->prepare("SELECT execucao, COUNT(*) chamadas, SUM(cota='texto') texto, SUM(cota='voz') voz, SUM(cota='busca') busca,
+                                    SUM(tokens_entrada + tokens_saida) tokens, SUM(custo_usd) usd, MAX(criado_em) quando
+                               FROM ia_consumo WHERE acao = :a AND ok = 1 GROUP BY execucao ORDER BY quando DESC LIMIT 20");
+        $st->execute([':a' => $acao]);
+        $ex = $st->fetchAll();
+        $q = max(1, $quantidade);
+        $dolar = (float)ia_consumo_config()['dolar'];
+        if ($ex) {
+            $n = count($ex);
+            $med = static fn(string $k): float => array_sum(array_map(static fn($r) => (float)$r[$k], $ex)) / $n;
+            $usd = array_map(static fn($r) => (float)$r['usd'], $ex);
+            $base = 'média real das últimas ' . $n . ' execuç' . ($n > 1 ? 'ões' : 'ão');
+            $r = ['texto' => $med('texto'), 'voz' => $med('voz'), 'busca' => $med('busca'), 'tokens' => $med('tokens'), 'usd' => $med('usd'), 'usd_min' => min($usd), 'usd_max' => max($usd)];
+        } else {
+            // Referência inicial (antes de existir histórico): medida nos testes da plataforma.
+            $ref = ['videoaula' => [2, 14, 0, 60000, 0.10], 'podcast' => [2, 8, 0, 40000, 0.06], 'apostila' => [1, 0, 0, 30000, 0.02],
+                'aula_ia' => [2, 0, 0, 25000, 0.02], 'questoes' => [3, 0, 4, 60000, 0.05], 'redacao' => [1, 0, 0, 8000, 0.01],
+                'conferir_pdf' => [1, 0, 0, 15000, 0.005], 'classificar' => [1, 0, 0, 3000, 0.001], 'edital' => [2, 0, 1, 50000, 0.04]][$acao] ?? [1, 0, 0, 10000, 0.01];
+            $base = 'referência inicial (ainda sem histórico desta ação; fica precisa após as primeiras execuções)';
+            $r = ['texto' => $ref[0], 'voz' => $ref[1], 'busca' => $ref[2], 'tokens' => $ref[3], 'usd' => $ref[4], 'usd_min' => $ref[4] * 0.6, 'usd_max' => $ref[4] * 1.6];
+        }
+        $uso = function_exists('podcast_uso_resumo') ? podcast_uso_resumo() : [];
+        $restam = [];
+        foreach (['texto', 'voz', 'busca'] as $t) {
+            if (isset($uso[$t]['limite']) && $uso[$t]['limite']) {
+                $restam[$t] = max(0, (int)$uso[$t]['limite'] - (int)$uso[$t]['hoje']);
+            }
+        }
+        $mes = ia_consumo_mes_brl($pdo);
+        $lim = (float)ia_consumo_config()['limite_mensal_brl'];
+        return [
+            'acao' => ia_consumo_acoes()[$acao] ?? $acao, 'quantidade' => $q, 'base' => $base,
+            'chamadas_texto' => (int)ceil($r['texto'] * $q), 'chamadas_voz' => (int)ceil($r['voz'] * $q), 'chamadas_busca' => (int)ceil($r['busca'] * $q),
+            'tokens' => (int)round($r['tokens'] * $q),
+            'brl' => round($r['usd'] * $q * $dolar, 4), 'brl_min' => round($r['usd_min'] * $q * $dolar, 4), 'brl_max' => round($r['usd_max'] * $q * $dolar, 4),
+            'cota_gratis_restante' => $restam, 'renova' => (string)($uso['renova'] ?? ''),
+            'mes_brl' => $mes, 'limite_mensal_brl' => $lim,
+            'estoura_limite' => $lim > 0 && $mes + $r['usd_max'] * $q * $dolar > $lim,
+        ];
+    }
+
+    function ia_consumo_mes_brl(PDO $pdo): float
+    {
+        ia_consumo_bootstrap($pdo);
+        $usd = (float)$pdo->query("SELECT COALESCE(SUM(custo_usd),0) FROM ia_consumo WHERE criado_em >= DATE_FORMAT(NOW(), '%Y-%m-01')")->fetchColumn();
+        return round($usd * (float)ia_consumo_config()['dolar'], 4);
+    }
+
+    /** Antes de cada chamada: estourou o teto do mês? Pausa (como a cota do Google) até o admin aumentar o limite. */
+    function ia_consumo_checar_limite(string $cota): void
+    {
+        $lim = (float)ia_consumo_config()['limite_mensal_brl'];
+        if ($lim <= 0) {
+            return;
+        }
+        static $ultimo = null;
+        static $quando = 0;
+        if ($ultimo === null || time() - $quando > 60) {
+            $pdo = ia_consumo_db();
+            $ultimo = $pdo ? ia_consumo_mes_brl($pdo) : 0.0;
+            $quando = time();
+        }
+        if ($ultimo >= $lim && class_exists('GeminiCotaException')) {
+            $e = new GeminiCotaException('Limite de gasto do mês atingido (R$ ' . number_format($lim, 2, ',', '.') . '). A IA está pausada; aumente o limite em Consumo da IA. [cota:' . $cota . ']');
+            $e->tipo = $cota;
+            $e->diario = true;
+            throw $e;
+        }
+    }
+}

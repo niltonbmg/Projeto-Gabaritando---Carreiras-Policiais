@@ -130,6 +130,8 @@ if (!function_exists('ia_class_processar_um')) {
     /** Classifica o próximo item pendente. Retorna null se não há nada. */
     function ia_class_processar_um(PDO $pdo): ?array
     {
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        ia_consumo_inicio('classificar');
         ia_class_bootstrap($pdo);
         $pdo = podcast_reconectar($pdo);
         $item = $pdo->query("SELECT * FROM ia_classificacoes WHERE status = 'pendente_ia' ORDER BY id LIMIT 1")->fetch();

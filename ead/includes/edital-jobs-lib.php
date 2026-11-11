@@ -109,6 +109,8 @@ if (!function_exists('job_bootstrap')) {
 
     function job_executar(PDO $pdo, array $job): string
     {
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        ia_consumo_inicio('edital', (int)$job['concurso_id']);
         $c = (int)$job['concurso_id'];
         $p = json_decode((string)$job['params'], true) ?: [];
         $cargosNomes = static function () use ($pdo, $c): array {
@@ -441,16 +443,21 @@ if (!function_exists('job_bootstrap')) {
         }
         // Últimos itens prontos (para o mentor pré-visualizar na hora).
         $recentes = [];
-        foreach ($pdo->query("SELECT f.tipo, f.aula_id, a.titulo FROM ia_fila f JOIN admin_curso_aulas a ON a.id = f.aula_id
+        foreach ($pdo->query("SELECT f.*, a.titulo FROM ia_fila f JOIN admin_curso_aulas a ON a.id = f.aula_id
                                WHERE f.status = 'feito' AND f.tipo IN ('aula_ia','apostila','videoaula') AND a.curso_id IN (" . implode(',', $cIds) . ") ORDER BY f.atualizado_em DESC LIMIT 6") as $r) {
-            $recentes[] = ['tipo' => $r['tipo'], 'pv' => 'aula', 'id' => (int)$r['aula_id'], 'titulo' => (string)$r['titulo']];
+            $recentes[] = ['tipo' => $r['tipo'], 'pv' => 'aula', 'id' => (int)$r['aula_id'], 'titulo' => (string)$r['titulo'], 'consumo' => (string)($r['consumo'] ?? '')];
         }
-        foreach ($pdo->query("SELECT f.aula_id, e.topico_id, t.titulo FROM ia_fila f JOIN edital_itens e ON e.id = f.aula_id JOIN admin_materia_topicos t ON t.id = e.topico_id
+        foreach ($pdo->query("SELECT f.*, e.topico_id, t.titulo FROM ia_fila f JOIN edital_itens e ON e.id = f.aula_id JOIN admin_materia_topicos t ON t.id = e.topico_id
                                WHERE f.status = 'feito' AND f.tipo = 'questoes' AND e.concurso_id = " . (int)$concursoId . ' ORDER BY f.atualizado_em DESC LIMIT 4') as $r) {
-            $recentes[] = ['tipo' => 'questoes', 'pv' => 'questoes', 'id' => (int)$r['topico_id'], 'titulo' => (string)$r['titulo']];
+            $recentes[] = ['tipo' => 'questoes', 'pv' => 'questoes', 'id' => (int)$r['topico_id'], 'titulo' => (string)$r['titulo'], 'consumo' => (string)($r['consumo'] ?? '')];
         }
         return [
             'recentes' => $recentes,
+            'consumo_mes' => (static function () use ($pdo): array {
+                require_once __DIR__ . '/ia-consumo-lib.php';
+                $c = ia_consumo_config();
+                return ['brl' => ia_consumo_mes_brl($pdo), 'limite' => (float)$c['limite_mensal_brl']];
+            })(),
             'agora' => job_agora_ler(),
             'uso' => podcast_uso_resumo(),
             'prioridade' => ia_prioridade(),

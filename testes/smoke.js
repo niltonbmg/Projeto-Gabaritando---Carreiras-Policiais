@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
 const B = process.env.BASE || 'http://127.0.0.1:8080/ead/';
 const SENHA = process.env.SENHA || 'teste123';
 const aluno = ['meu-plano.php', 'meu-concurso.php', 'desafio.php', 'banco-questoes.php', 'redacoes.php', 'meus-dados.php', 'materiais.php', 'simulados.php', 'meu-cronograma.php', 'cadernos.php', 'flashcards.php', 'forum-duvidas.php', 'edital-verticalizado.php', 'agenda.php', 'recompensas.php', 'privacidade.php', 'termos.php'];
-const admin = ['admin-dashboard.php', 'admin-editais.php', 'admin-cursos.php', 'admin-usuarios.php', 'admin-redacao.php', 'admin-lgpd.php', 'admin-desafio.php', 'admin-banco-questoes.php', 'admin-simulado.php', 'admin-materiais.php', 'correcao-redacao.php', 'saude.php'];
+const admin = ['admin-dashboard.php', 'admin-editais.php', 'admin-cursos.php', 'admin-usuarios.php', 'admin-redacao.php', 'admin-lgpd.php', 'admin-desafio.php', 'admin-banco-questoes.php', 'admin-simulado.php', 'admin-materiais.php', 'correcao-redacao.php', 'saude.php', 'admin-revisao-aulas.php', 'admin-consumo-ia.php'];
 const ruim = /(Fatal error|Parse error|Uncaught|Warning:|Notice:|Deprecated:|SQLSTATE)/;
 let falhas = 0;
 async function rodar(ctx, paginas, rotulo) {

@@ -53,6 +53,15 @@ if ($hm >= 2350 || $hm < 30) {
     echo "Pausa do pico do Desafio do Dia (23:50 às 00:30).\n";
     exit;
 }
+// Revisão: aula com PDF novo ou trocado entra na fila de conferência (barato, e destrava as videoaulas).
+try {
+    require_once __DIR__ . '/includes/revisao-aulas-lib.php';
+    if ($n = rev_varrer($pdo)) {
+        echo "Conferência de PDF na fila: $n aula(s)\n";
+    }
+} catch (Throwable $e) {
+    echo 'Revisão: ' . $e->getMessage() . "\n";
+}
 $feitos = 0;
 // Tarefas do cadastro do concurso (edital, provas, verticalizado...) que o mentor deixou na fila.
 require_once __DIR__ . '/includes/edital-jobs-lib.php';

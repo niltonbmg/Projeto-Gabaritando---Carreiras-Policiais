@@ -150,5 +150,6 @@ $menuBarInclude = admin_cursos_get_menubar();
     </main>
 </div>
 <?php admin_cursos_scripts(); ?>
+<script src="assets/js/ia-custo.js?v=1" data-api="api/ia-estimativa.php"></script>
 </body>
 </html>

@@ -144,6 +144,8 @@ if (!function_exists('desafio_gerar')) {
 
     function desafio_gerar_montar(PDO $pdo, string $data, bool $refazer, PDOStatement $st): array
     {
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        ia_consumo_inicio('desafio');
         $cand = desafio_candidatas($pdo, $data);
         if (count($cand) < 5) {
             throw new RuntimeException('O banco tem poucas questões ativas com gabarito (' . count($cand) . '). Cadastre mais questões para o desafio.');
