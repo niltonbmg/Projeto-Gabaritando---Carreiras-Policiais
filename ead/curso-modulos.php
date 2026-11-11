@@ -1020,7 +1020,7 @@ $conteudosCurso = [
         'subtitulo' => '',
         'texto' => 'Veja o cronograma de estudos deste curso.',
         'botao' => 'Acessar Cronograma',
-        'link' => 'cronograma.php?curso_id=' . (int)$cursoId,
+        'link' => 'meu-plano.php',
         'centralizado' => false,
     ],
     [

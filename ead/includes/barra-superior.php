@@ -37,7 +37,8 @@ $menuItens = $menuItens ?? [
     ['titulo' => '📝 Simulados', 'link' => 'simulados.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => '✍️ Redação', 'link' => 'redacoes.php', 'externo' => false],
     ['titulo' => '🎓 Meus cursos e materiais', 'link' => 'materiais.php' . $cursoContextoQuery, 'externo' => false],
-    ['titulo' => '💬 Dúvidas (fórum)', 'link' => 'forum-duvidas.php', 'externo' => false],
+    ['titulo' => '🎖 Antigão · tira-dúvidas', 'link' => 'antigao.php', 'externo' => false],
+    ['titulo' => '💬 Dúvidas com o mentor (fórum)', 'link' => 'forum-duvidas.php', 'externo' => false],
     ['titulo' => '📅 Minha rotina', 'link' => 'meu-cronograma.php', 'externo' => false],
     ['titulo' => 'Cadernos', 'link' => 'cadernos.php', 'externo' => false],
     ['titulo' => 'Flashcards', 'link' => 'flashcards.php', 'externo' => false],
@@ -46,7 +47,6 @@ $menuItens = $menuItens ?? [
     ['titulo' => 'Como funciona o método', 'link' => 'meu-plano.php?tour=1', 'externo' => false],
     ['titulo' => '🔒 Meus dados e privacidade', 'link' => 'meus-dados.php', 'externo' => false],
     ['titulo' => 'QUEM SOMOS', 'link' => 'https://www.instagram.com/projeto.gabaritando/', 'externo' => true],
-    ['titulo' => 'ANTIGÃO IA', 'link' => 'https://typebotapi.adscompany.app.br/antigao-38a8ulb', 'externo' => true],
 ];
 
 $notificacoesTopbar = [];

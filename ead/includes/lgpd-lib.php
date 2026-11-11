@@ -129,6 +129,8 @@ if (!function_exists('lgpd_bootstrap')) {
             'consentimentos' => 'SELECT versao, aceito_em, ip_parcial, origem FROM lgpd_consentimentos WHERE usuario_id = :u',
             'pedidos_lgpd' => 'SELECT tipo, status, criado_em, resolvido_em FROM lgpd_solicitacoes WHERE usuario_id = :u',
             'privacidade' => 'SELECT ranking_publico FROM aluno_privacidade WHERE usuario_id = :u',
+            'conversas_antigao' => 'SELECT quem, texto, criado_em FROM antigao_conversas WHERE usuario_id = :u',
+            'flashcards' => 'SELECT questao_id, nivel, proxima_em FROM flashcard_revisao WHERE usuario_id = :u',
         ];
         foreach ($tabelas as $chave => $sql) {
             try {
@@ -164,7 +166,7 @@ if (!function_exists('lgpd_bootstrap')) {
             $pdo->prepare('DELETE FROM redacoes WHERE usuario_id = :u')->execute([':u' => $usuarioId]);
         } catch (Throwable $e) {
         }
-        foreach (['aula_marcacoes', 'aula_marcacoes_pdf', 'aluno_concurso', 'aluno_vertical', 'aluno_edital_visitas', 'meta_aluno_config', 'aluno_privacidade', 'aluno_jornada', 'meta_aluno_tour'] as $t) {
+        foreach (['aula_marcacoes', 'aula_marcacoes_pdf', 'aluno_concurso', 'aluno_vertical', 'aluno_edital_visitas', 'meta_aluno_config', 'aluno_privacidade', 'aluno_jornada', 'meta_aluno_tour', 'antigao_conversas', 'flashcard_revisao'] as $t) {
             try {
                 $pdo->prepare("DELETE FROM `$t` WHERE usuario_id = :u")->execute([':u' => $usuarioId]);
             } catch (Throwable $e) {

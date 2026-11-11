@@ -10,7 +10,6 @@ $currentAdminSlug = preg_replace('/\.php$/', '', $currentAdminPage);
 $adminMenuGrupos = [
     ['titulo' => '', 'itens' => [
         ['label' => 'Comece aqui', 'href' => 'admin-inicio.php', 'icon' => 'house', 'pages' => ['admin-inicio.php', 'admin-inicio']],
-        ['label' => 'Dashboard', 'href' => 'admin-dashboard.php', 'icon' => 'layout-dashboard', 'pages' => ['admin-dashboard.php', 'admin-dashboard']],
     ]],
     ['titulo' => 'O concurso', 'itens' => [
         ['label' => 'Cadastro do concurso', 'href' => 'admin-editais.php', 'icon' => 'file-badge', 'pages' => ['admin-editais.php', 'admin-editais']],
@@ -39,15 +38,15 @@ $adminMenuGrupos = [
         ['label' => 'Revisão de aulas', 'href' => 'admin-revisao-aulas.php', 'icon' => 'scan-search', 'pages' => ['admin-revisao-aulas.php', 'admin-revisao-aulas']],
         ['label' => 'Padrão da plataforma', 'href' => 'admin-padrao.php', 'icon' => 'list-checks', 'pages' => ['admin-padrao.php', 'admin-padrao']],
         ['label' => 'Confirmar classificação', 'href' => 'admin-classificacao.php', 'icon' => 'tags', 'pages' => ['admin-classificacao.php', 'admin-classificacao']],
-        ['label' => 'Consumo da IA', 'href' => 'admin-consumo-ia.php', 'icon' => 'coins', 'pages' => ['admin-consumo-ia.php', 'admin-consumo-ia']],
-        ['label' => 'Diagnóstico da IA', 'href' => 'admin-ia.php', 'icon' => 'sparkles', 'pages' => ['admin-ia.php', 'admin-ia']],
+        ['label' => 'Consumo e controle da IA', 'href' => 'admin-consumo-ia.php', 'icon' => 'coins', 'pages' => ['admin-consumo-ia.php', 'admin-consumo-ia']],
+        ['label' => 'Diagnóstico da IA (avançado)', 'href' => 'admin-ia.php', 'icon' => 'sparkles', 'pages' => ['admin-ia.php', 'admin-ia']],
         ['label' => 'Saúde da plataforma', 'href' => 'saude.php', 'icon' => 'activity', 'pages' => ['saude.php', 'saude']],
     ]],
     ['titulo' => 'Gestão', 'itens' => [
+        ['label' => 'Vendas e números', 'href' => 'admin-dashboard.php', 'icon' => 'layout-dashboard', 'pages' => ['admin-dashboard.php', 'admin-dashboard']],
         ['label' => 'Vendas', 'href' => 'admin-dashboard.php#vendas', 'icon' => 'shopping-cart', 'pages' => []],
         ['label' => 'Produtos', 'href' => 'admin-dashboard.php#produtos', 'icon' => 'package', 'pages' => []],
         ['label' => 'Configurações', 'href' => 'admin-configuracoes.php', 'icon' => 'settings', 'pages' => ['admin-configuracoes.php', 'admin-configuracoes']],
-        ['label' => 'Cronograma (antigo)', 'href' => 'admin-cronograma.php', 'icon' => 'calendar-days', 'pages' => ['admin-cronograma.php', 'admin-cronograma']],
     ]],
 ];
 // Lista plana (compatibilidade com quem ainda use $adminMenuItems).

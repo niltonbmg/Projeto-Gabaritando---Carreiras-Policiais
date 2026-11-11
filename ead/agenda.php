@@ -200,6 +200,40 @@ try {
         ];
         $totalEventos++;
     }
+    // A plataforma conhece o concurso do aluno: a prova e as datas do Radar entram sozinhas na agenda.
+    try {
+        require_once __DIR__ . '/includes/edital-hack-lib.php';
+        require_once __DIR__ . '/includes/radar-lib.php';
+        $escAg = hack_escolha_aluno($pdo, (int)$usuarioId);
+        $autos = [];
+        if ($escAg && !empty($escAg['data_prova'])) {
+            $autos[] = ['id' => -1, 'titulo' => '🎯 PROVA: ' . $escAg['concurso'], 'curso_nome' => $escAg['cargo'], 'data_evento' => substr((string)$escAg['data_prova'], 0, 10),
+                'descricao' => 'Data da prova do seu concurso. Siga a Missão do dia até lá: cada dia conta.', 'link_evento' => 'meu-concurso.php', 'cor' => '#e8c55a'];
+        }
+        if ($escAg) {
+            foreach (radar_noticias($pdo, (int)$escAg['concurso_id'], 40) as $n) {
+                if (!empty($n['publicada_em']) && in_array($n['tipo'], ['cronograma', 'inscricao', 'convocacao', 'resultado', 'edital'], true)) {
+                    $autos[] = ['id' => -(1000 + (int)$n['id']), 'titulo' => '📡 ' . $n['titulo'], 'curso_nome' => 'Radar do concurso', 'data_evento' => (string)$n['publicada_em'],
+                        'descricao' => trim((string)$n['o_que_fazer'] . ' ' . (string)$n['resumo']), 'link_evento' => 'meu-concurso.php?aba=radar#n' . (int)$n['id'], 'cor' => '#60a5fa'];
+                }
+            }
+        }
+        foreach ($autos as $evento) {
+            if ($evento['data_evento'] < $params[':inicio'] || $evento['data_evento'] > $params[':fim']) {
+                continue;
+            }
+            $evento += ['hora_inicio' => null, 'hora_fim' => null, 'local_evento' => ''];
+            $eventosPorData[$evento['data_evento']][] = $evento;
+            $eventosDetalhes[(string)$evento['id']] = [
+                'id' => $evento['id'], 'titulo' => $evento['titulo'], 'curso' => $evento['curso_nome'], 'descricao' => $evento['descricao'],
+                'data' => agenda_data_extenso($evento['data_evento']), 'horario' => agenda_horario_evento(null, null), 'local' => '',
+                'link' => agenda_link_seguro($evento['link_evento']), 'externo' => false,
+            ];
+            $totalEventos++;
+        }
+    } catch (Throwable $e) {
+        error_log('[Agenda automática] ' . $e->getMessage());
+    }
 } catch (Throwable $e) {
     error_log('[Agenda] ' . $e->getMessage());
     $erroAgenda = 'Não foi possível carregar os eventos agora.';

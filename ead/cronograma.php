@@ -9,6 +9,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 date_default_timezone_set('America/Sao_Paulo');
 
+// O cronograma antigo foi substituído pela Missão do dia + Minha rotina (Método META).
+// Admin ainda pode abrir para consultar (?antigo=1); o aluno vai para a rotina nova.
+if (empty($_GET['antigo'])) {
+    header('Location: meu-cronograma.php', true, 302);
+    exit;
+}
+
 require_once __DIR__ . '/api/authenticador.php';
 auth_require_login();
 require_once __DIR__ . '/api/conexao.php';

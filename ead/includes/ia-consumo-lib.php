@@ -39,7 +39,7 @@ if (!function_exists('ia_consumo_bootstrap')) {
             'videoaula' => 'Videoaula do Antigão', 'podcast' => 'Podcast', 'apostila' => 'Apostila da aula',
             'aula_ia' => 'Teoria escrita pelo Antigão', 'questoes' => 'Questões de um assunto (busca + criação)',
             'redacao' => 'Leitura de redação', 'conferir_pdf' => 'Conferência do PDF da aula', 'classificar' => 'Classificação automática',
-            'desafio' => 'Montagem do Desafio do Dia', 'radar' => 'Radar do Concurso', 'edital' => 'Leitura do edital / cadastro do concurso', 'outro' => 'Outras ações',
+            'desafio' => 'Montagem do Desafio do Dia', 'radar' => 'Radar do Concurso', 'duvidas' => 'Antigão tira-dúvidas', 'edital' => 'Leitura do edital / cadastro do concurso', 'outro' => 'Outras ações',
         ];
     }
 
@@ -245,7 +245,7 @@ if (!function_exists('ia_consumo_bootstrap')) {
     function ia_controle_tipos(): array
     {
         return ['videoaula' => 'Videoaulas do Antigão', 'aula_ia' => 'Teoria escrita pelo Antigão', 'apostila' => 'Apostila (teoria a partir do vídeo/PDF)',
-            'conferir_pdf' => 'Conferência dos PDFs', 'questoes' => 'Questões (busca e criação)', 'redacao' => 'Leitura de redações',
+            'conferir_pdf' => 'Conferência dos PDFs', 'questoes' => 'Questões (busca e criação)', 'redacao' => 'Leitura de redações', 'duvidas' => 'Antigão tira-dúvidas (chat do aluno)',
             'classificar' => 'Classificação automática por assunto', 'radar' => 'Radar do Concurso (novidades na internet, 1x por dia)', 'podcast' => 'Podcasts (extra)', 'edital' => 'Cadastro do concurso (edital, provas, plano)'];
     }
 

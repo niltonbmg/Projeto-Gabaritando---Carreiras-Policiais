@@ -310,7 +310,7 @@ $adminLogadoTopbar = !empty($_SESSION['admin_logado']) || in_array($adminTipoTop
     <link rel="icon" type="image/x-icon" href="/ead/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/ead/favicon.png">
     <link rel="apple-touch-icon" href="/ead/favicon.png">
-    <a class="admin-topbar-logo-link" href="<?php echo htmlspecialchars(auth_admin_url('admin-dashboard'), ENT_QUOTES, 'UTF-8'); ?>" aria-label="Ir para o painel administrativo">
+    <a class="admin-topbar-logo-link" href="<?php echo htmlspecialchars(auth_admin_url('admin-inicio'), ENT_QUOTES, 'UTF-8'); ?>" aria-label="Ir para o painel administrativo">
         <img class="admin-topbar-logo" src="<?php echo htmlspecialchars(auth_admin_url('img/logo.png'), ENT_QUOTES, 'UTF-8'); ?>" alt="Projeto Gabaritando">
     </a>
 

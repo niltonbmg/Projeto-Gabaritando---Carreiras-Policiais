@@ -152,11 +152,16 @@ if (!function_exists('recompensas_bootstrap')) {
             ['banco_questao_errada', 'Banco de questões: primeira resposta errada', 'XP ganho quando a primeira resposta do aluno em uma questão for errada.', 0],
             ['simulado_finalizado', 'Simulado: primeiro envio', 'XP ganho quando o aluno envia um simulado pela primeira vez.', 0],
             ['simulado_acerto', 'Simulado: acerto no primeiro envio', 'XP por cada acerto no primeiro envio do simulado.', 0],
+            // Método META (valores iniciais; o mentor ajusta em Recompensas)
+            ['aula_concluida', 'Aula concluída (teoria da missão)', 'XP quando o aluno marca a aula como assistida.', 10],
+            ['desafio_participou', 'Desafio do Dia: participou', 'XP por terminar o Desafio do Dia.', 20],
+            ['desafio_acerto', 'Desafio do Dia: cada acerto', 'XP por acerto no Desafio do Dia.', 2],
+            ['redacao_enviada', 'Redação enviada', 'XP por enviar uma redação para correção.', 30],
         ];
 
         $stmt = $pdo->prepare("INSERT INTO admin_recompensas_regras (codigo, titulo, descricao, xp, ativo)
             VALUES (:codigo, :titulo, :descricao, :xp, 1)
-            ON DUPLICATE KEY UPDATE titulo = VALUES(titulo), descricao = VALUES(descricao)");
+            ON DUPLICATE KEY UPDATE titulo = VALUES(titulo), descricao = VALUES(descricao)"); // não sobrescreve o XP que o mentor definiu
         foreach ($regras as $regra) {
             $stmt->execute([
                 ':codigo' => $regra[0],
@@ -315,6 +320,26 @@ if (!function_exists('recompensas_sincronizar_eventos')) {
             recompensas_try_exec($pdo, $sql);
         }
 
+        // Método META: aula concluída, Desafio do Dia e redação enviada também dão XP.
+        $xpAula = recompensas_pontos($pdo, 'aula_concluida');
+        if ($xpAula > 0 && recompensas_table_exists($pdo, 'aulas_progresso')) {
+            recompensas_try_exec($pdo, "INSERT IGNORE INTO usuario_xp_eventos (usuario_id, origem_tipo, origem_id, origem_resultado, quantidade, xp, descricao, criado_em)
+                SELECT usuario_id, 'aula', aula_id, 'assistida', 1, {$xpAula}, 'Aula concluída', COALESCE(assistido_em, NOW())
+                FROM aulas_progresso WHERE assistido = 1 {$whereUsuario}");
+        }
+        $xpDes = recompensas_pontos($pdo, 'desafio_participou');
+        $xpDesA = recompensas_pontos($pdo, 'desafio_acerto');
+        if (($xpDes > 0 || $xpDesA > 0) && recompensas_table_exists($pdo, 'desafio_tentativas')) {
+            recompensas_try_exec($pdo, "INSERT IGNORE INTO usuario_xp_eventos (usuario_id, origem_tipo, origem_id, origem_resultado, quantidade, xp, descricao, criado_em)
+                SELECT usuario_id, 'desafio', desafio_id, 'finalizado', acertos, ({$xpDes} + acertos * {$xpDesA}), 'Desafio do Dia', finalizado_em
+                FROM desafio_tentativas WHERE finalizado_em IS NOT NULL {$whereUsuario}");
+        }
+        $xpRed = recompensas_pontos($pdo, 'redacao_enviada');
+        if ($xpRed > 0 && recompensas_table_exists($pdo, 'redacoes')) {
+            recompensas_try_exec($pdo, "INSERT IGNORE INTO usuario_xp_eventos (usuario_id, origem_tipo, origem_id, origem_resultado, quantidade, xp, descricao, criado_em)
+                SELECT usuario_id, 'redacao', id, 'enviada', 1, {$xpRed}, 'Redação enviada', enviada_em FROM redacoes WHERE 1=1 {$whereUsuario}");
+        }
+
         // Atualiza pontos quando o admin muda as regras, preservando o resultado da primeira resposta/tentativa.
         $xpMeta = recompensas_pontos($pdo, 'meta_concluida');
         $xpCorreta = recompensas_pontos($pdo, 'banco_questao_correta');
@@ -326,6 +351,9 @@ if (!function_exists('recompensas_sincronizar_eventos')) {
         recompensas_try_exec($pdo, "UPDATE usuario_xp_eventos SET xp = {$xpMeta}, atualizado_em = NOW() WHERE origem_tipo = 'meta_diaria' {$usuarioSql}");
         recompensas_try_exec($pdo, "UPDATE usuario_xp_eventos SET xp = CASE WHEN origem_resultado = 'correta' THEN {$xpCorreta} ELSE {$xpErrada} END, atualizado_em = NOW() WHERE origem_tipo = 'banco_questao' {$usuarioSql}");
         recompensas_try_exec($pdo, "UPDATE usuario_xp_eventos SET xp = ({$xpBase} + (quantidade * {$xpAcerto})), atualizado_em = NOW() WHERE origem_tipo = 'simulado' {$usuarioSql}");
+        recompensas_try_exec($pdo, "UPDATE usuario_xp_eventos SET xp = {$xpAula} WHERE origem_tipo = 'aula' {$usuarioSql}");
+        recompensas_try_exec($pdo, "UPDATE usuario_xp_eventos SET xp = ({$xpDes} + quantidade * {$xpDesA}) WHERE origem_tipo = 'desafio' {$usuarioSql}");
+        recompensas_try_exec($pdo, "UPDATE usuario_xp_eventos SET xp = {$xpRed} WHERE origem_tipo = 'redacao' {$usuarioSql}");
     }
 }
 
