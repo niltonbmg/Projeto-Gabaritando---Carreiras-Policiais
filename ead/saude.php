@@ -5,6 +5,7 @@ require_once __DIR__ . '/api/admin-auth.php';
 auth_admin_require_login();
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
 require_once __DIR__ . '/includes/cache-lib.php';
+require_once __DIR__ . '/api/conexao.php';
 
 $pdo = admin_cursos_db();
 $itens = [];
@@ -42,6 +43,13 @@ try {
     $itens[] = ['Desafio do Dia de hoje', true, (int)$d->fetchColumn() ? 'pronto' : 'ainda não montado (o robô monta)'];
 } catch (Throwable $e) {
 }
+// Porta de manutenção (assistente): mostra o que a plataforma enxerga no .env, sem mostrar a chave.
+$tok = gab_env('MANUTENCAO_TOKEN', '');
+$envArq = __DIR__ . '/.env';
+$itens[] = ['Porta de manutenção (assistente)', strlen($tok) >= 32,
+    !is_file($envArq) ? 'não achei o arquivo ' . 'ead/.env' :
+    ($tok === '' ? 'desligada: não há linha MANUTENCAO_TOKEN= no ead/.env' . (preg_match('~manuten~i', (string)@file_get_contents($envArq)) ? ' (existe algo parecido: confira se o nome está exatamente MANUTENCAO_TOKEN, maiúsculo, sem espaço antes do =)' : '') :
+    (strlen($tok) < 32 ? 'desligada: a chave tem ' . strlen($tok) . ' caracteres; precisa de 32 ou mais' : 'ligada (chave com ' . strlen($tok) . ' caracteres)'))];
 $itens[] = ['Senhas (.env) protegidas', true, 'bloqueado pelo .htaccess — confira abrindo /ead/.env (deve dar "Forbidden")'];
 if (($_POST['acao'] ?? '') === 'limpar') {
     gab_cache_apagar('');
