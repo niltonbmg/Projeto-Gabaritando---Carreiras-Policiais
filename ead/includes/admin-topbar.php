@@ -315,10 +315,10 @@ $adminLogadoTopbar = !empty($_SESSION['admin_logado']) || in_array($adminTipoTop
     </a>
 
     <div class="admin-topbar-actions">
-        <button class="admin-topbar-icon-btn" type="button" aria-label="Notificações">
+        <a class="admin-topbar-icon-btn" href="<?php echo htmlspecialchars(auth_admin_url('admin-mensagens.php'), ENT_QUOTES, 'UTF-8'); ?>" aria-label="Mensagens dos alunos" title="Mensagens dos alunos">
             <i data-lucide="bell" aria-hidden="true"></i>
             <span class="admin-topbar-notification-dot" aria-hidden="true"></span>
-        </button>
+        </a>
 
         <div class="admin-user-menu">
             <button class="admin-user-pill" type="button" id="adminUserMenuButton" aria-haspopup="true" aria-expanded="false" title="<?php echo htmlspecialchars($adminNomeTopbar, ENT_QUOTES, 'UTF-8'); ?>">

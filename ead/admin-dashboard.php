@@ -631,7 +631,7 @@ if (!is_file($menuBarInclude)) {
                     </div>
                 </a>
 
-                <article id="mensagens" class="admin-card-numero">
+                <a id="mensagens" class="admin-card-numero" href="admin-mensagens.php" style="text-decoration:none;color:inherit" title="Abrir mensagens dos alunos">
                     <div class="admin-card-topo">
                         <div class="admin-card-icone"><i data-lucide="messages-square" aria-hidden="true"></i></div>
                         <div class="admin-card-label">Mensagens</div>
@@ -640,7 +640,7 @@ if (!is_file($menuBarInclude)) {
                         <strong><?php echo (int)$totalMensagens; ?></strong>
                         <span>Mensagens recebidas</span>
                     </div>
-                </article>
+                </a>
             </section>
 
             <section class="admin-conteudo-grid" aria-label="Conteúdo do dashboard">
@@ -688,7 +688,7 @@ if (!is_file($menuBarInclude)) {
                             <strong><?php echo (int)$totalPedidosPendentes; ?></strong>
                         </div>
 
-                        <div class="admin-lista-item">
+                        <a class="admin-lista-item" href="admin-mensagens.php" style="text-decoration:none;color:inherit">
                             <div class="admin-lista-item-info">
                                 <div class="admin-lista-item-icone"><i data-lucide="mail" aria-hidden="true"></i></div>
                                 <div>
@@ -697,7 +697,7 @@ if (!is_file($menuBarInclude)) {
                                 </div>
                             </div>
                             <strong><?php echo (int)$totalMensagens; ?></strong>
-                        </div>
+                        </a>
                     </div>
                 </article>
             </section>

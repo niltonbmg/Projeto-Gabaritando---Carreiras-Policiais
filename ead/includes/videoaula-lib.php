@@ -101,6 +101,12 @@ if (!function_exists('videoaula_bootstrap')) {
         ], 150);
         $pdo = podcast_reconectar($pdo);
         $roteiro = videoaula_validar(json_decode((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? ''), true));
+        require_once __DIR__ . '/texto-limpo-lib.php';
+        array_walk_recursive($roteiro, static function (&$v): void { // slides e narração sem LaTeX (a voz leria "barra times")
+            if (is_string($v)) {
+                $v = gab_sem_latex($v);
+            }
+        });
 
         foreach (glob(videoaula_pasta() . '/aula-' . $aulaId . '-*') ?: [] as $velho) {
             @unlink($velho);

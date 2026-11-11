@@ -77,7 +77,16 @@ if (!function_exists('rev_bootstrap')) {
         foreach ($ids as $id) {
             ia_fila_adicionar($pdo, 'conferir_pdf', (int)$id);
         }
-        return count($ids);
+        // Videoaula esperando revisão numa aula SEM PDF e sem vídeo: não há material para conferir.
+        // O Antigão escreve a teoria pelo assunto do edital (e grava a videoaula depois).
+        $semPdf = $pdo->query("SELECT f.id, f.aula_id FROM ia_fila f JOIN admin_curso_aulas a ON a.id = f.aula_id
+                                WHERE f.tipo = 'videoaula' AND f.status = 'erro' AND (f.erro LIKE 'Aguardando revisão do PDF%' OR f.erro LIKE 'Aguardando conferência do PDF%')
+                                  AND TRIM(COALESCE(a.pdf_arquivo,'')) = '' AND TRIM(COALESCE(a.video_url,'')) = ''")->fetchAll();
+        foreach ($semPdf as $f) {
+            $pdo->prepare('DELETE FROM ia_fila WHERE id = :id')->execute([':id' => (int)$f['id']]);
+            ia_fila_adicionar($pdo, 'aula_ia', (int)$f['aula_id']);
+        }
+        return count($ids) + count($semPdf);
     }
 
     function rev_gravar(PDO $pdo, int $aulaId, string $pdf, string $status, ?string $assunto, ?string $motivo, string $por): void

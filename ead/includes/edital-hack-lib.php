@@ -313,7 +313,8 @@ if (!function_exists('hack_bootstrap')) {
             throw new RuntimeException('A IA devolveu um texto curto demais.');
         }
         $html = '<p class="aula-ia-aviso"><strong>🤖 Aula preparada pelo Antigão</strong> a partir do edital, enquanto a aula do professor não chega.</p>' . $html;
-        $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :id')->execute([':d' => $html, ':id' => $aulaId]);
+        require_once __DIR__ . '/texto-limpo-lib.php';
+        $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :id')->execute([':d' => gab_sem_latex($html), ':id' => $aulaId]);
         ia_fila_adicionar($pdo, 'videoaula', $aulaId);
         ia_fila_adicionar($pdo, 'podcast', $aulaId);
     }
@@ -525,9 +526,10 @@ if (!function_exists('hack_bootstrap')) {
         $insO = $pdo->prepare('INSERT INTO admin_banco_questao_opcoes (questao_id, letra, texto, correta, ordem, criado_em) VALUES (:q, :l, :t, :c, :o, NOW())');
         $insA = $pdo->prepare('INSERT IGNORE INTO admin_banco_questao_acessos (questao_id, curso_id) VALUES (:q, :c)');
         $dup = $pdo->prepare('SELECT id FROM admin_banco_questoes WHERE materia_topico_id = :t AND LEFT(enunciado, 180) = LEFT(:e, 180) LIMIT 1');
+        require_once __DIR__ . '/texto-limpo-lib.php';
         foreach ($questoes as $q) {
-            $enun = trim((string)($q['enunciado'] ?? ''));
-            $alts = array_values(array_filter(array_map(static fn($a) => trim((string)$a), (array)($q['alternativas'] ?? [])), 'strlen'));
+            $enun = gab_sem_latex(trim((string)($q['enunciado'] ?? '')));
+            $alts = array_values(array_filter(array_map(static fn($a) => gab_sem_latex(trim((string)$a)), (array)($q['alternativas'] ?? [])), 'strlen'));
             $cor = (int)($q['correta'] ?? -1);
             if ($enun === '' || count($alts) < 2 || !isset($alts[$cor])) {
                 continue;
@@ -537,7 +539,7 @@ if (!function_exists('hack_bootstrap')) {
                 continue;
             }
             $fonte = trim((string)($q['fonte'] ?? ''));
-            $exp = trim((string)($q['comentario'] ?? ''));
+            $exp = gab_sem_latex(trim((string)($q['comentario'] ?? '')));
             $exp = ($origem === 'gerada' ? hack_rotulo_gerada($pdo, $bancaRef) . ' ' : ($fonte !== '' ? '📌 Fonte: ' . $fonte . '. ' : '')) . $exp;
             $dif = in_array($q['dificuldade'] ?? '', ['facil', 'medio', 'dificil'], true) ? $q['dificuldade'] : 'medio';
             // Gerada: não é da banca nem de um ano de prova. Vai na "banca" "Antigão · estilo X", sem ano.

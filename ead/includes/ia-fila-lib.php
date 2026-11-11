@@ -138,7 +138,8 @@ if (!function_exists('ia_fila_processar_um')) {
                 $pdo = podcast_reconectar($pdo);
                 // Guarda a versão anterior antes de trocar.
                 $pdo->prepare('INSERT INTO aula_descricao_historico (aula_id, descricao, origem) VALUES (:a, :d, :o)')->execute([':a' => $aulaId, ':d' => $aula['descricao'], ':o' => 'antes_da_ia']);
-                $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :id')->execute([':d' => $html, ':id' => $aulaId]);
+                require_once __DIR__ . '/texto-limpo-lib.php';
+                $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :id')->execute([':d' => gab_sem_latex($html), ':id' => $aulaId]);
                 // Podcast antigo fica desatualizado: refaz com a apostila nova.
                 $pdo->prepare('DELETE FROM aula_podcasts WHERE aula_id = :a')->execute([':a' => $aulaId]);
                 ia_fila_adicionar($pdo, 'podcast', $aulaId);

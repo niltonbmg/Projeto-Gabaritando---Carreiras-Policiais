@@ -53,6 +53,15 @@ if ($hm >= 2350 || $hm < 30) {
     echo "Pausa do pico do Desafio do Dia (23:50 às 00:30).\n";
     exit;
 }
+// Uma vez só: fórmulas em LaTeX ($n$, \times) que a IA já tinha gravado viram texto legível.
+try {
+    require_once __DIR__ . '/includes/texto-limpo-lib.php';
+    if ($n = gab_limpar_latex_existente($pdo)) {
+        echo "Fórmulas corrigidas em $n registro(s)\n";
+    }
+} catch (Throwable $e) {
+    echo 'Fórmulas: ' . $e->getMessage() . "\n";
+}
 // Revisão: aula com PDF novo ou trocado entra na fila de conferência (barato, e destrava as videoaulas).
 try {
     require_once __DIR__ . '/includes/revisao-aulas-lib.php';
