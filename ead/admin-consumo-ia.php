@@ -12,6 +12,14 @@ require_once __DIR__ . '/includes/ia-consumo-lib.php';
 $pdo = admin_cursos_db();
 ia_consumo_bootstrap($pdo);
 $msg = '';
+if (($_POST['acao'] ?? '') === 'controle') {
+    $lig = [];
+    foreach (ia_controle_tipos() as $t => $_) {
+        $lig[$t] = !empty($_POST['lig'][$t]);
+    }
+    ia_controle_salvar(['ligados' => $lig, 'teto' => ['texto' => (int)($_POST['teto_texto'] ?? 0), 'voz' => (int)($_POST['teto_voz'] ?? 0), 'busca' => (int)($_POST['teto_busca'] ?? 0)]]);
+    $msg = 'Controle salvo. Vale a partir da próxima tarefa.';
+}
 if (($_POST['acao'] ?? '') === 'config') {
     $c = ia_consumo_config();
     $c['plano'] = ($_POST['plano'] ?? '') === 'pago' ? 'pago' : 'gratis';
@@ -85,6 +93,24 @@ $menuBarInclude = admin_cursos_get_menubar();
             <div><span>Por aluno ativo (mês)</span><strong><?php echo $alunos ? $brl($mesUsd / $alunos) : '—'; ?></strong><small><?php echo $alunos; ?> alunos ativos</small></div>
         </div>
         <?php if ($lim > 0 && $pct >= 80): ?><p style="color:#b42318;font-weight:700;margin-top:10px">⚠️ <?php echo $pct >= 100 ? 'Limite do mês atingido: a IA está pausada. Aumente o limite abaixo para continuar.' : 'Mais de 80% do limite do mês já foi usado.'; ?></p><?php endif; ?>
+        </section>
+
+        <?php $ctl = ia_controle(); $usoHoje = podcast_uso_resumo(); ?>
+        <section class="admin-panel" id="controle">
+            <h2>🔒 Controle rígido: o que a IA pode fazer</h2>
+            <p style="font-size:13px;color:#4b5563">Desligado = não roda de jeito nenhum (nem quando uma tarefa chama outra sozinha). Teto = máximo de chamadas por dia; ao chegar, a IA para até o dia seguinte, mesmo que o Google ainda deixasse. 0 = sem teto.</p>
+            <form method="post">
+                <input type="hidden" name="acao" value="controle">
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 16px;margin:8px 0">
+                <?php foreach (ia_controle_tipos() as $t => $nome): ?>
+                    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="lig[<?php echo $t; ?>]" value="1" <?php echo $ctl['ligados'][$t] ? 'checked' : ''; ?>> <?php echo admin_esc($nome); ?></label>
+                <?php endforeach; ?>
+                </div>
+                <p class="cs-form">Teto por dia — texto: <input name="teto_texto" value="<?php echo (int)$ctl['teto']['texto']; ?>"> <small>(hoje: <?php echo (int)$usoHoje['texto']['hoje']; ?>)</small>
+                    · voz: <input name="teto_voz" value="<?php echo (int)$ctl['teto']['voz']; ?>"> <small>(hoje: <?php echo (int)$usoHoje['voz']['hoje']; ?>)</small>
+                    · pesquisa: <input name="teto_busca" value="<?php echo (int)$ctl['teto']['busca']; ?>"> <small>(hoje: <?php echo (int)$usoHoje['busca']['hoje']; ?>)</small></p>
+                <button class="admin-btn admin-btn-primary" type="submit">Salvar controle</button>
+            </form>
         </section>
 
         <section class="admin-panel">

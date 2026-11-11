@@ -196,6 +196,50 @@ try {
             }
             man_ok(['aula_id' => $id, 'decisao' => $d]);
             // no break
+        case 'controle': // GET mostra; POST salva {ligados:{tipo:bool}, teto:{texto,voz,busca}}
+            if ($metodo === 'POST') {
+                $atual = ia_controle();
+                $lig = array_replace($atual['ligados'], array_map('boolval', array_intersect_key((array)($entrada['ligados'] ?? []), ia_controle_tipos())));
+                $teto = array_replace($atual['teto'], array_map('intval', array_intersect_key((array)($entrada['teto'] ?? []), $atual['teto'])));
+                ia_controle_salvar(['ligados' => $lig, 'teto' => $teto]);
+            }
+            man_ok(['controle' => ia_controle(), 'uso_hoje' => podcast_uso_resumo()]);
+            // no break
+        case 'titulos_edital': // GET = prévia; POST aplica (ids opcionais)
+            $todos = padrao_titulos_edital($pdo, (int)($entrada['curso_id'] ?? 0));
+            $lista = array_values(array_filter($todos, static fn($t) => $t['confere'])); // os divergentes só com ids explícitos
+            if ($metodo !== 'POST') {
+                man_ok(['total' => count($lista), 'itens' => array_slice($lista, 0, 600), 'assunto_divergente' => array_values(array_filter($todos, static fn($t) => !$t['confere']))]);
+            }
+            if (!empty($entrada['ids'])) {
+                $lista = $todos;
+            }
+            $sel = array_flip(array_map('intval', (array)($entrada['ids'] ?? [])));
+            $up = $pdo->prepare('UPDATE admin_curso_aulas SET titulo = :t WHERE id = :id');
+            $n = 0;
+            foreach ($lista as $t) {
+                if (!$sel || isset($sel[$t['id']])) {
+                    $up->execute([':t' => $t['para'], ':id' => $t['id']]);
+                    $n++;
+                }
+            }
+            man_ok(['alterados' => $n]);
+            // no break
+        case 'provisorias': // GET = pares provisória x real; POST troca (ids das provisórias opcionais)
+            $pares = padrao_provisorias_repetidas($pdo, (int)($entrada['curso_id'] ?? 0));
+            if ($metodo !== 'POST') {
+                man_ok(['total' => count($pares), 'pares' => $pares]);
+            }
+            $sel = array_flip(array_map('intval', (array)($entrada['ids'] ?? [])));
+            $n = 0;
+            foreach ($pares as $p) {
+                if (!$sel || isset($sel[$p['provisoria']['id']])) {
+                    padrao_trocar_provisoria($pdo, $p['provisoria']['id'], $p['real']['id']);
+                    $n++;
+                }
+            }
+            man_ok(['removidas' => $n]);
+            // no break
         case 'fila_tentar_de_novo': // erros comuns (não os que esperam revisão) voltam para a fila
             if ($metodo !== 'POST') {
                 throw new RuntimeException('Use POST.');

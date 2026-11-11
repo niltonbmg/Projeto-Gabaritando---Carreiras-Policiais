@@ -212,6 +212,7 @@ if (!function_exists('podcast_gemini')) {
         require_once __DIR__ . '/ia-consumo-lib.php';
         $cotaTipo = stripos($modelo, 'tts') !== false ? 'voz' : (isset($corpo['tools']) ? 'busca' : 'texto');
         ia_consumo_checar_limite($cotaTipo); // teto de gasto do mês
+        ia_controle_checar_teto($cotaTipo);  // teto diário definido pelo mentor
         if ($cotaTipo !== 'voz') {
             // Regra para todo texto da IA: nada de LaTeX (a plataforma mostra texto simples).
             $regra = 'Nunca use LaTeX nem cifrões ($...$) para matemática. Escreva contas e fórmulas em texto simples com símbolos Unicode: 3 × 2 = 6, x², x₁, a/b, √16, ≤, ≥, π.';

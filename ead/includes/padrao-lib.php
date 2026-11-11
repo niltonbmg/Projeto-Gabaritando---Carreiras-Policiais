@@ -138,10 +138,26 @@ if (!function_exists('padrao_texto_len')) {
             }
         }
         foreach ($grupos as $g) {
-            if (count($g) > 1 && padrao_chave_titulo((string)$g[0]['titulo']) !== '') {
+            if (count($g) < 2 || padrao_chave_titulo((string)$g[0]['titulo']) === '') {
+                continue;
+            }
+            // "2.1, 2.2, 2.3 Sistemas operacionais" são partes, não repetidas. Repetida = provisória do Antigão junto de aula real, ou título idêntico.
+            $prov = count(array_filter($g, static fn($a) => strpos((string)$a['descricao'], 'aula-ia-aviso') !== false && trim((string)$a['video_url']) === '' && trim((string)$a['pdf_arquivo']) === ''));
+            $iguais = count($g) !== count(array_unique(array_map(static fn($a) => mb_strtolower(trim((string)$a['titulo'])), $g)));
+            if (($prov > 0 && $prov < count($g)) || $iguais) {
                 $r['duplicadas'][] = $g;
             }
         }
+        // Títulos: pelo nome do assunto no edital (aulas ligadas a um assunto); as demais só ganham o ajuste de formato.
+        $porEdital = padrao_titulos_edital($pdo, $cursoId);
+        $comAssunto = [];
+        foreach ($aulas as $a) {
+            if (!empty($a['topico_id'])) {
+                $comAssunto[(int)$a['id']] = true;
+            }
+        }
+        $r['assunto_divergente'] = array_values(array_filter($porEdital, static fn($t) => !$t['confere']));
+        $r['titulos'] = array_merge(array_values(array_filter($porEdital, static fn($t) => $t['confere'])), array_values(array_filter($r['titulos'], static fn($t) => !isset($comAssunto[$t['id']]))));
         // Questões
         $q = $pdo->query("SELECT COUNT(*) total,
                                  SUM(COALESCE(CHAR_LENGTH(TRIM(explicacao)),0) < 40) sem_comentario,
@@ -219,5 +235,157 @@ if (!function_exists('padrao_texto_len')) {
             $n = ia_class_varrer($pdo);
         }
         return $n;
+    }
+}
+
+if (!function_exists('padrao_parecido')) {
+    /** Os dois textos falam do mesmo assunto? (palavras significativas em comum; tolera número, acento e caixa) */
+    function padrao_parecido(string $a, string $b): bool
+    {
+        $pal = static function (string $t): array {
+            $t = padrao_chave_titulo(preg_replace('~ · Parte \d+.*$~u', '', $t));
+            $t = preg_replace('~\b(teoria|minima|exercicios|parte|aula|introducao|nocoes|conceitos|basicos|dos|das|para|com|sobre)\b~', ' ', $t);
+            return array_values(array_unique(array_filter(explode(' ', $t), static fn($p) => strlen($p) >= 4)));
+        };
+        $x = $pal($a);
+        $y = $pal($b);
+        if (!$x || !$y) {
+            return false;
+        }
+        $comum = count(array_intersect($x, $y));
+        return $comum / min(count($x), count($y)) >= 0.5;
+    }
+}
+
+if (!function_exists('padrao_titulos_edital')) {
+    /**
+     * Título pelo nome do assunto no edital: "<número da aula> <assunto do edital>".
+     * Mantém o número de ordem que a aula já tinha (ex.: "2.1.") e o foco das partes do Antigão
+     * ("· Parte 2: Sistemas de arquivos"). Se o mesmo assunto tem várias aulas no curso, numera as partes.
+     */
+    function padrao_titulos_edital(PDO $pdo, int $cursoId = 0): array
+    {
+        $f = $cursoId > 0 ? ' AND a.curso_id = ' . $cursoId : '';
+        $aulas = $pdo->query("SELECT a.id, a.curso_id, a.topico_id, a.titulo, a.ordem, a.modulo_id, t.titulo assunto, c.nome curso, COALESCE(m.ordem, 0) mordem,
+                                     (a.descricao LIKE '%aula-ia-aviso%' AND TRIM(COALESCE(a.video_url,'')) = '' AND TRIM(COALESCE(a.pdf_arquivo,'')) = '') provisoria
+                                FROM admin_curso_aulas a JOIN admin_materia_topicos t ON t.id = a.topico_id
+                                LEFT JOIN admin_cursos c ON c.id = a.curso_id LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
+                               WHERE TRIM(COALESCE(t.titulo,'')) <> '' $f ORDER BY a.curso_id, a.topico_id, mordem, a.ordem, a.id")->fetchAll();
+        $grupos = [];
+        foreach ($aulas as $a) {
+            $grupos[$a['curso_id'] . '|' . $a['topico_id']][] = $a;
+        }
+        $saida = [];
+        foreach ($grupos as $g0) {
+            // Só as aulas que falam mesmo do assunto contam como partes; as outras ficam como "assunto pode estar errado".
+            $g = [];
+            $fora = [];
+            foreach ($g0 as $a) {
+                if ($a['provisoria'] || padrao_parecido((string)$a['titulo'], (string)$a['assunto'])) {
+                    $g[] = $a;
+                } else {
+                    $fora[] = $a;
+                }
+            }
+            foreach ($fora as $a) {
+                $saida[] = ['id' => (int)$a['id'], 'curso' => $a['curso'], 'de' => (string)$a['titulo'], 'para' => padrao_titulo((string)$a['assunto']), 'confere' => false];
+            }
+            $n = count($g);
+            foreach ($g as $k => $a) {
+                $atual = trim(preg_replace('~\s+~u', ' ', (string)$a['titulo']));
+                $num = preg_match('~^(\d+(?:\s*\.\s*\d+)*)\s*[.)\-–]?\s*(?=\S)~u', $atual, $m) ? preg_replace('~\s+~', '', $m[1]) . '. ' : '';
+                $assunto = rtrim(trim(preg_replace('~\s+~u', ' ', (string)$a['assunto'])), '. ');
+                if (preg_match('~^\d+(?:\.\d+)*\s*[.)\-–]?\s*~u', $assunto)) {
+                    $num = ''; // o próprio assunto já vem numerado no edital
+                }
+                $assunto = padrao_titulo($assunto); // tira TUDO MAIÚSCULO e ponto final, mantendo siglas
+                $parte = '';
+                if (preg_match('~ · Parte (\d+)(: .+)?$~u', $atual, $mp)) {
+                    $parte = ' · Parte ' . $mp[1] . ($mp[2] ?? '');
+                } elseif ($n > 1) {
+                    $parte = ' · Parte ' . ($k + 1);
+                }
+                $novo = mb_substr($num . $assunto . $parte, 0, 250);
+                if ($novo !== $atual) {
+                    // Só renomeia se o título atual fala do mesmo assunto (a ligação aula-assunto pode ter sido classificada errado).
+                    $confere = $a['provisoria'] || padrao_parecido($atual, (string)$a['assunto']);
+                    $saida[] = ['id' => (int)$a['id'], 'curso' => $a['curso'], 'de' => (string)$a['titulo'], 'para' => $novo, 'confere' => $confere];
+                }
+            }
+        }
+        return $saida;
+    }
+
+    /**
+     * Aulas provisórias do Antigão que repetem uma aula de verdade (mesmo curso e mesmo assunto do edital,
+     * ou mesmo título sem número). Retorna pares [provisoria, real].
+     */
+    function padrao_provisorias_repetidas(PDO $pdo, int $cursoId = 0): array
+    {
+        $f = $cursoId > 0 ? ' AND a.curso_id = ' . $cursoId : '';
+        $todas = $pdo->query("SELECT a.id, a.curso_id, a.topico_id, a.titulo, a.video_url, a.pdf_arquivo, c.nome curso,
+                                     (a.descricao LIKE '%aula-ia-aviso%' AND TRIM(COALESCE(a.video_url,'')) = '' AND TRIM(COALESCE(a.pdf_arquivo,'')) = '') provisoria
+                                FROM admin_curso_aulas a LEFT JOIN admin_cursos c ON c.id = a.curso_id WHERE 1=1 $f")->fetchAll();
+        $reaisPorTopico = [];
+        $reaisPorTitulo = [];
+        foreach ($todas as $a) {
+            if (!$a['provisoria'] && (trim((string)$a['video_url']) !== '' || trim((string)$a['pdf_arquivo']) !== '')) {
+                if ($a['topico_id']) {
+                    $reaisPorTopico[$a['curso_id'] . '|' . $a['topico_id']][] = $a;
+                }
+                $reaisPorTitulo[$a['curso_id'] . '|' . padrao_chave_titulo((string)$a['titulo'])][] = $a;
+            }
+        }
+        $pares = [];
+        foreach ($todas as $a) {
+            if (!$a['provisoria']) {
+                continue;
+            }
+            $base = preg_replace('~ · Parte \d+.*$~u', '', (string)$a['titulo']);
+            $real = $reaisPorTitulo[$a['curso_id'] . '|' . padrao_chave_titulo($base)][0] ?? null;
+            if (!$real) {
+                // mesmo assunto do edital E título parecido (a aula real pode estar ligada ao assunto errado)
+                foreach ($reaisPorTopico[$a['curso_id'] . '|' . $a['topico_id']] ?? [] as $cand) {
+                    if (padrao_parecido($base, (string)$cand['titulo'])) {
+                        $real = $cand;
+                        break;
+                    }
+                }
+            }
+            if ($real) {
+                $pares[] = ['provisoria' => ['id' => (int)$a['id'], 'titulo' => $a['titulo']], 'real' => ['id' => (int)$real['id'], 'titulo' => $real['titulo'], 'video' => trim((string)$real['video_url']) !== '', 'pdf' => trim((string)$real['pdf_arquivo']) !== ''], 'curso' => $a['curso']];
+            }
+        }
+        return $pares;
+    }
+
+    /**
+     * Apaga a provisória e passa para a aula real tudo o que é do aluno (progresso, marcações, respostas, plano, fórum).
+     * O que é gerado pela IA da provisória (videoaula, podcast, fila, revisão) é descartado.
+     */
+    function padrao_trocar_provisoria(PDO $pdo, int $provId, int $realId): void
+    {
+        static $tabelas = null;
+        if ($tabelas === null) {
+            $tabelas = $pdo->query("SELECT DISTINCT table_name FROM information_schema.columns WHERE table_schema = DATABASE() AND column_name = 'aula_id'")->fetchAll(PDO::FETCH_COLUMN);
+        }
+        $gerados = ['aula_videoaulas', 'aula_podcasts', 'ia_fila', 'aula_revisao', 'aula_transcricoes', 'aula_descricao_historico'];
+        $pdo->beginTransaction();
+        try {
+            foreach ($tabelas as $t) {
+                $t = preg_replace('~[^a-z0-9_]~i', '', (string)$t);
+                if (in_array($t, $gerados, true)) {
+                    $pdo->prepare("DELETE FROM `$t` WHERE aula_id = :o")->execute([':o' => $provId]);
+                } else {
+                    $pdo->prepare("UPDATE IGNORE `$t` SET aula_id = :n WHERE aula_id = :o")->execute([':n' => $realId, ':o' => $provId]);
+                    $pdo->prepare("DELETE FROM `$t` WHERE aula_id = :o")->execute([':o' => $provId]); // sobra só quando o aluno já tinha o mesmo registro na real
+                }
+            }
+            $pdo->prepare('DELETE FROM admin_curso_aulas WHERE id = :o')->execute([':o' => $provId]);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }

@@ -240,4 +240,55 @@ if (!function_exists('ia_consumo_bootstrap')) {
             throw $e;
         }
     }
+
+    // ---------- CONTROLE RÍGIDO: o mentor decide o que a IA pode fazer e quanto por dia ----------
+    function ia_controle_tipos(): array
+    {
+        return ['videoaula' => 'Videoaulas do Antigão', 'aula_ia' => 'Teoria escrita pelo Antigão', 'apostila' => 'Apostila (teoria a partir do vídeo/PDF)',
+            'conferir_pdf' => 'Conferência dos PDFs', 'questoes' => 'Questões (busca e criação)', 'redacao' => 'Leitura de redações',
+            'classificar' => 'Classificação automática por assunto', 'podcast' => 'Podcasts (extra)', 'edital' => 'Cadastro do concurso (edital, provas, plano)'];
+    }
+
+    function ia_controle(): array
+    {
+        $c = json_decode((string)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-controle.json'), true);
+        $c = is_array($c) ? $c : [];
+        $lig = [];
+        foreach (ia_controle_tipos() as $t => $_) {
+            $lig[$t] = array_key_exists($t, (array)($c['ligados'] ?? [])) ? (bool)$c['ligados'][$t] : true;
+        }
+        return ['ligados' => $lig, 'teto' => ['texto' => max(0, (int)($c['teto']['texto'] ?? 0)), 'voz' => max(0, (int)($c['teto']['voz'] ?? 0)), 'busca' => max(0, (int)($c['teto']['busca'] ?? 0))]];
+    }
+
+    function ia_controle_salvar(array $c): void
+    {
+        @file_put_contents(dirname(__DIR__) . '/uploads/.ia-controle.json', json_encode($c, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+
+    function ia_controle_ligado(string $tipo): bool
+    {
+        return ia_controle()['ligados'][$tipo] ?? true;
+    }
+
+    /** Tipos desligados, para a fila pular. */
+    function ia_controle_desligados(): array
+    {
+        return array_keys(array_filter(ia_controle()['ligados'], static fn($v) => !$v));
+    }
+
+    /** Teto diário (0 = sem teto). Lança a mesma exceção da cota do Google: a tarefa volta para a fila e espera o dia seguinte. */
+    function ia_controle_checar_teto(string $cota): void
+    {
+        $teto = ia_controle()['teto'][$cota] ?? 0;
+        if ($teto <= 0 || !function_exists('podcast_uso_resumo')) {
+            return;
+        }
+        $hoje = (int)(podcast_uso_resumo()[$cota]['hoje'] ?? 0);
+        if ($hoje >= $teto && class_exists('GeminiCotaException')) {
+            $e = new GeminiCotaException("Teto diário definido pelo mentor atingido ($hoje de $teto chamadas de $cota). Volta amanhã. [cota:$cota]");
+            $e->tipo = $cota;
+            $e->diario = true;
+            throw $e;
+        }
+    }
 }

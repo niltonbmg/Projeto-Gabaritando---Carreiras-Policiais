@@ -131,6 +131,9 @@ if (!function_exists('ia_class_processar_um')) {
     function ia_class_processar_um(PDO $pdo): ?array
     {
         require_once __DIR__ . '/ia-consumo-lib.php';
+        if (!ia_controle_ligado('classificar')) {
+            return null; // desligado no Controle rígido
+        }
         ia_consumo_inicio('classificar');
         ia_class_bootstrap($pdo);
         $pdo = podcast_reconectar($pdo);

@@ -115,7 +115,7 @@ $menuBarInclude = admin_cursos_get_menubar();
 
         <section class="admin-panel">
             <h2>✏️ Títulos fora do padrão (<?php echo count($aud['titulos']); ?>)</h2>
-            <p style="font-size:13px;color:#4b5563">Padrão: "7.2. Sintaxe - termos acessórios da oração" (número com ponto e espaço, sem TUDO MAIÚSCULO, sem ponto no fim; siglas como PM e CBMBA ficam). Desmarque o que não quiser mudar. Não usa IA.</p>
+            <p style="font-size:13px;color:#4b5563">Padrão: o nome do assunto no edital, mantendo o número de ordem da aula (ex.: "2.1. Convenção Americana sobre Direitos Humanos"). Várias aulas do mesmo assunto viram "· Parte 1, 2…". Desmarque o que não quiser mudar. Não usa IA.</p>
             <?php if ($aud['titulos']): ?>
             <form method="post">
                 <input type="hidden" name="acao" value="padrao_titulos"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">

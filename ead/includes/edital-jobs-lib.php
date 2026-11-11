@@ -65,6 +65,10 @@ if (!function_exists('job_bootstrap')) {
     /** Pega a próxima tarefa (de um concurso ou de todos) e executa. Retorna o job ou null. */
     function job_rodar_proximo(PDO $pdo, int $concursoId = 0): ?array
     {
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        if (!ia_controle_ligado('edital')) {
+            return null; // desligado no Controle rígido
+        }
         job_bootstrap($pdo);
         // Tarefa "rodando" há mais de 6 min travou: volta para a fila (até 3 tentativas).
         $pdo->exec("UPDATE edital_jobs SET status = IF(tentativas >= 3, 'erro', 'pendente'), mensagem = IF(tentativas >= 3, 'A IA não respondeu a tempo. Tente de novo.', mensagem)

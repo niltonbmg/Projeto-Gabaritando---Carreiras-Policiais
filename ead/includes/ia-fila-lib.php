@@ -90,6 +90,13 @@ if (!function_exists('ia_fila_processar_um')) {
         if (ia_fila_pausa_busca()) {
             $semVoz .= " AND tipo <> 'questoes'"; // sem pesquisa na internet, questões esperam (não criamos antes de buscar as reais)
         }
+        // Controle rígido: tipos desligados pelo mentor nunca rodam (nem quando uma tarefa encadeia outra).
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        foreach (ia_controle_desligados() as $tDesl) {
+            if ($tDesl !== 'classificar' && $tDesl !== 'edital') {
+                $semVoz .= ' AND tipo <> ' . $pdo->quote($tDesl);
+            }
+        }
         $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','apostila','aula_ia','videoaula','questoes','podcast'";
         // Dentro de cada tipo, segue a ordem do curso (módulo e aula): a cota grátis vai primeiro para o que o aluno vê primeiro.
         $item = $pdo->query("SELECT f.* FROM ia_fila f
