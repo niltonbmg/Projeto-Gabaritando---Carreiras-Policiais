@@ -1118,7 +1118,7 @@ $pdfAtual = $aulaAtual ? aulas_pdf_do_item($aulaAtual) : ['arquivo' => '', 'nome
 // Revisão: PDF marcado como suspeito (de outro assunto) não aparece para o aluno até o mentor resolver.
 $pdfEmRevisao = false;
 $reporteEnviado = !empty($_GET['reportado']);
-if ($aulaAtual && $pdfAtual['arquivo'] !== '' && function_exists('db')) {
+if ($aulaAtual && $pdfAtual['arquivo'] !== '' && function_exists('db') && is_file(__DIR__ . '/includes/revisao-aulas-lib.php')) {
     try {
         require_once __DIR__ . '/includes/revisao-aulas-lib.php';
         if (rev_status(db(), (int)$aulaAtual['id'], (string)($aulaAtual['pdf_arquivo'] ?? ''))['status'] === 'suspeita') {

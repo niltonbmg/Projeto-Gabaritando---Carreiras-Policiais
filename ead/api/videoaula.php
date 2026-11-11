@@ -56,7 +56,7 @@ try {
         }
     }
     // Revisão: não gera videoaula de aula cujo PDF ainda não foi conferido (ou está suspeito).
-    if ((string)($e['acao'] ?? '') === 'iniciar') {
+    if ((string)($e['acao'] ?? '') === 'iniciar' && is_file(__DIR__ . '/../includes/revisao-aulas-lib.php')) {
         require_once __DIR__ . '/../includes/revisao-aulas-lib.php';
         if (!rev_liberada($pdo, $aulaId)) {
             require_once __DIR__ . '/../includes/ia-fila-lib.php';
