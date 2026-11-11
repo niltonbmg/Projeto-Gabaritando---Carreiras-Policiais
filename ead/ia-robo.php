@@ -32,6 +32,7 @@ if ($trava === false || !flock($trava, LOCK_EX | LOCK_NB)) {
 }
 
 $inicio = time();
+@touch(__DIR__ . '/uploads/.ia-robo-ultima'); // sinal de vida para a página Saúde da plataforma
 $pdo = db();
 // Desafio do Dia já pronto quando o primeiro aluno abrir (e a mensagem do WhatsApp também).
 try {

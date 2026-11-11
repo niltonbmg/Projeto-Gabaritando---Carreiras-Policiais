@@ -16,7 +16,10 @@ try {
 } catch (Throwable $e) {
     $itens[] = ['Banco de dados', false, 'fora do ar'];
 }
-$robo = __DIR__ . '/uploads/.ia-robo.lock';
+$robo = __DIR__ . '/uploads/.ia-robo-ultima';
+if (!is_file($robo)) {
+    $robo = __DIR__ . '/uploads/.ia-robo.lock';
+}
 $minRobo = is_file($robo) ? (int)floor((time() - filemtime($robo)) / 60) : -1;
 $itens[] = ['Robô da IA (cron a cada 5 min)', $minRobo >= 0 && $minRobo <= 15, $minRobo < 0 ? 'nunca rodou' : "última execução há {$minRobo} min"];
 try {
@@ -30,7 +33,8 @@ foreach (['voz' => '.ia-pausa-voz', 'pesquisa' => '.ia-pausa-busca', 'texto' => 
     $itens[] = ['Cota do Google · ' . $n, !$ativa, $ativa ? 'esgotada, volta às 05:00' : 'disponível'];
 }
 $livre = @disk_free_space(__DIR__);
-$itens[] = ['Espaço em disco', $livre === false || $livre > 2e9, $livre === false ? 'não informado' : round($livre / 1e9, 1) . ' GB livres'];
+// Em hospedagem compartilhada o servidor mostra o disco da máquina inteira; o limite real é o do plano.
+$itens[] = ['Espaço em disco', true, ($livre !== false && $livre < 2e11) ? round($livre / 1e9, 1) . ' GB livres' : 'limite do plano: 50 GB (veja o uso no painel da Hostinger)'];
 try {
     $hoje = date('Y-m-d');
     $d = $pdo->prepare('SELECT COUNT(*) FROM desafios WHERE data = :d');
