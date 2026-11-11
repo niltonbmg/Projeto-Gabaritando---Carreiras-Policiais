@@ -48,6 +48,7 @@
         '<p style="margin:0 0 6px">≈ ' + Number(e.tokens).toLocaleString('pt-BR') + ' tokens · ' + esc(e.chamadas.join(' · ')) + '</p>' +
         '<details style="margin:6px 0;color:#444"><summary style="cursor:pointer">Como calculei</summary><ul style="margin:6px 0;padding-left:18px">' + e.linhas.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' +
         '<p style="margin:4px 0;font-size:12px">O gasto real (tokens que o Google cobra) é medido e mostrado quando terminar, em Consumo da IA.</p></details>' +
+        (e.gratis ? '<p style="margin:6px 0 0;font-size:13px;color:#175cd3">ℹ️ Plano grátis: nada é cobrado; o valor é o que custaria no pago. O limite real é a cota diária do Google.</p>' : '') +
         '<p style="margin:6px 0 0;font-size:13px;color:#555">Gasto do mês até agora: ' + brl(e.mes_brl) + (e.limite > 0 ? ' de ' + brl(e.limite) : '') + '</p>' +
         (e.estoura ? '<p style="margin:8px 0 0;color:#b42318;font-weight:700">⚠️ Pode passar do limite do mês. Ao chegar no limite, a IA pausa sozinha.</p>' : '');
       dialogo(h, 'Confirmar e executar', enviar);

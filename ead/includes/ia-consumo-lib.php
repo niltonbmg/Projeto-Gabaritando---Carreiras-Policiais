@@ -55,6 +55,7 @@ if (!function_exists('ia_consumo_bootstrap')) {
     function ia_consumo_config(): array
     {
         $padrao = [
+            'plano' => 'gratis',           // 'gratis' = Google não cobra (valores são só "quanto custaria"); 'pago' = cobrança real
             'dolar' => 5.50,
             'limite_mensal_brl' => 0,      // 0 = sem limite
             'precos' => [
@@ -222,8 +223,8 @@ if (!function_exists('ia_consumo_bootstrap')) {
     function ia_consumo_checar_limite(string $cota): void
     {
         $lim = (float)ia_consumo_config()['limite_mensal_brl'];
-        if ($lim <= 0) {
-            return;
+        if ($lim <= 0 || ia_consumo_config()['plano'] !== 'pago') {
+            return; // no plano grátis não há cobrança: quem limita é a cota diária do Google
         }
         static $ultimo = null;
         static $quando = 0;

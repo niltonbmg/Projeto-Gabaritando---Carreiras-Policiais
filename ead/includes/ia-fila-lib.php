@@ -91,8 +91,12 @@ if (!function_exists('ia_fila_processar_um')) {
             $semVoz .= " AND tipo <> 'questoes'"; // sem pesquisa na internet, questões esperam (não criamos antes de buscar as reais)
         }
         $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','apostila','aula_ia','videoaula','questoes','podcast'";
-        $item = $pdo->query("SELECT * FROM ia_fila WHERE (status = 'pendente' OR (status = 'erro' AND tentativas < 3 AND atualizado_em < NOW() - INTERVAL 20 MINUTE))$semVoz
-                              ORDER BY FIELD(tipo, $ordem), id ASC LIMIT 1")->fetch();
+        // Dentro de cada tipo, segue a ordem do curso (módulo e aula): a cota grátis vai primeiro para o que o aluno vê primeiro.
+        $item = $pdo->query("SELECT f.* FROM ia_fila f
+                               LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id AND f.tipo NOT IN ('questoes','redacao')
+                               LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
+                              WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
+                              ORDER BY FIELD(f.tipo, $ordem), COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch();
         if (!$item) {
             return null;
         }

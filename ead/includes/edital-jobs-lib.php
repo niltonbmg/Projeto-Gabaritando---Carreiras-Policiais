@@ -437,8 +437,8 @@ if (!function_exists('job_bootstrap')) {
         $cursos->execute([':c' => $concursoId]);
         $cIds = array_map('intval', $cursos->fetchAll(PDO::FETCH_COLUMN)) ?: [0];
         $porTipo = [];
-        foreach ($pdo->query("SELECT f.tipo, f.status, COUNT(*) n FROM ia_fila f JOIN admin_curso_aulas a ON a.id = f.aula_id
-                               WHERE f.tipo IN ('aula_ia','apostila','videoaula','podcast') AND a.curso_id IN (" . implode(',', $cIds) . ") GROUP BY f.tipo, f.status") as $r) {
+        foreach ($pdo->query("SELECT f.tipo, IF(f.status = 'erro' AND f.erro LIKE 'Aguardando%', 'revisao', f.status) status, COUNT(*) n FROM ia_fila f JOIN admin_curso_aulas a ON a.id = f.aula_id
+                               WHERE f.tipo IN ('aula_ia','apostila','videoaula','podcast') AND a.curso_id IN (" . implode(',', $cIds) . ") GROUP BY f.tipo, 2") as $r) {
             $porTipo[$r['tipo']][$r['status']] = (int)$r['n'];
         }
         // Últimos itens prontos (para o mentor pré-visualizar na hora).
@@ -456,7 +456,7 @@ if (!function_exists('job_bootstrap')) {
             'consumo_mes' => (static function () use ($pdo): array {
                 require_once __DIR__ . '/ia-consumo-lib.php';
                 $c = ia_consumo_config();
-                return ['brl' => ia_consumo_mes_brl($pdo), 'limite' => (float)$c['limite_mensal_brl']];
+                return ['brl' => ia_consumo_mes_brl($pdo), 'limite' => (float)$c['limite_mensal_brl'], 'gratis' => $c['plano'] !== 'pago'];
             })(),
             'agora' => job_agora_ler(),
             'uso' => podcast_uso_resumo(),

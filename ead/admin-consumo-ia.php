@@ -14,6 +14,7 @@ ia_consumo_bootstrap($pdo);
 $msg = '';
 if (($_POST['acao'] ?? '') === 'config') {
     $c = ia_consumo_config();
+    $c['plano'] = ($_POST['plano'] ?? '') === 'pago' ? 'pago' : 'gratis';
     $c['dolar'] = max(0.01, (float)str_replace(',', '.', (string)($_POST['dolar'] ?? $c['dolar'])));
     $c['limite_mensal_brl'] = max(0, (float)str_replace(',', '.', (string)($_POST['limite'] ?? 0)));
     $c['busca_por_chamada'] = max(0, (float)str_replace(',', '.', (string)($_POST['busca'] ?? 0)));
@@ -75,6 +76,7 @@ $menuBarInclude = admin_cursos_get_menubar();
             <div class="admin-page-heading"><h1>💰 Consumo da IA</h1><p>Valores medidos com os tokens que o próprio Google informa em cada resposta. Os preços abaixo vêm da tabela oficial: confira em ai.google.dev/pricing e ajuste se mudar.</p></div>
         </section>
         <?php if ($msg !== ''): ?><div class="admin-alert admin-alert-success"><?php echo admin_esc($msg); ?></div><?php endif; ?>
+        <?php if ($cfg['plano'] !== 'pago'): ?><div class="admin-alert" style="background:#eef6ff;border:1px solid #b2ddff;color:#175cd3">ℹ️ <strong>Plano grátis do Google: nada está sendo cobrado.</strong> Os valores abaixo mostram quanto <em>custaria</em> no plano pago, para você planejar. Quando ativar o pago, marque "Plano pago" lá embaixo e o limite mensal passa a valer.</div><?php endif; ?>
         <section class="admin-panel"><div class="cs-nums">
             <div><span>Hoje</span><strong><?php echo $brl($hoje['u']); ?></strong><small><?php echo $num($hoje['t']); ?> tokens · <?php echo (int)$hoje['c']; ?> chamadas</small></div>
             <div><span>Últimos 7 dias</span><strong><?php echo $brl($semana); ?></strong></div>
@@ -122,7 +124,8 @@ $menuBarInclude = admin_cursos_get_menubar();
             <h2>Limite, dólar e preços</h2>
             <form method="post" class="cs-form">
                 <input type="hidden" name="acao" value="config">
-                <p>Limite de gasto por mês (R$, 0 = sem limite): <input name="limite" value="<?php echo admin_esc((string)$cfg['limite_mensal_brl']); ?>"> · Dólar (R$): <input name="dolar" value="<?php echo admin_esc((string)$cfg['dolar']); ?>"></p>
+                <p>Plano do Google: <label><input type="radio" name="plano" value="gratis" style="width:auto" <?php echo $cfg['plano'] !== 'pago' ? 'checked' : ''; ?>> Grátis (não cobra; valores são simulação)</label> <label><input type="radio" name="plano" value="pago" style="width:auto" <?php echo $cfg['plano'] === 'pago' ? 'checked' : ''; ?>> Pago (cobrança real)</label></p>
+                <p>Limite de gasto por mês (R$, 0 = sem limite; vale no plano pago): <input name="limite" value="<?php echo admin_esc((string)$cfg['limite_mensal_brl']); ?>"> · Dólar (R$): <input name="dolar" value="<?php echo admin_esc((string)$cfg['dolar']); ?>"></p>
                 <table><tr><th>Modelo (nome contém)</th><th>Tipo</th><th class="n">US$ por 1 milhão de tokens de entrada</th><th class="n">US$ por 1 milhão de tokens de saída</th></tr>
                 <?php foreach ($cfg['precos'] as $k => $p): ?>
                     <tr><td><?php echo admin_esc($p['contem'] === '' ? '(qualquer outro)' : $p['contem']); ?></td><td><?php echo admin_esc((string)($p['rotulo'] ?? '')); ?></td>

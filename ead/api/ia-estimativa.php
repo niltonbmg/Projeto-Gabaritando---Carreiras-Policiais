@@ -148,12 +148,13 @@ foreach (['texto' => 'texto', 'voz' => 'voz', 'busca' => 'pesquisa'] as $k => $n
 }
 echo json_encode([
     'ia' => true,
+    'gratis' => $cfg['plano'] !== 'pago',
     'vazio' => !$linhas,
     'linhas' => $linhas,
     'tokens' => $tot['tokens'],
     'chamadas' => $gratis,
     'brl' => round($tot['brl'], 4), 'brl_min' => round($tot['brl_min'], 4), 'brl_max' => round($tot['brl_max'], 4),
     'mes_brl' => $mes, 'limite' => (float)$cfg['limite_mensal_brl'],
-    'estoura' => (float)$cfg['limite_mensal_brl'] > 0 && $mes + $tot['brl_max'] > (float)$cfg['limite_mensal_brl'],
+    'estoura' => $cfg['plano'] === 'pago' && (float)$cfg['limite_mensal_brl'] > 0 && $mes + $tot['brl_max'] > (float)$cfg['limite_mensal_brl'],
     'renova' => (string)($uso['renova'] ?? ''),
 ], JSON_UNESCAPED_UNICODE);
