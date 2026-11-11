@@ -102,8 +102,9 @@ if (!function_exists('ia_fila_processar_um')) {
         $item = $pdo->query("SELECT f.* FROM ia_fila f
                                LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id AND f.tipo NOT IN ('questoes','redacao')
                                LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
+                               LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
                               WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
-                              ORDER BY FIELD(f.tipo, $ordem), COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch();
+                              ORDER BY FIELD(f.tipo, $ordem), COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch(); // curso com mais alunos primeiro
         if (!$item) {
             return null;
         }
@@ -138,7 +139,8 @@ if (!function_exists('ia_fila_processar_um')) {
                 if (!$aula) {
                     throw new RuntimeException('Aula não existe mais.');
                 }
-                $html = apostila_gerar($pdo, (int)$aula['curso_id'], (int)$aula['modulo_id'], [
+                require_once __DIR__ . '/reaproveitar-lib.php';
+                $html = ia_reaproveitar_texto($pdo, $aulaId, 'apostila') ? null : apostila_gerar($pdo, (int)$aula['curso_id'], (int)$aula['modulo_id'], [
                     'titulo' => $aula['titulo'],
                     'descricao_atual' => $aula['descricao'],
                     'video_url' => $aula['video_url'],
@@ -147,10 +149,12 @@ if (!function_exists('ia_fila_processar_um')) {
                     'timeout' => 170,
                 ]);
                 $pdo = podcast_reconectar($pdo);
-                // Guarda a versão anterior antes de trocar.
-                $pdo->prepare('INSERT INTO aula_descricao_historico (aula_id, descricao, origem) VALUES (:a, :d, :o)')->execute([':a' => $aulaId, ':d' => $aula['descricao'], ':o' => 'antes_da_ia']);
-                require_once __DIR__ . '/texto-limpo-lib.php';
-                $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :id')->execute([':d' => gab_sem_latex($html), ':id' => $aulaId]);
+                if ($html !== null) { // null = texto copiado de outra aula com o mesmo material
+                    // Guarda a versão anterior antes de trocar.
+                    $pdo->prepare('INSERT INTO aula_descricao_historico (aula_id, descricao, origem) VALUES (:a, :d, :o)')->execute([':a' => $aulaId, ':d' => $aula['descricao'], ':o' => 'antes_da_ia']);
+                    require_once __DIR__ . '/texto-limpo-lib.php';
+                    $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :id')->execute([':d' => gab_sem_latex($html), ':id' => $aulaId]);
+                }
                 // Podcast antigo fica desatualizado: refaz com a apostila nova.
                 $pdo->prepare('DELETE FROM aula_podcasts WHERE aula_id = :a')->execute([':a' => $aulaId]);
                 ia_fila_adicionar($pdo, 'podcast', $aulaId);
@@ -188,8 +192,13 @@ if (!function_exists('ia_fila_processar_um')) {
                     }
                 }
             }
-            $pdo->prepare("UPDATE ia_fila SET status = 'feito', erro = NULL, consumo = :c WHERE id = :id")->execute([':c' => ia_consumo_da_execucao($pdo, $exec)['resumo'], ':id' => $id]);
-            return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => true, 'consumo' => ia_consumo_da_execucao($pdo, $exec)['resumo']];
+            $gasto = ia_consumo_da_execucao($pdo, $exec)['resumo'];
+            if (!empty($GLOBALS['gab_reaproveitado']) && ia_consumo_da_execucao($pdo, $exec)['chamadas'] === 0) {
+                $gasto = 'reaproveitada da aula ' . (int)$GLOBALS['gab_reaproveitado']['de'] . ' (mesmo material) · R$ 0';
+            }
+            unset($GLOBALS['gab_reaproveitado']);
+            $pdo->prepare("UPDATE ia_fila SET status = 'feito', erro = NULL, consumo = :c WHERE id = :id")->execute([':c' => $gasto, ':id' => $id]);
+            return ['tipo' => $item['tipo'], 'aula_id' => $aulaId, 'ok' => true, 'consumo' => $gasto];
         } catch (Throwable $e) {
             if (gemini_cota_pausar($e, in_array($item['tipo'], ['videoaula', 'podcast'], true) ? 'voz' : 'texto')) {
                 // Não é erro da tarefa: é a cota do Google. Volta para a fila sem gastar tentativa; a pausa certa já foi gravada.

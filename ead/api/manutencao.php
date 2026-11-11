@@ -240,6 +240,19 @@ try {
             }
             man_ok(['removidas' => $n]);
             // no break
+        case 'perfis': // carreira|nível|estado de cada curso (reaproveitamento só entre iguais). POST {curso_id, carreira, nivel, uf}
+            require_once dirname(__DIR__) . '/includes/reaproveitar-lib.php';
+            if ($metodo === 'POST') {
+                curso_perfil($pdo, 0); // garante a tabela
+                $pdo->prepare('REPLACE INTO curso_perfil (curso_id, carreira, nivel, uf) VALUES (:c, :ca, :n, :u)')
+                    ->execute([':c' => (int)($entrada['curso_id'] ?? 0), ':ca' => mb_substr((string)($entrada['carreira'] ?? ''), 0, 20), ':n' => mb_substr((string)($entrada['nivel'] ?? ''), 0, 20), ':u' => strtoupper(mb_substr((string)($entrada['uf'] ?? ''), 0, 2))]);
+            }
+            $lista = [];
+            foreach ($pdo->query('SELECT id, nome FROM admin_cursos ORDER BY nome') as $c) {
+                $lista[] = ['curso_id' => (int)$c['id'], 'curso' => $c['nome'], 'perfil' => curso_perfil($pdo, (int)$c['id'])];
+            }
+            man_ok(['cursos' => $lista]);
+            // no break
         case 'fila_tentar_de_novo': // erros comuns (não os que esperam revisão) voltam para a fila
             if ($metodo !== 'POST') {
                 throw new RuntimeException('Use POST.');

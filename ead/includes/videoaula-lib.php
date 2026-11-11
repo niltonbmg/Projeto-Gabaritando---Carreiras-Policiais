@@ -75,6 +75,11 @@ if (!function_exists('videoaula_bootstrap')) {
         if (!$refazer && $atual && $atual['status'] === 'gerando' && $atual['roteiro'] && strtotime((string)$atual['atualizado_em']) > time() - 300) {
             return ['status' => 'gerando', 'partes' => (int)$atual['partes'], 'partes_ok' => (int)$atual['partes_ok']];
         }
+        // Mesmo material em outro curso já tem videoaula pronta no padrão novo: copia, sem gastar IA.
+        require_once __DIR__ . '/reaproveitar-lib.php';
+        if (!$refazer && ia_reaproveitar_videoaula($pdo, $aulaId)) {
+            return videoaula_status($pdo, $aulaId);
+        }
 
         $aula = videoaula_material($pdo, $aulaId);
         $prompt = "Você é professor e designer didático do Projeto Gabaritando, cursinho para carreiras policiais e militares da Bahia.\n"
