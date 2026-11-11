@@ -9,6 +9,7 @@ $currentAdminSlug = preg_replace('/\.php$/', '', $currentAdminPage);
 // Menu em grupos (ver includes/menu-bar.php). O grupo da página atual abre sozinho.
 $adminMenuGrupos = [
     ['titulo' => '', 'itens' => [
+        ['label' => 'Comece aqui', 'href' => 'admin-inicio.php', 'icon' => 'house', 'pages' => ['admin-inicio.php', 'admin-inicio']],
         ['label' => 'Dashboard', 'href' => 'admin-dashboard.php', 'icon' => 'layout-dashboard', 'pages' => ['admin-dashboard.php', 'admin-dashboard']],
     ]],
     ['titulo' => 'Método META', 'itens' => [
