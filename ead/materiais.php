@@ -20,22 +20,7 @@ $nomeUsuario = $usuarioLogado && !empty($_SESSION['usuario']['nome'])
     ? (string) $_SESSION['usuario']['nome']
     : 'Visitante';
 
-$menuItens = [
-    ['titulo' => 'Materiais', 'link' => 'materiais.php', 'externo' => false],
-    ['titulo' => 'Agenda', 'link' => 'agenda.php', 'externo' => false],
-    ['titulo' => 'Simulados', 'link' => 'simulados.php', 'externo' => false],
-    ['titulo' => 'Banco de questões', 'link' => 'banco-questoes.php', 'externo' => false],
-    ['titulo' => 'Dashboard de questões', 'link' => 'dashboard-questoes.php', 'externo' => false],
-    ['titulo' => 'Cronograma', 'link' => 'cronograma.php', 'externo' => false],
-    ['titulo' => 'Fórum de dúvidas', 'link' => 'forum-duvidas.php', 'externo' => false],
-    ['titulo' => 'Propostas de redação', 'link' => 'propostas-redacao.php', 'externo' => false],
-    ['titulo' => 'Redações', 'link' => 'redacoes.php', 'externo' => false],
-    ['titulo' => 'Cadernos', 'link' => 'cadernos.php', 'externo' => false],
-    ['titulo' => 'Flashcards', 'link' => 'flashcards.php', 'externo' => false],
-    ['titulo' => 'Recompensas', 'link' => 'recompensas.php', 'externo' => false],
-    ['titulo' => 'QUEM SOMOS', 'link' => 'https://www.instagram.com/projeto.gabaritando/', 'externo' => true],
-    ['titulo' => 'ANTIGÃO IA', 'link' => 'https://typebotapi.adscompany.app.br/antigao-38a8ulb', 'externo' => true],
-];
+// Menu do aluno: o mesmo de todas as páginas (includes/barra-superior.php).
 
 if (!function_exists('materiais_esc')) {
     function materiais_esc($texto): string

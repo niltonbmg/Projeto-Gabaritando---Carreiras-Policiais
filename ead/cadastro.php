@@ -12,7 +12,7 @@ function e(string $texto): string
     return htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
 }
 
-function cadastro_safe_redirect(string $redirect, string $default = 'dashboard.php'): string
+function cadastro_safe_redirect(string $redirect, string $default = 'meu-plano.php'): string
 {
     $redirect = trim(rawurldecode($redirect));
     $default = trim($default) !== '' ? $default : 'dashboard.php';
@@ -58,7 +58,7 @@ function cadastro_safe_redirect(string $redirect, string $default = 'dashboard.p
 
 $erro = (string)($_SESSION['cadastro_erro'] ?? '');
 $old = $_SESSION['cadastro_old'] ?? [];
-$redirect = cadastro_safe_redirect((string)($_GET['redirect'] ?? $old['redirect'] ?? 'dashboard.php'));
+$redirect = cadastro_safe_redirect((string)($_GET['redirect'] ?? $old['redirect'] ?? 'meu-plano.php'));
 
 function old_value(string $key): string
 {

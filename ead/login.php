@@ -20,10 +20,10 @@ function login_redirect(string $url): void
     exit;
 }
 
-function login_safe_redirect(string $redirect, string $default = 'dashboard.php'): string
+function login_safe_redirect(string $redirect, string $default = 'meu-plano.php'): string
 {
     $redirect = trim(rawurldecode($redirect));
-    $default = trim($default) !== '' ? $default : 'dashboard.php';
+    $default = trim($default) !== '' ? $default : 'meu-plano.php';
 
     // Evita loop tipo: login?redirect=dashboard?redirect=dashboard...
     // e também evita voltar para login/cadastro depois de autenticar.
@@ -342,12 +342,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
 
 $erro = '';
 $loginDigitado = (string)($_GET['login'] ?? $_GET['email'] ?? '');
-$redirect = login_safe_redirect((string)($_GET['redirect'] ?? 'dashboard.php'));
+$redirect = login_safe_redirect((string)($_GET['redirect'] ?? 'meu-plano.php'));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $loginDigitado = trim((string)($_POST['login'] ?? $_POST['email'] ?? ''));
     $senha = (string)($_POST['senha'] ?? $_POST['password'] ?? '');
-    $redirect = login_safe_redirect((string)($_POST['redirect'] ?? 'dashboard.php'));
+    $redirect = login_safe_redirect((string)($_POST['redirect'] ?? 'meu-plano.php'));
 
     require_once __DIR__ . '/includes/seguranca.php';
     if (($espera = gab_seg_login_bloqueado()) > 0) {

@@ -25,7 +25,7 @@ function gab_cadastro_back(string $erro, array $old = []): void
     gab_cadastro_redirect('../cadastro');
 }
 
-function gab_cadastro_safe_redirect(string $redirect, string $default = '../dashboard'): string
+function gab_cadastro_safe_redirect(string $redirect, string $default = '../meu-plano'): string
 {
     $redirect = trim(rawurldecode($redirect));
 

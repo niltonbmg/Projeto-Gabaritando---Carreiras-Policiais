@@ -23,7 +23,7 @@ if (!function_exists('gab_redirect')) {
 }
 
 if (!function_exists('gab_safe_redirect')) {
-    function gab_safe_redirect(string $redirect, string $default = '../dashboard.php'): string
+    function gab_safe_redirect(string $redirect, string $default = '../meu-plano.php'): string
     {
         $redirect = trim($redirect);
 
@@ -173,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $email = strtolower(trim((string)($_POST['email'] ?? $_POST['login'] ?? '')));
 $senha = (string)($_POST['senha'] ?? $_POST['password'] ?? '');
-$redirect = (string)($_POST['redirect'] ?? 'dashboard.php');
+$redirect = (string)($_POST['redirect'] ?? 'meu-plano.php');
 
 if ($email === '' || $senha === '') {
     gab_redirect('../login.php?erro=campos&email=' . urlencode($email));
