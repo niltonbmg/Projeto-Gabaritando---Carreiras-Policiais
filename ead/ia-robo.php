@@ -71,6 +71,14 @@ try {
 } catch (Throwable $e) {
     echo 'Radar: ' . $e->getMessage() . "\n";
 }
+// Visual novo (formatos + Antigão) para videoaulas já prontas, sem regravar áudio.
+try {
+    if ($n = videoaula_visual_varrer($pdo)) {
+        echo "Visual novo na fila: $n videoaula(s)\n";
+    }
+} catch (Throwable $e) {
+    echo 'Visual: ' . $e->getMessage() . "\n";
+}
 // Revisão: aula com PDF novo ou trocado entra na fila de conferência (barato, e destrava as videoaulas).
 try {
     require_once __DIR__ . '/includes/revisao-aulas-lib.php';

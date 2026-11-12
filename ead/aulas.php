@@ -3085,6 +3085,59 @@ if ($travaMeta) {
         .va-abertura h3{padding:0}
         .va-abertura small{color:#fbb928;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
         @keyframes vaEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+        /* Videoaula do Antigão · visual por formato (conceito, comparação, passos, linha do tempo, lei, pegadinha, exemplo, resumo) */
+        .va{--h:42}
+        .va-fundo{position:absolute;inset:-10%;z-index:0;pointer-events:none;background:radial-gradient(60% 70% at 15% 20%,hsla(var(--h),90%,45%,.33),transparent 60%),radial-gradient(50% 60% at 90% 85%,hsla(calc(var(--h) + 180),70%,40%,.16),transparent 60%),linear-gradient(160deg,#141414,#0a0a0a);animation:vaKb 18s ease-in-out infinite alternate}
+        .va-fundo::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px}
+        @keyframes vaKb{to{transform:scale(1.08) translate(-2%,-1%)}}
+        .va-palco,.va-barra{position:relative;z-index:1}
+        .va-materia{position:absolute;top:16px;left:20px;z-index:2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:hsl(var(--h),90%,65%)}
+        .va-faixa{position:absolute;left:0;right:0;bottom:52px;z-index:2;display:flex;align-items:center;gap:12px;padding:8px 18px 8px clamp(18px,22%,250px);background:linear-gradient(90deg,rgba(0,0,0,.85),rgba(0,0,0,.4));border-top:2px solid #fbb928;font-size:clamp(13px,1.6vw,17px);pointer-events:none}
+        .va-faixa strong{color:#fbb928;font-size:12px;letter-spacing:.12em}
+        .va-palco{padding-bottom:64px}
+        .va-antigao{position:absolute;left:14px;bottom:54px;width:clamp(120px,17%,210px);z-index:2;pointer-events:none}
+        .va-antigao svg{display:block;width:100%;height:auto;animation:vaFlutua 4s ease-in-out infinite}
+        @keyframes vaFlutua{50%{transform:translateY(-5px)}}
+        .va-balao{position:absolute;left:4px;bottom:100%;margin-bottom:6px;max-width:220px;background:#fff;color:#111;font-weight:700;font-size:13px;line-height:1.3;border-radius:12px;padding:6px 10px;opacity:0;animation:vaEntra .45s .4s ease forwards}
+        .va-braco{transform-origin:150px 205px;animation:vaGesto 2.4s ease-in-out infinite}
+        @keyframes vaGesto{50%{transform:rotate(-8deg)}}
+        @media (min-width:760px){.va-palco{padding-left:clamp(18px,22%,250px)}}
+        @media (max-width:759px){.va-antigao{display:none}.va-faixa{padding-left:18px}}
+        .va-slide.e1{animation:vaE1 .7s cubic-bezier(.2,.8,.2,1) both}.va-slide.e2{animation:vaE2 .7s cubic-bezier(.2,.8,.2,1) both}.va-slide.e3{animation:vaE3 .7s cubic-bezier(.2,.8,.2,1) both}
+        @keyframes vaE1{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:none}}
+        @keyframes vaE2{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+        @keyframes vaE3{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+        .va .ap{opacity:0;animation:vaEntra .5s ease forwards}
+        .va-sub{color:#cfcfd4;font-size:clamp(13px,1.6vw,17px)}
+        .va-termo{font-size:clamp(34px,6vw,60px);font-weight:700;color:#fbb928;line-height:1}
+        .va-def{font-size:clamp(16px,2.3vw,24px);line-height:1.4;border-left:5px solid #fbb928;padding-left:16px}
+        .va-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .va-col{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px}
+        .va-col h4{margin:0 0 8px;font-size:clamp(16px,2.1vw,22px);color:#fbb928}.va-col.b h4{color:#7cc4ff}
+        .va-col li::before{background:#fbb928}.va-col.b li::before{background:#7cc4ff}
+        .va-passos{display:grid;gap:10px}
+        .va-passo{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;font-size:clamp(15px,2.1vw,22px)}
+        .va-passo b{width:clamp(36px,4.5vw,52px);height:clamp(36px,4.5vw,52px);border-radius:50%;display:grid;place-items:center;background:#fbb928;color:#111;box-shadow:0 0 0 5px rgba(251,185,40,.18)}
+        .va-linha{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;padding-top:34px}
+        .va-linha::before{content:"";position:absolute;left:0;right:0;top:14px;height:4px;border-radius:4px;background:linear-gradient(90deg,#fbb928,#7cc4ff);transform-origin:left;animation:vaBarraL 1.2s ease both}
+        @keyframes vaBarraL{from{transform:scaleX(0)}}
+        .va-marco{position:relative}.va-marco::before{content:"";position:absolute;top:-28px;left:0;width:16px;height:16px;border-radius:50%;background:#111;border:4px solid #fbb928}
+        .va-marco strong{display:block;font-size:clamp(18px,2.6vw,28px);color:#fbb928}.va-marco p{margin:0;font-size:clamp(13px,1.6vw,17px);color:#ddd}
+        .va-lei{background:#f4efe1;color:#1d1b16;border-radius:10px;padding:clamp(14px,2.4vw,24px);font-family:Georgia,serif;font-size:clamp(15px,2vw,22px);line-height:1.55;box-shadow:0 18px 44px rgba(0,0,0,.45);transform:rotate(-.6deg)}
+        .va-lei small{display:block;font-family:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#7a6a3a;margin-bottom:8px}
+        .va-lei mark{color:inherit;background:linear-gradient(transparent 55%,rgba(251,185,40,.75) 55%) no-repeat;background-size:0 100%;animation:vaGrifo 1.2s 1.4s ease forwards}
+        @keyframes vaGrifo{to{background-size:100% 100%}}
+        .va-peg{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .va-peg>div{border-radius:16px;padding:16px;font-size:clamp(15px,2.1vw,22px);line-height:1.35}
+        .va-peg .err{background:rgba(255,92,80,.13);border:2px solid #ff5c50}.va-peg .ok{background:rgba(60,207,122,.12);border:2px solid #3ccf7a}
+        .va-peg .rot{display:block;font-size:12px;letter-spacing:.12em;font-weight:700;margin-bottom:6px}.va-peg .err .rot{color:#ff8a80}.va-peg .ok .rot{color:#6ee7a5}
+        .va-peg .err p{margin:0;text-decoration:line-through;text-decoration-color:#ff5c50;text-decoration-thickness:3px}
+        .va-ex{display:grid;gap:12px}.va-ex>div{border-radius:14px;padding:14px 16px;font-size:clamp(15px,2vw,21px)}
+        .va-ex .sit{background:rgba(124,196,255,.1);border:1px solid rgba(124,196,255,.4)}.va-ex .res{background:rgba(251,185,40,.1);border:1px solid rgba(251,185,40,.45)}
+        .va-ex .rot{display:block;font-size:12px;letter-spacing:.12em;font-weight:700;color:#cfcfd4;margin-bottom:4px}
+        .va-res li{padding-left:0;display:flex;gap:12px;align-items:center}.va-res li::before{display:none}
+        .va-res li i{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:#3ccf7a;color:#0b0b0b;display:grid;place-items:center;font-style:normal;font-weight:700}
+        @media (max-width:640px){.va-cols,.va-peg{grid-template-columns:1fr}.va-linha{grid-auto-flow:row;padding-top:0}.va-linha::before,.va-marco::before{display:none}}
         .va-barra{display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(0,0,0,.55)}
         .va-bt{border:0;background:transparent;color:#fff;font:inherit;font-size:16px;min-width:36px;min-height:36px;border-radius:8px;cursor:pointer}
         .va-bt:hover{background:rgba(255,255,255,.12)}.va-bt:focus-visible{outline:2px solid #fbb928}
@@ -3722,8 +3775,12 @@ if ($travaMeta) {
                                 </div>
                             </div>
                             <div class="va" id="videoaulaIA" data-aula-id="<?php echo (int)($aulaAtual['id'] ?? 0); ?>" hidden>
+                                <div class="va-fundo" aria-hidden="true"></div>
+                                <span class="va-materia" id="vaMateria"></span>
                                 <img class="va-logo" src="img/logo.png" onerror="this.onerror=null;this.src='favicon.png'" alt="Projeto Gabaritando">
                                 <div class="va-palco" id="vaPalco" aria-live="polite"></div>
+                                <div class="va-antigao" id="vaAntigao" aria-hidden="true"></div>
+                                <div class="va-faixa" aria-hidden="true"><strong>ANTIGÃO</strong><span id="vaFaixa"></span></div>
                                 <div class="va-parada" id="vaParada" hidden role="dialog" aria-modal="false" aria-labelledby="vaParadaPerg"></div>
                                 <div class="va-barra">
                                     <button type="button" class="va-bt" id="vaPlay" aria-label="Reproduzir">▶</button>
@@ -6073,8 +6130,62 @@ if ($travaMeta) {
         Array.prototype.forEach.call(prog.children, function (el, i) { el.className = i < idx ? 'feito' : ''; if (i !== idx) { el.firstChild.style.width = ''; } });
         cont.textContent = (idx + 1) + '/' + dados.slides.length;
     }
+    // Antigão: personagem original (veterano da tropa) em SVG; poses: explica, alerta, pensa, comemora.
+    function antigaoSvg(pose) {
+        var boca = {explica: 'M112 118 q14 10 28 0', alerta: 'M114 122 q12 -6 24 0', comemora: 'M108 114 q18 18 36 0', pensa: 'M116 120 h20'}[pose] || 'M112 118 q14 10 28 0';
+        var braco = {
+            explica: '<g class="va-braco"><path d="M170 210 q40 -10 62 -52" stroke="#3f5b2f" stroke-width="26" fill="none" stroke-linecap="round"/><circle cx="234" cy="150" r="15" fill="#e0a77a"/><path d="M234 136 v-26" stroke="#e0a77a" stroke-width="8" stroke-linecap="round"/></g>',
+            alerta: '<g class="va-braco"><path d="M170 210 q36 -40 44 -96" stroke="#3f5b2f" stroke-width="26" fill="none" stroke-linecap="round"/><circle cx="214" cy="104" r="16" fill="#e0a77a"/></g><text x="222" y="70" font-size="54" font-weight="700" fill="#ff5c50">!</text>',
+            comemora: '<g class="va-braco"><path d="M170 210 q30 -50 26 -110" stroke="#3f5b2f" stroke-width="26" fill="none" stroke-linecap="round"/><circle cx="196" cy="94" r="17" fill="#e0a77a"/></g><text x="214" y="70" font-size="40">⭐</text>',
+            pensa: '<g class="va-braco"><path d="M168 214 q22 -30 -14 -62" stroke="#3f5b2f" stroke-width="26" fill="none" stroke-linecap="round"/><circle cx="150" cy="148" r="14" fill="#e0a77a"/></g><text x="200" y="60" font-size="40">💭</text>'
+        }[pose] || '';
+        var olhos = pose === 'alerta' ? '<circle cx="112" cy="96" r="5" fill="#222"/><circle cx="140" cy="96" r="5" fill="#222"/><path d="M104 84 l16 4 M148 84 l-16 4" stroke="#5a3b1e" stroke-width="5" stroke-linecap="round"/>'
+            : '<path d="M106 96 q6 -6 12 0 M134 96 q6 -6 12 0" stroke="#222" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M102 84 l16 -2 M150 84 l-16 -2" stroke="#9a9a9a" stroke-width="5" stroke-linecap="round"/>';
+        return '<svg viewBox="0 0 260 340"><ellipse cx="128" cy="332" rx="90" ry="8" fill="rgba(0,0,0,.45)"/><path d="M50 330 q0 -110 78 -116 q78 6 78 116z" fill="#4b6b38"/>'
+            + '<path d="M128 214 l-18 30 h36z" fill="#e6c78f"/><path d="M118 244 h20 l-4 50 h-12z" fill="#2c3e22"/><rect x="70" y="250" width="34" height="8" rx="2" fill="#fbb928"/><rect x="74" y="262" width="26" height="6" rx="2" fill="#c33"/><path d="M150 254 h34 v10 h-34z" fill="#fbb928"/>'
+            + braco + '<rect x="114" y="168" width="28" height="34" fill="#d99a6c"/><ellipse cx="128" cy="112" rx="50" ry="58" fill="#e0a77a"/>'
+            + '<path d="M78 122 q-6 18 8 30 M178 122 q6 18 -8 30" stroke="#bdbdbd" stroke-width="10" fill="none" stroke-linecap="round"/>' + olhos
+            + '<path d="M104 112 q24 14 48 0 q-8 14 -24 12 q-16 2 -24 -12z" fill="#cfcfcf"/><path d="' + boca + '" stroke="#7a3b2a" stroke-width="5" fill="none" stroke-linecap="round" transform="translate(0,14)"/>'
+            + '<path d="M70 78 q58 -62 120 -6 l6 14 h-132z" fill="#2c3e22"/><path d="M66 86 h128 v10 h-128z" fill="#1f2c18"/><circle cx="160" cy="70" r="10" fill="#fbb928"/></svg>';
+    }
+    function corDaMateria(nome) {
+        var n = String(nome || '').toLowerCase(), fixas = [['portugu', 42], ['penal militar', 6], ['penal', 0], ['constitucional', 220], ['hist', 28], ['geograf', 150], ['legisla', 210], ['inform', 190], ['matem', 270], ['racioc', 285], ['administrativo', 330], ['direitos humanos', 160]];
+        for (var i = 0; i < fixas.length; i++) { if (n.indexOf(fixas[i][0]) >= 0) { return fixas[i][1]; } }
+        var h = 0; String(nome || '').split('').forEach(function (c) { h = (h * 31 + c.charCodeAt(0)) % 360; }); return nome ? h : 42; }
+    function htmlDoVisual(sl, v) {
+        var li = function (arr) { return (arr || []).map(function (t) { return '<li class="ap">' + esc(t) + '</li>'; }).join(''); };
+        switch (v.tipo) {
+            case 'conceito': return '<div class="va-sub ap">Conceito</div><div class="va-termo ap">' + esc(v.termo) + '</div><div class="va-def ap">' + esc(v.definicao) + '</div>';
+            case 'comparacao': return '<h3 class="ap">' + esc(sl.titulo) + '</h3><div class="va-cols">' + v.colunas.map(function (c, k) { return '<div class="va-col ap ' + (k ? 'b' : '') + '"><h4>' + esc(c.titulo) + '</h4><ul>' + (c.itens || []).map(function (t) { return '<li style="opacity:1;animation:none">' + esc(t) + '</li>'; }).join('') + '</ul></div>'; }).join('') + '</div>';
+            case 'passos': return '<h3 class="ap">' + esc(sl.titulo) + '</h3><div class="va-passos">' + v.itens.map(function (t, k) { return '<div class="va-passo ap"><b>' + (k + 1) + '</b>' + esc(t) + '</div>'; }).join('') + '</div>';
+            case 'linha_do_tempo': return '<h3 class="ap">' + esc(sl.titulo) + '</h3><div class="va-linha">' + v.marcos.map(function (m) { return '<div class="va-marco ap"><strong>' + esc(m.rotulo) + '</strong><p>' + esc(m.texto) + '</p></div>'; }).join('') + '</div>';
+            case 'lei':
+                var txt = esc(v.texto), g = esc(v.grifo || '');
+                if (g && txt.indexOf(g) >= 0) { txt = txt.replace(g, '<mark>' + g + '</mark>'); }
+                return '<h3 class="ap">A lei diz</h3><div class="va-lei ap"><small>' + esc(v.fonte) + '</small>' + txt + '</div>';
+            case 'pegadinha': return '<h3 class="ap">⚠️ Pegadinha da banca</h3><div class="va-peg"><div class="err ap"><span class="rot">❌ A BANCA ESCREVE</span><p>' + esc(v.errado) + '</p></div><div class="ok ap"><span class="rot">✅ O CERTO</span>' + esc(v.certo) + '</div></div>';
+            case 'exemplo': return '<h3 class="ap">' + esc(sl.titulo) + '</h3><div class="va-ex"><div class="sit ap"><span class="rot">📍 SITUAÇÃO</span>' + esc(v.situacao) + '</div>' + (v.resolucao ? '<div class="res ap"><span class="rot">✔ COMO RESOLVER</span>' + esc(v.resolucao) + '</div>' : '') + '</div>';
+            case 'resumo': return '<h3 class="ap">' + esc(sl.titulo) + '</h3><ul class="va-res">' + v.itens.map(function (t) { return '<li class="ap"><i>✓</i>' + esc(t) + '</li>'; }).join('') + '</ul>' + (sl.destaque ? '<div class="va-slide__dest ap">🎯 ' + esc(sl.destaque) + '</div>' : '');
+            default: return '<div class="va-slide__emoji ap" aria-hidden="true">' + esc(sl.emoji) + '</div><h3 class="ap">' + esc(sl.titulo) + '</h3><ul>' + li(sl.topicos) + '</ul>' + (sl.destaque ? '<div class="va-slide__dest ap">💡 ' + esc(sl.destaque) + '</div>' : '');
+        }
+    }
     function desenhar() {
-        var sl = dados.slides[idx], n = (sl.topicos || []).length + (sl.destaque ? 1 : 0);
+        var sl = dados.slides[idx];
+        if (sl.visual && idx > 0) {
+            va.style.setProperty('--h', corDaMateria(dados.materia));
+            document.getElementById('vaMateria').textContent = dados.materia || '';
+            document.getElementById('vaFaixa').textContent = sl.titulo;
+            palco.innerHTML = '<div class="va-slide e' + (idx % 3 + 1) + '">' + htmlDoVisual(sl, sl.visual) + '</div>';
+            var aps = palco.querySelectorAll('.ap'), passoV = Math.max(0.9, (audio.duration && isFinite(audio.duration) ? audio.duration / vel : 8) / (aps.length + 1.5));
+            Array.prototype.forEach.call(aps, function (el, k) { el.style.animationDelay = (tocando ? (0.3 + k * passoV) : 0).toFixed(1) + 's'; });
+            document.getElementById('vaAntigao').innerHTML = antigaoSvg(sl.visual.pose) + (sl.visual.balao ? '<div class="va-balao">' + esc(sl.visual.balao) + '</div>' : '');
+            return;
+        }
+        va.style.setProperty('--h', corDaMateria(dados.materia));
+        document.getElementById('vaMateria').textContent = dados.materia || '';
+        document.getElementById('vaFaixa').textContent = sl.titulo || '';
+        document.getElementById('vaAntigao').innerHTML = sl.visual ? antigaoSvg('explica') + '<div class="va-balao">Fala, combatente!</div>' : '';
+        var n = (sl.topicos || []).length + (sl.destaque ? 1 : 0);
         var passo = Math.max(1.2, (audio.duration && isFinite(audio.duration) ? audio.duration / vel : 8) / (n + 1.5));
         var itens = (sl.topicos || []).map(function (t, i) { return '<li style="animation-delay:' + ((i + 1) * passo).toFixed(1) + 's">' + esc(t) + '</li>'; }).join('');
         var dest = sl.destaque ? '<div class="va-slide__dest" style="animation-delay:' + (((sl.topicos || []).length + 1) * passo).toFixed(1) + 's">💡 ' + esc(sl.destaque) + '</div>' : '';

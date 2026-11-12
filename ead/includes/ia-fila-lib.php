@@ -97,7 +97,7 @@ if (!function_exists('ia_fila_processar_um')) {
                 $semVoz .= ' AND tipo <> ' . $pdo->quote($tDesl);
             }
         }
-        $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','radar','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','radar','apostila','aula_ia','videoaula','questoes','podcast'";
+        $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','radar','visual','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','radar','visual','apostila','aula_ia','videoaula','questoes','podcast'";
         // Dentro de cada tipo, segue a ordem do curso (módulo e aula): a cota grátis vai primeiro para o que o aluno vê primeiro.
         $item = $pdo->query("SELECT f.* FROM ia_fila f
                                LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id AND f.tipo NOT IN ('questoes','redacao','radar')
@@ -129,7 +129,7 @@ if (!function_exists('ia_fila_processar_um')) {
             }
             $stN->execute([':id' => $aulaId]);
             $nomeN = (string)$stN->fetchColumn();
-            $verbo = ['questoes' => 'Buscando/criando questões de', 'aula_ia' => 'Escrevendo a teoria da aula', 'apostila' => 'Montando a apostila da aula', 'videoaula' => 'Gravando a videoaula', 'podcast' => 'Gravando o podcast', 'redacao' => 'Lendo uma redação', 'conferir_pdf' => 'Conferindo se o PDF é da aula', 'radar' => 'Radar: buscando novidades do concurso'][$item['tipo']] ?? 'Trabalhando em';
+            $verbo = ['questoes' => 'Buscando/criando questões de', 'aula_ia' => 'Escrevendo a teoria da aula', 'apostila' => 'Montando a apostila da aula', 'videoaula' => 'Gravando a videoaula', 'podcast' => 'Gravando o podcast', 'redacao' => 'Lendo uma redação', 'conferir_pdf' => 'Conferindo se o PDF é da aula', 'radar' => 'Radar: buscando novidades do concurso', 'visual' => 'Dando o visual novo à videoaula'][$item['tipo']] ?? 'Trabalhando em';
             @file_put_contents(dirname(__DIR__) . '/uploads/.ia-agora.json', json_encode(['texto' => $verbo . ($nomeN !== '' ? ': ' . $nomeN : ''), 'em' => time()], JSON_UNESCAPED_UNICODE));
         } catch (Throwable $e) {
         }
@@ -165,6 +165,8 @@ if (!function_exists('ia_fila_processar_um')) {
                     $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $aulaId]);
                     ia_fila_adicionar($pdo, 'videoaula', $aulaId);
                 }
+            } elseif ($item['tipo'] === 'visual') {
+                videoaula_visual_enriquecer($pdo, $aulaId); // visual novo sem regravar o áudio
             } elseif ($item['tipo'] === 'radar') {
                 // aqui aula_id guarda o id do concurso
                 require_once __DIR__ . '/radar-lib.php';
