@@ -111,7 +111,7 @@ if ($aud['titulos']) {
     $tarefas[] = ['🟡', count($aud['titulos']) . ' título(s) fora do padrão do edital', 'Ex.: "1.Globalização…" vira "1. Globalização…", com o nome do assunto no edital.', 'Só muda títulos que já falam do mesmo assunto. Não usa IA.', 'form:titulos', 'Padronizar'];
 }
 if ($aud['assunto_divergente'] ?? []) {
-    $tarefas[] = ['🟡', count($aud['assunto_divergente']) . ' aula(s) com assunto que pode estar errado', 'O título fala de um assunto e a aula está ligada a outro no edital.', 'Confira na tela de Padrão e ajuste o assunto da aula.', 'admin-padrao.php', 'Conferir'];
+    $tarefas[] = ['🟡', count($aud['assunto_divergente']) . ' aula(s) com assunto que pode estar errado', 'O título fala de um assunto e a aula está ligada a outro no edital.', 'Confira na tela de Padrão e ajuste o assunto da aula.', 'admin-padrao.php#assunto', 'Conferir'];
 }
 if ($semResposta) {
     $tarefas[] = ['🟢', "$semResposta dúvida(s) de aluno sem resposta", 'Perguntas no fórum que ninguém respondeu ainda.', 'Responder rápido mantém o aluno engajado.', 'admin-mensagens.php', 'Responder'];

@@ -17,6 +17,15 @@ $sucesso = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $acao = (string)($_POST['acao'] ?? '');
+        if ($acao === 'assunto_ok') { // mentor confirma: o assunto ligado está certo (some do aviso)
+            $st = $pdo->prepare('INSERT INTO padrao_assunto_ok (aula_id, topico_id) SELECT id, topico_id FROM admin_curso_aulas WHERE id = :id AND topico_id > 0 ON DUPLICATE KEY UPDATE topico_id = VALUES(topico_id), em = NOW()');
+            $nOk = 0;
+            foreach ((array)($_POST['ids'] ?? []) as $idOk) {
+                $st->execute([':id' => (int)$idOk]);
+                $nOk += $st->rowCount() > 0 ? 1 : 0;
+            }
+            $sucesso = "$nOk aula(s) confirmada(s) com o assunto certo.";
+        } else {
         $n = padrao_corrigir($pdo, $acao, $cursoId, (array)($_POST['ids'] ?? []));
         $sucesso = [
             'padrao_titulos' => "$n título(s) padronizados.",
@@ -27,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'padrao_podcasts' => "$n podcast(s) na fila para regravar com o Antigão e o Recruta Zero Um.",
             'padrao_assunto' => "$n item(ns) na classificação automática por assunto.",
         ][$acao] ?? 'Feito.';
+        }
     } catch (Throwable $e) {
         $erro = $e->getMessage();
     }
@@ -125,6 +135,20 @@ $menuBarInclude = admin_cursos_get_menubar();
                 <button class="admin-btn admin-btn-primary" type="submit" style="margin-top:10px">Aplicar nos marcados</button>
             </form>
             <?php else: ?><p class="pd-ok">✓ Todos os títulos no padrão.</p><?php endif; ?>
+        </section>
+
+        <section class="admin-panel" id="assunto">
+            <h2>🏷 Aulas com assunto que pode estar errado (<?php echo count($aud['assunto_divergente'] ?? []); ?>)</h2>
+            <p style="font-size:13px;color:#4b5563">O título da aula fala de uma coisa e ela está ligada a outro assunto do edital. Isso importa porque as questões da aula e a trava das 5 questões vêm desse assunto. Se estiver certo (ex.: "Substantivo" dentro de "Classes de palavras"), marque e confirme: some daqui. Se estiver errado, abra a aula em Cursos &gt; Módulos e troque o assunto. Não usa IA.</p>
+            <?php if (!empty($aud['assunto_divergente'])): ?>
+            <form method="post">
+                <input type="hidden" name="acao" value="assunto_ok"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
+                <div style="max-height:420px;overflow:auto"><table><tr><th><input type="checkbox" checked onclick="document.querySelectorAll('.pd-a').forEach(c => c.checked = this.checked)"></th><th>Título da aula</th><th>Ligada no edital a</th><th>Curso</th></tr>
+                <?php foreach ($aud['assunto_divergente'] as $t): ?><tr><td><input class="pd-a" type="checkbox" name="ids[]" value="<?php echo (int)$t['id']; ?>" checked></td><td><?php echo $e($t['de']); ?></td><td><strong><?php echo $e($t['para']); ?></strong></td><td><?php echo $e($t['curso']); ?></td></tr><?php endforeach; ?>
+                </table></div>
+                <button class="admin-btn admin-btn-primary" type="submit" style="margin-top:10px">✓ Está certo — confirmar os marcados</button>
+            </form>
+            <?php else: ?><p class="pd-ok">✓ Todas as aulas ligadas ao assunto certo.</p><?php endif; ?>
         </section>
 
         <section class="admin-panel">

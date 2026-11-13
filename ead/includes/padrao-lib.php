@@ -275,6 +275,14 @@ if (!function_exists('padrao_titulos_edital')) {
         foreach ($aulas as $a) {
             $grupos[$a['curso_id'] . '|' . $a['topico_id']][] = $a;
         }
+        $ok = [];
+        try {
+            $pdo->exec('CREATE TABLE IF NOT EXISTS padrao_assunto_ok (aula_id INT UNSIGNED NOT NULL PRIMARY KEY, topico_id INT UNSIGNED NOT NULL, em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+            foreach ($pdo->query('SELECT aula_id, topico_id FROM padrao_assunto_ok') as $r0) {
+                $ok[(int)$r0['aula_id'] . '|' . (int)$r0['topico_id']] = true;
+            }
+        } catch (Throwable $e) {
+        }
         $saida = [];
         foreach ($grupos as $g0) {
             // Só as aulas que falam mesmo do assunto contam como partes; as outras ficam como "assunto pode estar errado".
@@ -288,6 +296,13 @@ if (!function_exists('padrao_titulos_edital')) {
                 }
             }
             foreach ($fora as $a) {
+                if (isset($ok[(int)$a['id'] . '|' . (int)$a['topico_id']])) {
+                    continue; // o mentor já conferiu: a ligação está certa
+                }
+                // "1.1 Dos princípios fundamentais" ligada a "1. Constituição Federal": é subtópico do mesmo item, não erro.
+                if (preg_match('~^(\d+)\s*\.~u', trim((string)$a['assunto']), $na) && preg_match('~^(\d+)\s*\.\s*\d~u', trim((string)$a['titulo']), $nt) && $na[1] === $nt[1]) {
+                    continue;
+                }
                 $saida[] = ['id' => (int)$a['id'], 'curso' => $a['curso'], 'de' => (string)$a['titulo'], 'para' => padrao_titulo((string)$a['assunto']), 'confere' => false];
             }
             $n = count($g);
