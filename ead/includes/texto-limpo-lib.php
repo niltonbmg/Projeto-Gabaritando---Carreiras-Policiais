@@ -130,3 +130,31 @@ if (!function_exists('gab_limpar_latex_existente')) {
         return $n;
     }
 }
+
+if (!function_exists('gab_questao_origem')) {
+    /**
+     * Separa o aviso de origem da questão ("🤖 Questão inédita do Antigão…" ou "📌 Fonte: …") do comentário,
+     * para o aviso virar uma etiqueta junto do enunciado e o gabarito comentado começar direto na explicação.
+     * @return array{0: string, 1: string} [origem, comentário]
+     */
+    function gab_questao_origem(?string $explicacao): array
+    {
+        $t = (string)$explicacao;
+        if (preg_match('~^\s*(🤖 Questão inédita do Antigão.*?Não é questão de prova\.|📌 Fonte:.*?\.(?=\s|$))\s*~us', $t, $m)) {
+            return [trim($m[1]), ltrim(mb_substr($t, mb_strlen($m[0])))];
+        }
+        return ['', $t];
+    }
+
+    /** Etiqueta curta para mostrar junto do enunciado. */
+    function gab_questao_etiqueta(string $origem): string
+    {
+        if ($origem === '') {
+            return '';
+        }
+        if (preg_match('~no estilo (.+?), gerada em ([0-9/]+)~u', $origem, $m)) {
+            return '🤖 Questão do Antigão · estilo ' . $m[1] . ' · ' . $m[2];
+        }
+        return rtrim($origem, '.');
+    }
+}

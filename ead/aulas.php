@@ -6383,7 +6383,7 @@ if ($travaMeta) {
     function questao() {
         var q = qs[i];
         if (!q) { return resultado(); }
-        box.innerHTML = topo(rotulo()) + '<p class="cq-enun">' + esc(q.enunciado) + '</p><div class="cq-ops">'
+        box.innerHTML = topo(rotulo()) + (q.origem ? '<p style="margin:0 0 6px;font-size:12px;color:#a3a3ab">' + esc(q.origem) + '</p>' : '') + '<p class="cq-enun">' + esc(q.enunciado) + '</p><div class="cq-ops">'
             + q.opcoes.map(function (o) { return '<button type="button" class="cq-op" data-op="' + o.id + '"><b>' + esc(o.letra) + '</b><span>' + esc(o.texto) + '</span></button>'; }).join('') + '</div><div id="cqFb"></div>';
         box.scrollTop = 0;
     }

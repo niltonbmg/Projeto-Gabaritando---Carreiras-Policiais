@@ -216,7 +216,7 @@ $meses = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho
                     <?php foreach ($q['opcoes'] as $o): $classe = (int)$o['correta'] ? 'certa' : ((int)$o['id'] === $minha ? 'errada' : ''); ?>
                         <div class="dz-op <?php echo $classe; ?>"><span><?php echo (int)$o['correta'] ? '✅' : ((int)$o['id'] === $minha ? '❌' : '•'); ?></span><span><strong><?php echo dz_e((string)$o['letra']); ?>)</strong> <?php echo dz_e(trim(html_entity_decode(strip_tags((string)$o['texto']), ENT_QUOTES, 'UTF-8'))); ?></span></div>
                     <?php endforeach; ?>
-                    <?php if (trim(strip_tags((string)$q['explicacao'])) !== ''): ?><div class="dz-exp">💡 <?php echo dz_e(trim(html_entity_decode(strip_tags((string)$q['explicacao']), ENT_QUOTES, 'UTF-8'))); ?></div><?php endif; ?>
+                    <?php require_once __DIR__ . '/includes/texto-limpo-lib.php'; $q['explicacao'] = gab_questao_origem((string)$q['explicacao'])[1]; ?><?php if (trim(strip_tags((string)$q['explicacao'])) !== ''): ?><div class="dz-exp">💡 <?php echo dz_e(trim(html_entity_decode(strip_tags((string)$q['explicacao']), ENT_QUOTES, 'UTF-8'))); ?></div><?php endif; ?>
                 </article>
             <?php endforeach; ?>
         <?php endif; ?>

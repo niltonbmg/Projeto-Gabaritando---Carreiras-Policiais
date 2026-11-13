@@ -64,7 +64,10 @@ $card = $pdo->prepare("SELECT f.questao_id, f.nivel, q.enunciado, q.explicacao, 
 $card->execute([':u' => $uid, ':max' => count(FC_INTERVALOS)]);
 $card = $card->fetch();
 $certa = '';
+require_once __DIR__ . '/includes/texto-limpo-lib.php';
 if ($card) {
+    [$origemFc, $card['explicacao']] = gab_questao_origem((string)$card['explicacao']);
+    $card['origem'] = gab_questao_etiqueta($origemFc);
     $o = $pdo->prepare('SELECT letra, texto FROM admin_banco_questao_opcoes WHERE questao_id = :q AND correta = 1 LIMIT 1');
     $o->execute([':q' => $card['questao_id']]);
     $oc = $o->fetch();
@@ -116,7 +119,7 @@ if ($card) {
     <?php endif; ?>
     <?php if ($card): ?>
         <section class="card">
-            <p class="tag"><?php echo fc_e($card['materia'] ?: 'Questão'); ?> · revisão <?php echo (int)$card['nivel'] + 1; ?> de <?php echo count(FC_INTERVALOS); ?></p>
+            <p class="tag"><?php echo fc_e($card['materia'] ?: 'Questão'); ?><?php echo $card['origem'] ? ' · ' . fc_e($card['origem']) : ''; ?> · revisão <?php echo (int)$card['nivel'] + 1; ?> de <?php echo count(FC_INTERVALOS); ?></p>
             <div class="frente"><?php echo fc_e(trim(html_entity_decode(strip_tags((string)$card['enunciado']), ENT_QUOTES, 'UTF-8'))); ?></div>
             <div class="bts" id="mostrarBox"><button class="bt" type="button" onclick="document.getElementById('verso').classList.add('on');document.getElementById('mostrarBox').style.display='none'">Pensei na resposta · mostrar</button></div>
             <div class="verso" id="verso">

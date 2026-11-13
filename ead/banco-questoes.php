@@ -568,7 +568,9 @@ if (isset($_GET['ciclo_json']) && $pdo instanceof PDO && $usuarioId > 0) {
         $saida = [];
         foreach ($lista as $q) {
             $stO->execute([':q' => (int)$q['id']]);
-            $saida[] = ['id' => (int)$q['id'], 'enunciado' => (string)$q['enunciado'], 'explicacao' => (string)$q['explicacao'], 'opcoes' => $stO->fetchAll(PDO::FETCH_ASSOC)];
+            require_once __DIR__ . '/includes/texto-limpo-lib.php';
+            [$origQ, $comentQ] = gab_questao_origem((string)$q['explicacao']);
+            $saida[] = ['id' => (int)$q['id'], 'enunciado' => (string)$q['enunciado'], 'explicacao' => $comentQ, 'origem' => gab_questao_etiqueta($origQ), 'opcoes' => $stO->fetchAll(PDO::FETCH_ASSOC)];
         }
         bq_json(['ok' => true, 'min' => min($minC, count($todas)), 'meta' => min($metaC, count($todas)), 'meta_ideal' => $metaC, 'disponiveis' => count($todas), 'feitas' => $feitas, 'questoes' => $saida]);
     } catch (Throwable $e) {
@@ -968,7 +970,8 @@ function bq_status_label(?string $status): string
                         $topicoLinha = implode(' • ', $metaPartes);
                     ?>
                     <article class="question" data-question-id="<?php echo $qid; ?>" data-correct-option="<?php echo $corretaId; ?>" data-answered="<?php echo $respondidaOpcaoId > 0 ? '1' : '0'; ?>">
-                        <div class="question-meta"><?php echo bq_esc($topicoLinha); ?></div>
+                        <?php require_once __DIR__ . '/includes/texto-limpo-lib.php'; $etiquetaQ = gab_questao_etiqueta(gab_questao_origem((string)($questao['explicacao'] ?? ''))[0]); ?>
+                        <div class="question-meta"><?php echo bq_esc($topicoLinha); ?><?php if ($etiquetaQ !== ''): ?> <span style="display:inline-block;margin-left:6px;font-size:12px;opacity:.85">· <?php echo bq_esc($etiquetaQ); ?></span><?php endif; ?></div>
                         <div class="question-text"><?php echo nl2br(bq_esc($questao['enunciado'] ?? '')); ?></div>
 
                         <div class="options" aria-label="Alternativas da questão">
@@ -1005,8 +1008,9 @@ function bq_status_label(?string $status): string
                         <div class="solution-box<?php echo $solucaoAberta ? ' is-open' : ''; ?>">
                             <h3>Resolução</h3>
                             <p><strong>GABARITO:</strong> <?php echo bq_esc($corretaLetra !== '' ? $corretaLetra : '-'); ?></p>
-                            <?php if (trim((string)($questao['explicacao'] ?? '')) !== ''): ?>
-                                <p><strong>COMENTÁRIO:</strong> <?php echo nl2br(bq_esc($questao['explicacao'])); ?></p>
+                            <?php require_once __DIR__ . '/includes/texto-limpo-lib.php'; [$origemQ, $comentarioQ] = gab_questao_origem((string)($questao['explicacao'] ?? '')); ?>
+                            <?php if (trim($comentarioQ) !== ''): ?>
+                                <p><strong>COMENTÁRIO:</strong> <?php echo nl2br(bq_esc($comentarioQ)); ?></p>
                             <?php else: ?>
                                 <p><strong>COMENTÁRIO:</strong> Explicação ainda não cadastrada para esta questão.</p>
                             <?php endif; ?>
