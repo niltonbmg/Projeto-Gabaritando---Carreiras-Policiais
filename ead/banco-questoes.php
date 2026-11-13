@@ -311,6 +311,35 @@ if (!function_exists('bq_usuario_pode_ver_questao')) {
     }
 }
 
+if (!function_exists('bq_desempenho')) {
+    /** Desempenho e evolução do aluno: no assunto, na matéria do assunto e no geral (só questões respondidas). */
+    function bq_desempenho(PDO $pdo, int $usuarioId, int $topico): array
+    {
+        require_once __DIR__ . '/includes/meta-lib.php';
+        $cfgD = meta_config($pdo);
+        $pct = static fn($a, $n): int => (int)$n > 0 ? (int)round((int)$a * 100 / (int)$n) : 0;
+        $stD = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_topico_id = :t');
+        $stD->execute([':u' => $usuarioId, ':t' => $topico]);
+        $dA = $stD->fetch();
+        $nivA = meta_nivel((int)$dA['n'], (int)$dA['a'], $cfgD);
+        $stM = $pdo->prepare('SELECT m.nome, COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
+                               JOIN admin_materias m ON m.id = q.materia_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u
+                                AND q.materia_id = (SELECT materia_id FROM admin_materia_topicos WHERE id = :t) GROUP BY m.nome');
+        $stM->execute([':u' => $usuarioId, ':t' => $topico]);
+        $dM = $stM->fetch() ?: ['nome' => '', 'n' => 0, 'a' => 0];
+        $stG = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(correta),0) a, COALESCE(SUM(respondido_em >= NOW() - INTERVAL 7 DAY),0) n7, COALESCE(SUM(correta AND respondido_em >= NOW() - INTERVAL 7 DAY),0) a7 FROM banco_questoes_respostas_usuario WHERE opcao_id IS NOT NULL AND usuario_id = :u');
+        $stG->execute([':u' => $usuarioId]);
+        $dG = $stG->fetch();
+        $antesN = (int)$dG['n'] - (int)$dG['n7'];
+        return [
+            'assunto' => ['acertos' => (int)$dA['a'], 'feitas' => (int)$dA['n'], 'pct' => $pct($dA['a'], $dA['n']), 'nivel' => $nivA['nome'], 'nivel_n' => $nivA['nivel'], 'proximo_nivel' => $nivA['proximo_nome'], 'faltam_proximo' => $nivA['faltam_proximo'], 'proximo_acerto' => $nivA['proximo_acerto']],
+            'materia' => ['nome' => (string)$dM['nome'], 'pct' => $pct($dM['a'], $dM['n']), 'feitas' => (int)$dM['n']],
+            'geral' => ['pct' => $pct($dG['a'], $dG['n']), 'feitas' => (int)$dG['n'], 'semana_pct' => $pct($dG['a7'], $dG['n7']), 'semana_feitas' => (int)$dG['n7'],
+                        'antes_pct' => $antesN > 0 ? $pct((int)$dG['a'] - (int)$dG['a7'], $antesN) : null],
+        ];
+    }
+}
+
 if (!function_exists('bq_opcoes_cortadas_array')) {
     function bq_opcoes_cortadas_array(mixed $valor): array
     {
@@ -437,28 +466,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                     $stT = $pdo->prepare('SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_topico_id = :t');
                     $stT->execute([':u' => $usuarioId, ':t' => $topResp]);
                     $cicloResp = ['topico_id' => $topResp, 'feitas' => (int)$stT->fetchColumn()];
-                    // Desempenho e evolução: o assunto, a matéria e o geral (para o aluno ver que está avançando).
-                    require_once __DIR__ . '/includes/meta-lib.php';
-                    $cfgD = meta_config($pdo);
-                    $stD = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_topico_id = :t');
-                    $stD->execute([':u' => $usuarioId, ':t' => $topResp]);
-                    $dA = $stD->fetch();
-                    $nivA = meta_nivel((int)$dA['n'], (int)$dA['a'], $cfgD);
-                    $stM = $pdo->prepare('SELECT m.nome, COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
-                                           JOIN admin_materias m ON m.id = q.materia_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_id = (SELECT materia_id FROM admin_banco_questoes WHERE id = :q) GROUP BY m.nome');
-                    $stM->execute([':u' => $usuarioId, ':q' => $questaoId]);
-                    $dM = $stM->fetch() ?: ['nome' => '', 'n' => 0, 'a' => 0];
-                    $stG = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(correta),0) a, COALESCE(SUM(respondido_em >= NOW() - INTERVAL 7 DAY),0) n7, COALESCE(SUM(correta AND respondido_em >= NOW() - INTERVAL 7 DAY),0) a7 FROM banco_questoes_respostas_usuario WHERE opcao_id IS NOT NULL AND usuario_id = :u');
-                    $stG->execute([':u' => $usuarioId]);
-                    $dG = $stG->fetch();
-                    $pct = static fn($a, $n): int => (int)$n > 0 ? (int)round((int)$a * 100 / (int)$n) : 0;
-                    $antesN = (int)$dG['n'] - (int)$dG['n7'];
-                    $cicloResp['desempenho'] = [
-                        'assunto' => ['acertos' => (int)$dA['a'], 'feitas' => (int)$dA['n'], 'pct' => $pct($dA['a'], $dA['n']), 'nivel' => $nivA['nome'], 'nivel_n' => $nivA['nivel'], 'proximo_nivel' => $nivA['proximo_nome'], 'faltam_proximo' => $nivA['faltam_proximo'], 'proximo_acerto' => $nivA['proximo_acerto']],
-                        'materia' => ['nome' => (string)$dM['nome'], 'pct' => $pct($dM['a'], $dM['n']), 'feitas' => (int)$dM['n']],
-                        'geral' => ['pct' => $pct($dG['a'], $dG['n']), 'feitas' => (int)$dG['n'], 'semana_pct' => $pct($dG['a7'], $dG['n7']), 'semana_feitas' => (int)$dG['n7'],
-                                    'antes_pct' => $antesN > 0 ? $pct((int)$dG['a'] - (int)$dG['a7'], $antesN) : null],
-                    ];
+                    $cicloResp['desempenho'] = bq_desempenho($pdo, (int)$usuarioId, $topResp);
                 }
                 unset($_SESSION['gab_missao_' . (int)$usuarioId]);
                 if ($cicloResp && is_file(__DIR__ . '/includes/missao-lib.php')) {
@@ -590,7 +598,7 @@ if (isset($_GET['ciclo_json']) && $pdo instanceof PDO && $usuarioId > 0) {
             [$origQ, $comentQ] = gab_questao_origem((string)$q['explicacao']);
             $saida[] = ['id' => (int)$q['id'], 'enunciado' => (string)$q['enunciado'], 'explicacao' => $comentQ, 'origem' => gab_questao_etiqueta($origQ), 'opcoes' => $stO->fetchAll(PDO::FETCH_ASSOC)];
         }
-        bq_json(['ok' => true, 'gerando' => $gerando, 'min' => min($minC, count($todas)), 'meta' => min($metaC, count($todas)), 'meta_ideal' => $metaC, 'disponiveis' => count($todas), 'feitas' => $feitas, 'questoes' => $saida]);
+        bq_json(['ok' => true, 'desempenho' => $feitas > 0 ? bq_desempenho($pdo, (int)$usuarioId, $tq) : null, 'gerando' => $gerando, 'min' => min($minC, count($todas)), 'meta' => min($metaC, count($todas)), 'meta_ideal' => $metaC, 'disponiveis' => count($todas), 'feitas' => $feitas, 'questoes' => $saida]);
     } catch (Throwable $e) {
         bq_json(['ok' => false, 'erro' => 'Não foi possível carregar as questões.'], 400);
     }

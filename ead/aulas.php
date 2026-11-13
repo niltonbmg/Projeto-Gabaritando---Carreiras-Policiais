@@ -4490,7 +4490,7 @@ if ($travaMeta) {
                 atualizarProgressoModuloVisual(100);
                 // Método META: terminou o vídeo do professor -> as questões do assunto abrem na própria tela do vídeo.
                 var cV = window.gabCiclo || {};
-                if (cV.topico && (cV.res || 0) < (cV.min || 5) && window.gabAbrirQuestoes && !cV.abriuNoFim) {
+                if (cV.topico && window.gabAbrirQuestoes && !cV.abriuNoFim) {
                     cV.abriuNoFim = true; cV.assistida = true;
                     setTimeout(function () { window.gabAbrirQuestoes(); }, 900);
                 }
@@ -4855,6 +4855,12 @@ if ($travaMeta) {
                     root.classList.add('is-ended');
                     if (telaFinal) {
                         telaFinal.setAttribute('aria-hidden', 'false');
+                    }
+                    // Método META: fim do vídeo -> questões do assunto na própria tela (ou o desempenho e "rumo às 50").
+                    var cFim = window.gabCiclo || {};
+                    if (cFim.topico && window.gabAbrirQuestoes && !cFim.abriuNoFim) {
+                        cFim.abriuNoFim = true;
+                        setTimeout(function () { window.gabAbrirQuestoes(); }, 900);
                     }
                     return;
                 }
@@ -5750,7 +5756,7 @@ if ($travaMeta) {
                             btnAssistido.closest('.aula-actions').insertAdjacentElement('afterend', box);
                             var cicloSec = document.querySelector('.ciclo-passos li'); if (cicloSec) { cicloSec.className = 'feito'; }
                             c.assistida = true;
-                            if (faltam > 0 && window.gabAbrirQuestoes) { window.gabAbrirQuestoes(); } else { box.querySelector('button').focus(); }
+                            if (window.gabAbrirQuestoes) { window.gabAbrirQuestoes(); } else { box.querySelector('button').focus(); }
                         })();
                         atualizarProgresso(data.progresso || 0);
                         if (window.aulasRenderizarIcones) {
@@ -6459,7 +6465,7 @@ if ($travaMeta) {
         window.scrollTo({top: Math.max(0, fr.getBoundingClientRect().top + window.pageYOffset - 90), behavior: 'smooth'});
         fetch('banco-questoes.php?ciclo_json=1&topico_id=' + encodeURIComponent(c.topico) + (modoMais ? '&mais=1' : ''), {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (j) {
             qs = (j && j.questoes) || []; feitas = (j && j.feitas) || 0; min = Math.max(1, (j && j.min) || min); i = 0;
-            gerando = !!(j && j.gerando); if (j && j.disponiveis === 0) { min = 0; }
+            gerando = !!(j && j.gerando); if (j && j.desempenho) { desemp = j.desempenho; } if (j && j.disponiveis === 0) { min = 0; }
             meta = Math.max(min, (j && j.meta) || 50); metaIdeal = (j && j.meta_ideal) || 50; disp = (j && j.disponiveis) || 0;
             if ((!modoMais && feitas >= min) || !qs.length) { return resultado(); }
             questao();
