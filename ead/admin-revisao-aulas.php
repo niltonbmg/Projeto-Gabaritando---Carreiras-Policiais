@@ -72,7 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ia_fila_adicionar($pdo, 'videoaula', $aulaId);
             }
             $pdo->prepare("UPDATE aula_reportes SET status = 'resolvido' WHERE aula_id = :a AND tipo = 'pdf_errado'")->execute([':a' => $aulaId]);
-            $sucesso = 'PDF trocado.' . (trim((string)$aula['video_url']) === '' ? ' A videoaula do Antigão foi para a fila com o PDF certo.' : '');
+            rev_reescrever_texto($pdo, $aulaId);
+            $sucesso = 'PDF trocado. A teoria da aula será reescrita com o PDF certo.' . (trim((string)$aula['video_url']) === '' ? ' A videoaula do Antigão foi para a fila com o PDF certo.' : '');
         } elseif ($acao === 'sem_pdf') {
             $pdo->prepare("UPDATE admin_curso_aulas SET pdf_arquivo = '', pdf_nome = '' WHERE id = :id")->execute([':id' => $aulaId]);
             $pdo->prepare('DELETE FROM aula_revisao WHERE aula_id = :a')->execute([':a' => $aulaId]);

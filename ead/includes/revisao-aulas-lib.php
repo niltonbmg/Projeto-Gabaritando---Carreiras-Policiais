@@ -98,6 +98,9 @@ if (!function_exists('rev_bootstrap')) {
         if (in_array($status, ['confere', 'ok_manual'], true)) {
             rev_liberar_espera($pdo, $aulaId);
         }
+        if ($status === 'suspeita' && $por === 'ia') {
+            rev_restaurar_texto_antes_da_ia($pdo, $aulaId);
+        }
     }
 
     /** Aula liberada: o que estava esperando a revisão (videoaula, apostila, podcast) volta para a fila. */
@@ -315,6 +318,7 @@ if (!function_exists('rev_sugestoes_troca')) {
             throw $e;
         }
         foreach ($novoPdf as $aulaId => [$p, $n]) {
+            rev_reescrever_texto($pdo, (int)$aulaId); // teoria reescrita com o material certo
             if ($p !== '') {
                 rev_gravar($pdo, (int)$aulaId, $p, 'ok_manual', null, 'PDF movido para a aula certa (troca inteligente aprovada pelo mentor).', 'mentor');
                 $st = $pdo->prepare("SELECT TRIM(COALESCE(video_url,'')) FROM admin_curso_aulas WHERE id = :id");
@@ -325,5 +329,34 @@ if (!function_exists('rev_sugestoes_troca')) {
             }
         }
         return count($aplicar);
+    }
+
+    /** PDF suspeito: o texto que a IA escreveu a partir dele volta para a versão anterior (o aluno não lê conteúdo errado). */
+    function rev_restaurar_texto_antes_da_ia(PDO $pdo, int $aulaId): void
+    {
+        try {
+            $st = $pdo->prepare("SELECT descricao FROM aula_descricao_historico WHERE aula_id = :a AND origem = 'antes_da_ia' ORDER BY id DESC LIMIT 1");
+            $st->execute([':a' => $aulaId]);
+            $antes = $st->fetchColumn();
+            if ($antes !== false) {
+                $pdo->prepare('UPDATE admin_curso_aulas SET descricao = :d WHERE id = :a')->execute([':d' => (string)$antes, ':a' => $aulaId]);
+                $pdo->prepare("UPDATE ia_fila SET status = 'erro', tentativas = 9, erro = 'Aguardando revisão do PDF (texto anterior restaurado)' WHERE aula_id = :a AND tipo = 'apostila'")->execute([':a' => $aulaId]);
+            }
+        } catch (Throwable $e) {
+        }
+    }
+
+    /** PDF mudou (troca, envio novo ou retirado): reescreve a teoria da aula com o material certo. */
+    function rev_reescrever_texto(PDO $pdo, int $aulaId): void
+    {
+        require_once __DIR__ . '/ia-fila-lib.php';
+        $st = $pdo->prepare("SELECT TRIM(COALESCE(video_url,'')) v, TRIM(COALESCE(pdf_arquivo,'')) p FROM admin_curso_aulas WHERE id = :a");
+        $st->execute([':a' => $aulaId]);
+        $a = $st->fetch();
+        if (!$a) {
+            return;
+        }
+        $pdo->prepare("DELETE FROM ia_fila WHERE aula_id = :a AND tipo IN ('apostila','aula_ia')")->execute([':a' => $aulaId]);
+        ia_fila_adicionar($pdo, ($a['v'] !== '' || $a['p'] !== '') ? 'apostila' : 'aula_ia', $aulaId);
     }
 }

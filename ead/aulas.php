@@ -3808,7 +3808,34 @@ if ($travaMeta) {
                                     <p>Esta aula é de leitura. Leia o material com atenção, faça suas marcações e depois siga para as questões.</p>
                                     <?php if (!empty($aulaAtual['pdf_duracao'])): ?><p class="aula-somente-pdf__tempo"><i data-lucide="clock-3" aria-hidden="true"></i>Tempo estimado de leitura: <?php echo esc((string)$aulaAtual['pdf_duracao']); ?></p><?php endif; ?>
                                     <div class="aula-somente-pdf__acoes">
+                                        <?php
+                                        // Videoaula do Antigão: botão só quando ela existe ou pode ser gerada agora; senão, "em preparação"
+                                        // (e a conferência do PDF desta aula vai para o começo da fila, porque um aluno está nela).
+                                        $vaDisponivel = true;
+                                        try {
+                                            $stVa = db()->prepare("SELECT status FROM aula_videoaulas WHERE aula_id = :a");
+                                            $stVa->execute([':a' => (int)$aulaAtual['id']]);
+                                            $vaPronta = $stVa->fetchColumn() === 'pronto';
+                                            if (!$vaPronta && is_file(__DIR__ . '/includes/revisao-aulas-lib.php')) {
+                                                require_once __DIR__ . '/includes/revisao-aulas-lib.php';
+                                                if (!rev_liberada(db(), (int)$aulaAtual['id'])) {
+                                                    $vaDisponivel = false;
+                                                    if (rev_status(db(), (int)$aulaAtual['id'])['status'] === 'pendente') {
+                                                        require_once __DIR__ . '/includes/ia-fila-lib.php';
+                                                        ia_fila_adicionar(db(), 'conferir_pdf', (int)$aulaAtual['id']);
+                                                        db()->prepare("UPDATE ia_fila SET prioridade = 1 WHERE tipo = 'conferir_pdf' AND aula_id = :a")->execute([':a' => (int)$aulaAtual['id']]);
+                                                    }
+                                                }
+                                            }
+                                        } catch (Throwable $e) {
+                                            $vaDisponivel = true;
+                                        }
+                                        ?>
+                                        <?php if ($vaDisponivel): ?>
                                         <button type="button" class="aula-somente-pdf__botao" id="vaAbrir"><span aria-hidden="true">▶</span>Assistir à videoaula do Antigão</button>
+                                        <?php else: ?>
+                                        <span class="aula-somente-pdf__botao" style="opacity:.6;cursor:default" title="A IA confere o PDF desta aula antes de gravar a videoaula">🎬 Videoaula do Antigão em preparação</span>
+                                        <?php endif; ?>
                                         <button type="button" class="aula-somente-pdf__botao aula-somente-pdf__botao--sec" onclick="var b=document.getElementById('abrirPdfAula'); if(b){b.click();}else{var t=document.getElementById('aulaDescricao'); if(t){t.scrollIntoView({behavior:'smooth'});}}">
                                             <i data-lucide="file-text" aria-hidden="true"></i><?php echo $soTexto ? 'Ler a teoria' : 'Ler o material'; ?>
                                         </button>

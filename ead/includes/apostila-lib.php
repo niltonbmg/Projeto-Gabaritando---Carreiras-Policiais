@@ -94,6 +94,10 @@ if (!function_exists('apostila_gerar')) {
         foreach ((array)($resp['candidates'][0]['content']['parts'] ?? []) as $p) {
             $texto .= (string)($p['text'] ?? '');
         }
+        // A IA conferiu e o material (vídeo/PDF) não é do assunto da aula: não grava texto errado.
+        if (preg_match('~===\s*CONFERIR\s*===\s*(.{0,200})~u', $texto, $mC)) {
+            throw new RuntimeException('Material de outro assunto (' . trim(strip_tags($mC[1])) . '): a teoria não foi escrita. Confira o vídeo/PDF da aula na Revisão de aulas.');
+        }
         // Junta DESCRICAO + APOSTILA num só HTML (a descrição vem primeiro).
         $texto = preg_replace('~^```(?:html)?\s*|\s*```$~m', '', $texto);
         $texto = str_replace(['=== DESCRICAO ===', '=== APOSTILA ==='], '', (string)$texto);

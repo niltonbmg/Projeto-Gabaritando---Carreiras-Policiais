@@ -24,6 +24,10 @@ REGRAS OBRIGATÓRIAS
    Não exagere: no máximo uma expressão motivacional na abertura e uma no fecho.
 7. Saída em HTML simples (h2, h3, p, ul, li, strong, table). Sem CSS, sem markdown.
 8. Tamanho da mini apostila: até 900 palavras.
+9. NÃO copie a saudação nem os bordões do professor da transcrição: a sua abertura é só "Fala, combatente!".
+10. Cite apenas a(s) corporação(ões) do concurso ({concurso}). Não mencione outras polícias ou concursos.
+11. CONFERÊNCIA: se a transcrição/PDF NÃO tratar do assunto "{assunto}" (título "{titulo}"), não escreva nada
+    da apostila. Responda SOMENTE a linha: === CONFERIR === <do que o material realmente trata, em até 12 palavras>
 
 ESTRUTURA DA SAÍDA (duas partes, nesta ordem)
 

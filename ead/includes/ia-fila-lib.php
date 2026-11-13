@@ -41,6 +41,10 @@ if (!function_exists('ia_fila_bootstrap')) {
             $pdo->exec('ALTER TABLE ia_fila ADD COLUMN consumo VARCHAR(160) NULL'); // gasto real da última execução
         } catch (Throwable $e) {
         }
+        try {
+            $pdo->exec('ALTER TABLE ia_fila ADD COLUMN prioridade TINYINT NOT NULL DEFAULT 0'); // 1 = um aluno está na aula agora
+        } catch (Throwable $e) {
+        }
     }
 }
 
@@ -104,7 +108,7 @@ if (!function_exists('ia_fila_processar_um')) {
                                LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
                                LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
                               WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
-                              ORDER BY FIELD(f.tipo, $ordem), COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch(); // curso com mais alunos primeiro
+                              ORDER BY FIELD(f.tipo, $ordem), f.prioridade DESC, COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch(); // curso com mais alunos primeiro
         // Voz e texto são cotas separadas do Google: alterna para não deixar a voz parada enquanto há fila de texto.
         $arqGrupo = dirname(__DIR__) . '/uploads/.ia-ultimo-grupo';
         $vozTipos = ['videoaula', 'podcast'];

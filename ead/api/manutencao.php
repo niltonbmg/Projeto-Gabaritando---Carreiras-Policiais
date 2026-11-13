@@ -218,6 +218,7 @@ try {
                 $pdo->prepare('UPDATE admin_curso_aulas SET pdf_arquivo = :p, pdf_nome = :n WHERE id = :id')->execute([':p' => $novo, ':n' => (string)$nome ?: basename($novo), ':id' => $id]);
                 $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $id]);
                 rev_gravar($pdo, $id, $novo, 'ok_manual', null, 'PDF trocado pelo assistente a pedido do mentor.', 'mentor');
+                rev_reescrever_texto($pdo, $id);
                 if (trim((string)$a['video_url']) === '') {
                     ia_fila_adicionar($pdo, 'videoaula', $id);
                 }
