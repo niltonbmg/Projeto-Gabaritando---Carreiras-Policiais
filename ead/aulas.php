@@ -1140,7 +1140,24 @@ $videoAtual = $videoUrlAtual !== '' ? aulas_youtube_embed($videoUrlAtual) : '';
 $videoDuracaoSegundosConhecida = $videoDuracaoSegundosManual > 0
     ? $videoDuracaoSegundosManual
     : max(0, (int)($videoProgressoAtual['duracao'] ?? 0));
-$conteudoDuracaoSegundos = $videoDuracaoSegundosConhecida + $pdfDuracaoSegundos;
+// Método META: a aula termina nas questões. Tempo das questões = mínimo do ciclo × minutos por questão (Plano-Mestre).
+$questoesQtdAula = 0;
+$questoesSegundos = 0;
+try {
+    $stTopQ = ($aulaAtual && function_exists('db')) ? db()->prepare('SELECT topico_id FROM admin_curso_aulas WHERE id = :id') : null;
+    if ($stTopQ) {
+        $stTopQ->execute([':id' => (int)$aulaAtual['id']]);
+    }
+    if ($stTopQ && (int)$stTopQ->fetchColumn() > 0 && is_file(__DIR__ . '/includes/meta-lib.php')) {
+        require_once __DIR__ . '/includes/meta-lib.php';
+        $cfgTempoQ = meta_config(db());
+        $questoesQtdAula = max(1, (int)($cfgTempoQ['min_questoes'] ?? 5));
+        $questoesSegundos = $questoesQtdAula * max(1, (int)($cfgTempoQ['min_por_questao'] ?? 3)) * 60;
+    }
+} catch (Throwable $e) {
+    $questoesSegundos = 0;
+}
+$conteudoDuracaoSegundos = $videoDuracaoSegundosConhecida + $pdfDuracaoSegundos + $questoesSegundos;
 $conteudoDuracaoTexto = $conteudoDuracaoSegundos > 0
     ? aulas_formatar_duracao_resumo($conteudoDuracaoSegundos)
     : (($videoUrlAtual !== '' && $videoDuracaoSegundosConhecida <= 0) ? 'Carregando...' : 'Não informado');
@@ -3828,6 +3845,16 @@ if ($travaMeta) {
                             </div>
                         <?php endif; ?>
 
+                        <?php if ($questoesSegundos > 0): ?>
+                            <div class="aula-duration-item">
+                                <span class="aula-duration-item__icon"><i data-lucide="list-checks" aria-hidden="true"></i></span>
+                                <span class="aula-duration-item__text">
+                                    <span>Tempo das questões</span>
+                                    <strong><?php echo esc(aulas_formatar_duracao_resumo($questoesSegundos)); ?> · <?php echo (int)$questoesQtdAula; ?> questões</strong>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="aula-duration-item">
                             <span class="aula-duration-item__icon"><i data-lucide="timer" aria-hidden="true"></i></span>
                             <span class="aula-duration-item__text">
@@ -3836,6 +3863,7 @@ if ($travaMeta) {
                                     id="aulaContentDurationValue"
                                     data-video-seconds="<?php echo (int)$videoDuracaoSegundosConhecida; ?>"
                                     data-pdf-seconds="<?php echo (int)$pdfDuracaoSegundos; ?>"
+                                    data-questoes-seconds="<?php echo (int)$questoesSegundos; ?>"
                                     data-video-dynamic="<?php echo ($videoUrlAtual !== '' && $videoDuracaoSegundosManual <= 0) ? '1' : '0'; ?>"><?php echo esc($conteudoDuracaoTexto); ?></strong>
                             </span>
                         </div>
@@ -4388,7 +4416,8 @@ if ($travaMeta) {
                     videoSegundos = duracaoVideo;
                     resumoDuracaoConteudo.dataset.videoSeconds = String(Math.round(duracaoVideo));
                 }
-                resumoDuracaoConteudo.textContent = formatarDuracaoResumo(videoSegundos + pdfSegundos);
+                const questoesSegundos = Math.max(0, Number(resumoDuracaoConteudo.dataset.questoesSeconds) || 0);
+                resumoDuracaoConteudo.textContent = formatarDuracaoResumo(videoSegundos + pdfSegundos + questoesSegundos);
             }
 
             function atualizarProgressoModuloVisual(percentualVideo){

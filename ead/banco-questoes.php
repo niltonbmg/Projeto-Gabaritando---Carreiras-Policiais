@@ -437,6 +437,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                     $stT = $pdo->prepare('SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = :t');
                     $stT->execute([':u' => $usuarioId, ':t' => $topResp]);
                     $cicloResp = ['topico_id' => $topResp, 'feitas' => (int)$stT->fetchColumn()];
+                    // Desempenho e evolução: o assunto, a matéria e o geral (para o aluno ver que está avançando).
+                    require_once __DIR__ . '/includes/meta-lib.php';
+                    $cfgD = meta_config($pdo);
+                    $stD = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = :t');
+                    $stD->execute([':u' => $usuarioId, ':t' => $topResp]);
+                    $dA = $stD->fetch();
+                    $nivA = meta_nivel((int)$dA['n'], (int)$dA['a'], $cfgD);
+                    $stM = $pdo->prepare('SELECT m.nome, COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
+                                           JOIN admin_materias m ON m.id = q.materia_id WHERE r.usuario_id = :u AND q.materia_id = (SELECT materia_id FROM admin_banco_questoes WHERE id = :q) GROUP BY m.nome');
+                    $stM->execute([':u' => $usuarioId, ':q' => $questaoId]);
+                    $dM = $stM->fetch() ?: ['nome' => '', 'n' => 0, 'a' => 0];
+                    $stG = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(correta),0) a, COALESCE(SUM(respondido_em >= NOW() - INTERVAL 7 DAY),0) n7, COALESCE(SUM(correta AND respondido_em >= NOW() - INTERVAL 7 DAY),0) a7 FROM banco_questoes_respostas_usuario WHERE usuario_id = :u');
+                    $stG->execute([':u' => $usuarioId]);
+                    $dG = $stG->fetch();
+                    $pct = static fn($a, $n): int => (int)$n > 0 ? (int)round((int)$a * 100 / (int)$n) : 0;
+                    $antesN = (int)$dG['n'] - (int)$dG['n7'];
+                    $cicloResp['desempenho'] = [
+                        'assunto' => ['acertos' => (int)$dA['a'], 'feitas' => (int)$dA['n'], 'pct' => $pct($dA['a'], $dA['n']), 'nivel' => $nivA['nome'], 'nivel_n' => $nivA['nivel'], 'proximo_nivel' => $nivA['proximo_nome'], 'faltam_proximo' => $nivA['faltam_proximo'], 'proximo_acerto' => $nivA['proximo_acerto']],
+                        'materia' => ['nome' => (string)$dM['nome'], 'pct' => $pct($dM['a'], $dM['n']), 'feitas' => (int)$dM['n']],
+                        'geral' => ['pct' => $pct($dG['a'], $dG['n']), 'feitas' => (int)$dG['n'], 'semana_pct' => $pct($dG['a7'], $dG['n7']), 'semana_feitas' => (int)$dG['n7'],
+                                    'antes_pct' => $antesN > 0 ? $pct((int)$dG['a'] - (int)$dG['a7'], $antesN) : null],
+                    ];
                 }
                 unset($_SESSION['gab_missao_' . (int)$usuarioId]);
                 if ($cicloResp && is_file(__DIR__ . '/includes/missao-lib.php')) {
@@ -758,7 +780,14 @@ function bq_status_label(?string $status): string
         .bqc.liberou{border-color:#22c55e;background:#0f2a1a}
         .bqc-ok{margin:0 0 12px;padding:12px 14px;border-radius:12px;background:#0f2a1a;color:#4ade80;font-weight:700}
         @media(max-width:640px){.page-wrap{padding:0 12px 28px;margin-top:18px}.bq-title{min-height:60px;font-size:1.1rem}.bq-body{padding:15px 12px 22px}.select-wrap,.select-wrap.is-wide,.select-wrap.is-mid{min-width:100%}.option-row{grid-template-columns:24px 35px 1fr;gap:8px}.question-text{font-size:1rem}.option-text{font-size:.95rem}.pager-controls{gap:8px}.per-page{gap:6px;flex-wrap:wrap;justify-content:center}}
-    </style>
+    
+.bqd{margin:12px 0;padding:16px;border-radius:16px;background:#161618;border:1px solid #3a3a3e;display:grid;gap:10px}
+.bqd-tit{font-size:17px;color:#fbb928}
+.bqd-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.bqd-g>div{background:#1e1e21;border-radius:12px;padding:10px 12px;display:grid}
+.bqd-g span{font-size:12px;color:#a3a3ab;text-transform:uppercase}.bqd-g b{font-size:26px}.bqd-g small{font-size:12px;color:#c9c9cf}
+.bqd-p{margin:0;font-size:14px;color:#e5e5e7}.bqd-p a{color:#fbb928}
+</style>
 </head>
 <body>
     <?php if (is_file(__DIR__ . '/includes/barra-superior.php')) { include_once __DIR__ . '/includes/barra-superior.php'; } ?>
@@ -1122,6 +1151,23 @@ function bq_status_label(?string $status): string
         box.classList.toggle('liberou', feitas >= min);
     }
     pintar();
+    // Desempenho e evolução depois das questões do ciclo
+    function mostrarDesempenho(d, primeiraVez) {
+        var el = document.getElementById('bqDesempenho');
+        if (!el) { el = document.createElement('div'); el.id = 'bqDesempenho'; el.className = 'bqd'; el.setAttribute('role', 'status'); box.insertAdjacentElement('afterend', el); }
+        var a = d.assunto, m = d.materia, g = d.geral;
+        var cor = function (p) { return p >= 70 ? '#4ade80' : (p >= 50 ? '#fbb928' : '#ff8a80'); };
+        var evol = g.antes_pct === null ? 'Primeira semana: sua base está sendo formada.' : (g.semana_pct >= g.antes_pct ? '📈 Nesta semana você acertou ' + g.semana_pct + '%, contra ' + g.antes_pct + '% antes. Evoluindo!' : '📉 Nesta semana ' + g.semana_pct + '% (antes ' + g.antes_pct + '%). Revise os erros nos Flashcards.');
+        var dica = a.pct >= 70 ? 'Mandou bem! Siga para o próximo assunto.' : 'Antes de seguir, revise os erros: eles já estão nos seus Flashcards.';
+        el.innerHTML = '<strong class="bqd-tit">' + (primeiraVez ? '🎯 Missão cumprida neste assunto!' : '📊 Seu desempenho') + '</strong>'
+            + '<div class="bqd-g">'
+            + '<div><span>Neste assunto</span><b style="color:' + cor(a.pct) + '">' + a.pct + '%</b><small>' + a.acertos + ' de ' + a.feitas + ' · nível ' + a.nivel + '</small></div>'
+            + (m.nome ? '<div><span>' + m.nome + '</span><b style="color:' + cor(m.pct) + '">' + m.pct + '%</b><small>' + m.feitas + ' questões na matéria</small></div>' : '')
+            + '<div><span>Geral</span><b style="color:' + cor(g.pct) + '">' + g.pct + '%</b><small>' + g.feitas + ' questões no total</small></div></div>'
+            + '<p class="bqd-p">' + evol + '</p>'
+            + (a.proximo_nivel ? '<p class="bqd-p">⬆ Próximo nível neste assunto: <b>' + a.proximo_nivel + '</b> (mais ' + a.faltam_proximo + ' questões com ' + (a.proximo_acerto || 0) + '% de acerto).</p>' : '<p class="bqd-p">🏆 Assunto dominado!</p>')
+            + '<p class="bqd-p">' + dica + ' <a href="flashcards.php">Flashcards</a> · <a href="meu-plano.php">Minha evolução</a></p>';
+    }
     var _fetch = window.fetch;
     window.fetch = function () {
         return _fetch.apply(this, arguments).then(function (r) {
@@ -1129,6 +1175,7 @@ function bq_status_label(?string $status): string
                 r.clone().json().then(function (j) {
                     if (!j || !j.ciclo || String(j.ciclo.topico_id) !== String(topico)) { return; }
                     var antes = feitas; feitas = j.ciclo.feitas; pintar();
+                    if (j.ciclo.desempenho && feitas >= min) { mostrarDesempenho(j.ciclo.desempenho, antes < min); }
                     if (antes < min && feitas >= min) {
                         var p = j.ciclo.proximo;
                         acao.innerHTML = '<strong style="color:#4ade80">🔓 Próximo assunto liberado!</strong> ' + (p ? '<a class="bqc-bt" href="' + p.url + '">▶ ' + (p.acao || 'Continuar') + (p.assunto ? ': ' + p.assunto.replace(/[<>&"]/g, '') : '') + '</a>' : '');

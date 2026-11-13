@@ -186,17 +186,43 @@ if (!function_exists('meta_estado_aluno')) {
         $cfg = meta_config($pdo);
         $minQ = max(1, $cfg['min_questoes'] ?? 5);
         $plano = meta_plano_do_curso($pdo, $cursoId);
+        $qtdDisp = "(SELECT COUNT(*) FROM admin_banco_questoes qd WHERE qd.status = 'ativo' AND qd.materia_topico_id = %s
+                       AND EXISTS (SELECT 1 FROM admin_banco_questao_opcoes od WHERE od.questao_id = qd.id AND od.correta = 1)) AS disponiveis";
         if (!$plano) {
-            return ['plano' => null, 'itens' => [], 'atual' => null, 'atuais' => [], 'nivel_geral' => 0.0, 'dominio_pct' => 0, 'config' => $cfg];
-        }
-
+            // Sem Plano-Mestre aprovado: o ciclo segue a ORDEM DAS AULAS do curso (um item por assunto do edital),
+            // para a trava, a missão e as questões funcionarem igual. Ids a partir de 3.000.000.000 = itens implícitos (sem plano).
+            $stI = $pdo->prepare("SELECT (3000000000 + a.id) AS id, a.id AS aula_id, a.topico_id, a.materia_id, COALESCE(mt.titulo, a.titulo) AS titulo, mt.titulo AS topico_nome, m.nome AS materia_nome,
+                        a.titulo AS aula_titulo, a.modulo_id AS aula_modulo_id, a.curso_id AS aula_curso_id, 1 AS peso, 'media' AS complexidade, NULL AS tempo_ajustado_min,
+                        NULL AS teoria_concluida_em, NULL AS liberado_por_admin_em, NULL AS liberado_motivo,
+                        (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u1 AND q.materia_topico_id = a.topico_id) AS resolvidas,
+                        (SELECT COALESCE(SUM(r.correta), 0) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u2 AND q.materia_topico_id = a.topico_id) AS acertos,
+                        " . sprintf($qtdDisp, 'a.topico_id') . "
+                   FROM admin_curso_aulas a LEFT JOIN admin_curso_modulos mo ON mo.id = a.modulo_id
+                   LEFT JOIN admin_materia_topicos mt ON mt.id = a.topico_id LEFT JOIN admin_materias m ON m.id = a.materia_id
+                  WHERE a.curso_id = :c AND a.topico_id IS NOT NULL AND a.topico_id > 0
+                  ORDER BY COALESCE(mo.ordem, 0), mo.id, a.ordem, a.id");
+            $stI->execute([':u1' => $usuarioId, ':u2' => $usuarioId, ':c' => $cursoId]);
+            $linhas = [];
+            $vistos = [];
+            foreach ($stI->fetchAll() as $l) {
+                if (!isset($vistos[(int)$l['topico_id']])) { // primeira aula de cada assunto
+                    $vistos[(int)$l['topico_id']] = true;
+                    $linhas[] = $l;
+                }
+            }
+            if (!$linhas) {
+                return ['plano' => null, 'itens' => [], 'atual' => null, 'atuais' => [], 'nivel_geral' => 0.0, 'dominio_pct' => 0, 'config' => $cfg];
+            }
+            $plano = ['id' => 0, 'curso_id' => $cursoId, 'status' => 'aprovado', 'implicito' => true, 'titulo' => 'Ordem das aulas do curso'];
+        } else {
         $stmt = $pdo->prepare("SELECT i.*, mt.titulo AS topico_nome, m.nome AS materia_nome,
                     ai.teoria_concluida_em, ai.liberado_por_admin_em, ai.liberado_motivo,
                     a.titulo AS aula_titulo, a.modulo_id AS aula_modulo_id, a.curso_id AS aula_curso_id,
                     (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
                       WHERE r.usuario_id = :u1 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS resolvidas,
                     (SELECT COALESCE(SUM(r.correta), 0) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
-                      WHERE r.usuario_id = :u2 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS acertos
+                      WHERE r.usuario_id = :u2 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS acertos,
+                    " . sprintf($qtdDisp, 'i.topico_id') . "
                FROM meta_plano_itens i
                LEFT JOIN admin_materia_topicos mt ON mt.id = i.topico_id
                LEFT JOIN admin_materias m ON m.id = i.materia_id
@@ -206,6 +232,7 @@ if (!function_exists('meta_estado_aluno')) {
               ORDER BY i.ordem ASC, i.id ASC");
         $stmt->execute([':u1' => $usuarioId, ':u2' => $usuarioId, ':u3' => $usuarioId, ':p' => (int)$plano['id']]);
         $linhas = $stmt->fetchAll();
+        }
         // Ciclo automático: aula marcada como assistida na página da aula já conta como teoria concluída.
         try {
             $stA = $pdo->prepare('SELECT aula_id, MIN(COALESCE(assistido_em, NOW())) FROM aulas_progresso WHERE usuario_id = :u AND assistido = 1 GROUP BY aula_id');
@@ -233,7 +260,9 @@ if (!function_exists('meta_estado_aluno')) {
             $nivel = meta_nivel((int)$l['resolvidas'], (int)$l['acertos'], $cfg);
             $teoriaOk = !empty($l['teoria_concluida_em']) || empty($l['aula_id']);
             $liberadoAdmin = !empty($l['liberado_por_admin_em']);
-            $cumprido = $liberadoAdmin || ($teoriaOk && (int)$l['resolvidas'] >= $minQ);
+            // Assunto com menos questões no banco do que o mínimo: exige as que existem (ninguém fica preso).
+            $minItem = min($minQ, max(0, (int)($l['disponiveis'] ?? $minQ)));
+            $cumprido = $liberadoAdmin || ($teoriaOk && (int)$l['resolvidas'] >= $minItem);
 
             if ($liberadoAdmin) {
                 // Exceção do mentor: o assunto fica aberto e conta como cumprido.
@@ -252,7 +281,8 @@ if (!function_exists('meta_estado_aluno')) {
                 'etapa' => $etapa,
                 'nivel_info' => $nivel,
                 'teoria_ok' => $teoriaOk,
-                'faltam_minimo' => max(0, $minQ - (int)$l['resolvidas']),
+                'faltam_minimo' => max(0, $minItem - (int)$l['resolvidas']),
+                'min_item' => $minItem,
                 'liberado_admin' => $liberadoAdmin,
             ];
             $itens[] = $item;
