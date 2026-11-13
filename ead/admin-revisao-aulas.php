@@ -186,7 +186,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         <section class="admin-panel">
             <?php if (!$lista): ?><p>Nada pendente aqui. 👍</p><?php endif; ?>
             <?php foreach ($lista as $a): $s = $selo[$a['situacao']] ?? [$a['situacao'], '#111']; $sug = $a['situacao'] === 'suspeita' || $a['reportes'] ? rev_sugerir_pdfs($pdo, (string)$a['titulo'], (string)$a['materia']) : []; ?>
-            <div class="rv-item">
+            <div class="rv-item" id="rv-<?php echo (int)$a['id']; ?>">
                 <div class="rv-top">
                     <span class="rv-selo" style="color:<?php echo $s[1]; ?>"><?php echo $s[0]; ?></span>
                     <strong><?php echo admin_esc((string)$a['titulo']); ?></strong>
@@ -210,11 +210,11 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <?php endif; ?>
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="acao" value="trocar"><input type="hidden" name="aula_id" value="<?php echo (int)$a['id']; ?>"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
-                        <select name="pdf_existente"><option value="">Trocar por PDF já na plataforma…</option>
+                        <select name="pdf_existente" data-rv-escolha><option value="">Trocar por PDF já na plataforma…</option>
                             <?php foreach ($sug as $p): ?><option value="<?php echo admin_esc((string)$p['pdf']); ?>"><?php echo ($p['nota'] > 0 ? '★ ' : '') . admin_esc(basename((string)$p['pdf'])) . ($p['assunto'] ? ' — ' . admin_esc((string)$p['assunto']) : ''); ?></option><?php endforeach; ?>
                         </select>
                         <span style="font-size:12px">ou</span><input type="file" name="pdf_novo" accept="application/pdf" style="max-width:200px">
-                        <button class="admin-btn admin-btn-small">Trocar PDF</button>
+                        <button class="admin-btn admin-btn-small" data-rv-trocar>Trocar PDF</button>
                     </form>
                     <?php if (trim((string)$a['pdf_arquivo']) !== ''): ?>
                         <form method="post" onsubmit="return confirm('Retirar o PDF desta aula? <?php echo trim((string)$a['video_url']) === '' ? 'O Antigão vai escrever a teoria e gravar a videoaula pelo assunto do edital.' : ''; ?>');"><input type="hidden" name="acao" value="sem_pdf"><input type="hidden" name="aula_id" value="<?php echo (int)$a['id']; ?>"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>"><button class="admin-btn admin-btn-small admin-btn-light">Sem PDF<?php echo trim((string)$a['video_url']) === '' ? ': Antigão gera pelo edital' : ''; ?></button></form>
@@ -231,5 +231,27 @@ $menuBarInclude = admin_cursos_get_menubar();
 </div>
 <script>window.lucide && lucide.createIcons();</script>
 <script src="assets/js/ia-custo.js?v=2" data-api="api/ia-estimativa.php"></script>
+<?php if ($sucesso !== ''): ?><div id="rvToast" style="position:fixed;right:20px;bottom:20px;z-index:9999;max-width:420px;background:#067647;color:#fff;padding:14px 18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);font-size:14px">✅ <?php echo admin_esc($sucesso); ?><br><small>Seguindo para a próxima aula da lista.</small></div><script>setTimeout(function(){var t=document.getElementById('rvToast');if(t)t.remove();},7000);</script><?php endif; ?>
+<script>
+// Revisão: escolher no menu já mostra o botão de confirmar; depois de qualquer ação, a página volta na PRÓXIMA aula da lista.
+(function(){
+    var itens = Array.prototype.slice.call(document.querySelectorAll('.rv-item'));
+    itens.forEach(function(it, k){
+        var prox = itens[k + 1] || itens[k - 1];
+        it.querySelectorAll('form[method="post"]').forEach(function(f){
+            f.addEventListener('submit', function(){ f.action = location.pathname + location.search + (prox ? '#' + prox.id : ''); });
+        });
+        var sel = it.querySelector('[data-rv-escolha]'), bt = it.querySelector('[data-rv-trocar]'), arq = it.querySelector('input[name="pdf_novo"]');
+        if (!sel || !bt) return;
+        function upd(){
+            var ok = sel.value !== '' || (arq && arq.files.length);
+            bt.textContent = ok ? '✅ Confirmar troca' : 'Trocar PDF';
+            bt.style.cssText = ok ? 'background:#fbb928;color:#111;font-weight:800;box-shadow:0 0 0 3px rgba(251,185,40,.35)' : '';
+        }
+        sel.addEventListener('change', upd); if (arq) arq.addEventListener('change', upd);
+        bt.closest('form').addEventListener('submit', function(ev){ if (sel.value === '' && !(arq && arq.files.length)) { ev.preventDefault(); alert('Escolha um PDF no menu (ou envie um arquivo) antes de trocar.'); } });
+    });
+})();
+</script>
 </body>
 </html>
