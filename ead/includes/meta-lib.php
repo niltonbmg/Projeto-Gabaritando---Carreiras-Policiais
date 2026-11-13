@@ -194,7 +194,7 @@ if (!function_exists('meta_estado_aluno')) {
             $stI = $pdo->prepare("SELECT (3000000000 + a.id) AS id, a.id AS aula_id, a.topico_id, a.materia_id, COALESCE(mt.titulo, a.titulo) AS titulo, mt.titulo AS topico_nome, m.nome AS materia_nome,
                         a.titulo AS aula_titulo, a.modulo_id AS aula_modulo_id, a.curso_id AS aula_curso_id, 1 AS peso, 'media' AS complexidade, NULL AS tempo_ajustado_min,
                         NULL AS teoria_concluida_em, NULL AS liberado_por_admin_em, NULL AS liberado_motivo,
-                        (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u1 AND q.materia_topico_id = a.topico_id) AS resolvidas,
+                        (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u1 AND q.materia_topico_id = a.topico_id) AS resolvidas,
                         (SELECT COALESCE(SUM(r.correta), 0) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u2 AND q.materia_topico_id = a.topico_id) AS acertos,
                         " . sprintf($qtdDisp, 'a.topico_id') . "
                    FROM admin_curso_aulas a LEFT JOIN admin_curso_modulos mo ON mo.id = a.modulo_id
@@ -219,7 +219,7 @@ if (!function_exists('meta_estado_aluno')) {
                     ai.teoria_concluida_em, ai.liberado_por_admin_em, ai.liberado_motivo,
                     a.titulo AS aula_titulo, a.modulo_id AS aula_modulo_id, a.curso_id AS aula_curso_id,
                     (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
-                      WHERE r.usuario_id = :u1 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS resolvidas,
+                      WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u1 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS resolvidas,
                     (SELECT COALESCE(SUM(r.correta), 0) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
                       WHERE r.usuario_id = :u2 AND i.topico_id IS NOT NULL AND q.materia_topico_id = i.topico_id) AS acertos,
                     " . sprintf($qtdDisp, 'i.topico_id') . "

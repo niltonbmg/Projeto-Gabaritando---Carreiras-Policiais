@@ -81,7 +81,7 @@ if (!$esc) {
     }
     // Andamento do aluno por assunto (questões resolvidas) e link da aula.
     $resolvidas = [];
-    $stR = $pdo->prepare('SELECT q.materia_topico_id t, COUNT(*) n FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u GROUP BY q.materia_topico_id');
+    $stR = $pdo->prepare('SELECT q.materia_topico_id t, COUNT(*) n FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u GROUP BY q.materia_topico_id');
     $stR->execute([':u' => $usuarioId]);
     foreach ($stR->fetchAll() as $r) {
         $resolvidas[(int)$r['t']] = (int)$r['n'];

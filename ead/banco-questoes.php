@@ -434,21 +434,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                 $stT->execute([':q' => $questaoId]);
                 $topResp = (int)$stT->fetchColumn();
                 if ($topResp > 0) {
-                    $stT = $pdo->prepare('SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = :t');
+                    $stT = $pdo->prepare('SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_topico_id = :t');
                     $stT->execute([':u' => $usuarioId, ':t' => $topResp]);
                     $cicloResp = ['topico_id' => $topResp, 'feitas' => (int)$stT->fetchColumn()];
                     // Desempenho e evolução: o assunto, a matéria e o geral (para o aluno ver que está avançando).
                     require_once __DIR__ . '/includes/meta-lib.php';
                     $cfgD = meta_config($pdo);
-                    $stD = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = :t');
+                    $stD = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_topico_id = :t');
                     $stD->execute([':u' => $usuarioId, ':t' => $topResp]);
                     $dA = $stD->fetch();
                     $nivA = meta_nivel((int)$dA['n'], (int)$dA['a'], $cfgD);
                     $stM = $pdo->prepare('SELECT m.nome, COUNT(*) n, COALESCE(SUM(r.correta),0) a FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
-                                           JOIN admin_materias m ON m.id = q.materia_id WHERE r.usuario_id = :u AND q.materia_id = (SELECT materia_id FROM admin_banco_questoes WHERE id = :q) GROUP BY m.nome');
+                                           JOIN admin_materias m ON m.id = q.materia_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_id = (SELECT materia_id FROM admin_banco_questoes WHERE id = :q) GROUP BY m.nome');
                     $stM->execute([':u' => $usuarioId, ':q' => $questaoId]);
                     $dM = $stM->fetch() ?: ['nome' => '', 'n' => 0, 'a' => 0];
-                    $stG = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(correta),0) a, COALESCE(SUM(respondido_em >= NOW() - INTERVAL 7 DAY),0) n7, COALESCE(SUM(correta AND respondido_em >= NOW() - INTERVAL 7 DAY),0) a7 FROM banco_questoes_respostas_usuario WHERE usuario_id = :u');
+                    $stG = $pdo->prepare('SELECT COUNT(*) n, COALESCE(SUM(correta),0) a, COALESCE(SUM(respondido_em >= NOW() - INTERVAL 7 DAY),0) n7, COALESCE(SUM(correta AND respondido_em >= NOW() - INTERVAL 7 DAY),0) a7 FROM banco_questoes_respostas_usuario WHERE opcao_id IS NOT NULL AND usuario_id = :u');
                     $stG->execute([':u' => $usuarioId]);
                     $dG = $stG->fetch();
                     $pct = static fn($a, $n): int => (int)$n > 0 ? (int)round((int)$a * 100 / (int)$n) : 0;
@@ -544,6 +544,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 }
 
 $concursoPassadoId = max(0, (int)($_GET['concurso_passado_id'] ?? 0));
+// Ciclo na tela da aula: as questões do assunto em JSON (mesmo filtro de acesso do banco). Responde por 'salvar_resposta'.
+if (isset($_GET['ciclo_json']) && $pdo instanceof PDO && $usuarioId > 0) {
+    try {
+        $tq = max(0, (int)($_GET['topico_id'] ?? 0));
+        require_once __DIR__ . '/includes/meta-lib.php';
+        $cfgC = meta_config($pdo);
+        $minC = max(1, (int)($cfgC['min_questoes'] ?? 5));
+        $metaC = max($minC, (int)($cfgC['nivel4_questoes'] ?? 50)); // meta do assunto (dominar): 50
+        [$filtroC, $paramsC] = bq_acesso_sql($pdo, $usuarioId, 'q', 'bq_ciclo');
+        $stC = $pdo->prepare("SELECT q.id, q.enunciado, q.explicacao, (r.opcao_id IS NOT NULL) respondida
+                                FROM admin_banco_questoes q LEFT JOIN banco_questoes_respostas_usuario r ON r.questao_id = q.id AND r.usuario_id = :u
+                               WHERE q.status = 'ativo' AND q.materia_topico_id = :t {$filtroC}
+                                 AND EXISTS (SELECT 1 FROM admin_banco_questao_opcoes o WHERE o.questao_id = q.id AND o.correta = 1)
+                               ORDER BY (r.opcao_id IS NOT NULL), q.id LIMIT 300");
+        $stC->execute(array_merge([':u' => $usuarioId, ':t' => $tq], $paramsC));
+        $todas = $stC->fetchAll();
+        $feitas = count(array_filter($todas, static fn($x) => (int)$x['respondida'] === 1));
+        $naoFeitas = array_values(array_filter($todas, static fn($x) => (int)$x['respondida'] === 0));
+        // Primeiro o mínimo para liberar; depois, se o aluno quiser, lotes de 10 rumo à meta.
+        $lista = array_slice($naoFeitas, 0, !empty($_GET['mais']) || $feitas >= $minC ? 10 : max(1, $minC - $feitas));
+        $stO = $pdo->prepare('SELECT id, letra, texto FROM admin_banco_questao_opcoes WHERE questao_id = :q ORDER BY ordem, letra, id');
+        $saida = [];
+        foreach ($lista as $q) {
+            $stO->execute([':q' => (int)$q['id']]);
+            $saida[] = ['id' => (int)$q['id'], 'enunciado' => (string)$q['enunciado'], 'explicacao' => (string)$q['explicacao'], 'opcoes' => $stO->fetchAll(PDO::FETCH_ASSOC)];
+        }
+        bq_json(['ok' => true, 'min' => min($minC, count($todas)), 'meta' => min($metaC, count($todas)), 'meta_ideal' => $metaC, 'disponiveis' => count($todas), 'feitas' => $feitas, 'questoes' => $saida]);
+    } catch (Throwable $e) {
+        bq_json(['ok' => false, 'erro' => 'Não foi possível carregar as questões.'], 400);
+    }
+}
 $topicoId = max(0, (int)($_GET['topico_id'] ?? 0));
 $bancaId = max(0, (int)($_GET['banca_id'] ?? 0));
 $ano = max(0, (int)($_GET['ano'] ?? 0));
@@ -802,7 +833,7 @@ function bq_status_label(?string $status): string
                     try {
                         require_once __DIR__ . '/includes/missao-lib.php';
                         $cfgB = meta_config($pdo);
-                        $stB = $pdo->prepare('SELECT mt.titulo, (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.usuario_id = :u AND q.materia_topico_id = mt.id) feitas FROM admin_materia_topicos mt WHERE mt.id = :t');
+                        $stB = $pdo->prepare('SELECT mt.titulo, (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_topico_id = mt.id) feitas FROM admin_materia_topicos mt WHERE mt.id = :t');
                         $stB->execute([':u' => (int)$usuarioId, ':t' => $topicoId]);
                         $rowB = $stB->fetch();
                         if ($rowB) {

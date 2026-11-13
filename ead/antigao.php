@@ -55,7 +55,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $fracas = '';
         try {
             $st = $pdo->prepare('SELECT m.nome, SUM(r.correta = 0) erros, COUNT(*) total FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id
-                                   JOIN admin_materias m ON m.id = q.materia_id WHERE r.usuario_id = :u GROUP BY m.id, m.nome HAVING total >= 3 ORDER BY erros / total DESC LIMIT 3');
+                                   JOIN admin_materias m ON m.id = q.materia_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u GROUP BY m.id, m.nome HAVING total >= 3 ORDER BY erros / total DESC LIMIT 3');
             $st->execute([':u' => $uid]);
             $fracas = implode(', ', array_map(static fn($x) => $x['nome'] . ' (' . round($x['erros'] / max(1, $x['total']) * 100) . '% de erro)', $st->fetchAll()));
         } catch (Throwable $e) {
