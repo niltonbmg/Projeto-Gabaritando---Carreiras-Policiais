@@ -25,7 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st = $pdo->prepare('SELECT * FROM admin_curso_aulas WHERE id = :id');
         $st->execute([':id' => $aulaId]);
         $aula = $st->fetch();
-        if ($acao === 'conferir_todas') {
+        if ($acao === 'aplicar_trocas') {
+            $n = rev_aplicar_trocas($pdo, $cursoId, (array)($_POST['de'] ?? []));
+            $sucesso = $n . ' PDF(s) foram para a aula certa. As aulas que ficaram sem PDF continuam escondidas do aluno até você decidir (enviar o PDF ou deixar o Antigão gerar pelo edital).';
+        } elseif ($acao === 'conferir_todas') {
             $sucesso = rev_varrer($pdo, 5000) . ' aula(s) na fila de conferência. O robô confere em segundo plano (a cada 5 min).';
         } elseif (!$aula) {
             throw new RuntimeException('Aula não encontrada.');
@@ -90,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $cursos = $pdo->query('SELECT id, nome FROM admin_cursos ORDER BY nome')->fetchAll();
+$trocas = rev_sugestoes_troca($pdo, $cursoId);
 $filtro = $cursoId > 0 ? ' AND a.curso_id = ' . $cursoId : '';
 // situação calculada: o selo só vale para o PDF atual
 $sit = "CASE WHEN TRIM(COALESCE(a.pdf_arquivo,'')) = '' THEN 'sem_pdf' WHEN r.aula_id IS NULL OR r.pdf <> a.pdf_arquivo THEN 'pendente' ELSE r.status END";
@@ -159,6 +163,25 @@ $menuBarInclude = admin_cursos_get_menubar();
             </div>
             <div class="rv-barra"><i style="width:<?php echo $comPdf ? (int)round($conferidas / $comPdf * 100) : 0; ?>%"></i></div>
         </section>
+        <?php if ($trocas['movimentos']): ?>
+        <section class="admin-panel" style="border:2px solid #067647">
+            <h2>🔁 Trocas sugeridas (<?php echo count($trocas['movimentos']); ?>)</h2>
+            <p style="font-size:13px;color:#4b5563;margin-top:0">A IA leu os PDFs e encontrou a aula certa de cada um, no mesmo curso. Confira a lista e aplique com um clique. Desmarque o que não quiser.</p>
+            <form method="post">
+                <input type="hidden" name="acao" value="aplicar_trocas"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
+                <table style="width:100%;border-collapse:collapse;font-size:14px">
+                    <tr style="text-align:left;color:#6b7280"><th style="padding:6px"></th><th>PDF (a IA diz que trata de)</th><th>Está na aula</th><th>Vai para a aula</th></tr>
+                    <?php foreach ($trocas['movimentos'] as $m): ?>
+                        <tr style="border-top:1px solid #f0f1f3"><td style="padding:6px"><input type="checkbox" name="de[]" value="<?php echo (int)$m['de_id']; ?>" checked></td>
+                            <td><strong><?php echo admin_esc($m['pdf_nome']); ?></strong><br><small style="color:#6b7280"><?php echo admin_esc($m['assunto_pdf']); ?></small></td>
+                            <td style="color:#b42318">✗ <?php echo admin_esc($m['de']); ?></td>
+                            <td style="color:#067647">✓ <?php echo admin_esc($m['para']); ?></td></tr>
+                    <?php endforeach; ?>
+                </table>
+                <button class="admin-btn admin-btn-primary" type="submit" style="margin-top:10px">✅ Aplicar as trocas marcadas</button>
+            </form>
+        </section>
+        <?php endif; ?>
         <section class="admin-panel">
             <?php if (!$lista): ?><p>Nada pendente aqui. 👍</p><?php endif; ?>
             <?php foreach ($lista as $a): $s = $selo[$a['situacao']] ?? [$a['situacao'], '#111']; $sug = $a['situacao'] === 'suspeita' || $a['reportes'] ? rev_sugerir_pdfs($pdo, (string)$a['titulo'], (string)$a['materia']) : []; ?>

@@ -96,6 +96,11 @@ if ($redAtrasadas) {
 if ($reportes) {
     $tarefas[] = ['🟠', "$reportes aula(s) com problema reportado por aluno", 'Alunos avisaram de PDF errado, vídeo ou conteúdo.', 'Veja e resolva em um clique.', 'admin-revisao-aulas.php', 'Ver reportes'];
 }
+$trocasSug = $seguro(fn() => count(rev_sugestoes_troca($pdo)['movimentos']), 0);
+if ($trocasSug) {
+    $tarefas[] = ['🟠', "$trocasSug PDF(s) na aula errada, com a aula certa já encontrada", 'A IA leu os PDFs e achou o lugar certo de cada um.', 'Confira a lista e aplique todas as trocas com um clique.', 'admin-revisao-aulas.php', 'Ver trocas'];
+    $pdfSusp = max(0, $pdfSusp - $trocasSug);
+}
 if ($pdfSusp) {
     $tarefas[] = ['🟠', "$pdfSusp aula(s) com PDF de outro assunto", 'A IA conferiu e o PDF não bate com a aula. Ele já está escondido dos alunos.', 'Escolha: trocar o PDF ou deixar o Antigão gerar a aula pelo edital.', 'admin-revisao-aulas.php', 'Decidir'];
 }

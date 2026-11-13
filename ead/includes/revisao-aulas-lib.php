@@ -209,3 +209,121 @@ if (!function_exists('rev_bootstrap')) {
         return array_slice($lista, 0, $limite);
     }
 }
+
+if (!function_exists('rev_sugestoes_troca')) {
+    /** Nota de 0 a 1: quanto o assunto do PDF (dito pela IA) combina com o título/assunto de uma aula. */
+    function rev_combina(string $assuntoPdf, string $tituloAula): float
+    {
+        require_once __DIR__ . '/padrao-lib.php';
+        $pal = static function (string $t): array {
+            $t = padrao_chave_titulo(preg_replace('~ · Parte \d+.*$~u', '', $t));
+            $t = preg_replace('~\b(teoria|minima|exercicios|parte|aula|introducao|nocoes|conceitos|basicos|dos|das|para|com|sobre|brasil)\b~', ' ', $t);
+            return array_values(array_unique(array_filter(explode(' ', $t), static fn($p) => strlen($p) >= 4)));
+        };
+        $x = $pal($assuntoPdf);
+        $y = $pal($tituloAula);
+        if (!$x || !$y) {
+            return 0.0;
+        }
+        return count(array_intersect($x, $y)) / min(count($x), count($y));
+    }
+
+    /**
+     * Troca inteligente: para cada aula com PDF suspeito, onde está o lugar certo desse PDF (outra aula do mesmo curso
+     * cujo assunto bate com o que o PDF trata) e, se existir, qual PDF da plataforma é o certo para ela.
+     * Só move para aula SEM PDF ou com PDF também suspeito (nunca sobrescreve PDF conferido ou ainda não conferido).
+     */
+    function rev_sugestoes_troca(PDO $pdo, int $cursoId = 0): array
+    {
+        rev_bootstrap($pdo);
+        $f = $cursoId > 0 ? ' AND a.curso_id = ' . $cursoId : '';
+        $aulas = $pdo->query("SELECT a.id, a.curso_id, a.titulo, a.pdf_arquivo, a.pdf_nome, a.video_url, t.titulo assunto, c.nome curso,
+                                     CASE WHEN TRIM(COALESCE(a.pdf_arquivo,'')) = '' THEN 'sem_pdf' WHEN r.aula_id IS NULL OR r.pdf <> a.pdf_arquivo THEN 'pendente' ELSE r.status END situacao,
+                                     r.assunto_pdf
+                                FROM admin_curso_aulas a LEFT JOIN admin_materia_topicos t ON t.id = a.topico_id LEFT JOIN admin_cursos c ON c.id = a.curso_id
+                                LEFT JOIN aula_revisao r ON r.aula_id = a.id WHERE 1=1 $f")->fetchAll();
+        $porCurso = [];
+        foreach ($aulas as $a) {
+            $porCurso[(int)$a['curso_id']][] = $a;
+        }
+        $movimentos = [];
+        $usadas = [];
+        foreach ($aulas as $a) {
+            if ($a['situacao'] !== 'suspeita' || trim((string)$a['assunto_pdf']) === '') {
+                continue;
+            }
+            $melhor = null;
+            $nota = 0.0;
+            foreach ($porCurso[(int)$a['curso_id']] as $b) {
+                if ((int)$b['id'] === (int)$a['id'] || isset($usadas[(int)$b['id']]) || !in_array($b['situacao'], ['sem_pdf', 'suspeita'], true)) {
+                    continue;
+                }
+                $n = max(rev_combina((string)$a['assunto_pdf'], (string)$b['titulo']), rev_combina((string)$a['assunto_pdf'], (string)$b['assunto']));
+                if ($n > $nota) {
+                    $nota = $n;
+                    $melhor = $b;
+                }
+            }
+            if ($melhor && $nota >= 0.5) {
+                $usadas[(int)$melhor['id']] = true;
+                $movimentos[] = ['pdf' => (string)$a['pdf_arquivo'], 'pdf_nome' => (string)($a['pdf_nome'] ?: basename((string)$a['pdf_arquivo'])), 'assunto_pdf' => (string)$a['assunto_pdf'],
+                    'de_id' => (int)$a['id'], 'de' => (string)$a['titulo'], 'para_id' => (int)$melhor['id'], 'para' => (string)$melhor['titulo'], 'curso' => (string)$a['curso'], 'nota' => round($nota, 2)];
+            }
+        }
+        // Suspeitas que não recebem nenhum PDF pelas trocas: ficam sem PDF certo (mentor envia ou o Antigão gera pelo edital)
+        $recebem = array_flip(array_column($movimentos, 'para_id'));
+        $semCerto = [];
+        foreach ($aulas as $a) {
+            if ($a['situacao'] === 'suspeita' && !isset($recebem[(int)$a['id']])) {
+                $semCerto[] = ['id' => (int)$a['id'], 'titulo' => (string)$a['titulo'], 'curso' => (string)$a['curso'], 'assunto_pdf' => (string)$a['assunto_pdf']];
+            }
+        }
+        return ['movimentos' => $movimentos, 'sem_pdf_certo' => $semCerto];
+    }
+
+    /** Aplica as trocas sugeridas de uma vez. Retorna quantos PDFs foram para o lugar certo. */
+    function rev_aplicar_trocas(PDO $pdo, int $cursoId = 0, array $somente = []): int
+    {
+        require_once __DIR__ . '/ia-fila-lib.php';
+        $s = rev_sugestoes_troca($pdo, $cursoId);
+        $sel = array_flip(array_map('intval', $somente));
+        $aplicar = array_values(array_filter($s['movimentos'], static fn($m) => !$sel || isset($sel[$m['de_id']])));
+        if (!$aplicar) {
+            return 0;
+        }
+        $pdo->beginTransaction();
+        try {
+            $novoPdf = [];
+            foreach ($aplicar as $m) {
+                $novoPdf[$m['para_id']] = [$m['pdf'], $m['pdf_nome']];
+            }
+            // Quem entregou o PDF e não recebeu outro fica sem PDF (continua escondido do aluno até o mentor decidir).
+            foreach ($aplicar as $m) {
+                if (!isset($novoPdf[$m['de_id']])) {
+                    $novoPdf[$m['de_id']] = ['', ''];
+                }
+            }
+            $up = $pdo->prepare('UPDATE admin_curso_aulas SET pdf_arquivo = :p, pdf_nome = :n WHERE id = :id');
+            foreach ($novoPdf as $aulaId => [$p, $n]) {
+                $up->execute([':p' => $p, ':n' => $n, ':id' => $aulaId]);
+                $pdo->prepare('DELETE FROM aula_videoaulas WHERE aula_id = :a')->execute([':a' => $aulaId]);
+                $pdo->prepare('DELETE FROM aula_revisao WHERE aula_id = :a')->execute([':a' => $aulaId]);
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        foreach ($novoPdf as $aulaId => [$p, $n]) {
+            if ($p !== '') {
+                rev_gravar($pdo, (int)$aulaId, $p, 'ok_manual', null, 'PDF movido para a aula certa (troca inteligente aprovada pelo mentor).', 'mentor');
+                $st = $pdo->prepare("SELECT TRIM(COALESCE(video_url,'')) FROM admin_curso_aulas WHERE id = :id");
+                $st->execute([':id' => $aulaId]);
+                if ($st->fetchColumn() === '') {
+                    ia_fila_adicionar($pdo, 'videoaula', (int)$aulaId);
+                }
+            }
+        }
+        return count($aplicar);
+    }
+}

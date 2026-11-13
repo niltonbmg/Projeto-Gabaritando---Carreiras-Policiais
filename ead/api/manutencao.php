@@ -147,6 +147,9 @@ try {
             }
             man_ok(['resumo' => $resumo, 'amostra' => $amostra]);
             // no break
+        case 'trocas': // GET: trocas sugeridas de PDF (só leitura)
+            man_ok(rev_sugestoes_troca($pdo, (int)($entrada['curso_id'] ?? 0)));
+            // no break
         case 'fila_erros':
             man_ok(['erros' => $pdo->query("SELECT f.id, f.tipo, f.aula_id, f.tentativas, f.erro, f.atualizado_em FROM ia_fila f WHERE f.status = 'erro' ORDER BY f.atualizado_em DESC LIMIT 200")->fetchAll()]);
             // no break
