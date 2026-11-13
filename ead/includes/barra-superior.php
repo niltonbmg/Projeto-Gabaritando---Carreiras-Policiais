@@ -28,15 +28,29 @@ foreach (['curso_id', 'id_curso', 'id'] as $cursoContextoChave) {
 }
 $cursoContextoQuery = $cursoContextoId > 0 ? '?curso_id=' . $cursoContextoId : '';
 
+// "Minhas aulas": direto nas aulas do curso do concurso que o aluno escolheu; sem escolha, a lista de cursos dele.
+$linkMinhasAulas = 'dashboard.php';
+if ($usuarioLogado && function_exists('db')) {
+    try {
+        $stMA = db()->prepare('SELECT cg.curso_id FROM aluno_concurso ac JOIN concurso_cargos cg ON cg.id = ac.cargo_id WHERE ac.usuario_id = :u AND cg.curso_id IS NOT NULL LIMIT 1');
+        $stMA->execute([':u' => (int)($usuarioAtual['id'] ?? 0)]);
+        if ($cursoMA = (int)$stMA->fetchColumn()) {
+            $linkMinhasAulas = 'curso-modulos.php?curso_id=' . $cursoMA;
+        }
+    } catch (Throwable $e) {
+    }
+}
 $menuItens = $menuItens ?? [
     // Ordem do método: a plataforma conhece o concurso e monta a missão; o aluno executa; o resto apoia.
     ['titulo' => '▶ Missão do dia', 'link' => 'meu-plano.php', 'externo' => false],
+    ['titulo' => '🎬 Minhas aulas', 'link' => $linkMinhasAulas, 'externo' => false],
     ['titulo' => '🕵️ Meu concurso · edital, prova e radar', 'link' => 'meu-concurso.php', 'externo' => false],
     ['titulo' => '🎯 Desafio do dia · Ranking', 'link' => 'desafio.php', 'externo' => false],
     ['titulo' => '📚 Banco de questões', 'link' => 'banco-questoes.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => '📝 Simulados', 'link' => 'simulados.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => '✍️ Redação', 'link' => 'redacoes.php', 'externo' => false],
-    ['titulo' => '🎓 Meus cursos e materiais', 'link' => 'materiais.php' . $cursoContextoQuery, 'externo' => false],
+    ['titulo' => '🎓 Todos os meus cursos', 'link' => 'dashboard.php', 'externo' => false],
+    ['titulo' => '📎 Materiais', 'link' => 'materiais.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => '🎖 Antigão · tira-dúvidas', 'link' => 'antigao.php', 'externo' => false],
     ['titulo' => '💬 Dúvidas com o mentor (fórum)', 'link' => 'forum-duvidas.php', 'externo' => false],
     ['titulo' => '📅 Minha rotina', 'link' => 'meu-cronograma.php', 'externo' => false],
