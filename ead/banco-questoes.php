@@ -562,6 +562,24 @@ if (isset($_GET['ciclo_json']) && $pdo instanceof PDO && $usuarioId > 0) {
         $todas = $stC->fetchAll();
         $feitas = count(array_filter($todas, static fn($x) => (int)$x['respondida'] === 1));
         $naoFeitas = array_values(array_filter($todas, static fn($x) => (int)$x['respondida'] === 0));
+        // Assunto sem nenhuma questão: pede ao Antigão agora (fila de questões do assunto do edital).
+        $gerando = false;
+        if (!$todas && $tq > 0) {
+            try {
+                require_once __DIR__ . '/includes/ia-fila-lib.php';
+                $stE = $pdo->prepare('SELECT id FROM edital_itens WHERE topico_id = :t ORDER BY id DESC LIMIT 1');
+                $stE->execute([':t' => $tq]);
+                if ($itemE = (int)$stE->fetchColumn()) {
+                    $jaF = $pdo->prepare("SELECT status FROM ia_fila WHERE tipo = 'questoes' AND aula_id = :i");
+                    $jaF->execute([':i' => $itemE]);
+                    if ($jaF->fetchColumn() !== 'pendente') {
+                        ia_fila_adicionar($pdo, 'questoes', $itemE);
+                    }
+                    $gerando = true;
+                }
+            } catch (Throwable $e) {
+            }
+        }
         // Primeiro o mínimo para liberar; depois, se o aluno quiser, lotes de 10 rumo à meta.
         $lista = array_slice($naoFeitas, 0, !empty($_GET['mais']) || $feitas >= $minC ? 10 : max(1, $minC - $feitas));
         $stO = $pdo->prepare('SELECT id, letra, texto FROM admin_banco_questao_opcoes WHERE questao_id = :q ORDER BY ordem, letra, id');
@@ -572,7 +590,7 @@ if (isset($_GET['ciclo_json']) && $pdo instanceof PDO && $usuarioId > 0) {
             [$origQ, $comentQ] = gab_questao_origem((string)$q['explicacao']);
             $saida[] = ['id' => (int)$q['id'], 'enunciado' => (string)$q['enunciado'], 'explicacao' => $comentQ, 'origem' => gab_questao_etiqueta($origQ), 'opcoes' => $stO->fetchAll(PDO::FETCH_ASSOC)];
         }
-        bq_json(['ok' => true, 'min' => min($minC, count($todas)), 'meta' => min($metaC, count($todas)), 'meta_ideal' => $metaC, 'disponiveis' => count($todas), 'feitas' => $feitas, 'questoes' => $saida]);
+        bq_json(['ok' => true, 'gerando' => $gerando, 'min' => min($minC, count($todas)), 'meta' => min($metaC, count($todas)), 'meta_ideal' => $metaC, 'disponiveis' => count($todas), 'feitas' => $feitas, 'questoes' => $saida]);
     } catch (Throwable $e) {
         bq_json(['ok' => false, 'erro' => 'Não foi possível carregar as questões.'], 400);
     }

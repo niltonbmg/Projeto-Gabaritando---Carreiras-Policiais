@@ -1152,7 +1152,10 @@ try {
         require_once __DIR__ . '/includes/meta-lib.php';
         $cfgTempoQ = meta_config(db());
         $questoesQtdAula = max(1, (int)($cfgTempoQ['min_questoes'] ?? 5));
-        $questoesSegundos = $questoesQtdAula * max(1, (int)($cfgTempoQ['min_por_questao'] ?? 3)) * 60;
+        $stDispT = db()->prepare("SELECT COUNT(*) FROM admin_banco_questoes q JOIN admin_curso_aulas a ON a.topico_id = q.materia_topico_id WHERE a.id = :a AND q.status = 'ativo'");
+        $stDispT->execute([':a' => (int)$aulaAtual['id']]);
+        $questoesQtdAula = min($questoesQtdAula, (int)$stDispT->fetchColumn());
+        $questoesSegundos = $questoesQtdAula > 0 ? $questoesQtdAula * max(1, (int)($cfgTempoQ['min_por_questao'] ?? 3)) * 60 : 0;
     }
 } catch (Throwable $e) {
     $questoesSegundos = 0;
@@ -3921,13 +3924,20 @@ if ($travaMeta) {
                         $metaC = max($minC, (int)($cfgCiclo['nivel4_questoes'] ?? 50));
                         $ciclo = ['teoria' => $aulaAtualAssistida, 'res' => $resC, 'pct' => $resC ? (int)round($aceC * 100 / $resC) : 0, 'min' => $minC, 'meta' => $metaC,
                             'nivel' => meta_nivel($resC, $aceC, $cfgCiclo), 'rev' => min(3, $revC), 'topico' => $topicoCiclo];
+                        try {
+                            $stDisp = $pdoCiclo->prepare("SELECT COUNT(*) FROM admin_banco_questoes q WHERE q.status = 'ativo' AND q.materia_topico_id = :t AND EXISTS (SELECT 1 FROM admin_banco_questao_opcoes o WHERE o.questao_id = q.id AND o.correta = 1)");
+                            $stDisp->execute([':t' => $topicoCiclo]);
+                            $ciclo['disp'] = (int)$stDisp->fetchColumn();
+                        } catch (Throwable $e) {
+                            $ciclo['disp'] = $ciclo['min'];
+                        }
                         $ciclo['passo'] = !$ciclo['teoria'] ? 1 : ($resC < $minC ? 2 : ($revC < 3 ? 3 : 4));
                     }
                 } catch (Throwable $e) {
                     $ciclo = null;
                 }
                 ?>
-                <?php if ($ciclo): ?><script>window.gabCiclo = <?php echo json_encode(['topico' => (int)$ciclo['topico'], 'min' => (int)$ciclo['min'], 'res' => (int)$ciclo['res'], 'assistida' => (bool)$aulaAtualAssistida, 'proxAula' => (string)($linkProximo ?? '')]); ?>;</script><?php endif; ?>
+                <?php if ($ciclo): ?><script>window.gabCiclo = <?php echo json_encode(['topico' => (int)$ciclo['topico'], 'min' => (int)$ciclo['min'], 'res' => (int)$ciclo['res'], 'assistida' => (bool)$aulaAtualAssistida, 'proxAula' => (string)($linkProximo ?? ''), 'disp' => (int)($ciclo['disp'] ?? 5)]); ?>;</script><?php endif; ?>
                 <?php if ($ciclo): $cp = $ciclo['passo']; ?>
                 <section class="ciclo" aria-labelledby="cicloTitulo">
                     <div class="ciclo-topo">
@@ -4478,6 +4488,12 @@ if ($travaMeta) {
                     window.aulasRenderizarIcones();
                 }
                 atualizarProgressoModuloVisual(100);
+                // Método META: terminou o vídeo do professor -> as questões do assunto abrem na própria tela do vídeo.
+                var cV = window.gabCiclo || {};
+                if (cV.topico && (cV.res || 0) < (cV.min || 5) && window.gabAbrirQuestoes && !cV.abriuNoFim) {
+                    cV.abriuNoFim = true; cV.assistida = true;
+                    setTimeout(function () { window.gabAbrirQuestoes(); }, 900);
+                }
             }
 
             function atualizarFaixa(campo, percentual){
@@ -6370,7 +6386,7 @@ if ($travaMeta) {
 (function () {
     var c = window.gabCiclo, box = document.getElementById('cicloQuiz');
     if (!c || !c.topico || !box) { return; }
-    var qs = [], i = 0, feitas = 0, min = c.min || 5, meta = 50, metaIdeal = 50, disp = 0, modoMais = false, desemp = null, proximo = null;
+    var gerando = false, qs = [], i = 0, feitas = 0, min = c.min || 5, meta = 50, metaIdeal = 50, disp = 0, modoMais = false, desemp = null, proximo = null;
     function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
     function cor(p) { return p >= 70 ? '#4ade80' : (p >= 50 ? '#fbb928' : '#ff8a80'); }
     function topo(titulo) {
@@ -6410,7 +6426,7 @@ if ($travaMeta) {
         });
     }
     function resultado() {
-        var h = topo(feitas >= min ? '🎯 Missão cumprida neste assunto!' : '📊 Seu desempenho');
+        var h = topo(!disp ? '📚 Questões em preparação' : (feitas >= min ? '🎯 Missão cumprida neste assunto!' : '📊 Seu desempenho'));
         if (desemp) {
             var a = desemp.assunto, m = desemp.materia, g = desemp.geral;
             var evol = g.antes_pct === null ? 'Primeira semana: sua base está sendo formada.' : (g.semana_pct >= g.antes_pct ? '📈 Nesta semana você acertou ' + g.semana_pct + '%, contra ' + g.antes_pct + '% antes. Evoluindo!' : '📉 Nesta semana ' + g.semana_pct + '% (antes ' + g.antes_pct + '%). Revise os erros nos Flashcards.');
@@ -6421,14 +6437,16 @@ if ($travaMeta) {
                 + (a.proximo_nivel ? '<p class="cq-p">⬆ Próximo nível neste assunto: <b>' + esc(a.proximo_nivel) + '</b> (mais ' + a.faltam_proximo + ' questões com ' + (a.proximo_acerto || 0) + '% de acerto).</p>' : '<p class="cq-p">🏆 Assunto dominado!</p>')
                 + '<p class="cq-p">' + (a.pct >= 70 ? 'Mandou bem! Siga para o próximo assunto.' : 'Antes de seguir, revise os erros: eles já estão nos seus Flashcards.') + '</p>';
         } else if (!qs.length) {
-            h += '<p class="cq-p">Este assunto ainda não tem questões novas para você. O Antigão está preparando mais; enquanto isso, siga a Missão do dia.</p>';
+            h += '<p class="cq-p" style="font-size:16px">🛠 <b>As questões deste assunto estão sendo preparadas pelo Antigão.</b></p>'
+                + '<p class="cq-p">' + (gerando ? 'O pedido entrou agora na fila. ' : '') + 'Assim que ficarem prontas, elas aparecem aqui e no seu sininho. Este assunto não vai te travar: pode seguir para a próxima aula.</p>';
         }
-        if (feitas >= min) {
+        if (feitas >= min && disp > 0) {
             h += '<p class="cq-p">🎯 Mínimo cumprido (' + min + '). O ideal para dominar o assunto é <b>' + metaIdeal + ' questões</b>: você está com <b>' + feitas + '</b>.'
                 + (feitas < disp ? '' : ' Já fez todas as disponíveis por enquanto; o Antigão está buscando mais.') + '</p>';
             if (feitas < disp && feitas < metaIdeal) { h += '<button type="button" class="cq-bt" data-cq-mais>💪 Continuar resolvendo (rumo às ' + metaIdeal + ')</button>'; }
         }
         var segue = proximo ? {url: proximo.url, txt: (proximo.acao || 'Continuar') + (proximo.assunto ? ': ' + proximo.assunto : '')} : (c.proxAula ? {url: c.proxAula, txt: 'Próxima aula'} : null);
+        if (!qs.length && !desemp && c.proxAula) { segue = {url: c.proxAula, txt: 'Próxima aula'}; feitas = Math.max(feitas, min); }
         h += (feitas >= min && segue ? '<a class="cq-bt' + (feitas < disp && feitas < metaIdeal ? ' l' : '') + '" href="' + esc(segue.url) + '">▶ ' + esc(segue.txt) + '</a>' : '')
             + '<a class="cq-bt l" href="flashcards.php">🃏 Flashcards</a><a class="cq-bt l" href="banco-questoes.php?topico_id=' + c.topico + '">Mais questões do assunto</a>';
         box.innerHTML = h;
@@ -6437,9 +6455,11 @@ if ($travaMeta) {
     function abrir(mais) {
         modoMais = !!mais;
         box.hidden = false; box.innerHTML = topo('✅ Passo 2 · Questões do assunto') + '<p class="cq-p">Carregando as questões…</p>';
-        box.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+        var fr = box.closest('.video-frame') || box;
+        window.scrollTo({top: Math.max(0, fr.getBoundingClientRect().top + window.pageYOffset - 90), behavior: 'smooth'});
         fetch('banco-questoes.php?ciclo_json=1&topico_id=' + encodeURIComponent(c.topico) + (modoMais ? '&mais=1' : ''), {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (j) {
             qs = (j && j.questoes) || []; feitas = (j && j.feitas) || 0; min = Math.max(1, (j && j.min) || min); i = 0;
+            gerando = !!(j && j.gerando); if (j && j.disponiveis === 0) { min = 0; }
             meta = Math.max(min, (j && j.meta) || 50); metaIdeal = (j && j.meta_ideal) || 50; disp = (j && j.disponiveis) || 0;
             if ((!modoMais && feitas >= min) || !qs.length) { return resultado(); }
             questao();
@@ -6455,7 +6475,7 @@ if ($travaMeta) {
     });
     document.addEventListener('click', function (ev) { if (ev.target.closest('[data-cq-abrir]')) { abrir(); } });
     // Aula já assistida e questões pendentes: oferece resolver aqui
-    if (c.assistida && (c.res || 0) < (c.min || 5)) {
+    if (c.assistida && (c.res || 0) < (c.min || 5) && c.disp !== 0) {
         var acts = document.querySelector('.aula-actions');
         if (acts && !document.getElementById('cicloProximo')) {
             var b = document.createElement('div'); b.id = 'cicloProximo'; b.className = 'ciclo-prox';
