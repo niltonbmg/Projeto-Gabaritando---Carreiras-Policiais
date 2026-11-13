@@ -105,6 +105,23 @@ if (!function_exists('ia_fila_processar_um')) {
                                LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
                               WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
                               ORDER BY FIELD(f.tipo, $ordem), COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch(); // curso com mais alunos primeiro
+        // Voz e texto são cotas separadas do Google: alterna para não deixar a voz parada enquanto há fila de texto.
+        $arqGrupo = dirname(__DIR__) . '/uploads/.ia-ultimo-grupo';
+        $vozTipos = ['videoaula', 'podcast'];
+        if ($item && !in_array($item['tipo'], $vozTipos, true) && !$pausa && @file_get_contents($arqGrupo) === 'texto') {
+            $vozItem = $pdo->query("SELECT f.* FROM ia_fila f
+                                   LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id
+                                   LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
+                                   LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
+                                  WHERE f.tipo IN ('videoaula','podcast') AND (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
+                                  ORDER BY FIELD(f.tipo, 'videoaula', 'podcast'), COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id LIMIT 1")->fetch();
+            if ($vozItem) {
+                $item = $vozItem;
+            }
+        }
+        if ($item) {
+            @file_put_contents($arqGrupo, in_array($item['tipo'], $vozTipos, true) ? 'voz' : 'texto');
+        }
         if (!$item) {
             return null;
         }
