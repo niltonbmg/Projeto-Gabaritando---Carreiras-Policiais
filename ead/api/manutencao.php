@@ -120,6 +120,33 @@ try {
             $a['revisao'] = rev_status($pdo, (int)$a['id']);
             man_ok(['aula' => $a]);
             // no break
+        case 'questoes_amostra': // SÓ LEITURA: amostra de questões por matéria para avaliar os comentários (sem dados de alunos)
+            $porMateria = max(1, min(15, (int)($entrada['por_materia'] ?? 6)));
+            $resumo = $pdo->query("SELECT COALESCE(m.nome,'(sem matéria)') materia, COUNT(*) total,
+                                          SUM(CHAR_LENGTH(TRIM(COALESCE(q.explicacao,''))) < 40) vazios_ou_curtos,
+                                          SUM(CHAR_LENGTH(TRIM(COALESCE(q.explicacao,''))) BETWEEN 40 AND 200) curtos,
+                                          SUM(CHAR_LENGTH(TRIM(COALESCE(q.explicacao,''))) > 200) longos,
+                                          ROUND(AVG(CHAR_LENGTH(TRIM(COALESCE(q.explicacao,''))))) media_caracteres,
+                                          SUM(q.explicacao LIKE '%Questão inédita do Antigão%') geradas
+                                     FROM admin_banco_questoes q LEFT JOIN admin_materias m ON m.id = q.materia_id
+                                    WHERE q.status = 'ativo' GROUP BY materia ORDER BY total DESC")->fetchAll();
+            $amostra = [];
+            $stQ = $pdo->prepare("SELECT q.id, q.enunciado, q.explicacao, q.dificuldade, q.ano, b.nome banca, t.titulo assunto FROM admin_banco_questoes q
+                                   LEFT JOIN admin_bancas b ON b.id = q.banca_id LEFT JOIN admin_materia_topicos t ON t.id = q.materia_topico_id
+                                  WHERE q.status = 'ativo' AND COALESCE(q.materia_id, 0) = :m ORDER BY RAND() LIMIT " . $porMateria);
+            $stO = $pdo->prepare('SELECT letra, texto, correta FROM admin_banco_questao_opcoes WHERE questao_id = :q ORDER BY ordem, letra, id');
+            foreach ($pdo->query("SELECT DISTINCT COALESCE(q.materia_id, 0) id, COALESCE(m.nome,'(sem matéria)') nome FROM admin_banco_questoes q LEFT JOIN admin_materias m ON m.id = q.materia_id WHERE q.status = 'ativo'") as $mt) {
+                $stQ->execute([':m' => (int)$mt['id']]);
+                foreach ($stQ->fetchAll() as $q) {
+                    $stO->execute([':q' => (int)$q['id']]);
+                    $q['enunciado'] = mb_substr(trim(strip_tags((string)$q['enunciado'])), 0, 900);
+                    $q['explicacao'] = mb_substr(trim(strip_tags((string)$q['explicacao'])), 0, 1500);
+                    $q['alternativas'] = $stO->fetchAll(PDO::FETCH_ASSOC);
+                    $amostra[$mt['nome']][] = $q;
+                }
+            }
+            man_ok(['resumo' => $resumo, 'amostra' => $amostra]);
+            // no break
         case 'fila_erros':
             man_ok(['erros' => $pdo->query("SELECT f.id, f.tipo, f.aula_id, f.tentativas, f.erro, f.atualizado_em FROM ia_fila f WHERE f.status = 'erro' ORDER BY f.atualizado_em DESC LIMIT 200")->fetchAll()]);
             // no break
