@@ -513,7 +513,7 @@ if (!function_exists('podcast_tts')) {
                 ['speaker' => 'Ana', 'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_ANA]]],
             ]]],
         ];
-        $dialogo = "TTS the following conversation between Sargento and Ana, at a calm, natural pace:\n";
+        $dialogo = ''; // só as falas: a linha de instrução em inglês acabava sendo lida em voz alta
         $partesNovas = [];
         foreach ($falas as $f) {
             $dialogo .= $f['quem'] . ': ' . $f['texto'] . "\n";

@@ -85,7 +85,7 @@ if (!function_exists('padrao_texto_len')) {
                 foreach ($sl as $s) {
                     $palavras += count(preg_split('~\s+~u', trim((string)($s['narracao'] ?? ''))) ?: []);
                 }
-                $vid[(int)$v['aula_id']] = ['status' => $v['status'], 'slides' => count($sl), 'novo' => (int)($j['formato'] ?? 0) >= 2,
+                $vid[(int)$v['aula_id']] = ['status' => $v['status'], 'slides' => count($sl), 'novo' => (int)($j['formato'] ?? 0) >= 2 && (int)($j['audio_v'] ?? 0) >= 2,
                     'palavras_slide' => $sl ? (int)round($palavras / count($sl)) : 0];
             }
         } catch (Throwable $e) {

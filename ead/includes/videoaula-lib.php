@@ -116,6 +116,7 @@ if (!function_exists('videoaula_bootstrap')) {
         ], 150);
         $pdo = podcast_reconectar($pdo);
         $roteiro = videoaula_validar(json_decode((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? ''), true));
+        $roteiro['audio_v'] = 2; // voz recebe só a fala (sem instrução lida em voz alta)
         $roteiro['formato'] = 2; // padrão atual (10 a 15 min, narração calma 120–170 palavras por slide); a Auditoria de padrão usa esta marca
         require_once __DIR__ . '/texto-limpo-lib.php';
         array_walk_recursive($roteiro, static function (&$v): void { // slides e narração sem LaTeX (a voz leria "barra times")
@@ -131,6 +132,16 @@ if (!function_exists('videoaula_bootstrap')) {
                        ON DUPLICATE KEY UPDATE status = 'gerando', roteiro = VALUES(roteiro), partes = VALUES(partes), partes_ok = 0, audios = '[]', erro = NULL")
             ->execute([':a' => $aulaId, ':r' => json_encode($roteiro, JSON_UNESCAPED_UNICODE), ':p' => count($roteiro['slides'])]);
         return ['status' => 'gerando', 'partes' => count($roteiro['slides']), 'partes_ok' => 0];
+    }
+
+    /** Texto que vai para a voz: só a fala, sem nada que pareça instrução, com pausas entre as frases (ritmo calmo). */
+    function videoaula_texto_falado(string $t): string
+    {
+        $t = preg_replace('~\[[^\]]*\]|\([^)]*(pausa|tom|ritmo|fala|lento|calm)[^)]*\)~iu', ' ', $t); // [pausa], (tom calmo)…
+        $t = preg_replace('~^\s*(narra[çc][ãa]o|antig[ãa]o|professor)\s*:\s*~iu', '', $t);
+        $t = preg_replace('~\s+([.,!?;:])~u', '$1', $t);
+        $t = preg_replace('~([.!?])\s+~u', '$1… ', trim($t)); // reticências = pausa curta, não é lida
+        return trim(preg_replace('~\s{2,}~u', ' ', $t));
     }
 
     /** Visual do slide (formato escolhido pela IA): só os campos conhecidos, com tamanho limitado. */
@@ -293,7 +304,8 @@ if (!function_exists('videoaula_bootstrap')) {
         $audios = json_decode((string)($v['audios'] ?: '[]'), true) ?: [];
         if (empty($audios[$n])) {
             $resp = podcast_gemini(PODCAST_MODELO_VOZ, [
-                'contents' => [['parts' => [['text' => 'Say slowly, calmly and clearly, like a patient teacher: ' . $slide['narracao']]]]],
+                // Só a fala do Antigão (instrução no texto era lida em voz alta). O ritmo calmo vem das pausas.
+                'contents' => [['parts' => [['text' => videoaula_texto_falado((string)$slide['narracao'])]]]],
                 'generationConfig' => ['responseModalities' => ['AUDIO'], 'speechConfig' => ['voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => PODCAST_VOZ_SARGENTO]]]],
             ], 85);
             $pdo = podcast_reconectar($pdo);
