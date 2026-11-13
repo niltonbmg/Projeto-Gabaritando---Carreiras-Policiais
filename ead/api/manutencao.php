@@ -233,8 +233,8 @@ try {
             if ($metodo === 'POST') {
                 $atual = ia_controle();
                 $lig = array_replace($atual['ligados'], array_map('boolval', array_intersect_key((array)($entrada['ligados'] ?? []), ia_controle_tipos())));
-                $teto = array_replace($atual['teto'], array_map('intval', array_intersect_key((array)($entrada['teto'] ?? []), $atual['teto'])));
-                ia_controle_salvar(['ligados' => $lig, 'teto' => $teto]);
+                $modo = in_array($entrada['modo'] ?? '', ['economico', 'normal', 'maximo'], true) ? $entrada['modo'] : $atual['modo'];
+                ia_controle_salvar(['ligados' => $lig, 'modo' => $modo, 'teto' => $atual['teto_manual']]);
             }
             man_ok(['controle' => ia_controle(), 'uso_hoje' => podcast_uso_resumo()]);
             // no break

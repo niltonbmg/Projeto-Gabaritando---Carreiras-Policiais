@@ -17,7 +17,8 @@ if (($_POST['acao'] ?? '') === 'controle') {
     foreach (ia_controle_tipos() as $t => $_) {
         $lig[$t] = !empty($_POST['lig'][$t]);
     }
-    ia_controle_salvar(['ligados' => $lig, 'teto' => ['texto' => (int)($_POST['teto_texto'] ?? 0), 'voz' => (int)($_POST['teto_voz'] ?? 0), 'busca' => (int)($_POST['teto_busca'] ?? 0)]]);
+    $modoNovo = in_array($_POST['modo'] ?? '', ['economico', 'normal', 'maximo'], true) ? $_POST['modo'] : 'normal';
+    ia_controle_salvar(['ligados' => $lig, 'modo' => $modoNovo, 'teto' => ia_controle()['teto_manual']]);
     $msg = 'Controle salvo. Vale a partir da próxima tarefa.';
 }
 if (($_POST['acao'] ?? '') === 'config') {
@@ -95,21 +96,52 @@ $menuBarInclude = admin_cursos_get_menubar();
         <?php if ($lim > 0 && $pct >= 80): ?><p style="color:#b42318;font-weight:700;margin-top:10px">⚠️ <?php echo $pct >= 100 ? 'Limite do mês atingido: a IA está pausada. Aumente o limite abaixo para continuar.' : 'Mais de 80% do limite do mês já foi usado.'; ?></p><?php endif; ?>
         </section>
 
-        <?php $ctl = ia_controle(); $usoHoje = podcast_uso_resumo(); ?>
+        <?php
+        $ctl = ia_controle(); $usoHoje = podcast_uso_resumo(); $aprend = ia_controle_limite_aprendido(); $porTarefa = ia_controle_uso_por_tarefa();
+        $nomesT = ia_controle_tipos() + ['desafio' => 'Desafio do Dia', 'outro' => 'Outros'];
+        $nomesC = ['texto' => '✍️ Texto', 'voz' => '🎙 Voz', 'busca' => '🔎 Pesquisa'];
+        // Previsão: tarefas na fila ÷ ritmo dos últimos 3 dias
+        $prev = [];
+        try {
+            $pend = $pdo->query("SELECT tipo, COUNT(*) n FROM ia_fila WHERE status IN ('pendente','erro') GROUP BY tipo")->fetchAll(PDO::FETCH_KEY_PAIR);
+            $ritmo = $pdo->query("SELECT acao, COUNT(DISTINCT execucao) / 3 r FROM ia_consumo WHERE ok = 1 AND criado_em >= NOW() - INTERVAL 3 DAY GROUP BY acao")->fetchAll(PDO::FETCH_KEY_PAIR);
+            foreach (['conferir_pdf' => 'a conferência dos PDFs', 'videoaula' => 'as videoaulas', 'apostila' => 'as teorias', 'questoes' => 'as questões'] as $t => $n) {
+                if (!empty($pend[$t])) {
+                    $r = (float)($ritmo[$t] ?? 0);
+                    $prev[] = $r > 0 ? $n . ' termina' . ($t === 'conferir_pdf' ? '' : 'm') . ' em ~' . max(1, (int)ceil($pend[$t] / $r)) . ' dia(s) (' . (int)$pend[$t] . ' na fila)' : $n . ': ' . (int)$pend[$t] . ' na fila, ainda sem ritmo medido';
+                }
+            }
+        } catch (Throwable $e) {
+        }
+        $modos = ['economico' => ['🐢 Econômico', 'Usa metade da cota grátis. Sobra folga.'], 'normal' => ['⚖️ Normal', 'Usa toda a cota grátis. Recomendado.'], 'maximo' => ['🚀 Máximo', 'Sem teto. Só faz sentido no plano pago (no grátis, o Google corta e o robô só pausa).']];
+        ?>
         <section class="admin-panel" id="controle">
-            <h2>🔒 Controle rígido: o que a IA pode fazer</h2>
-            <p style="font-size:13px;color:#4b5563">Desligado = não roda de jeito nenhum (nem quando uma tarefa chama outra sozinha). Teto = máximo de chamadas por dia; ao chegar, a IA para até o dia seguinte, mesmo que o Google ainda deixasse. 0 = sem teto.</p>
-            <form method="post">
+            <h2>🎚 Quanto a IA pode trabalhar por dia</h2>
+            <?php foreach (['texto', 'voz', 'busca'] as $c): $teto = (int)$ctl['teto'][$c]; ?>
+                <p style="margin:4px 0;font-size:15px"><?php echo $nomesC[$c]; ?>: hoje <strong><?php echo (int)$usoHoje[$c]['hoje']; ?></strong> de <?php echo $teto > 0 ? '<strong>~' . $teto . '</strong>' : 'sem teto'; ?> usados<?php echo $usoHoje[$c]['bloqueado'] ? ' · <span style="color:#b54708">o Google cortou às ' . admin_esc($usoHoje[$c]['bloqueado_em']) . '</span>' : ''; ?></p>
+            <?php endforeach; ?>
+            <p style="margin:4px 0;font-size:13px;color:#4b5563">Renova às <?php echo admin_esc((string)$usoHoje['renova']); ?>.</p>
+            <?php if ($porTarefa): ?><p style="margin:10px 0 4px">📊 Gastou mais com: <strong><?php echo admin_esc($nomesT[$porTarefa[0]['acao']] ?? $porTarefa[0]['acao']); ?></strong> (<?php echo (int)$porTarefa[0]['n']; ?>)<?php foreach (array_slice($porTarefa, 1, 3) as $pt): ?> · <?php echo admin_esc($nomesT[$pt['acao']] ?? $pt['acao']); ?> (<?php echo (int)$pt['n']; ?>)<?php endforeach; ?></p><?php endif; ?>
+            <?php foreach ($prev as $p): ?><p style="margin:2px 0">⏳ No ritmo atual, <?php echo admin_esc($p); ?>.</p><?php endforeach; ?>
+            <form method="post" style="margin-top:14px">
                 <input type="hidden" name="acao" value="controle">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px">
+                <?php foreach ($modos as $m => [$tit, $desc]): ?>
+                    <label style="border:2px solid <?php echo $ctl['modo'] === $m ? '#fbb928' : '#e5e7eb'; ?>;border-radius:12px;padding:12px;cursor:pointer;background:<?php echo $ctl['modo'] === $m ? '#fffbeb' : '#fff'; ?>"><input type="radio" name="modo" value="<?php echo $m; ?>" <?php echo $ctl['modo'] === $m ? 'checked' : ''; ?> onchange="this.form.submit()"> <strong><?php echo $tit; ?></strong><br><small style="color:#4b5563"><?php echo $desc; ?></small></label>
+                <?php endforeach; ?>
+                </div>
+                <p style="font-size:13px;color:#4b5563">A plataforma descobre sozinha o limite grátis do Google (e sobe aos poucos até achar). Nenhuma tarefa pode usar mais da metade da cota do dia, para uma não travar as outras. Tira-dúvidas do aluno, Desafio e redação nunca esperam.</p>
+                <details style="margin:8px 0"><summary style="cursor:pointer">Ver detalhes</summary>
+                    <p style="font-size:13px"><?php foreach (['texto', 'voz', 'busca'] as $c): ?><?php echo $nomesC[$c]; ?>: limite grátis <?php echo $aprend[$c]['medido'] ? 'medido' : 'em teste'; ?> ~<?php echo (int)$aprend[$c]['limite']; ?>/dia · <?php endforeach; ?></p>
+                    <p style="font-size:13px"><?php foreach ($porTarefa as $pt): ?><?php echo admin_esc($nomesT[$pt['acao']] ?? $pt['acao']); ?> (<?php echo $pt['cota']; ?>): <?php echo (int)$pt['n']; ?> · <?php endforeach; ?></p>
+                    <p style="font-size:13px;margin-top:10px"><strong>O que a IA pode fazer</strong> (desligado = não roda de jeito nenhum):</p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 16px;margin:8px 0">
                 <?php foreach (ia_controle_tipos() as $t => $nome): ?>
                     <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="lig[<?php echo $t; ?>]" value="1" <?php echo $ctl['ligados'][$t] ? 'checked' : ''; ?>> <?php echo admin_esc($nome); ?></label>
                 <?php endforeach; ?>
                 </div>
-                <p class="cs-form">Teto por dia — texto: <input name="teto_texto" value="<?php echo (int)$ctl['teto']['texto']; ?>"> <small>(hoje: <?php echo (int)$usoHoje['texto']['hoje']; ?>)</small>
-                    · voz: <input name="teto_voz" value="<?php echo (int)$ctl['teto']['voz']; ?>"> <small>(hoje: <?php echo (int)$usoHoje['voz']['hoje']; ?>)</small>
-                    · pesquisa: <input name="teto_busca" value="<?php echo (int)$ctl['teto']['busca']; ?>"> <small>(hoje: <?php echo (int)$usoHoje['busca']['hoje']; ?>)</small></p>
-                <button class="admin-btn admin-btn-primary" type="submit">Salvar controle</button>
+                </details>
+                <button class="admin-btn admin-btn-primary" type="submit">Salvar</button>
             </form>
         </section>
 

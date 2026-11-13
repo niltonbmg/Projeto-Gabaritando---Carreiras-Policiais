@@ -103,12 +103,22 @@ if (!function_exists('ia_fila_processar_um')) {
         }
         $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','radar','visual','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','radar','visual','apostila','aula_ia','videoaula','questoes','podcast'";
         // Dentro de cada tipo, segue a ordem do curso (módulo e aula): a cota grátis vai primeiro para o que o aluno vê primeiro.
+        // Divisão justa: tarefa que já usou metade da cota do dia cede a vez (se não houver outra, segue).
+        $justo = '';
+        foreach (ia_controle_tipos_no_limite() as $tJ) {
+            $justo .= ' AND tipo <> ' . $pdo->quote($tJ);
+        }
+        foreach ($justo !== '' ? [$justo, ''] : [''] as $extraJ) {
         $item = $pdo->query("SELECT f.* FROM ia_fila f
                                LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id AND f.tipo NOT IN ('questoes','redacao','radar')
                                LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
                                LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
-                              WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
+                              WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz . $extraJ) . "
                               ORDER BY FIELD(f.tipo, $ordem), f.prioridade DESC, COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch(); // curso com mais alunos primeiro
+            if ($item) {
+                break;
+            }
+        }
         // Voz e texto são cotas separadas do Google: alterna para não deixar a voz parada enquanto há fila de texto.
         $arqGrupo = dirname(__DIR__) . '/uploads/.ia-ultimo-grupo';
         $vozTipos = ['videoaula', 'podcast'];

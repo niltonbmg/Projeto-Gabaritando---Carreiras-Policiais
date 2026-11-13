@@ -257,7 +257,95 @@ if (!function_exists('ia_consumo_bootstrap')) {
         foreach (ia_controle_tipos() as $t => $_) {
             $lig[$t] = array_key_exists($t, (array)($c['ligados'] ?? [])) ? (bool)$c['ligados'][$t] : true;
         }
-        return ['ligados' => $lig, 'teto' => ['texto' => max(0, (int)($c['teto']['texto'] ?? 0)), 'voz' => max(0, (int)($c['teto']['voz'] ?? 0)), 'busca' => max(0, (int)($c['teto']['busca'] ?? 0))]];
+        $manual = ['texto' => max(0, (int)($c['teto']['texto'] ?? 0)), 'voz' => max(0, (int)($c['teto']['voz'] ?? 0)), 'busca' => max(0, (int)($c['teto']['busca'] ?? 0))];
+        $modo = in_array($c['modo'] ?? '', ['economico', 'normal', 'maximo'], true) ? $c['modo'] : 'normal';
+        // O mentor escolhe só o modo; o teto de cada dia sai do limite grátis que a plataforma aprendeu sozinha.
+        $teto = [];
+        foreach (ia_controle_limite_aprendido() as $t => $l) {
+            $teto[$t] = $modo === 'maximo' ? 0 : ($modo === 'economico' ? max(1, (int)floor($l['limite'] / 2)) : $l['limite']);
+        }
+        return ['ligados' => $lig, 'modo' => $modo, 'teto' => $teto, 'teto_manual' => $manual];
+    }
+
+    /**
+     * Limite grátis do Google aprendido pelos próprios dados (sem perguntar ao mentor):
+     * nos dias em que o Google cortou, quantas chamadas passaram no dia (somando os modelos reservas).
+     * Sem nenhum corte registrado ainda, testa 20% acima do padrão para descobrir até onde vai.
+     */
+    function ia_controle_limite_aprendido(): array
+    {
+        static $memo = null;
+        if ($memo !== null) {
+            return $memo;
+        }
+        $padrao = ['texto' => 100, 'voz' => 15, 'busca' => 20];
+        $d = json_decode((string)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-uso.json'), true) ?: [];
+        $hoje = function_exists('podcast_uso_dia') ? podcast_uso_dia() : '';
+        $memo = [];
+        foreach ($padrao as $t => $p) {
+            $cortes = [];
+            $maior = 0;
+            foreach ($d as $dia => $x) {
+                if ($dia === $hoje) {
+                    continue;
+                }
+                $ok = (int)($x[$t]['ok'] ?? 0);
+                $maior = max($maior, $ok);
+                if (!empty($x[$t]['bloqueios'])) {
+                    $cortes[] = $ok;
+                }
+            }
+            $memo[$t] = $cortes
+                ? ['limite' => max(1, max($cortes)), 'medido' => true]
+                : ['limite' => max($p, (int)ceil($maior * 1.2)), 'medido' => false];
+        }
+        return $memo;
+    }
+
+    /** Nenhuma tarefa da fila passa de metade da cota do dia (a conferência de PDF não trava mais as videoaulas). */
+    function ia_controle_tipos_no_limite(): array
+    {
+        static $memo = null;
+        if ($memo !== null) {
+            return $memo;
+        }
+        $memo = [];
+        $ctl = ia_controle();
+        $pdo = ia_consumo_db();
+        if (!$pdo) {
+            return $memo;
+        }
+        try {
+            $inicio = (new DateTimeImmutable('today', new DateTimeZone('America/Los_Angeles')))->setTimezone(new DateTimeZone(date_default_timezone_get()))->format('Y-m-d H:i:s');
+            $st = $pdo->prepare("SELECT acao, cota, COUNT(*) n FROM ia_consumo WHERE criado_em >= :i AND ok = 1 GROUP BY acao, cota");
+            $st->execute([':i' => $inicio]);
+            foreach ($st as $r) {
+                $teto = (int)($ctl['teto'][$r['cota']] ?? 0);
+                $cota = $teto > 0 ? $teto : (int)(ia_controle_limite_aprendido()[$r['cota']]['limite'] ?? 0);
+                if ($cota > 0 && (int)$r['n'] >= (int)ceil($cota / 2) && !in_array($r['acao'], ['duvidas', 'desafio', 'redacao'], true)) {
+                    $memo[] = (string)$r['acao'];
+                }
+            }
+        } catch (Throwable $e) {
+        }
+        return $memo = array_values(array_unique($memo));
+    }
+
+    /** Uso de hoje por tarefa (para "gastou mais com"). */
+    function ia_controle_uso_por_tarefa(): array
+    {
+        $pdo = ia_consumo_db();
+        if (!$pdo) {
+            return [];
+        }
+        try {
+            $inicio = (new DateTimeImmutable('today', new DateTimeZone('America/Los_Angeles')))->setTimezone(new DateTimeZone(date_default_timezone_get()))->format('Y-m-d H:i:s');
+            $st = $pdo->prepare("SELECT acao, cota, COUNT(*) n FROM ia_consumo WHERE criado_em >= :i AND ok = 1 GROUP BY acao, cota ORDER BY n DESC");
+            $st->execute([':i' => $inicio]);
+            return $st->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 
     function ia_controle_salvar(array $c): void
