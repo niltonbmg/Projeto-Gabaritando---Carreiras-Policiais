@@ -5264,6 +5264,18 @@ if ($travaMeta) {
                 if (zoomLabel) zoomLabel.textContent = Math.round(zoom * 100) + '%';
                 if (menosZoom) menosZoom.disabled = zoom <= .5;
                 if (maisZoom) maisZoom.disabled = zoom >= 3;
+                // Leu até a última página: oferece o Passo 2 (questões do assunto) direto do leitor.
+                if (typeof window.gabAbrirQuestoes === 'function' && modal) {
+                    var fim = document.getElementById('pdfFimQuestoes');
+                    if (!fim) {
+                        fim = document.createElement('button'); fim.type = 'button'; fim.id = 'pdfFimQuestoes';
+                        fim.textContent = '✅ Terminei o PDF — responder as questões';
+                        fim.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:100000;background:#fbb928;color:#111;border:0;border-radius:999px;padding:13px 22px;font-weight:800;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;max-width:92vw';
+                        fim.addEventListener('click', function(){ fecharModal(); window.gabAbrirQuestoes(); });
+                        modal.appendChild(fim);
+                    }
+                    fim.hidden = !(totalPaginas > 0 && paginaAtual >= totalPaginas);
+                }
             }
 
             async function renderizarPagina(){
