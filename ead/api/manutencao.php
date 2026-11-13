@@ -66,6 +66,8 @@ try {
             $aud = padrao_auditar($pdo, (int)($entrada['curso_id'] ?? 0));
             man_ok([
                 'agora' => date('c'),
+                'arquivos' => array_map(static fn($f) => is_file(__DIR__ . '/../' . $f) ? date('d/m H:i', filemtime(__DIR__ . '/../' . $f)) : null,
+                    array_combine($fs = ['aulas.php', 'banco-questoes.php', 'includes/videoaula-lib.php', 'includes/meta-lib.php'], $fs)),
                 'robo_ultima_execucao_min' => is_file($robo) ? (int)floor((time() - filemtime($robo)) / 60) : null,
                 'cota_google' => podcast_uso_resumo(),
                 'pausas' => ['voz' => ia_fila_pausa() ?: 0, 'texto' => ia_fila_pausa_texto() ?: 0, 'busca' => ia_fila_pausa_busca() ?: 0],
