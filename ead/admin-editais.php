@@ -312,6 +312,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             job_criar($pdo, $concursoId, 'conferir_conteudo', 'A IA confere se faltou assunto do edital no cadastro', ['texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 120000)]);
             ed_ir($concursoId, 'edital', '🤖 A IA está conferindo o edital inteiro contra o cadastro (1 pedido de texto). Os assuntos que faltarem aparecem aqui para você aprovar.');
         }
+        if ($acao === 'editar_conteudo') {
+            $nCargos = (int)$pdo->query('SELECT COUNT(*) FROM concurso_cargos WHERE concurso_id = ' . (int)$concursoId)->fetchColumn();
+            $alt = 0; $rem = 0; $ren = 0;
+            foreach ((array)($_POST['it'] ?? []) as $iid => $x) {
+                $st = $pdo->prepare('SELECT e.*, t.titulo FROM edital_itens e JOIN admin_materia_topicos t ON t.id = e.topico_id WHERE e.id = :id AND e.concurso_id = :c');
+                $st->execute([':id' => (int)$iid, ':c' => $concursoId]);
+                if (!($it = $st->fetch())) { continue; }
+                $cgs = array_values(array_unique(array_map('intval', (array)($x['cargos'] ?? []))));
+                if (!empty($x['apagar']) || !$cgs) { // removido ou sem nenhum cargo: sai do edital deste concurso
+                    $pdo->prepare('DELETE FROM edital_itens WHERE id = :id')->execute([':id' => (int)$iid]);
+                    $rem++;
+                    continue;
+                }
+                $novoCg = count($cgs) >= $nCargos ? '' : implode(',', $cgs);
+                if ($novoCg !== (string)$it['cargos']) {
+                    $pdo->prepare('UPDATE edital_itens SET cargos = :g WHERE id = :id')->execute([':g' => $novoCg, ':id' => (int)$iid]);
+                    $alt++;
+                }
+                $tit = trim(mb_substr((string)($x['titulo'] ?? ''), 0, 180));
+                if ($tit !== '' && $tit !== (string)$it['titulo']) {
+                    $pdo->prepare('UPDATE admin_materia_topicos SET titulo = :t WHERE id = :id')->execute([':t' => $tit, ':id' => (int)$it['topico_id']]);
+                    $ren++;
+                }
+            }
+            [$saE] = job_sincronizar_concurso($pdo, $concursoId);
+            ed_ir($concursoId, 'edital', "💾 Salvo: $alt assunto(s) com cargos ajustados, $ren renomeado(s), $rem removido(s)" . ($saE ? " · $saE aula(s) aproveitada(s) da plataforma" : '') . '. O passo Aulas já mostra assim.');
+        }
         if ($acao === 'comparar_cargo') {
             $rc = job_comparar_cargo($pdo, $concursoId, (int)($_POST['cargo_id'] ?? 0), (string)($_POST['texto'] ?? ''));
             ed_ir($concursoId, 'edital', "Li {$rc['materias']} matéria(s) e {$rc['lidos']} assunto(s) do texto colado (sem IA). Faltam {$rc['novos']} assunto(s) novo(s) e {$rc['ligar']} assunto(s) que existem mas não estão ligados a este cargo. Confira abaixo.");
@@ -750,10 +777,32 @@ $menuBarInclude = admin_cursos_get_menubar();
                 </section>
                 <?php endif; ?>
                 <?php if ($itens): ?>
-                <section class="admin-panel"><div class="admin-panel-title"><h2>Conteúdo programático confirmado</h2><small><?php echo count($itens); ?> assuntos</small></div>
-                    <?php $grupo = []; foreach ($itens as $it) { $grupo[$it['materia']][] = $it; } foreach ($grupo as $mat => $lista): ?>
-                        <details class="ed-materia"><summary><span><?php echo admin_esc($mat); ?></span><small><?php echo count($lista); ?> assuntos</small></summary>
-                        <?php foreach ($lista as $it): ?><div class="ed-assunto"><span>•</span><span><?php echo admin_esc((string)$it['assunto']); ?></span><small><?php $cs = array_filter(array_map('intval', explode(',', (string)$it['cargos']))); echo $cs ? admin_esc(implode(', ', array_map(static fn($i) => $nomeCargo[$i] ?? '', $cs))) : 'todos os cargos'; ?></small></div><?php endforeach; ?>
+                <section class="admin-panel" id="conteudo"><div class="admin-panel-title"><h2>Conteúdo programático por cargo</h2><small><?php echo count($itens); ?> assuntos no concurso</small></div>
+                    <?php
+                    $grupo = []; foreach ($itens as $it) { $grupo[edital_normalizar((string)$it['materia'])][] = $it; } // mesma matéria cadastrada 2x aparece junta
+                    $doCargo = static function (array $it, int $cid): bool { $cs = array_filter(array_map('intval', explode(',', (string)$it['cargos']))); return !$cs || in_array($cid, $cs, true); };
+                    ?>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 12px">
+                        <?php foreach ($cargos as $cgx): $n = count(array_filter($itens, static fn($it) => $doCargo($it, (int)$cgx['id']))); $nm = count(array_filter($grupo, static fn($l) => (bool)array_filter($l, static fn($it) => $doCargo($it, (int)$cgx['id'])))); ?>
+                            <span style="background:#f3f4f6;border-radius:10px;padding:8px 12px;font-size:14px"><strong><?php echo admin_esc((string)$cgx['nome']); ?></strong>: <?php echo $nm; ?> matérias · <?php echo $n; ?> assuntos</span>
+                        <?php endforeach; ?>
+                    </div>
+                    <p class="admin-form-hint">Abra a matéria para corrigir: marque em quais cargos cada assunto cai, renomeie ou remova. Salva uma matéria por vez. Remover tira o assunto do edital deste concurso (as aulas continuam no curso).</p>
+                    <?php foreach ($grupo as $lista): $mat = (string)$lista[0]['materia']; ?>
+                        <details class="ed-materia"><summary><span><?php echo admin_esc($mat); ?></span><small><?php foreach ($cargos as $cgx): ?><?php echo admin_esc((string)$cgx['nome']); ?>: <?php echo count(array_filter($lista, static fn($it) => $doCargo($it, (int)$cgx['id']))); ?> · <?php endforeach; ?><?php echo count($lista); ?> no total</small></summary>
+                        <form method="post" style="margin:8px 0"><input type="hidden" name="acao" value="editar_conteudo"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                            <div style="overflow:auto"><table style="width:100%;font-size:13px;border-collapse:collapse">
+                                <tr><th style="text-align:left">Assunto</th><?php foreach ($cargos as $cgx): ?><th style="white-space:nowrap"><?php echo admin_esc((string)$cgx['nome']); ?><br><label style="font-weight:400"><input type="checkbox" onclick="this.closest('table').querySelectorAll('.cg-<?php echo (int)$cgx['id']; ?>').forEach(c => c.checked = this.checked)"> todos</label></th><?php endforeach; ?><th>Remover</th></tr>
+                                <?php foreach ($lista as $it): $iid = (int)$it['id']; ?>
+                                <tr style="border-top:1px solid #f0f1f3">
+                                    <td><input name="it[<?php echo $iid; ?>][titulo]" value="<?php echo admin_esc((string)$it['assunto']); ?>" style="width:100%;min-width:260px;border:1px solid #e5e7eb;border-radius:6px;padding:4px 6px"></td>
+                                    <?php foreach ($cargos as $cgx): ?><td style="text-align:center"><input type="checkbox" class="cg-<?php echo (int)$cgx['id']; ?>" name="it[<?php echo $iid; ?>][cargos][]" value="<?php echo (int)$cgx['id']; ?>" <?php echo $doCargo($it, (int)$cgx['id']) ? 'checked' : ''; ?>></td><?php endforeach; ?>
+                                    <td style="text-align:center"><input type="checkbox" name="it[<?php echo $iid; ?>][apagar]" value="1"></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </table></div>
+                            <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" style="margin-top:8px">💾 Salvar <?php echo admin_esc($mat); ?></button>
+                        </form>
                         </details>
                     <?php endforeach; ?>
                     <a class="admin-btn admin-btn-primary" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=escritas">Próximo: provas escritas ▶</a>
