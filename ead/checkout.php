@@ -23,6 +23,16 @@ $erro = '';
 $pedido = null;
 if (!empty($_GET['pedido'])) {
     $pedido = pag_pedido_por_chave($pdo, preg_replace('~[^a-f0-9]~', '', (string)$_GET['pedido']));
+    if ($pedido && isset($_GET['pixqr'])) { // nova tentativa do QR do Pix (a página pede a cada 10 s)
+        header('Content-Type: application/json');
+        try {
+            $q = $pedido['status'] === 'aguardando' ? pag_pix($pdo, $pedido) : ['imagem' => '', 'copia' => ''];
+            echo json_encode(['ok' => $q['imagem'] !== '' || $q['copia'] !== '', 'imagem' => $q['imagem'], 'copia' => $q['copia'], 'status' => $pedido['status']]);
+        } catch (Throwable $ex) {
+            echo json_encode(['ok' => false, 'status' => $pedido['status']]);
+        }
+        exit;
+    }
     if ($pedido && isset($_GET['situacao'])) { // consulta da página a cada poucos segundos
         $pedido = pag_sincronizar($pdo, $pedido);
         header('Content-Type: application/json');
@@ -51,7 +61,7 @@ if ($pedido && $pedido['status'] === 'aguardando' && $pedido['forma'] === 'pix')
     try {
         $pix = pag_pix($pdo, $pedido);
     } catch (Throwable $ex) {
-        $erro = 'Não consegui gerar o Pix agora. Atualize a página em instantes.';
+        $pix = null; // a página tenta de novo sozinha (a cada 10 s, até 2 min)
     }
 }
 [$precoCheio] = $prod ? pag_preco($prod, '') : [0];
@@ -109,11 +119,26 @@ $formas = $prod ? explode(',', (string)$prod['formas']) : [];
         <?php elseif ($pedido['forma'] === 'pix'): ?>
             <section class="card qr">
                 <strong>Pague com Pix</strong>
-                <?php if ($pix && $pix['imagem'] !== ''): ?><img src="data:image/png;base64,<?php echo $e($pix['imagem']); ?>" alt="QR Code do Pix"><?php endif; ?>
-                <p class="sub">Abra o app do seu banco, escolha Pix › QR Code, ou use o "copia e cola":</p>
-                <div class="copia" style="width:100%"><input id="pixCopia" readonly value="<?php echo $e($pix['copia'] ?? ''); ?>"><button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pixCopia').value);this.textContent='Copiado ✓'">Copiar</button></div>
+                <?php $temQr = $pix && ($pix['imagem'] !== '' || $pix['copia'] !== ''); ?>
+                <div id="pixPronto" style="display:<?php echo $temQr ? 'grid' : 'none'; ?>;gap:10px;justify-items:center;width:100%">
+                    <img id="pixImg" src="<?php echo $temQr && $pix['imagem'] !== '' ? 'data:image/png;base64,' . $e($pix['imagem']) : 'data:,'; ?>" alt="QR Code do Pix" style="<?php echo $temQr && $pix['imagem'] !== '' ? '' : 'display:none'; ?>">
+                    <p class="sub">Abra o app do seu banco, escolha Pix › QR Code, ou use o "copia e cola":</p>
+                    <div class="copia" style="width:100%"><input id="pixCopia" readonly value="<?php echo $e($pix['copia'] ?? ''); ?>"><button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pixCopia').value);this.textContent='Copiado ✓'">Copiar</button></div>
+                </div>
+                <div id="pixGerando" class="aguarda" style="display:<?php echo $temQr ? 'none' : 'flex'; ?>"><i></i><span>Gerando o seu Pix… um instante.</span></div>
+                <div id="pixFalhou" style="display:none;width:100%;gap:10px" class="grid">
+                    <p class="erro" style="margin:0">O Pix está indisponível agora. Pague com cartão ou boleto.</p>
+                    <?php if (!empty($pedido['link_pagamento'])): ?><a class="bt" href="<?php echo $e($pedido['link_pagamento']); ?>" target="_blank" rel="noopener">Abrir a página de pagamento do Asaas</a><?php endif; ?>
+                    <a class="bt" style="background:var(--card2);color:var(--texto);border:1px solid var(--linha)" href="checkout.php?p=<?php echo (int)$pedido['produto_id']; ?>">Escolher cartão ou boleto</a>
+                </div>
                 <div class="aguarda" aria-live="polite"><i></i><span id="aguardaTxt">Esperando o pagamento… a confirmação é automática.</span></div>
             </section>
+            <?php if (!$temQr): ?>
+            <script>(function(){var n=0,max=12;function tenta(){n++;fetch(location.pathname+'?pedido=<?php echo $e($pedido['chave_publica']); ?>&pixqr=1',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+                if(j.ok){var img=document.getElementById('pixImg');if(j.imagem){img.src='data:image/png;base64,'+j.imagem;img.style.display='';}document.getElementById('pixCopia').value=j.copia||'';document.getElementById('pixPronto').style.display='grid';document.getElementById('pixGerando').style.display='none';return;}
+                if(n>=max){document.getElementById('pixGerando').style.display='none';document.getElementById('pixFalhou').style.display='grid';return;}setTimeout(tenta,10000);
+            }).catch(function(){if(n<max){setTimeout(tenta,10000);}else{document.getElementById('pixGerando').style.display='none';document.getElementById('pixFalhou').style.display='grid';}});}setTimeout(tenta,10000);})();</script>
+            <?php endif; ?>
         <?php else: ?>
             <section class="card grid">
                 <p><?php echo $pedido['forma'] === 'cartao' ? 'Para sua segurança, o cartão é digitado na página protegida do Asaas.' : 'O boleto fica na página do Asaas: pague no app do banco ou numa lotérica. A liberação acontece quando o banco confirmar (até 3 dias úteis).'; ?></p>

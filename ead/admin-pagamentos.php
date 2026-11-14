@@ -84,6 +84,8 @@ $passo = (int)($_GET['passo'] ?? 0) ?: (!$cfg['conectado'] ? 1 : (!$produtos ? 2
 if ($passo === 3 && !$prod && $produtos) {
     $prod = pag_produto($pdo, (int)$produtos[0]['id']);
 }
+// Chave Pix ativa no Asaas (sem ela o QR do Pix não é gerado). Só consulta nos passos 1 e 3.
+$pixAtiva = ($passo === 1 || $passo === 3) ? pag_pix_chave_ativa($pdo) : null;
 $feitos = ($cfg['conectado'] ? 1 : 0) + ($produtos ? 1 : 0) + (array_filter($produtos, static fn($p) => $p['status'] === 'publicado') ? 1 : 0);
 $link = $prod ? pag_site_url() . '/checkout.php?p=' . (int)$prod['id'] : '';
 $prazoTxt = static function (int $cursoId) use ($pdo): string {
@@ -136,6 +138,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         <?php if ($passo === 1): ?>
         <section class="admin-panel">
             <h2>1. Conectar sua conta Asaas</h2>
+<?php if ($pixAtiva === false): ?><div style="margin-top:8px;background:#fff8e6;border:1px solid #fbb928;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span>⚠️ Para receber por Pix, cadastre uma chave Pix no Asaas (<strong>Pix › Minhas chaves</strong>). Pode ser a chave aleatória.</span><a class="admin-btn admin-btn-light admin-btn-small" href="admin-pagamentos.php?passo=1">🔁 Verificar de novo</a></div><?php endif; ?>
             <?php if ($cfg['conectado']): ?><p class="rp-conta">✅ Conectado à conta <strong><?php echo $e($cfg['conta_nome']); ?></strong> (<?php echo $e($cfg['conta_doc']); ?>) · <?php echo $cfg['modo'] === 'real' ? '🟢 Modo real: cobranças de verdade' : '🧪 Modo teste: nenhum dinheiro de verdade'; ?></p>
                 <?php if ($cfg['aviso_ok']): ?><p class="rp-conta" style="margin-top:6px">✅ Avisos de pagamento ativos: o curso é liberado sozinho quando o pagamento é confirmado.</p>
                 <?php else: ?>
@@ -203,6 +206,7 @@ $menuBarInclude = admin_cursos_get_menubar();
         <?php else: ?>
         <section class="admin-panel">
             <h2>3. Publicar e testar</h2>
+            <?php if ($pixAtiva === false): ?><div style="margin-top:8px;background:#fff8e6;border:1px solid #fbb928;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span>⚠️ Para receber por Pix, cadastre uma chave Pix no Asaas (<strong>Pix › Minhas chaves</strong>). Pode ser a chave aleatória.</span><a class="admin-btn admin-btn-light admin-btn-small" href="admin-pagamentos.php?passo=3<?php echo $prod ? '&produto=' . (int)$prod['id'] : ''; ?>">🔁 Verificar de novo</a></div><?php endif; ?>
             <?php if (!$prod): ?><p>Crie o produto no passo 2.</p><?php else: [$pr] = pag_preco($prod, ''); ?>
                 <p style="font-size:15px"><strong><?php echo $e($prod['nome']); ?></strong> · <?php echo $e($prod['curso_nome']); ?> · R$ <?php echo number_format($pr, 2, ',', '.'); ?><?php echo (int)$prod['parcelas_max'] > 1 ? ' · até ' . (int)$prod['parcelas_max'] . 'x no cartão' : ''; ?> ·
                     <?php echo $prod['status'] === 'publicado' ? '<span style="color:#067647;font-weight:700">● publicado</span>' : '<span style="color:#b54708;font-weight:700">● ' . ($prod['status'] === 'pausado' ? 'pausado' : 'ainda não publicado') . '</span>'; ?></p>

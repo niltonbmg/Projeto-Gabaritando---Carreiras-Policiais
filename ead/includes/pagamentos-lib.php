@@ -387,6 +387,21 @@ if (!function_exists('pag_bootstrap')) {
         return $st->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    /** A conta tem chave Pix ativa? true / false / null (não deu para saber). */
+    function pag_pix_chave_ativa(PDO $pdo): ?bool
+    {
+        $cfg = pag_config($pdo);
+        if (!$cfg['conectado']) {
+            return null;
+        }
+        try {
+            $r = pag_asaas('GET', '/pix/addressKeys?status=ACTIVE', null, $cfg['chave'], $cfg['modo']);
+            return ((int)($r['totalCount'] ?? 0) > 0) || !empty($r['data']);
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
     function pag_pix(PDO $pdo, array $pedido): array
     {
         $cfg = pag_config($pdo);
