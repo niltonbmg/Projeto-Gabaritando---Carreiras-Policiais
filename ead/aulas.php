@@ -3106,7 +3106,7 @@ if ($travaMeta) {
         .va-abertura small{color:#fbb928;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
         @keyframes vaEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
         /* Passo 2 do ciclo NA TELA DA AULA: as questões do assunto sobre o vídeo, uma por vez, e depois o desempenho */
-        .cq{position:absolute;inset:0;z-index:6;overflow:auto;background:radial-gradient(120% 120% at 0% 0%,#2a2108 0%,#111 55%,#0b0b0b 100%);color:#f3f3f4;padding:clamp(14px,3vw,30px)}
+        .cq{position:absolute;inset:0;z-index:40;overflow:auto;background:radial-gradient(120% 120% at 0% 0%,#2a2108 0%,#111 55%,#0b0b0b 100%);color:#f3f3f4;padding:clamp(14px,3vw,30px)}
         .cq[hidden]{display:none!important}
         .cq-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
         .cq-top small{color:#fbb928;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
@@ -6499,6 +6499,12 @@ if ($travaMeta) {
     }
     function abrir(mais) {
         modoMais = !!mais;
+        // As questões ficam por cima de tudo do player e o vídeo pausa (clicar numa alternativa não dá play).
+        var fr0 = box.closest('.video-frame');
+        if (fr0) {
+            fr0.querySelectorAll('video,audio').forEach(function (m) { try { m.pause(); } catch (e) {} });
+            fr0.querySelectorAll('iframe').forEach(function (f) { try { f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch (e) {} });
+        }
         box.hidden = false; box.innerHTML = topo('✅ Passo 2 · Questões do assunto') + '<p class="cq-p">Carregando as questões…</p>';
         var fr = box.closest('.video-frame') || box;
         window.scrollTo({top: Math.max(0, fr.getBoundingClientRect().top + window.pageYOffset - 90), behavior: 'smooth'});
@@ -6511,7 +6517,9 @@ if ($travaMeta) {
         }).catch(function () { box.innerHTML = topo('✅ Passo 2') + '<p class="cq-p">Não consegui carregar agora. <a style="color:#fbb928" href="banco-questoes.php?topico_id=' + c.topico + '">Abrir no banco de questões</a></p>'; });
     }
     window.gabAbrirQuestoes = abrir;
+    ['pointerdown', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'dblclick', 'keydown'].forEach(function (t) { box.addEventListener(t, function (ev) { ev.stopPropagation(); }); });
     box.addEventListener('click', function (ev) {
+        ev.stopPropagation(); // o clique nas questões não chega ao player
         var op = ev.target.closest('.cq-op'); if (op && !op.disabled) { return responder(op.getAttribute('data-op'), op); }
         if (ev.target.closest('[data-cq-prox]')) { i++; return ((!modoMais && feitas >= min) || i >= qs.length) ? resultado() : questao(); }
         if (ev.target.closest('[data-cq-parar]')) { return resultado(); }
