@@ -321,7 +321,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($acao === 'mapa_usar') {
             $rm = mapa_usar($pdo, $concursoId);
-            ed_ir($concursoId, 'edital', "✅ Mapa em uso: {$rm['assuntos']} assuntos na ordem do edital ({$rm['reaproveitados']} já existiam, {$rm['novos']} novos, {$rm['sairam']} saíram)." . ($rm['aulas_movidas'] ? " {$rm['aulas_movidas']} aula(s) passaram para o assunto certo." : '') . ($rm['aulas_aproveitadas'] ? " {$rm['aulas_aproveitadas']} aula(s) aproveitadas de outros cursos." : '') . ' Próximo: no passo Aulas, "A IA procura aulas pelo assunto".');
+            ed_ir($concursoId, 'edital', "✅ Mapa em uso: {$rm['assuntos']} assuntos na ordem do edital ({$rm['reaproveitados']} casados com os que já existiam, {$rm['renomeados']} renomeados, {$rm['novos']} novos, {$rm['sairam']} saíram do edital)." . ($rm['aulas_aproveitadas'] ? " {$rm['aulas_aproveitadas']} aula(s) aproveitadas de outros cursos." : '') . ' Próximo: no passo Aulas, "A IA procura aulas pelo assunto".');
+        }
+        if ($acao === 'unificar_simular' || $acao === 'unificar_aplicar') {
+            $ru = mapa_unificar($pdo, $concursoId, $acao === 'unificar_aplicar');
+            hack_rascunho_set($pdo, $concursoId, 'unificar_previa', $acao === 'unificar_simular' ? $ru : null);
+            ed_ir($concursoId, 'edital', $acao === 'unificar_simular'
+                ? '🔍 Simulação pronta: ' . count($ru['pares']) . ' assunto(s) duplicado(s) para unir e ' . count($ru['sem_par']) . ' sem par. Nada foi alterado ainda: confira a lista abaixo.'
+                : "✅ Assuntos unidos: {$ru['aulas']} aula(s), {$ru['questoes']} questão(ões) e {$ru['plano_itens']} item(ns) do plano passaram para o assunto do edital; {$ru['plano_duplicados']} item(ns) repetidos do plano viraram um só; {$ru['apagados']} assunto(s) duplicado(s) apagado(s).");
         }
         if ($acao === 'mapa_desfazer') {
             $nd = mapa_desfazer($pdo, $concursoId);
@@ -786,22 +793,41 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <button class="admin-btn admin-btn-light" type="submit" style="margin-top:8px">🗺 Montar o mapa</button>
                     </form>
                     <?php if ($mapaPrev): ?>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:14px">
-                        <?php foreach ($mapaPrev as $pv): ?>
+                    <p style="margin:12px 0 0;font-size:13px">Legenda: <span style="background:#ecfdf3;border-radius:6px;padding:0 5px">casado</span> = usa o assunto que já existe (aulas, questões e progresso continuam) · <span style="background:#fef3c7;border-radius:6px;padding:0 5px">novo</span> = assunto criado agora.</p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:8px">
+                        <?php foreach ($mapaPrev['cargos'] as $pv): ?>
                         <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px">
                             <strong style="font-size:16px"><?php echo admin_esc($pv['cargo']); ?>: <?php echo (int)$pv['n_materias']; ?> matérias · <?php echo (int)$pv['n_assuntos']; ?> assuntos</strong>
-                            <div style="font-size:12px;color:#6b7280;margin:2px 0 6px"><?php echo (int)$pv['n_reaproveita']; ?> já existem (com aulas e questões) · <?php echo (int)$pv['n_assuntos'] - (int)$pv['n_reaproveita']; ?> novos</div>
+                            <div style="font-size:12px;color:#6b7280;margin:2px 0 6px">✅ <?php echo (int)$pv['n_reaproveita']; ?> casados · 🆕 <?php echo (int)$pv['n_assuntos'] - (int)$pv['n_reaproveita']; ?> novos</div>
                             <?php foreach ($pv['materias'] as $pm): ?>
                                 <details><summary style="cursor:pointer"><?php echo admin_esc($pm['materia']); ?> <small>(<?php echo count($pm['assuntos']); ?>)</small></summary>
-                                    <ol style="margin:4px 0 6px 18px;font-size:13px"><?php foreach ($pm['assuntos'] as $pa): ?><li><?php echo admin_esc($pa['assunto']); ?><?php echo $pa['reaproveita'] ? '' : ' <small style="background:#fef3c7;border-radius:6px;padding:0 5px">novo</small>'; ?></li><?php endforeach; ?></ol>
+                                    <ol style="margin:4px 0 6px 18px;font-size:13px"><?php foreach ($pm['assuntos'] as $pa): ?><li><?php echo admin_esc($pa['assunto']); ?><?php echo $pa['reaproveita'] ? ' <small style="background:#ecfdf3;border-radius:6px;padding:0 5px" title="' . admin_esc($pa['aulas'] . ' aula(s), ' . $pa['questoes'] . ' questão(ões)') . '">casado' . (trim($pa['casado_com']) !== trim($pa['assunto']) ? ' com "' . admin_esc(mb_substr($pa['casado_com'], 0, 60)) . '"' : '') . '</small>' : ' <small style="background:#fef3c7;border-radius:6px;padding:0 5px">novo</small>'; ?></li><?php endforeach; ?></ol>
                                 </details>
                             <?php endforeach; ?>
                         </div>
                         <?php endforeach; ?>
                     </div>
+                    <?php if ($mapaPrev['sem_par']): ?>
+                    <details style="margin-top:10px"><summary style="cursor:pointer">⚪ <?php echo count($mapaPrev['sem_par']); ?> assunto(s) que existem e ficaram <strong>sem par</strong> no edital (saem do mapa; aulas e questões ficam onde estão)</summary>
+                        <ul style="font-size:13px;margin:6px 0 0 18px"><?php foreach ($mapaPrev['sem_par'] as $sp): ?><li><?php echo admin_esc($sp['materia'] . ' › ' . $sp['titulo']); ?> <small>(<?php echo (int)$sp['aulas']; ?> aula(s), <?php echo (int)$sp['questoes']; ?> questão(ões))</small></li><?php endforeach; ?></ul></details>
+                    <?php endif; ?>
                     <form method="post" style="margin-top:12px" onsubmit="return confirm('Usar este mapa? O conteúdo do concurso passa a ser exatamente estes anexos. Dá para desfazer.');"><input type="hidden" name="acao" value="mapa_usar"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
                         <button class="admin-btn admin-btn-primary" type="submit">✅ Usar este mapa</button></form>
                     <?php endif; ?>
+                    <?php $uniPrev = (array)hack_rascunho_get($pdo, $concursoId, 'unificar_previa', []); ?>
+                    <div style="margin-top:14px;border-top:1px solid #eef0f3;padding-top:12px">
+                        <strong>🧹 Unir assuntos duplicados</strong> <small class="admin-form-hint">(de um mapa aplicado antes: aulas, questões, progresso e plano passam para o assunto do edital)</small>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                            <form method="post"><input type="hidden" name="acao" value="unificar_simular"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">🔍 Simular (não muda nada)</button></form>
+                            <?php if (!empty($uniPrev['pares'])): ?><form method="post" onsubmit="return confirm('Unir os <?php echo count($uniPrev['pares']); ?> assuntos da lista? Aulas, questões, progresso e plano passam para o assunto do edital.');"><input type="hidden" name="acao" value="unificar_aplicar"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary admin-btn-small" type="submit">✅ Unir agora (<?php echo count($uniPrev['pares']); ?>)</button></form><?php endif; ?>
+                        </div>
+                        <?php if ($uniPrev): ?>
+                            <?php if ($uniPrev['pares']): ?><div style="max-height:360px;overflow:auto;margin-top:8px"><table style="width:100%;font-size:13px;border-collapse:collapse"><tr><th style="text-align:left">Duplicado (sai)</th><th style="text-align:left">Fica (assunto do edital)</th><th>Aulas</th><th>Questões</th><th>Plano</th></tr>
+                                <?php foreach ($uniPrev['pares'] as $pp): ?><tr style="border-top:1px solid #f0f1f3"><td><?php echo admin_esc($pp['de']['materia'] . ' › ' . $pp['de']['titulo']); ?></td><td><strong><?php echo admin_esc($pp['para']['titulo']); ?></strong></td><td style="text-align:center"><?php echo (int)$pp['de']['aulas']; ?></td><td style="text-align:center"><?php echo (int)$pp['de']['questoes']; ?></td><td style="text-align:center"><?php echo (int)$pp['de']['plano']; ?></td></tr><?php endforeach; ?>
+                            </table></div><?php else: ?><p class="admin-form-hint">Nenhum duplicado encontrado. 👍</p><?php endif; ?>
+                            <?php if ($uniPrev['sem_par']): ?><details style="margin-top:6px"><summary style="cursor:pointer;font-size:13px"><?php echo count($uniPrev['sem_par']); ?> assunto(s) fora do edital sem equivalente (ficam como estão)</summary><ul style="font-size:13px;margin:4px 0 0 18px"><?php foreach ($uniPrev['sem_par'] as $sp): ?><li><?php echo admin_esc($sp['materia'] . ' › ' . $sp['titulo']); ?> <small>(<?php echo (int)$sp['aulas']; ?> aula(s), <?php echo (int)$sp['questoes']; ?> questão(ões), <?php echo (int)$sp['plano']; ?> no plano)</small></li><?php endforeach; ?></ul></details><?php endif; ?>
+                        <?php endif; ?>
+                    </div>
                     <?php if ($mapaBk): ?><form method="post" style="margin-top:8px"><input type="hidden" name="acao" value="mapa_desfazer"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit" onclick="return confirm('Voltar ao mapa anterior?');">↩ Desfazer (voltar ao mapa anterior)</button></form><?php endif; ?>
                 </section>
                 <details class="admin-panel" style="padding:14px 18px"><summary style="cursor:pointer;font-weight:700">⚙️ Avançado: conferir com IA, comparar, editar assunto por assunto</summary>

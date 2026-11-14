@@ -1201,19 +1201,45 @@ try {
         require_once __DIR__ . '/includes/meta-lib.php';
         $pdoTrava = db();
         meta_bootstrap($pdoTrava);
-        $estadoTrava = meta_estado_aluno($pdoTrava, (int)$usuarioId, (int)$cursoId);
-        $stTop = $pdoTrava->prepare('SELECT topico_id FROM admin_curso_aulas WHERE id = :id');
+        // Trava pela ORDEM DAS AULAS DO MÓDULO: a aula depende do assunto da aula anterior do mesmo módulo.
+        // Nunca do próprio assunto; sem aula anterior de outro assunto (ou sem questões para resolver), libera.
+        $cfgTrava = meta_config($pdoTrava);
+        $minTrava = max(1, (int)($cfgTrava['min_questoes'] ?? 5));
+        $stTop = $pdoTrava->prepare('SELECT topico_id, modulo_id, ordem FROM admin_curso_aulas WHERE id = :id');
         $stTop->execute([':id' => (int)$aulaAtual['id']]);
-        $topicoAula = (int)$stTop->fetchColumn();
-        foreach ($estadoTrava['itens'] as $itT) {
-            $mesma = (int)($itT['aula_id'] ?? 0) === (int)$aulaAtual['id'] || ($topicoAula > 0 && (int)($itT['topico_id'] ?? 0) === $topicoAula);
-            if ($mesma && $itT['etapa'] === META_ETAPA_BLOQUEADO) {
-                $falta = null;
-                foreach ($estadoTrava['atuais'] as $at) {
-                    if ((int)($at['materia_id'] ?? 0) === (int)($itT['materia_id'] ?? 0)) { $falta = $at; }
-                }
-                $travaMeta = ['assunto' => (string)$itT['titulo'], 'falta' => $falta, 'min' => (int)($estadoTrava['config']['min_questoes'] ?? 5)];
-                break;
+        $aT = $stTop->fetch(PDO::FETCH_ASSOC) ?: [];
+        $topicoAula = (int)($aT['topico_id'] ?? 0);
+        $prev = false;
+        if ($topicoAula > 0) {
+            $stPrev = $pdoTrava->prepare('SELECT a.id, a.topico_id, a.curso_id, a.modulo_id, COALESCE(t.titulo, a.titulo) titulo FROM admin_curso_aulas a LEFT JOIN admin_materia_topicos t ON t.id = a.topico_id
+                                          WHERE a.modulo_id = :m AND a.topico_id > 0 AND a.topico_id <> :t AND (a.ordem < :o OR (a.ordem = :o2 AND a.id < :id))
+                                          ORDER BY a.ordem DESC, a.id DESC LIMIT 1');
+            $stPrev->execute([':m' => (int)$aT['modulo_id'], ':t' => $topicoAula, ':o' => (int)$aT['ordem'], ':o2' => (int)$aT['ordem'], ':id' => (int)$aulaAtual['id']]);
+            $prev = $stPrev->fetch(PDO::FETCH_ASSOC);
+        }
+        if ($prev) {
+            $tp = (int)$prev['topico_id'];
+            $stQ = $pdoTrava->prepare("SELECT
+                    (SELECT COUNT(*) FROM banco_questoes_respostas_usuario r JOIN admin_banco_questoes q ON q.id = r.questao_id WHERE r.opcao_id IS NOT NULL AND r.usuario_id = :u AND q.materia_topico_id = :t1) resolvidas,
+                    (SELECT COUNT(*) FROM admin_banco_questoes qd WHERE qd.status = 'ativo' AND qd.materia_topico_id = :t2 AND EXISTS (SELECT 1 FROM admin_banco_questao_opcoes od WHERE od.questao_id = qd.id AND od.correta = 1)) disponiveis");
+            $stQ->execute([':u' => (int)$usuarioId, ':t1' => $tp, ':t2' => $tp]);
+            $qq = $stQ->fetch(PDO::FETCH_ASSOC) ?: ['resolvidas' => 0, 'disponiveis' => 0];
+            $minItem = min($minTrava, (int)$qq['disponiveis']);
+            $liberadoAdm = false;
+            try { // exceção do mentor no plano para aquele assunto
+                $stL = $pdoTrava->prepare('SELECT 1 FROM meta_aluno_itens ai JOIN meta_plano_itens i ON i.id = ai.plano_item_id WHERE ai.usuario_id = :u AND i.topico_id = :t AND ai.liberado_por_admin_em IS NOT NULL LIMIT 1');
+                $stL->execute([':u' => (int)$usuarioId, ':t' => $tp]);
+                $liberadoAdm = (bool)$stL->fetchColumn();
+            } catch (Throwable $e) {
+            }
+            if (!$liberadoAdm && $minItem > 0 && (int)$qq['resolvidas'] < $minItem) {
+                $stAs = $pdoTrava->prepare('SELECT 1 FROM aulas_progresso WHERE usuario_id = :u AND aula_id = :a AND assistido = 1 LIMIT 1');
+                $stAs->execute([':u' => (int)$usuarioId, ':a' => (int)$prev['id']]);
+                $falta = ['titulo' => (string)$prev['titulo'], 'topico_id' => $tp, 'aula_id' => (int)$prev['id'], 'aula_curso_id' => (int)$prev['curso_id'], 'aula_modulo_id' => (int)$prev['modulo_id'],
+                    'nivel_info' => ['resolvidas' => (int)$qq['resolvidas']], 'teoria_ok' => (bool)$stAs->fetchColumn()];
+                $stNome = $pdoTrava->prepare('SELECT titulo FROM admin_materia_topicos WHERE id = :t');
+                $stNome->execute([':t' => $topicoAula]);
+                $travaMeta = ['assunto' => (string)($stNome->fetchColumn() ?: $aulaAtual['titulo']), 'falta' => $falta, 'min' => $minItem];
             }
         }
     }

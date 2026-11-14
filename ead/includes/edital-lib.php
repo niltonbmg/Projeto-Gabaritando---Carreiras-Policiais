@@ -695,3 +695,40 @@ if (!function_exists('edital_mesmo_assunto')) {
         return count($p) > 1 ? implode(' › ', array_slice($p, 0, -1)) : '';
     }
 }
+
+if (!function_exists('edital_score_casar')) {
+    /**
+     * Quão parecidos são dois nomes de assunto (0 a 1), para CASAR o item do edital com o assunto que já existe.
+     * Mais tolerante que edital_mesmo_assunto: "Crase" casa com "Uso do sinal indicativo de crase".
+     * "Pai › filho": compara pelo filho; se os dois têm pai, o pai também precisa ser parecido.
+     */
+    function edital_score_casar(string $a, string $b): float
+    {
+        $pal = static function (string $t): array {
+            $t = trim(edital_normalizar(preg_replace('~\(.*?\)~u', ' ', preg_replace('~^\s*\d+(?:\.\d+)*\s*[.)\-–]?\s*~u', '', $t))));
+            $t = preg_replace('~\b(dos|das|do|da|de|e|a|o|os|as|em|no|na|nos|nas|para|com|sobre|uso|parte|aula|teoria|nocoes|conceitos)\b~', ' ', $t);
+            $t = str_replace(['constituicao federal', ' cf 88', ' crfb'], ['constituicao republica federativa brasil', ' constituicao republica federativa brasil', ' constituicao republica federativa brasil'], ' ' . $t);
+            return array_values(array_unique(array_filter(explode(' ', $t), static fn($p) => strlen($p) >= 3)));
+        };
+        $sim = static function (string $x0, string $y0) use ($pal): float {
+            $x = $pal($x0);
+            $y = $pal($y0);
+            if (!$x || !$y) {
+                return 0.0;
+            }
+            $c = count(array_intersect($x, $y));
+            return $c / min(count($x), count($y));
+        };
+        $partes = static function (string $t): array {
+            $t = preg_replace('~ · Parte \d+.*$~u', '', $t);
+            $p = array_map('trim', explode('›', $t));
+            return count($p) > 1 ? [implode(' › ', array_slice($p, 0, -1)), end($p)] : ['', $t];
+        };
+        [$pa, $fa] = $partes($a);
+        [$pb, $fb] = $partes($b);
+        if ($pa !== '' && $pb !== '' && $sim($pa, $pb) < 0.5) {
+            return 0.0;
+        }
+        return max($sim($fa, $fb), $pa === '' && $pb === '' ? 0.0 : $sim($a, $b) * 0.9);
+    }
+}

@@ -751,74 +751,77 @@ if (!function_exists('job_bootstrap')) {
     }
 
     // ---------------- Mapa do edital (o caminho simples) ----------------
-    /**
-     * Prévia do mapa a partir dos anexos colados (um por cargo), sem IA e sem gravar nada no edital.
-     * Retorna por cargo: matérias e assuntos na ordem, e quantos reaproveitam o que já existe.
-     */
-    function mapa_previa(PDO $pdo, int $concursoId, array $textos): array
+    /** Cursos dos cargos do concurso. */
+    function mapa_cursos(PDO $pdo, int $concursoId): array
     {
-        $cg = $pdo->prepare('SELECT id, nome FROM concurso_cargos WHERE concurso_id = :c ORDER BY id');
-        $cg->execute([':c' => $concursoId]);
-        $cargos = $cg->fetchAll(PDO::FETCH_KEY_PAIR);
-        $atuais = edital_itens($pdo, $concursoId);
+        $st = $pdo->prepare('SELECT DISTINCT curso_id FROM concurso_cargos WHERE concurso_id = :c AND curso_id IS NOT NULL AND curso_id > 0');
+        $st->execute([':c' => $concursoId]);
+        return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
+     * Assuntos que JÁ existem para este concurso: os do edital atual, os das aulas dos cursos e os dos planos dos cursos.
+     * Por matéria (nome normalizado) => [topico_id => ['titulo', 'materia_id', 'aulas', 'questoes', 'plano', 'edital']].
+     */
+    function mapa_existentes(PDO $pdo, int $concursoId): array
+    {
+        $cursos = mapa_cursos($pdo, $concursoId) ?: [0];
+        $in = implode(',', $cursos);
+        $ids = [];
+        foreach (edital_itens($pdo, $concursoId) as $it) {
+            $ids[(int)$it['topico_id']] = true;
+        }
+        foreach ($pdo->query("SELECT DISTINCT topico_id FROM admin_curso_aulas WHERE curso_id IN ($in) AND topico_id > 0") as $r) {
+            $ids[(int)$r['topico_id']] = true;
+        }
+        try {
+            foreach ($pdo->query("SELECT DISTINCT i.topico_id FROM meta_plano_itens i JOIN meta_planos p ON p.id = i.plano_id WHERE p.curso_id IN ($in) AND i.topico_id > 0") as $r) {
+                $ids[(int)$r['topico_id']] = true;
+            }
+        } catch (Throwable $e) {
+        }
+        if (!$ids) {
+            return [];
+        }
+        $lista = implode(',', array_keys($ids));
+        $edit = [];
+        foreach (edital_itens($pdo, $concursoId) as $it) {
+            $edit[(int)$it['topico_id']] = true;
+        }
         $saida = [];
-        foreach ($cargos as $cid => $nome) {
-            $txt = trim((string)($textos[$cid] ?? ''));
-            if ($txt === '') {
-                continue;
-            }
-            $lido = edital_parse_texto($txt);
-            $mats = [];
-            $nAss = 0;
-            $nReap = 0;
-            foreach ($lido as $m) {
-                $lista = [];
-                foreach ($m['assuntos'] as $a) {
-                    $reap = false;
-                    foreach ($atuais as $it) {
-                        if (edital_normalizar((string)$it['materia']) === edital_normalizar($m['materia']) && edital_mesmo_assunto($a, (string)$it['assunto'])) {
-                            $reap = true;
-                            break;
-                        }
-                    }
-                    $lista[] = ['assunto' => $a, 'reaproveita' => $reap];
-                    $nAss++;
-                    $nReap += $reap ? 1 : 0;
-                }
-                $mats[] = ['materia' => $m['materia'], 'assuntos' => $lista];
-            }
-            $saida[(int)$cid] = ['cargo' => (string)$nome, 'materias' => $mats, 'n_materias' => count($mats), 'n_assuntos' => $nAss, 'n_reaproveita' => $nReap];
+        $sql = "SELECT t.id, t.titulo, t.materia_id, m.nome materia,
+                       (SELECT COUNT(*) FROM admin_curso_aulas a WHERE a.topico_id = t.id AND a.curso_id IN ($in)) aulas,
+                       (SELECT COUNT(*) FROM admin_banco_questoes q WHERE q.materia_topico_id = t.id) questoes
+                  FROM admin_materia_topicos t JOIN admin_materias m ON m.id = t.materia_id WHERE t.id IN ($lista) ORDER BY t.id";
+        foreach ($pdo->query($sql) as $r) {
+            $saida[trim(edital_normalizar((string)$r['materia']))][(int)$r['id']] = ['id' => (int)$r['id'], 'titulo' => (string)$r['titulo'], 'materia_id' => (int)$r['materia_id'],
+                'materia' => (string)$r['materia'], 'aulas' => (int)$r['aulas'], 'questoes' => (int)$r['questoes'], 'edital' => isset($edit[(int)$r['id']])];
         }
         return $saida;
     }
 
     /**
-     * Usa o mapa: o edital do concurso passa a ser EXATAMENTE os anexos colados (por cargo, na ordem do edital).
-     * Reaproveita assuntos iguais (aulas, questões e progresso continuam ligados); assunto antigo que saiu do edital
-     * passa as aulas e questões dele para o assunto novo mais parecido (ex.: "Constituição da República…" →
-     * "Constituição Federal › Dos princípios fundamentais"); se não houver, as aulas ficam no curso como estão.
-     * Guarda uma cópia do mapa anterior para desfazer.
+     * Monta o mapa a partir dos anexos e CASA cada item com o assunto que já existe (mesma matéria, nome parecido).
+     * Só é "novo" o que não tem equivalente. Retorna ['seq' => [...], 'ordem' => [...], 'sem_par' => [...], 'por_cargo' => [...]].
      */
-    function mapa_usar(PDO $pdo, int $concursoId): array
+    function mapa_montar(PDO $pdo, int $concursoId, array $textos): array
     {
-        $textos = (array)hack_rascunho_get($pdo, $concursoId, 'mapa_textos', []);
-        $cg = $pdo->prepare('SELECT id, nome, curso_id FROM concurso_cargos WHERE concurso_id = :c ORDER BY id');
+        $cg = $pdo->prepare('SELECT id, nome FROM concurso_cargos WHERE concurso_id = :c ORDER BY id');
         $cg->execute([':c' => $concursoId]);
-        $cargos = $cg->fetchAll(PDO::FETCH_ASSOC);
-        $idsCargos = array_map(static fn($c) => (int)$c['id'], $cargos);
-        $semTexto = array_filter($cargos, static fn($c) => trim((string)($textos[(int)$c['id']] ?? '')) === '');
-        if ($semTexto) {
-            throw new RuntimeException('Cole o anexo de todos os cargos antes (falta: ' . implode(', ', array_column($semTexto, 'nome')) . ').');
-        }
-        $antes = edital_itens($pdo, $concursoId);
-        hack_rascunho_set($pdo, $concursoId, 'mapa_backup', array_map(static fn($i) => ['id' => (int)$i['id'], 'materia_id' => (int)$i['materia_id'], 'topico_id' => (int)$i['topico_id'], 'cargos' => (string)$i['cargos'], 'ordem' => (int)$i['ordem']], $antes));
-
-        // 1) sequência única (primeiro cargo inteiro; os assuntos só do outro cargo entram depois do vizinho de cima)
-        $seq = [];   // chave => ['materia','assunto','cargos'=>[ids]]
-        $ordem = []; // chaves na ordem
-        foreach ($cargos as $c) {
+        $cargos = $cg->fetchAll(PDO::FETCH_KEY_PAIR);
+        // 1) sequência única na ordem do edital (o 1º cargo inteiro; o que é só do outro entra depois do vizinho de cima)
+        $seq = [];
+        $ordem = [];
+        $porCargo = [];
+        foreach ($cargos as $cid => $nome) {
+            $txt = trim((string)($textos[$cid] ?? ''));
+            if ($txt === '') {
+                continue;
+            }
             $ultimo = null;
-            foreach (edital_parse_texto((string)$textos[(int)$c['id']]) as $m) {
+            $porCargo[$cid] = ['cargo' => (string)$nome, 'materias' => []];
+            foreach (edital_parse_texto($txt) as $m) {
+                $porCargo[$cid]['materias'][$m['materia']] = [];
                 foreach ($m['assuntos'] as $a) {
                     $achou = null;
                     foreach ($seq as $k => $x) {
@@ -829,10 +832,9 @@ if (!function_exists('job_bootstrap')) {
                     }
                     if ($achou === null) {
                         $achou = 'k' . count($seq);
-                        $seq[$achou] = ['materia' => $m['materia'], 'assunto' => $a, 'cargos' => []];
+                        $seq[$achou] = ['materia' => $m['materia'], 'assunto' => $a, 'cargos' => [], 'casado' => null, 'score' => 0.0];
                         $pos = $ultimo === null ? false : array_search($ultimo, $ordem, true);
                         if ($pos === false) {
-                            // matéria nova para a sequência: entra no fim (ou depois da mesma matéria, se já houver)
                             $fimMat = null;
                             foreach ($ordem as $i => $k2) {
                                 if (edital_normalizar($seq[$k2]['materia']) === edital_normalizar($m['materia'])) {
@@ -844,133 +846,334 @@ if (!function_exists('job_bootstrap')) {
                             array_splice($ordem, $pos + 1, 0, [$achou]);
                         }
                     }
-                    $seq[$achou]['cargos'][] = (int)$c['id'];
+                    $seq[$achou]['cargos'][] = (int)$cid;
+                    $porCargo[$cid]['materias'][$m['materia']][] = $achou;
                     $ultimo = $achou;
                 }
             }
         }
+        // 2) casamento: em cada matéria, os pares mais parecidos primeiro; cada assunto existente casa uma vez só
+        $exist = mapa_existentes($pdo, $concursoId);
+        $pares = [];
+        foreach ($seq as $k => $x) {
+            foreach ($exist[trim(edital_normalizar($x['materia']))] ?? [] as $tid => $t) {
+                $sc = edital_score_casar($x['assunto'], $t['titulo']);
+                if ($sc >= 0.5) {
+                    // desempate: preferir o que já está no edital e o que tem mais aulas/questões
+                    $pares[] = [$sc + ($t['edital'] ? 0.001 : 0) + min(0.0009, ($t['aulas'] + $t['questoes']) / 1e6), $k, $tid];
+                }
+            }
+        }
+        usort($pares, static fn($p, $q) => $q[0] <=> $p[0]);
+        $usado = [];
+        foreach ($pares as [$sc, $k, $tid]) {
+            if ($seq[$k]['casado'] !== null || isset($usado[$tid])) {
+                continue;
+            }
+            $mat = trim(edital_normalizar($seq[$k]['materia']));
+            $seq[$k]['casado'] = $exist[$mat][$tid];
+            $seq[$k]['score'] = $sc;
+            $usado[$tid] = true;
+        }
+        // 3) sem par: assuntos que existem (nas matérias do mapa) e não casaram com nenhum item
+        $matsMapa = [];
+        foreach ($seq as $x) {
+            $matsMapa[trim(edital_normalizar($x['materia']))] = true;
+        }
+        $semPar = [];
+        foreach ($exist as $mat => $lista) {
+            if (!isset($matsMapa[$mat])) {
+                continue;
+            }
+            foreach ($lista as $tid => $t) {
+                if (!isset($usado[$tid])) {
+                    $semPar[] = $t;
+                }
+            }
+        }
+        return ['seq' => $seq, 'ordem' => $ordem, 'sem_par' => $semPar, 'por_cargo' => $porCargo, 'cargos' => $cargos];
+    }
 
-        // 2) cada assunto do mapa: reaproveita o item igual do concurso; senão cria (reaproveitando matéria/assunto já cadastrados)
-        $idsNaOrdem = [];
-        $usados = [];
-        $novos = 0;
-        $reap = 0;
-        $insMat = $pdo->prepare("INSERT INTO admin_materias (nome, status, ordem) VALUES (:n, 'ativo', 0)");
-        foreach ($ordem as $k) {
-            $x = $seq[$k];
-            $cargosTxt = count(array_unique($x['cargos'])) >= count($idsCargos) ? '' : implode(',', array_unique($x['cargos']));
-            $item = null;
+    /** Prévia (sem gravar nada): por cargo, cada assunto como casado (com o nome atual) ou novo; e a lista "sem par". */
+    function mapa_previa(PDO $pdo, int $concursoId, array $textos): array
+    {
+        $mp = mapa_montar($pdo, $concursoId, $textos);
+        $saida = [];
+        foreach ($mp['por_cargo'] as $cid => $pc) {
+            $mats = [];
+            $nAss = 0;
+            $nCas = 0;
+            foreach ($pc['materias'] as $mat => $chaves) {
+                $lista = [];
+                foreach ($chaves as $k) {
+                    $x = $mp['seq'][$k];
+                    $lista[] = ['assunto' => $x['assunto'], 'reaproveita' => $x['casado'] !== null, 'casado_com' => $x['casado']['titulo'] ?? '',
+                        'aulas' => $x['casado']['aulas'] ?? 0, 'questoes' => $x['casado']['questoes'] ?? 0];
+                    $nAss++;
+                    $nCas += $x['casado'] !== null ? 1 : 0;
+                }
+                $mats[] = ['materia' => $mat, 'assuntos' => $lista];
+            }
+            $saida[(int)$cid] = ['cargo' => $pc['cargo'], 'materias' => $mats, 'n_materias' => count($mats), 'n_assuntos' => $nAss, 'n_reaproveita' => $nCas];
+        }
+        return ['cargos' => $saida, 'sem_par' => $mp['sem_par']];
+    }
+
+    /**
+     * Usa o mapa: o edital passa a ser exatamente os anexos (por cargo, na ordem do edital).
+     * Item CASADO: reaproveita o assunto existente (mesmo id: aulas, questões, plano e progresso continuam ligados),
+     * só renomeia para o texto do edital e reordena. Só cria assunto novo quando não há equivalente.
+     * Nada é movido entre assuntos. Guarda tudo o que mudou para o Desfazer voltar exatamente como estava.
+     */
+    function mapa_usar(PDO $pdo, int $concursoId): array
+    {
+        $textos = (array)hack_rascunho_get($pdo, $concursoId, 'mapa_textos', []);
+        $cg = $pdo->prepare('SELECT id, nome, curso_id FROM concurso_cargos WHERE concurso_id = :c ORDER BY id');
+        $cg->execute([':c' => $concursoId]);
+        $cargos = $cg->fetchAll(PDO::FETCH_ASSOC);
+        $semTexto = array_filter($cargos, static fn($c) => trim((string)($textos[(int)$c['id']] ?? '')) === '');
+        if ($semTexto) {
+            throw new RuntimeException('Cole o anexo de todos os cargos antes (falta: ' . implode(', ', array_column($semTexto, 'nome')) . ').');
+        }
+        $idsCargos = array_map(static fn($c) => (int)$c['id'], $cargos);
+        $mp = mapa_montar($pdo, $concursoId, $textos);
+        $antes = edital_itens($pdo, $concursoId);
+        $log = ['itens' => array_map(static fn($i) => ['id' => (int)$i['id'], 'materia_id' => (int)$i['materia_id'], 'topico_id' => (int)$i['topico_id'], 'cargos' => (string)$i['cargos'], 'ordem' => (int)$i['ordem']], $antes),
+            'titulos' => [], 'topicos_criados' => [], 'materias_criadas' => []];
+        $porTopicoAntes = [];
+        foreach ($antes as $i) {
+            $porTopicoAntes[(int)$i['topico_id']] = $i;
+        }
+        $pdo->beginTransaction();
+        try {
+            $idsNaOrdem = [];
+            $usados = [];
+            $casados = 0;
+            $novos = 0;
+            $renomeados = 0;
+            foreach ($mp['ordem'] as $k) {
+                $x = $mp['seq'][$k];
+                $cargosTxt = count(array_unique($x['cargos'])) >= count($idsCargos) ? '' : implode(',', array_unique($x['cargos']));
+                if ($x['casado']) {
+                    $tid = (int)$x['casado']['id'];
+                    $mid = (int)$x['casado']['materia_id'];
+                    $casados++;
+                    if (trim((string)$x['casado']['titulo']) !== trim($x['assunto'])) {
+                        $log['titulos'][] = [$tid, (string)$x['casado']['titulo']];
+                        $pdo->prepare('UPDATE admin_materia_topicos SET titulo = :t WHERE id = :id')->execute([':t' => mb_substr($x['assunto'], 0, 180), ':id' => $tid]);
+                        $renomeados++;
+                    }
+                } else {
+                    $mid = 0;
+                    foreach ($pdo->query('SELECT id, nome FROM admin_materias')->fetchAll(PDO::FETCH_ASSOC) as $mm) {
+                        if (trim(edital_normalizar((string)$mm['nome'])) === trim(edital_normalizar($x['materia']))) {
+                            $mid = (int)$mm['id'];
+                            break;
+                        }
+                    }
+                    if (!$mid) {
+                        $pdo->prepare("INSERT INTO admin_materias (nome, status, ordem) VALUES (:n, 'ativo', 0)")->execute([':n' => mb_substr($x['materia'], 0, 180)]);
+                        $mid = (int)$pdo->lastInsertId();
+                        $log['materias_criadas'][] = $mid;
+                    }
+                    $pdo->prepare("INSERT INTO admin_materia_topicos (materia_id, titulo, status, ordem) VALUES (:m, :t, 'ativo', 0)")->execute([':m' => $mid, ':t' => mb_substr($x['assunto'], 0, 180)]);
+                    $tid = (int)$pdo->lastInsertId();
+                    $log['topicos_criados'][] = $tid;
+                    $novos++;
+                }
+                if (isset($porTopicoAntes[$tid])) {
+                    $idItem = (int)$porTopicoAntes[$tid]['id'];
+                    $pdo->prepare('UPDATE edital_itens SET cargos = :g, materia_id = :m WHERE id = :id')->execute([':g' => $cargosTxt, ':m' => $mid, ':id' => $idItem]);
+                } else {
+                    $pdo->prepare('INSERT INTO edital_itens (concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:c, :m, :t, :g, 9999)')
+                        ->execute([':c' => $concursoId, ':m' => $mid, ':t' => $tid, ':g' => $cargosTxt]);
+                    $idItem = (int)$pdo->lastInsertId();
+                }
+                $usados[$idItem] = true;
+                $idsNaOrdem[] = $idItem;
+            }
+            // o que saiu do edital: só sai do mapa (aulas e questões ficam onde estão). Redação/Discursiva ficam.
+            $sairam = 0;
             foreach ($antes as $it) {
-                if (!isset($usados[(int)$it['id']]) && edital_normalizar((string)$it['materia']) === edital_normalizar($x['materia']) && edital_mesmo_assunto($x['assunto'], (string)$it['assunto'])) {
-                    $item = $it;
-                    break;
+                if (isset($usados[(int)$it['id']]) || in_array(trim(edital_normalizar((string)$it['materia'])), ['redacao', 'prova discursiva'], true)) {
+                    continue;
                 }
+                $pdo->prepare('DELETE FROM edital_itens WHERE id = :id')->execute([':id' => (int)$it['id']]);
+                $sairam++;
             }
-            if ($item) {
-                $pdo->prepare('UPDATE edital_itens SET cargos = :g WHERE id = :id')->execute([':g' => $cargosTxt, ':id' => (int)$item['id']]);
-                $usados[(int)$item['id']] = true;
-                $idsNaOrdem[] = (int)$item['id'];
-                $reap++;
-                continue;
-            }
-            $sm = $pdo->prepare('SELECT id, nome FROM admin_materias');
-            $sm->execute();
-            $mid = 0;
-            foreach ($sm->fetchAll(PDO::FETCH_ASSOC) as $mm) {
-                if (trim(edital_normalizar((string)$mm['nome'])) === trim(edital_normalizar($x['materia']))) { $mid = (int)$mm['id']; break; }
-            }
-            if (!$mid) { $insMat->execute([':n' => mb_substr($x['materia'], 0, 180)]); $mid = (int)$pdo->lastInsertId(); }
-            $st = $pdo->prepare('SELECT id, titulo FROM admin_materia_topicos WHERE materia_id = :m');
-            $st->execute([':m' => $mid]);
-            $tid = 0;
-            foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $t) {
-                if (trim(edital_normalizar((string)$t['titulo'])) === trim(edital_normalizar($x['assunto']))) { $tid = (int)$t['id']; break; }
-            }
-            if (!$tid) {
-                $pdo->prepare("INSERT INTO admin_materia_topicos (materia_id, titulo, status, ordem) VALUES (:m, :t, 'ativo', 0)")->execute([':m' => $mid, ':t' => mb_substr($x['assunto'], 0, 180)]);
-                $tid = (int)$pdo->lastInsertId();
-            }
-            $ex = $pdo->prepare('SELECT id FROM edital_itens WHERE concurso_id = :c AND topico_id = :t');
-            $ex->execute([':c' => $concursoId, ':t' => $tid]);
-            if ($idEx = (int)$ex->fetchColumn()) {
-                $pdo->prepare('UPDATE edital_itens SET cargos = :g WHERE id = :id')->execute([':g' => $cargosTxt, ':id' => $idEx]);
-                $usados[$idEx] = true;
-                $idsNaOrdem[] = $idEx;
-                continue;
-            }
-            $pdo->prepare('INSERT INTO edital_itens (concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:c, :m, :t, :g, 9999)')
-                ->execute([':c' => $concursoId, ':m' => $mid, ':t' => $tid, ':g' => $cargosTxt]);
-            $idNovo = (int)$pdo->lastInsertId();
-            $usados[$idNovo] = true;
-            $idsNaOrdem[] = $idNovo;
-            $novos++;
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
         }
-
-        // 3) o que saiu do edital: as aulas e questões vão para o assunto novo mais parecido; o item sai do mapa
-        $cursos = array_values(array_filter(array_map(static fn($c) => (int)$c['curso_id'], $cargos)));
-        $depois = [];
-        foreach (edital_itens($pdo, $concursoId) as $it) {
-            if (isset($usados[(int)$it['id']])) { $depois[] = $it; }
-        }
-        $sairam = 0;
-        $movidas = 0;
-        foreach ($antes as $it) {
-            if (isset($usados[(int)$it['id']])) {
-                continue;
-            }
-            if (in_array(trim(edital_normalizar((string)$it['materia'])), ['redacao', 'prova discursiva'], true)) {
-                continue; // vêm do passo "Provas escritas", não do anexo: ficam
-            }
-            $alvo = null;
-            foreach ($depois as $d) {
-                if (edital_normalizar((string)$d['materia']) !== edital_normalizar((string)$it['materia'])) { continue; }
-                $paiD = edital_pai((string)$d['assunto']);
-                if (edital_mesmo_assunto((string)$it['assunto'], (string)$d['assunto']) || ($paiD !== '' && edital_mesmo_assunto((string)$it['assunto'], $paiD))
-                    || ($paiD !== '' && str_contains(edital_normalizar((string)$it['assunto']), trim(edital_normalizar(preg_replace('~^Constitui[çc][ãa]o Federal$~u', 'constituicao da republica federativa do brasil', $paiD)))))) {
-                    $alvo = $d;
-                    break;
-                }
-            }
-            if ($alvo && $cursos) {
-                $in = implode(',', $cursos);
-                $mv = $pdo->prepare("UPDATE admin_curso_aulas SET topico_id = :n WHERE topico_id = :o AND curso_id IN ($in)");
-                $mv->execute([':n' => (int)$alvo['topico_id'], ':o' => (int)$it['topico_id']]);
-                $movidas += $mv->rowCount();
-                // questões: só se o assunto antigo não for usado em outro concurso
-                $outro = $pdo->prepare('SELECT COUNT(*) FROM edital_itens WHERE topico_id = :t AND concurso_id <> :c');
-                $outro->execute([':t' => (int)$it['topico_id'], ':c' => $concursoId]);
-                if (!(int)$outro->fetchColumn()) {
-                    $pdo->prepare('UPDATE admin_banco_questoes SET materia_topico_id = :n WHERE materia_topico_id = :o')->execute([':n' => (int)$alvo['topico_id'], ':o' => (int)$it['topico_id']]);
-                }
-            }
-            $pdo->prepare('DELETE FROM edital_itens WHERE id = :id')->execute([':id' => (int)$it['id']]);
-            $sairam++;
-        }
-
-        // 4) ordem do edital em tudo e aproveita aulas de outros cursos
+        hack_rascunho_set($pdo, $concursoId, 'mapa_backup', $log);
         hack_rascunho_set($pdo, $concursoId, 'ordem_edital', $idsNaOrdem);
         edital_ordenar_itens($pdo, $concursoId, $idsNaOrdem);
         hack_rascunho_set($pdo, $concursoId, 'faltando', null);
-        hack_rascunho_set($pdo, $concursoId, 'edital_texto', null); // rascunho antigo da IA não vale mais
+        hack_rascunho_set($pdo, $concursoId, 'edital_texto', null);
         [$aul] = job_sincronizar_concurso($pdo, $concursoId);
-        return ['assuntos' => count($ordem), 'reaproveitados' => $reap, 'novos' => $novos, 'sairam' => $sairam, 'aulas_movidas' => $movidas, 'aulas_aproveitadas' => $aul];
+        return ['assuntos' => count($mp['ordem']), 'reaproveitados' => $casados, 'novos' => $novos, 'renomeados' => $renomeados, 'sairam' => $sairam, 'aulas_movidas' => 0, 'aulas_aproveitadas' => $aul];
     }
 
-    /** Volta o mapa anterior (cópia guardada ao usar o mapa). */
+    /**
+     * Desfazer: volta o mapa anterior EXATAMENTE: itens do edital, nomes dos assuntos renomeados, apaga os assuntos
+     * criados (se nada novo os usa) e devolve aulas/questões movidas (cópias antigas que tinham esse registro).
+     */
     function mapa_desfazer(PDO $pdo, int $concursoId): int
     {
         $bk = (array)hack_rascunho_get($pdo, $concursoId, 'mapa_backup', []);
         if (!$bk) {
             throw new RuntimeException('Não há cópia para desfazer.');
         }
-        $pdo->prepare('DELETE FROM edital_itens WHERE concurso_id = :c')->execute([':c' => $concursoId]);
-        $ins = $pdo->prepare('INSERT INTO edital_itens (id, concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:id, :c, :m, :t, :g, :o)');
-        foreach ($bk as $b) {
-            $ins->execute([':id' => $b['id'], ':c' => $concursoId, ':m' => $b['materia_id'], ':t' => $b['topico_id'], ':g' => $b['cargos'], ':o' => $b['ordem']]);
+        $itens = isset($bk['itens']) ? (array)$bk['itens'] : $bk; // formato antigo: só a lista de itens
+        $pdo->beginTransaction();
+        try {
+            foreach ((array)($bk['aulas_movidas'] ?? []) as [$aulaId, $de]) {
+                $pdo->prepare('UPDATE admin_curso_aulas SET topico_id = :t WHERE id = :id')->execute([':t' => (int)$de, ':id' => (int)$aulaId]);
+            }
+            foreach ((array)($bk['questoes_movidas'] ?? []) as [$qId, $de]) {
+                $pdo->prepare('UPDATE admin_banco_questoes SET materia_topico_id = :t WHERE id = :id')->execute([':t' => (int)$de, ':id' => (int)$qId]);
+            }
+            foreach ((array)($bk['titulos'] ?? []) as [$tid, $titulo]) {
+                $pdo->prepare('UPDATE admin_materia_topicos SET titulo = :t WHERE id = :id')->execute([':t' => (string)$titulo, ':id' => (int)$tid]);
+            }
+            $pdo->prepare('DELETE FROM edital_itens WHERE concurso_id = :c')->execute([':c' => $concursoId]);
+            $ins = $pdo->prepare('INSERT INTO edital_itens (id, concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:id, :c, :m, :t, :g, :o)');
+            foreach ($itens as $b) {
+                $ins->execute([':id' => $b['id'], ':c' => $concursoId, ':m' => $b['materia_id'], ':t' => $b['topico_id'], ':g' => $b['cargos'], ':o' => $b['ordem']]);
+            }
+            foreach ((array)($bk['topicos_criados'] ?? []) as $tid) {
+                if (!mapa_topico_em_uso($pdo, (int)$tid)) {
+                    $pdo->prepare('DELETE FROM admin_materia_topicos WHERE id = :id')->execute([':id' => (int)$tid]);
+                }
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
         }
         hack_rascunho_set($pdo, $concursoId, 'mapa_backup', null);
         edital_ordenar_aulas($pdo, $concursoId);
-        return count($bk);
+        return count($itens);
+    }
+
+    /** O assunto ainda é usado por algum edital, aula, questão ou plano? */
+    function mapa_topico_em_uso(PDO $pdo, int $tid): bool
+    {
+        foreach (['SELECT 1 FROM edital_itens WHERE topico_id = :t', 'SELECT 1 FROM admin_curso_aulas WHERE topico_id = :t', 'SELECT 1 FROM admin_banco_questoes WHERE materia_topico_id = :t', 'SELECT 1 FROM meta_plano_itens WHERE topico_id = :t'] as $sql) {
+            try {
+                $st = $pdo->prepare($sql . ' LIMIT 1');
+                $st->execute([':t' => $tid]);
+                if ($st->fetchColumn()) {
+                    return true;
+                }
+            } catch (Throwable $e) {
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Limpeza dos dados atuais (assuntos duplicados de um mapa aplicado antes): para cada assunto usado nos cursos/planos
+     * do concurso que NÃO está no edital, acha o equivalente do edital (mesma matéria, nome parecido) e une:
+     * aulas, questões (com o progresso dos alunos, que vai junto da questão) e itens do plano passam para o que fica;
+     * itens repetidos no mesmo plano viram um só (revisões e teoria marcada vão juntas); o duplicado é apagado se ninguém mais usa.
+     * $aplicar = false: só simula e lista o que muda.
+     */
+    function mapa_unificar(PDO $pdo, int $concursoId, bool $aplicar): array
+    {
+        $cursos = mapa_cursos($pdo, $concursoId) ?: [0];
+        $in = implode(',', $cursos);
+        $exist = mapa_existentes($pdo, $concursoId);
+        $planos = [];
+        try {
+            $planos = array_map('intval', $pdo->query("SELECT id FROM meta_planos WHERE curso_id IN ($in)")->fetchAll(PDO::FETCH_COLUMN));
+        } catch (Throwable $e) {
+        }
+        $inP = $planos ? implode(',', $planos) : '0';
+        $pares = [];
+        $semPar = [];
+        foreach ($exist as $mat => $lista) {
+            $doEdital = array_filter($lista, static fn($t) => $t['edital']);
+            foreach ($lista as $t) {
+                if ($t['edital']) {
+                    continue;
+                }
+                $melhor = null;
+                foreach ($doEdital as $e) {
+                    $sc = edital_score_casar((string)$e['titulo'], (string)$t['titulo']);
+                    if ($sc >= 0.5 && (!$melhor || $sc > $melhor[0])) {
+                        $melhor = [$sc, $e];
+                    }
+                }
+                $stP = $pdo->query("SELECT COUNT(*) FROM meta_plano_itens WHERE plano_id IN ($inP) AND topico_id = " . (int)$t['id']);
+                $nPlano = (int)$stP->fetchColumn();
+                if (!$melhor) {
+                    $semPar[] = $t + ['plano' => $nPlano];
+                    continue;
+                }
+                $pares[] = ['de' => $t + ['plano' => $nPlano], 'para' => $melhor[1], 'score' => round($melhor[0], 2)];
+            }
+        }
+        $res = ['pares' => $pares, 'sem_par' => $semPar, 'aplicado' => false, 'aulas' => 0, 'questoes' => 0, 'plano_itens' => 0, 'plano_duplicados' => 0, 'apagados' => 0];
+        if (!$aplicar || !$pares) {
+            return $res;
+        }
+        $pdo->beginTransaction();
+        try {
+            $log = ['aulas' => [], 'questoes' => [], 'plano' => []];
+            foreach ($pares as $p) {
+                $de = (int)$p['de']['id'];
+                $para = (int)$p['para']['id'];
+                foreach ($pdo->query("SELECT id FROM admin_curso_aulas WHERE topico_id = $de AND curso_id IN ($in)")->fetchAll(PDO::FETCH_COLUMN) as $aid) {
+                    $log['aulas'][] = [(int)$aid, $de];
+                }
+                $res['aulas'] += $pdo->exec("UPDATE admin_curso_aulas SET topico_id = $para WHERE topico_id = $de AND curso_id IN ($in)");
+                // questões: só se o assunto antigo não está no edital de outro concurso (senão ele continua valendo lá)
+                $outro = (int)$pdo->query("SELECT COUNT(*) FROM edital_itens WHERE topico_id = $de AND concurso_id <> " . (int)$concursoId)->fetchColumn();
+                if (!$outro) {
+                    foreach ($pdo->query("SELECT id FROM admin_banco_questoes WHERE materia_topico_id = $de")->fetchAll(PDO::FETCH_COLUMN) as $qid) {
+                        $log['questoes'][] = [(int)$qid, $de];
+                    }
+                    $res['questoes'] += $pdo->exec("UPDATE admin_banco_questoes SET materia_topico_id = $para WHERE materia_topico_id = $de");
+                    try { $pdo->exec("DELETE FROM questoes_busca WHERE topico_id = $de"); } catch (Throwable $e) {}
+                }
+                foreach ($pdo->query("SELECT id FROM meta_plano_itens WHERE topico_id = $de AND plano_id IN ($inP)")->fetchAll(PDO::FETCH_COLUMN) as $pid) {
+                    $log['plano'][] = [(int)$pid, $de];
+                }
+                $res['plano_itens'] += $pdo->exec("UPDATE meta_plano_itens SET topico_id = $para WHERE topico_id = $de AND plano_id IN ($inP)");
+            }
+            // itens repetidos no mesmo plano (mesmo assunto): fica o primeiro na ordem; teoria/revisões dos alunos vão para ele
+            foreach ($planos as $pl) {
+                $grupos = [];
+                foreach ($pdo->query("SELECT id, topico_id FROM meta_plano_itens WHERE plano_id = $pl AND topico_id > 0 ORDER BY ordem, id")->fetchAll(PDO::FETCH_ASSOC) as $r) {
+                    $grupos[(int)$r['topico_id']][] = (int)$r['id'];
+                }
+                foreach ($grupos as $ids) {
+                    $fica = array_shift($ids);
+                    foreach ($ids as $sai) {
+                        try { $pdo->exec("UPDATE IGNORE meta_aluno_itens SET plano_item_id = $fica WHERE plano_item_id = $sai"); $pdo->exec("DELETE FROM meta_aluno_itens WHERE plano_item_id = $sai"); } catch (Throwable $e) {}
+                        try { $pdo->exec("UPDATE IGNORE meta_aluno_revisoes SET plano_item_id = $fica WHERE plano_item_id = $sai"); $pdo->exec("DELETE FROM meta_aluno_revisoes WHERE plano_item_id = $sai"); } catch (Throwable $e) {}
+                        $pdo->exec("DELETE FROM meta_plano_itens WHERE id = $sai");
+                        $res['plano_duplicados']++;
+                    }
+                }
+            }
+            foreach ($pares as $p) {
+                if (!mapa_topico_em_uso($pdo, (int)$p['de']['id'])) {
+                    $pdo->prepare('DELETE FROM admin_materia_topicos WHERE id = :id')->execute([':id' => (int)$p['de']['id']]);
+                    $res['apagados']++;
+                }
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        hack_rascunho_set($pdo, $concursoId, 'unificar_log', $log + ['em' => date('Y-m-d H:i')]);
+        edital_ordenar_aulas($pdo, $concursoId);
+        $res['aplicado'] = true;
+        return $res;
     }
 
     /** Aplica a ordem do último edital colado aos assuntos e às aulas dos cursos do concurso. */
