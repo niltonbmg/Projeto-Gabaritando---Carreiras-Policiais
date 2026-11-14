@@ -1017,7 +1017,7 @@ if ($capaCursoMobile === '') {
 
 // Carga horária real: soma da duração das aulas (vídeo + PDF), não os campos manuais do cadastro do curso.
 require_once __DIR__ . '/includes/curso-duracao-lib.php';
-$durReal = curso_duracao_real($pdo, (int)$curso['id']);
+$durReal = (isset($pdo) && $pdo instanceof PDO && is_array($curso ?? null)) ? curso_duracao_real($pdo, (int)$curso['id']) : ['total' => 0, 'video' => 0, 'pdf' => 0];
 $horasCurso = curso_duracao_formatar($durReal['total']);
 $horasVideo = curso_duracao_formatar($durReal['video']);
 $horasPdf = curso_duracao_formatar($durReal['pdf']);

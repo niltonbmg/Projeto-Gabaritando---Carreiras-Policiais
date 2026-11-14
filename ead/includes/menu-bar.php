@@ -44,6 +44,8 @@ $adminMenuGrupos = [
         ['label' => 'Saúde da plataforma', 'href' => 'saude.php', 'icon' => 'activity', 'pages' => ['saude.php', 'saude']],
     ]],
     ['titulo' => 'Gestão', 'itens' => [
+        ['label' => 'Receber pagamentos', 'href' => 'admin-pagamentos.php', 'icon' => 'credit-card', 'pages' => ['admin-pagamentos.php', 'admin-pagamentos']],
+        ['label' => 'Pedidos', 'href' => 'admin-vendas.php', 'icon' => 'package', 'pages' => ['admin-vendas.php', 'admin-vendas']],
         ['label' => 'Vendas e números', 'href' => 'admin-dashboard.php', 'icon' => 'layout-dashboard', 'pages' => ['admin-dashboard.php', 'admin-dashboard']],
         ['label' => 'Vendas', 'href' => 'admin-dashboard.php#vendas', 'icon' => 'shopping-cart', 'pages' => []],
         ['label' => 'Produtos', 'href' => 'admin-dashboard.php#produtos', 'icon' => 'package', 'pages' => []],
