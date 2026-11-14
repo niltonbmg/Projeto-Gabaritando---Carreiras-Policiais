@@ -3975,14 +3975,14 @@ if ($travaMeta) {
                         <li class="<?php echo $cp > 1 ? 'feito' : 'agora'; ?>">
                             <span class="ciclo-n"><?php echo $cp > 1 ? '✓' : '1'; ?></span>
                             <div><strong>Teoria mínima</strong><small>Escolha um jeito: videoaula do professor, videoaula do Antigão ou o PDF com marcações. O podcast é extra.</small>
-                            <em><?php echo $cp > 1 ? 'Concluída' : 'Ao terminar, toque em “Marcar como assistido”.'; ?></em></div>
+                            <em><?php echo $cp > 1 ? 'Concluída' : 'Recomendado antes das questões. Ao terminar, toque em “Marcar como assistido”.'; ?></em></div>
                         </li>
                         <li class="<?php echo $cp > 2 ? 'feito' : ($cp === 2 ? 'agora' : ''); ?>">
                             <span class="ciclo-n"><?php echo $cp > 2 ? '✓' : '2'; ?></span>
                             <div><strong>Questões comentadas</strong><small>Mínimo de <?php echo (int)$ciclo['min']; ?> para avançar · meta de <?php echo (int)$ciclo['meta']; ?> para dominar o assunto.</small>
                             <span class="ciclo-barra" aria-hidden="true"><i style="width:<?php echo min(100, (int)round($ciclo['res'] * 100 / $ciclo['meta'])); ?>%"></i><b style="left:<?php echo (int)round($ciclo['min'] * 100 / $ciclo['meta']); ?>%"></b></span>
                             <em><?php echo (int)$ciclo['res']; ?>/<?php echo (int)$ciclo['meta']; ?> resolvidas<?php if ($ciclo['res']): ?> · <?php echo (int)$ciclo['pct']; ?>% de acerto<?php endif; ?> · nível <?php echo esc((string)($ciclo['nivel']['nome'] ?? '—')); ?></em>
-                            <?php if ($ciclo['topico'] > 0 && $cp >= 2): ?><a class="ciclo-bt" href="banco-questoes.php?topico_id=<?php echo (int)$ciclo['topico']; ?>">Resolver questões</a><?php endif; ?></div>
+                            <?php if ($ciclo['topico'] > 0): ?><a class="ciclo-bt" data-cq-abrir data-cq-mais-se-feito href="banco-questoes.php?topico_id=<?php echo (int)$ciclo['topico']; ?>"><?php echo $ciclo['res'] >= $ciclo['min'] ? 'Continuar rumo às ' . (int)$ciclo['meta'] : 'Resolver questões'; ?></a><?php endif; ?></div>
                         </li>
                         <li class="<?php echo $cp > 3 ? 'feito' : ($cp === 3 ? 'agora' : ''); ?>">
                             <span class="ciclo-n"><?php echo $cp > 3 ? '✓' : '3'; ?></span>
@@ -6530,13 +6530,18 @@ if ($travaMeta) {
         if (ev.target.closest('[data-cq-mais]')) { return abrir(true); }
         if (ev.target.closest('[data-cq-fechar]')) { box.hidden = true; }
     });
-    document.addEventListener('click', function (ev) { if (ev.target.closest('[data-cq-abrir]')) { abrir(); } });
+    document.addEventListener('click', function (ev) {
+        var bt = ev.target.closest('[data-cq-abrir]');
+        if (bt) { ev.preventDefault(); abrir(bt.hasAttribute('data-cq-mais-se-feito') && (c.res || 0) >= (c.min || 5)); }
+    });
     // Questões pendentes: oferece resolver aqui, mesmo sem ter assistido (as questões é que liberam o próximo assunto)
-    if ((c.res || 0) < (c.min || 5) && c.disp !== 0) {
+    if (c.disp !== 0) {
         var acts = document.querySelector('.aula-actions');
         if (acts && !document.getElementById('cicloProximo')) {
             var b = document.createElement('div'); b.id = 'cicloProximo'; b.className = 'ciclo-prox';
-            b.innerHTML = '<strong>✅ Passo 2:</strong> <span>faltam ' + ((c.min || 5) - (c.res || 0)) + ' questões para liberar o próximo assunto.</span> <button type="button" class="ciclo-bt" data-cq-abrir>Resolver aqui agora</button>';
+            b.innerHTML = (c.res || 0) < (c.min || 5)
+                ? '<strong>✅ Passo 2:</strong> <span>faltam ' + ((c.min || 5) - (c.res || 0)) + ' questões para liberar o próximo assunto.</span> <button type="button" class="ciclo-bt" data-cq-abrir>Resolver aqui agora</button>'
+                : '<strong>✅ Próximo assunto liberado</strong> <span>' + (c.res || 0) + ' de 50 resolvidas. Quanto mais, mais você domina.</span> <button type="button" class="ciclo-bt" data-cq-abrir data-cq-mais-se-feito>Continuar rumo às 50</button>';
             acts.insertAdjacentElement('afterend', b);
         }
     }
