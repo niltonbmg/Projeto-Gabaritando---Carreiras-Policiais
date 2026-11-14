@@ -15,6 +15,7 @@ auth_admin_require_login();
 
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
 require_once __DIR__ . '/includes/edital-jobs-lib.php';
+require_once __DIR__ . '/includes/provas-escritas-lib.php';
 @set_time_limit(320);
 
 $pdo = admin_cursos_db();
@@ -22,7 +23,7 @@ hack_bootstrap($pdo);
 job_bootstrap($pdo);
 ia_fila_bootstrap($pdo);
 
-const ED_PASSOS = ['concurso' => 'Concurso e cargos', 'edital' => 'Edital', 'prova' => 'Última prova', 'aulas' => 'Aulas', 'questoes' => 'Questões', 'plano' => 'Plano-Mestre', 'publicar' => 'Hackeando'];
+const ED_PASSOS = ['concurso' => 'Concurso e cargos', 'edital' => 'Edital', 'escritas' => 'Provas escritas', 'prova' => 'Última prova', 'aulas' => 'Aulas', 'questoes' => 'Questões', 'plano' => 'Plano-Mestre', 'publicar' => 'Hackeando'];
 
 $concursoId = (int)($_GET['concurso_id'] ?? $_POST['concurso_id'] ?? 0);
 $aba = (string)($_GET['aba'] ?? '');
@@ -164,6 +165,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             hack_rascunho_set($pdo, $concursoId, 'edital_texto', null);
             [$sa, $sq] = job_sincronizar_concurso($pdo, $concursoId);
             ed_ir($concursoId, 'edital', $n . ' assuntos no conteúdo programático.' . ($sa || $sq ? " Já aproveitado da plataforma: $sa aula(s) e $sq questão(ões) dos mesmos assuntos." : ''));
+        }
+        // 2b · Provas escritas (redação e discursiva por cargo)
+        if ($acao === 'ler_escritas') {
+            $stC = $pdo->prepare('SELECT edital_pdf FROM concursos WHERE id = :id');
+            $stC->execute([':id' => $concursoId]);
+            $texto = trim((string)($_POST['texto'] ?? ''));
+            if ($texto === '' && trim((string)$stC->fetchColumn()) === '') { throw new RuntimeException('Não há PDF do edital guardado. Cole o trecho do edital que fala das provas.'); }
+            job_criar($pdo, $concursoId, 'ler_escritas', 'Identificando redação e prova discursiva no edital', ['texto' => mb_substr($texto, 0, 80000)]);
+            ed_ir($concursoId, 'escritas', '🤖 A IA está lendo a parte de redação e discursiva do edital (1 pedido de texto). Quando terminar, confira aqui.');
+        }
+        if ($acao === 'salvar_escritas') {
+            $lista = [];
+            foreach ((array)($_POST['pe'] ?? []) as $x) {
+                $x = (array)$x;
+                $crit = [];
+                foreach (preg_split('~\R~', (string)($x['redacao']['criterios_txt'] ?? '')) as $linha) {
+                    $partes = array_map('trim', explode('|', $linha));
+                    if (($partes[0] ?? '') !== '') { $crit[] = ['nome' => $partes[0], 'max' => $partes[1] ?? 0, 'descricao' => $partes[2] ?? '']; }
+                }
+                $x['redacao']['criterios'] = $crit;
+                $lista[] = ['cargo' => (string)($x['cargo'] ?? '')] + pe_normalizar($x);
+            }
+            pe_salvar($pdo, $concursoId, $lista, true);
+            ed_ir($concursoId, 'escritas', '✅ Provas escritas conferidas. A plataforma já se adapta: menu, cronograma e correção seguem o edital.');
         }
         if ($acao === 'salvar_info') {
             $j = json_decode((string)($_POST['info'] ?? ''), true);
@@ -622,13 +647,61 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <?php foreach ($lista as $it): ?><div class="ed-assunto"><span>•</span><span><?php echo admin_esc((string)$it['assunto']); ?></span><small><?php $cs = array_filter(array_map('intval', explode(',', (string)$it['cargos']))); echo $cs ? admin_esc(implode(', ', array_map(static fn($i) => $nomeCargo[$i] ?? '', $cs))) : 'todos os cargos'; ?></small></div><?php endforeach; ?>
                         </details>
                     <?php endforeach; ?>
-                    <a class="admin-btn admin-btn-primary" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=prova">Próximo: última prova ▶</a>
+                    <a class="admin-btn admin-btn-primary" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=escritas">Próximo: provas escritas ▶</a>
                 </section>
                 <?php endif; ?>
 
+            <?php elseif ($aba === 'escritas'): $infoE = json_decode((string)($concurso['edital_info'] ?? ''), true) ?: []; $confE = !empty($infoE['provas_escritas_conferido']); ?>
+                <section class="admin-panel">
+                    <div class="admin-panel-title"><h2>3. Provas escritas: redação e discursiva</h2><?php echo $confE ? '<span class="ed-salvo">✓ conferido por você</span>' : (!empty($infoE['provas_escritas']) ? '<span class="ed-salvo" style="color:#b54708">lido pela IA · falta conferir</span>' : ''); ?></div>
+                    <p class="admin-form-hint">A plataforma se adapta a isto: sem redação, o menu Redação some para os alunos do cargo e o cronograma não marca redação; com redação, a correção usa a grade do edital; com discursiva, o aluno ganha o treino de discursiva com o Antigão.</p>
+                    <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin:8px 0 14px">
+                        <input type="hidden" name="acao" value="ler_escritas"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                        <?php if (empty($concurso['edital_pdf'])): ?><div class="admin-form-field" style="flex:1;min-width:260px"><label for="peTexto">Cole o trecho do edital que fala das provas (não há PDF guardado)</label><textarea id="peTexto" name="texto" rows="3"></textarea></div><?php endif; ?>
+                        <button class="admin-btn admin-btn-light" type="submit"><i data-lucide="sparkles"></i>A IA identifica redação e discursiva (1 pedido)</button>
+                    </form>
+                    <form method="post"><input type="hidden" name="acao" value="salvar_escritas"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                    <?php foreach ($cargos as $k => $cg): $pe = pe_do_cargo($infoE, (string)$cg['nome']); $rd = $pe['redacao']; $ds = $pe['discursiva'];
+                        $sel = static fn(?bool $v, string $nome) => '<select name="' . $nome . '"><option value=""' . ($v === null ? ' selected' : '') . '>não sei</option><option value="1"' . ($v === true ? ' selected' : '') . '>sim</option><option value="0"' . ($v === false ? ' selected' : '') . '>não</option></select>';
+                        $nm = static fn($v) => $v === null ? '' : rtrim(rtrim((string)$v, '0'), '.'); $b = 'pe[' . $k . ']'; ?>
+                        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:12px">
+                            <input type="hidden" name="<?php echo $b; ?>[cargo]" value="<?php echo admin_esc((string)$cg['nome']); ?>">
+                            <h3 style="margin:0 0 8px"><?php echo admin_esc((string)$cg['nome']); ?></h3>
+                            <p style="margin:0 0 10px;font-size:13px">✍️ Redação: <strong><?php echo admin_esc(pe_resumo($pe, 'redacao')); ?></strong><br>📝 Discursiva: <strong><?php echo admin_esc(pe_resumo($pe, 'discursiva')); ?></strong></p>
+                            <details><summary style="cursor:pointer">Conferir e corrigir</summary>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:10px;font-size:13px">
+                                <label>Tem redação? <?php echo $sel($rd['tem'], $b . '[redacao][tem]'); ?></label>
+                                <label>Tipo/gênero <input name="<?php echo $b; ?>[redacao][tipo]" value="<?php echo admin_esc($rd['tipo']); ?>" placeholder="dissertativo-argumentativo"></label>
+                                <label>Linhas mín. <input name="<?php echo $b; ?>[redacao][linhas_min]" value="<?php echo $nm($rd['linhas_min']); ?>" size="4"></label>
+                                <label>Linhas máx. <input name="<?php echo $b; ?>[redacao][linhas_max]" value="<?php echo $nm($rd['linhas_max']); ?>" size="4"></label>
+                                <label>Pontos <input name="<?php echo $b; ?>[redacao][pontos]" value="<?php echo $nm($rd['pontos']); ?>" size="4"></label>
+                                <label>Nota mínima <input name="<?php echo $b; ?>[redacao][nota_minima]" value="<?php echo $nm($rd['nota_minima']); ?>" size="4"></label>
+                                <label>Eliminatória? <?php echo $sel($rd['eliminatoria'], $b . '[redacao][eliminatoria]'); ?></label>
+                            </div>
+                            <label style="display:block;font-size:13px;margin-top:8px">Critérios de correção (um por linha: nome | pontos | o que avalia)
+                                <textarea name="<?php echo $b; ?>[redacao][criterios_txt]" rows="3" style="width:100%"><?php echo admin_esc(implode("\n", array_map(static fn($c) => $c['nome'] . ' | ' . $nm($c['max']) . ' | ' . $c['descricao'], $rd['criterios']))); ?></textarea></label>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:10px;font-size:13px">
+                                <label>Tem discursiva? <?php echo $sel($ds['tem'], $b . '[discursiva][tem]'); ?></label>
+                                <label>Nº de questões <input name="<?php echo $b; ?>[discursiva][questoes]" value="<?php echo $nm($ds['questoes']); ?>" size="4"></label>
+                                <label>Formato <input name="<?php echo $b; ?>[discursiva][formato]" value="<?php echo admin_esc($ds['formato']); ?>" placeholder="questões abertas"></label>
+                                <label>Linhas por resposta <input name="<?php echo $b; ?>[discursiva][linhas]" value="<?php echo $nm($ds['linhas']); ?>" size="4"></label>
+                                <label>Pontos <input name="<?php echo $b; ?>[discursiva][pontos]" value="<?php echo $nm($ds['pontos']); ?>" size="4"></label>
+                                <label>Nota mínima <input name="<?php echo $b; ?>[discursiva][nota_minima]" value="<?php echo $nm($ds['nota_minima']); ?>" size="4"></label>
+                                <label>Eliminatória? <?php echo $sel($ds['eliminatoria'], $b . '[discursiva][eliminatoria]'); ?></label>
+                            </div>
+                            <label style="display:block;font-size:13px;margin-top:8px">Matérias da discursiva (separe por ;)
+                                <input name="<?php echo $b; ?>[discursiva][materias]" value="<?php echo admin_esc(implode('; ', $ds['materias'])); ?>" style="width:100%"></label>
+                            </details>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php if ($cargos): ?><button class="admin-btn admin-btn-primary" type="submit">✓ Está certo — confirmar provas escritas</button><?php else: ?><p>Cadastre os cargos no passo 1.</p><?php endif; ?>
+                    </form>
+                    <p style="margin-top:12px"><a class="admin-btn admin-btn-light" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=prova">Próximo: última prova ▶</a></p>
+                </section>
+
             <?php elseif ($aba === 'prova'): $prova = json_decode((string)($concurso['ultima_prova'] ?? ''), true); $provas = job_provas($concurso); ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>3. Prova anterior de cada cargo</h2></div>
+                    <div class="admin-panel-title"><h2>4. Prova anterior de cada cargo</h2></div>
                     <p class="admin-form-hint">Envie o PDF da prova de <strong>cada cargo</strong>. A IA confere se é mesmo a prova certa e conta as questões por assunto. A prova fica disponível para os alunos com a marca d'água do Projeto Gabaritando.</p>
                     <?php foreach ($cargos as $cg): $pv = $provas[(string)$cg['id']] ?? null; ?>
                         <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;align-items:center;padding:12px 0;border-top:1px solid #f3f4f6">
@@ -662,7 +735,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                 try { foreach ($pdo->query("SELECT aula_id, status FROM aula_videoaulas") as $vr) { $vaStatus[(int)$vr['aula_id']] = (string)$vr['status']; } } catch (Throwable $e) {}
             ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>4. Aulas de cada assunto</h2></div>
+                    <div class="admin-panel-title"><h2>5. Aulas de cada assunto</h2></div>
                     <p class="admin-form-hint" style="margin-bottom:10px">Três caminhos, nesta ordem: <strong>1)</strong> usar vídeos que já existem na plataforma (abaixo), <strong>2)</strong> cadastrar vídeo/PDF do professor no assunto, <strong>3)</strong> o que faltar, a IA gera (teoria mínima + videoaula do Antigão). Legenda: ✅ aula do professor · 🤖 aula do Antigão · ⬜ falta.</p>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
                         <form method="post" onsubmit="return confirm('Refazer as videoaulas já prontas no formato novo (10 a 15 min, ritmo calmo)? As aulas do Antigão também têm a teoria refeita e podem virar mais de uma aula. Gasta cota de voz de novo.');"><input type="hidden" name="acao" value="refazer_formato"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit">🔁 Refazer videoaulas no formato novo</button></form>
@@ -746,7 +819,7 @@ $menuBarInclude = admin_cursos_get_menubar();
 
             <?php elseif ($aba === 'questoes'): $qs = hack_questoes_situacao($pdo, $concursoId); $pctQ = $qs['total'] ? (int)round($qs['ok'] * 100 / $qs['total']) : 0; $totQ = array_sum(array_column($qs['itens'], 'questoes')); ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>5. Questões de cada assunto</h2><strong><?php echo $qs['ok']; ?>/<?php echo $qs['total']; ?> assuntos prontos (10+ questões) · <?php echo $totQ; ?> questões</strong></div>
+                    <div class="admin-panel-title"><h2>6. Questões de cada assunto</h2><strong><?php echo $qs['ok']; ?>/<?php echo $qs['total']; ?> assuntos prontos (10+ questões) · <?php echo $totQ; ?> questões</strong></div>
                     <div class="ed-barra" style="height:10px;margin-bottom:12px"><i style="width:<?php echo $pctQ; ?>%"></i></div>
                     <p class="admin-form-hint" style="margin-bottom:10px">O jeito mais simples: clique no botão amarelo. A IA faz assunto por assunto: <strong>pesquisa questões reais</strong> de provas anteriores (mesma banca primeiro) e, se não achar 10, <strong>cria no nível da prova</strong>. O andamento aparece na Central da IA, acima. Pode fechar a página: ela continua.</p>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
@@ -768,7 +841,7 @@ $menuBarInclude = admin_cursos_get_menubar();
 
             <?php elseif ($aba === 'plano'): ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>6. Plano-Mestre por cargo</h2></div>
+                    <div class="admin-panel-title"><h2>7. Plano-Mestre por cargo</h2></div>
                     <p class="admin-form-hint">A IA ordena os assuntos, dá peso e complexidade com base na última prova. Você confere a justificativa e aprova.</p>
                     <?php foreach ($cargos as $cg):
                         $ap = 0;
@@ -784,7 +857,7 @@ $menuBarInclude = admin_cursos_get_menubar();
 
             <?php else: $hacks = json_decode((string)($concurso['hacks'] ?? ''), true) ?: []; ?>
                 <section class="admin-panel">
-                    <div class="admin-panel-title"><h2>7. Hackeando o Edital e a Prova (o que o aluno vê)</h2>
+                    <div class="admin-panel-title"><h2>8. Hackeando o Edital e a Prova (o que o aluno vê)</h2>
                         <form method="post"><input type="hidden" name="acao" value="gerar_hacks"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary admin-btn-small" type="submit"><i data-lucide="sparkles"></i><?php echo $hacks ? 'Refazer para todos os cargos' : 'Antigão escreve para todos os cargos'; ?></button></form></div>
                     <p class="admin-form-hint">Use depois do edital e das provas. O Antigão gera, para cada cargo, o <strong>edital verticalizado</strong> (assuntos por disciplina com complexidade, peso e custo-benefício) e os textos <strong>Hackeando o Edital/Prova</strong>. O aluno vê tudo em "Meu concurso" e baixa o verticalizado em PDF com a logo.</p>
                     <?php $vert = json_decode((string)($concurso['verticalizado'] ?? ''), true) ?: []; foreach ($cargos as $cg): $v = $vert[(string)$cg['id']] ?? null; ?>

@@ -39,7 +39,7 @@ if (!function_exists('ia_consumo_bootstrap')) {
             'videoaula' => 'Videoaula do Antigão', 'podcast' => 'Podcast', 'apostila' => 'Apostila da aula',
             'aula_ia' => 'Teoria escrita pelo Antigão', 'questoes' => 'Questões de um assunto (busca + criação)',
             'redacao' => 'Leitura de redação', 'conferir_pdf' => 'Conferência do PDF da aula', 'classificar' => 'Classificação automática',
-            'desafio' => 'Montagem do Desafio do Dia', 'radar' => 'Radar do Concurso', 'duvidas' => 'Antigão tira-dúvidas', 'visual' => 'Visual novo das videoaulas', 'edital' => 'Leitura do edital / cadastro do concurso', 'outro' => 'Outras ações',
+            'desafio' => 'Montagem do Desafio do Dia', 'radar' => 'Radar do Concurso', 'duvidas' => 'Antigão tira-dúvidas', 'discursiva' => 'Treino de discursiva (criar e corrigir)', 'visual' => 'Visual novo das videoaulas', 'edital' => 'Leitura do edital / cadastro do concurso', 'outro' => 'Outras ações',
         ];
     }
 
@@ -245,7 +245,7 @@ if (!function_exists('ia_consumo_bootstrap')) {
     function ia_controle_tipos(): array
     {
         return ['videoaula' => 'Videoaulas do Antigão', 'aula_ia' => 'Teoria escrita pelo Antigão', 'apostila' => 'Apostila (teoria a partir do vídeo/PDF)',
-            'conferir_pdf' => 'Conferência dos PDFs', 'questoes' => 'Questões (busca e criação)', 'redacao' => 'Leitura de redações', 'duvidas' => 'Antigão tira-dúvidas (chat do aluno)', 'visual' => 'Visual novo das videoaulas prontas (só texto)',
+            'conferir_pdf' => 'Conferência dos PDFs', 'questoes' => 'Questões (busca e criação)', 'redacao' => 'Leitura de redações', 'duvidas' => 'Antigão tira-dúvidas (chat do aluno)', 'discursiva' => 'Treino de discursiva (aluno)', 'visual' => 'Visual novo das videoaulas prontas (só texto)',
             'classificar' => 'Classificação automática por assunto', 'radar' => 'Radar do Concurso (novidades na internet, 1x por dia)', 'podcast' => 'Podcasts (extra)', 'edital' => 'Cadastro do concurso (edital, provas, plano)'];
     }
 
@@ -322,7 +322,7 @@ if (!function_exists('ia_consumo_bootstrap')) {
             foreach ($st as $r) {
                 $teto = (int)($ctl['teto'][$r['cota']] ?? 0);
                 $cota = $teto > 0 ? $teto : (int)(ia_controle_limite_aprendido()[$r['cota']]['limite'] ?? 0);
-                if ($cota > 0 && (int)$r['n'] >= (int)ceil($cota / 2) && !in_array($r['acao'], ['duvidas', 'desafio', 'redacao'], true)) {
+                if ($cota > 0 && (int)$r['n'] >= (int)ceil($cota / 2) && !in_array($r['acao'], ['duvidas', 'desafio', 'redacao', 'discursiva'], true)) {
                     $memo[] = (string)$r['acao'];
                 }
             }

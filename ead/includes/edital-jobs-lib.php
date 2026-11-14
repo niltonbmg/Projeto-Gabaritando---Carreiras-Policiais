@@ -140,8 +140,22 @@ if (!function_exists('job_bootstrap')) {
                 return 'Conteúdo programático lido: ' . count($lido) . ' matérias. Confira e confirme.';
             case 'ler_info':
                 $info = hack_ia_info((string)($p['texto'] ?? ''), hack_pdf_base64($conc['edital_pdf'] ?? ''), $cargosNomes());
+                $antes = json_decode((string)($conc['edital_info'] ?? ''), true) ?: [];
+                if (!empty($antes['provas_escritas_conferido'])) { // o que o mentor já conferiu não é sobrescrito
+                    $info['provas_escritas'] = $antes['provas_escritas'];
+                    $info['provas_escritas_conferido'] = true;
+                } elseif (!empty($info['provas_escritas'])) {
+                    require_once __DIR__ . '/provas-escritas-lib.php';
+                    $info['provas_escritas'] = array_map(static fn($x) => ['cargo' => (string)($x['cargo'] ?? '')] + pe_normalizar((array)$x), (array)$info['provas_escritas']);
+                    $info['provas_escritas_conferido'] = false;
+                }
                 podcast_reconectar($pdo)->prepare('UPDATE concursos SET edital_info = :i WHERE id = :id')->execute([':i' => json_encode($info, JSON_UNESCAPED_UNICODE), ':id' => $c]);
                 return 'Informações do edital lidas.';
+            case 'ler_escritas':
+                require_once __DIR__ . '/provas-escritas-lib.php';
+                $lista = pe_ia_ler((string)($p['texto'] ?? ''), hack_pdf_base64($conc['edital_pdf'] ?? ''), $cargosNomes());
+                pe_salvar(podcast_reconectar($pdo), $c, $lista, false);
+                return 'Redação e discursiva identificadas para ' . count($lista) . ' cargo(s). Confira no passo "Provas escritas".';
             case 'verificar_prova':
                 return job_verificar_prova($pdo, $conc, (int)$p['cargo_id']);
             case 'buscar_prova':

@@ -97,6 +97,9 @@ function rd_e($v): string
         <h1>✍️ Redação</h1>
         <p class="sub">Escolha a proposta, escreva aqui ou mande a foto da folha (como na prova). Um professor corrige pelos critérios do seu edital e você é avisado no sininho.</p>
     </header>
+    <?php require_once __DIR__ . '/includes/provas-escritas-lib.php'; $peRd = pe_do_aluno($pdo, $usuarioId); ?>
+    <?php if ($peRd && ($peRd['redacao']['tem'] ?? null) === true): ?><div class="alerta ok" role="note">📋 Na sua prova (<?php echo rd_e($peRd['cargo'] ?: $peRd['concurso']); ?>): <strong><?php echo rd_e(pe_resumo($peRd, 'redacao')); ?></strong>. Treine exatamente nesse formato.</div>
+    <?php elseif ($peRd && ($peRd['redacao']['tem'] ?? null) === false): ?><div class="alerta" role="note">ℹ️ O edital do seu concurso não tem redação. Pode treinar se quiser, mas o seu tempo rende mais nas questões.</div><?php endif; ?>
     <?php if ($ok === 'enviada'): ?><div class="alerta ok" role="status">✅ Redação enviada! Agora é com o professor: prazo de até <?php echo REDACAO_PRAZO_HORAS; ?>h. Você recebe o aviso no sininho.</div><?php endif; ?>
     <?php if ($erro !== ''): ?><div class="alerta erro" role="alert"><?php echo rd_e($erro); ?></div><?php endif; ?>
 

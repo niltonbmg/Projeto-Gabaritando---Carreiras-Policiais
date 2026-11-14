@@ -375,8 +375,12 @@ if (!function_exists('meta_cronograma_montar')) {
         if (($cfgEv['simulado_min'] ?? 0) > 0) {
             $cfg['eventos'][] = ['tipo' => 'simulado', 'dia' => $cfgEv['simulado_dia'] ?? 6, 'minutos' => $cfgEv['simulado_min'], 'cada_semanas' => $cfgEv['simulado_semanas'] ?? 1, 'titulo' => 'Simulado no tempo de prova', 'rotulo' => 'Simulado'];
         }
-        if (($cfgEv['redacao_min'] ?? 0) > 0) {
+        require_once __DIR__ . '/provas-escritas-lib.php';
+        if (($cfgEv['redacao_min'] ?? 0) > 0 && pe_aluno_tem($pdo, $usuarioId, 'redacao')) { // concurso sem redação: não entra no cronograma
             $cfg['eventos'][] = ['tipo' => 'redacao', 'dia' => $cfgEv['redacao_dia'] ?? 3, 'minutos' => $cfgEv['redacao_min'], 'cada_semanas' => $cfgEv['redacao_semanas'] ?? 1, 'titulo' => 'Redação da semana', 'rotulo' => 'Redação'];
+        }
+        if (pe_aluno_tem($pdo, $usuarioId, 'discursiva')) {
+            $cfg['eventos'][] = ['tipo' => 'discursiva', 'dia' => 5, 'minutos' => 45, 'cada_semanas' => 1, 'titulo' => 'Treino de discursiva', 'rotulo' => 'Discursiva'];
         }
         $fila = meta_cronograma_tarefas_pendentes($estado);
         $real = meta_cronograma_distribuir($fila, $cfg, $hoje, $revisoes);

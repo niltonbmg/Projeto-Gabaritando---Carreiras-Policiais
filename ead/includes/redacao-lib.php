@@ -114,7 +114,10 @@ if (!function_exists('redacao_bootstrap')) {
             $c = $st->fetch();
             $info = json_decode((string)($c['edital_info'] ?? ''), true) ?: [];
             $grade = [];
-            foreach ((array)($info['redacao']['criterios'] ?? []) as $cr) {
+            require_once __DIR__ . '/provas-escritas-lib.php';
+            $peAl = pe_do_aluno($pdo, $usuarioId);
+            $critCargo = $peAl ? (array)($peAl['redacao']['criterios'] ?? []) : [];
+            foreach ($critCargo ?: (array)($info['redacao']['criterios'] ?? []) as $cr) {
                 $nome = trim((string)($cr['nome'] ?? ''));
                 $max = (float)($cr['max'] ?? 0);
                 if ($nome !== '' && $max > 0) {

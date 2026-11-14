@@ -120,6 +120,7 @@ if (!function_exists('hack_bootstrap')) {
     /** Lê TODAS as informações do edital (não só o conteúdo programático). */
     function hack_ia_info(string $texto, string $pdfBase64, array $cargos): array
     {
+        require_once __DIR__ . '/provas-escritas-lib.php';
         $prompt = "Você é especialista em editais de concursos policiais e militares da Bahia e trabalha para o Projeto Gabaritando.\n"
             . "Leia o EDITAL e extraia TODAS as informações que um candidato precisa saber, por cargo quando for diferente.\n"
             . "Cargos: " . json_encode($cargos, JSON_UNESCAPED_UNICODE) . ".\n"
@@ -128,7 +129,7 @@ if (!function_exists('hack_bootstrap')) {
             . '{"orgao":"","banca":"","ano":null,"inscricoes":{"inicio":null,"fim":null,"taxa":null,"onde":null},'
             . '"prova_objetiva":{"data":null,"duracao":null,"questoes":null,"alternativas":null,"criterio_aprovacao":null,"penaliza_erro":null},'
             . '"redacao":{"tem":null,"criterio":"resumo do critério de correção","criterios":[{"nome":"critério de correção como está no edital","max":0,"descricao":"o que é avaliado"}]},"etapas":[{"nome":"","carater":"eliminatório/classificatório","resumo":""}],'
-            . '"taf":[{"cargo":"","sexo":"","exercicio":"","minimo":""}],'
+            . '"taf":[{"cargo":"","sexo":"","exercicio":"","minimo":""}],' . (function_exists('pe_formato_json') ? pe_formato_json() . ',' : '')
             . '"cargos":[{"nome":"","vagas":null,"vagas_detalhe":null,"salario":null,"escolaridade":null,"idade":null,"altura":null,"cnh":null,"outros_requisitos":[""]}],'
             . '"cotas":null,"validade":null,"lotacao":null,"datas_importantes":[{"evento":"","data":""}],"atencao":["pontos do edital que mais eliminam candidatos"]}' . "\n\n"
             . "EDITAL (texto):\n" . mb_substr($texto, 0, 80000);
@@ -357,6 +358,7 @@ if (!function_exists('hack_bootstrap')) {
         $e = [
             'concurso' => ['nome' => 'Concurso e cargos', 'ok' => $cargos && $ligados === count($cargos), 'det' => count($cargos) . ' cargo(s) · ' . $ligados . ' ligado(s) a curso'],
             'edital' => ['nome' => 'Edital', 'ok' => $itens && is_array($info), 'det' => ($itens ? count($itens) . ' assuntos' : 'conteúdo programático pendente') . ' · ' . (is_array($info) ? 'informações lidas' : 'informações pendentes') . ($rascEdital ? ' · rascunho salvo' : '')],
+            'escritas' => ['nome' => 'Provas escritas', 'ok' => !empty($info['provas_escritas_conferido']), 'det' => !empty($info['provas_escritas']) ? (!empty($info['provas_escritas_conferido']) ? 'redação e discursiva conferidas' : 'lidas pela IA · falta você conferir') : 'redação e discursiva pendentes'],
             'prova' => ['nome' => 'Última prova', 'ok' => $provasOk >= count($cargos) && $cargos || !empty($prova['encontrada']) || ($c['prova_status'] ?? '') === 'sem_prova', 'det' => !empty($prova['encontrada']) ? 'última prova: ' . trim(($prova['banca'] ?? '') . ' ' . ($prova['ano'] ?? '')) : (($c['prova_status'] ?? '') === 'sem_prova' ? 'sem prova anterior (pesos estimados)' : 'última prova pendente')],
             'aulas' => ['nome' => 'Aulas por assunto', 'ok' => $tot > 0 && $cob >= $tot, 'det' => $cob . '/' . $tot . ' assuntos com aula' . ($rascAulas ? ' · ' . count($rascAulas) . ' sugestão(ões) para conferir' : '')],
             'questoes' => ['nome' => 'Questões por assunto', 'ok' => $qs['total'] > 0 && $qs['ok'] >= $qs['total'], 'det' => $qs['ok'] . '/' . $qs['total'] . ' assuntos com 10+ questões'],
@@ -367,6 +369,7 @@ if (!function_exists('hack_bootstrap')) {
         $pcts = [
             'concurso' => $cargos ? $ligados * 100 / $nc : 0,
             'edital' => ($itens ? 50 : 0) + (is_array($info) ? 50 : 0),
+            'escritas' => !empty($info['provas_escritas_conferido']) ? 100 : (!empty($info['provas_escritas']) ? 60 : 0),
             'prova' => (!empty($prova['encontrada']) || ($c['prova_status'] ?? '') === 'sem_prova') ? 100 : $provasOk * 100 / $nc,
             'aulas' => $tot ? $cob * 100 / $tot : 0,
             'questoes' => $qs['total'] ? $qs['ok'] * 100 / $qs['total'] : 0,

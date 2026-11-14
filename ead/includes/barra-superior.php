@@ -40,7 +40,20 @@ if ($usuarioLogado && function_exists('db')) {
     } catch (Throwable $e) {
     }
 }
-$menuItens = $menuItens ?? [
+$menuItens = $menuItens ?? (static function (array $itens) use ($usuarioLogado, $usuarioAtual): array {
+    // O menu segue o edital do aluno: sem redação no concurso, some "Redação"; discursiva só aparece se o concurso tiver.
+    $temRed = true;
+    $temDisc = false;
+    if ($usuarioLogado && function_exists('db')) {
+        try {
+            require_once __DIR__ . '/provas-escritas-lib.php';
+            $temRed = pe_aluno_tem(db(), (int)($usuarioAtual['id'] ?? 0), 'redacao');
+            $temDisc = pe_aluno_tem(db(), (int)($usuarioAtual['id'] ?? 0), 'discursiva');
+        } catch (Throwable $e) {
+        }
+    }
+    return array_values(array_filter($itens, static fn($i) => !(($i['link'] === 'redacoes.php' && !$temRed) || ($i['link'] === 'discursiva.php' && !$temDisc))));
+})([
     // Ordem do método: a plataforma conhece o concurso e monta a missão; o aluno executa; o resto apoia.
     ['titulo' => '▶ Missão do dia', 'link' => 'meu-plano.php', 'externo' => false],
     ['titulo' => '🎬 Minhas aulas', 'link' => $linkMinhasAulas, 'externo' => false],
@@ -49,6 +62,7 @@ $menuItens = $menuItens ?? [
     ['titulo' => '📚 Banco de questões', 'link' => 'banco-questoes.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => '📝 Simulados', 'link' => 'simulados.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => '✍️ Redação', 'link' => 'redacoes.php', 'externo' => false],
+    ['titulo' => '📝 Discursiva · treino com o Antigão', 'link' => 'discursiva.php', 'externo' => false],
     ['titulo' => '🎓 Todos os meus cursos', 'link' => 'dashboard.php', 'externo' => false],
     ['titulo' => '📎 Materiais', 'link' => 'materiais.php' . $cursoContextoQuery, 'externo' => false],
     ['titulo' => '🎖 Antigão · tira-dúvidas', 'link' => 'antigao.php', 'externo' => false],
@@ -61,7 +75,7 @@ $menuItens = $menuItens ?? [
     ['titulo' => 'Como funciona o método', 'link' => 'meu-plano.php?tour=1', 'externo' => false],
     ['titulo' => '🔒 Meus dados e privacidade', 'link' => 'meus-dados.php', 'externo' => false],
     ['titulo' => 'QUEM SOMOS', 'link' => 'https://www.instagram.com/projeto.gabaritando/', 'externo' => true],
-];
+]);
 
 $notificacoesTopbar = [];
 $totalNotificacoesNaoLidas = 0;
