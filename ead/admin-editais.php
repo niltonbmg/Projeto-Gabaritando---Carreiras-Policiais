@@ -846,6 +846,7 @@ $menuBarInclude = admin_cursos_get_menubar();
             ?>
                 <section class="admin-panel">
                     <div class="admin-panel-title"><h2>5. Aulas de cada assunto</h2></div>
+                    <p style="margin:0 0 10px;padding:10px 12px;background:#fff8e6;border:1px solid #fbb928;border-radius:10px;font-size:14px">✏️ Falta matéria ou assunto em algum cargo? <a href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=edital#faltou" style="font-weight:700">Corrigir o conteúdo do edital (colar o anexo do cargo)</a></p>
                     <p class="admin-form-hint" style="margin-bottom:10px">Três caminhos, nesta ordem: <strong>1)</strong> usar vídeos que já existem na plataforma (abaixo), <strong>2)</strong> cadastrar vídeo/PDF do professor no assunto, <strong>3)</strong> o que faltar, a IA gera (teoria mínima + videoaula do Antigão). Legenda: ✅ aula do professor · 🤖 aula do Antigão · ⬜ falta.</p>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
                         <form method="post" onsubmit="return confirm('Refazer as videoaulas já prontas no formato novo (10 a 15 min, ritmo calmo)? As aulas do Antigão também têm a teoria refeita e podem virar mais de uma aula. Gasta cota de voz de novo.');"><input type="hidden" name="acao" value="refazer_formato"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit">🔁 Refazer videoaulas no formato novo</button></form>
