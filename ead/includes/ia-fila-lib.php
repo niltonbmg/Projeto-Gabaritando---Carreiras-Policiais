@@ -10,6 +10,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/apostila-lib.php';
 require_once __DIR__ . '/videoaula-lib.php';
 
+// Cursos para os quais a IA gera conteúdo (CFSD: 13 = Soldado PM, 12 = Soldado BM).
+if (!defined('IA_FILA_CURSOS')) {
+    define('IA_FILA_CURSOS', [13, 12]);
+}
+
 if (!function_exists('ia_fila_bootstrap')) {
     function ia_fila_bootstrap(PDO $pdo): void
     {
@@ -83,7 +88,7 @@ if (!function_exists('ia_fila_processar_um')) {
         ia_fila_bootstrap($pdo);
         videoaula_bootstrap($pdo);
         $pdo = podcast_reconectar($pdo);
-        // Apostilas antes de podcasts; até 3 tentativas por item.
+        // Apostilas antes de podcasts; 1 tentativa + 1 nova tentativa por item (depois fica como erro).
         // Limite diário do Google atingido? Pausa só o que usa voz (videoaula/podcast) e segue com o resto.
         if (ia_fila_pausa_texto()) {
             return null; // cota de texto do Google: espera uns minutos
@@ -101,6 +106,13 @@ if (!function_exists('ia_fila_processar_um')) {
                 $semVoz .= ' AND tipo <> ' . $pdo->quote($tDesl);
             }
         }
+        // Só gera para os cursos CFSD (13 = PM, 12 = BM); cursos-repositório nunca. Tarefas sem aula (questões, redação, radar) seguem.
+        $soCursos = " AND (f.tipo IN ('questoes','redacao','radar') OR a.curso_id IN (" . implode(',', IA_FILA_CURSOS) . '))';
+        // Gasto do mês passou de 80% do limite (Consumo da IA): a fila para; só a redação do aluno continua.
+        $cfgC = ia_consumo_config();
+        if ((float)$cfgC['limite_mensal_brl'] > 0 && ia_consumo_mes_brl($pdo) >= 0.8 * (float)$cfgC['limite_mensal_brl']) {
+            $soCursos .= " AND f.tipo = 'redacao'";
+        }
         $ordem = $pri['primeiro'] === 'questoes' ? "'redacao','conferir_pdf','radar','visual','apostila','aula_ia','questoes','videoaula','podcast'" : "'redacao','conferir_pdf','radar','visual','apostila','aula_ia','videoaula','questoes','podcast'";
         // Dentro de cada tipo, segue a ordem do curso (módulo e aula): a cota grátis vai primeiro para o que o aluno vê primeiro.
         // Divisão justa: tarefa que já usou metade da cota do dia cede a vez (se não houver outra, segue).
@@ -113,7 +125,7 @@ if (!function_exists('ia_fila_processar_um')) {
                                LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id AND f.tipo NOT IN ('questoes','redacao','radar')
                                LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
                                LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
-                              WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz . $extraJ) . "
+                              WHERE (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 2 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz . $extraJ) . $soCursos . "
                               ORDER BY FIELD(f.tipo, $ordem), f.prioridade DESC, COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id ASC LIMIT 1")->fetch(); // curso com mais alunos primeiro
             if ($item) {
                 break;
@@ -127,7 +139,7 @@ if (!function_exists('ia_fila_processar_um')) {
                                    LEFT JOIN admin_curso_aulas a ON a.id = f.aula_id
                                    LEFT JOIN admin_curso_modulos m ON m.id = a.modulo_id
                                    LEFT JOIN (SELECT curso_id, COUNT(*) n FROM usuario_cursos WHERE status = 'ativo' GROUP BY curso_id) dem ON dem.curso_id = a.curso_id
-                                  WHERE f.tipo IN ('videoaula','podcast') AND (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 3 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . "
+                                  WHERE f.tipo IN ('videoaula','podcast') AND (f.status = 'pendente' OR (f.status = 'erro' AND f.tentativas < 2 AND f.atualizado_em < NOW() - INTERVAL 20 MINUTE))" . str_replace('tipo', 'f.tipo', $semVoz) . $soCursos . "
                                   ORDER BY FIELD(f.tipo, 'videoaula', 'podcast'), COALESCE(dem.n, 0) DESC, COALESCE(m.ordem, 9999), COALESCE(a.ordem, 9999), f.id LIMIT 1")->fetch();
             if ($vozItem) {
                 $item = $vozItem;
