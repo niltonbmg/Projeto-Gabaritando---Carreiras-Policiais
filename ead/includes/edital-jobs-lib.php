@@ -482,6 +482,7 @@ if (!function_exists('job_bootstrap')) {
             })(),
             'agora' => job_agora_ler(),
             'uso' => podcast_uso_resumo(),
+            'plano_pago' => function_exists('ia_plano_pago') && ia_plano_pago(),
             'prioridade' => ia_prioridade(),
             'pausa_voz' => ia_fila_pausa() ? date('H:i', ia_fila_pausa()) : '',
             'pausa_texto' => ia_fila_pausa_texto() ? date('H:i', ia_fila_pausa_texto()) : '',

@@ -331,6 +331,9 @@ if (!function_exists('podcast_uso_registrar')) {
             return false;
         }
         $ate = $diario ? (int)podcast_uso_resumo()['renova_ts'] : time() + 120;
+        if (function_exists('ia_plano_pago') && ia_plano_pago()) {
+            $ate = time() + 60; // plano pago: o 429 é momentâneo (ritmo por minuto); espera 1 min e segue
+        }
         $arq = ['voz' => '.ia-pausa-voz', 'busca' => '.ia-pausa-busca'][$tipo] ?? '.ia-pausa-texto';
         @file_put_contents(dirname(__DIR__) . '/uploads/' . $arq, (string)($arq === '.ia-pausa-texto' ? min($ate, time() + 1800) : $ate));
         return true;

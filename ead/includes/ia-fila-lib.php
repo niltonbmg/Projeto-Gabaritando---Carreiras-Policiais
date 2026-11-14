@@ -250,23 +250,37 @@ if (!function_exists('ia_fila_processar_um')) {
     }
 }
 
+if (!function_exists('ia_fila_ler_pausa')) {
+    /** Lê uma pausa de cota. No plano pago só vale pausa curta (429 de agora, até 2 min); pausa longa antiga é ignorada. */
+    function ia_fila_ler_pausa(string $arq): int
+    {
+        require_once __DIR__ . '/ia-consumo-lib.php';
+        ia_conferir_chave(); // chave nova no .env: limpa pausas e limites da chave antiga
+        $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/' . $arq);
+        if ($ate > time() + 120 && ia_plano_pago()) {
+            return 0;
+        }
+        return $ate;
+    }
+}
+
 if (!function_exists('ia_fila_pausa')) {
     /** Até quando a voz (TTS) está pausada por limite diário do Google (0 = não está). */
     function ia_fila_pausa(): int
     {
-        $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-pausa-voz');
+        $ate = ia_fila_ler_pausa('.ia-pausa-voz');
         return $ate > time() ? $ate : 0;
     }
 
     function ia_fila_pausa_busca(): int
     {
-        $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-pausa-busca');
+        $ate = ia_fila_ler_pausa('.ia-pausa-busca');
         return $ate > time() ? $ate : 0;
     }
 
     function ia_fila_pausa_texto(): int
     {
-        $ate = (int)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-pausa-texto');
+        $ate = ia_fila_ler_pausa('.ia-pausa-texto');
         return $ate > time() ? $ate : 0;
     }
 }

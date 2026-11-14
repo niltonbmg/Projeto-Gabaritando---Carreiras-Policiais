@@ -241,6 +241,58 @@ if (!function_exists('ia_consumo_bootstrap')) {
         }
     }
 
+    // ---------- PLANO PAGO: sem limites grátis aprendidos; só 429 real (pausa curta) e o limite mensal em R$ ----------
+    function ia_plano_pago(): bool
+    {
+        static $memo = null;
+        return $memo ??= (ia_consumo_config()['plano'] ?? 'gratis') === 'pago';
+    }
+
+    /**
+     * "Retomar agora": apaga as pausas de cota (.ia-pausa-*) e zera os contadores de hoje.
+     * $tudo = true também esquece os limites grátis aprendidos (troca de chave ou passou para o plano pago).
+     */
+    function ia_retomar_agora(bool $tudo = false): void
+    {
+        $up = dirname(__DIR__) . '/uploads/';
+        foreach (['.ia-pausa-voz', '.ia-pausa-busca', '.ia-pausa-texto', '.ia-pausa'] as $a) {
+            @unlink($up . $a);
+        }
+        if ($tudo) {
+            @unlink($up . '.ia-uso.json');
+            return;
+        }
+        $arq = $up . '.ia-uso.json';
+        $d = json_decode((string)@file_get_contents($arq), true) ?: [];
+        if (function_exists('podcast_uso_dia')) {
+            unset($d[podcast_uso_dia()]);
+        }
+        @file_put_contents($arq, json_encode($d, JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+
+    /** Chave do Google trocada no .env? Guarda só um resumo (hash curto) e, se mudou, limpa pausas e limites aprendidos. */
+    function ia_conferir_chave(): void
+    {
+        static $feito = false;
+        if ($feito || !function_exists('gab_env')) {
+            return;
+        }
+        $feito = true;
+        $chave = gab_env('GEMINI_API_KEY', '');
+        if ($chave === '') {
+            return;
+        }
+        $arq = dirname(__DIR__) . '/uploads/.ia-chave-hash';
+        $hash = substr(hash('sha256', $chave), 0, 12);
+        $antes = trim((string)@file_get_contents($arq));
+        if ($antes !== $hash) {
+            if ($antes !== '') {
+                ia_retomar_agora(true);
+            }
+            @file_put_contents($arq, $hash);
+        }
+    }
+
     // ---------- CONTROLE RÍGIDO: o mentor decide o que a IA pode fazer e quanto por dia ----------
     function ia_controle_tipos(): array
     {
@@ -259,6 +311,10 @@ if (!function_exists('ia_consumo_bootstrap')) {
         }
         $manual = ['texto' => max(0, (int)($c['teto']['texto'] ?? 0)), 'voz' => max(0, (int)($c['teto']['voz'] ?? 0)), 'busca' => max(0, (int)($c['teto']['busca'] ?? 0))];
         $modo = in_array($c['modo'] ?? '', ['economico', 'normal', 'maximo'], true) ? $c['modo'] : 'normal';
+        ia_conferir_chave();
+        if (ia_plano_pago()) { // plano pago: nada de limite grátis aprendido; quem limita é o teto mensal em R$
+            return ['ligados' => $lig, 'modo' => $modo, 'teto' => ['texto' => 0, 'voz' => 0, 'busca' => 0], 'teto_manual' => ['texto' => max(0, (int)($c['teto']['texto'] ?? 0)), 'voz' => max(0, (int)($c['teto']['voz'] ?? 0)), 'busca' => max(0, (int)($c['teto']['busca'] ?? 0))]];
+        }
         // O mentor escolhe só o modo; o teto de cada dia sai do limite grátis que a plataforma aprendeu sozinha.
         $teto = [];
         foreach (ia_controle_limite_aprendido() as $t => $l) {
@@ -310,6 +366,9 @@ if (!function_exists('ia_consumo_bootstrap')) {
             return $memo;
         }
         $memo = [];
+        if (ia_plano_pago()) {
+            return $memo; // plano pago: sem divisão da cota grátis
+        }
         $ctl = ia_controle();
         $pdo = ia_consumo_db();
         if (!$pdo) {

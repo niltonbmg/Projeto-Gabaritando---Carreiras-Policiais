@@ -664,6 +664,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                 <?php endif; ?>
                 <p id="ciaAtualizar" hidden class="admin-alert admin-alert-success" style="margin:0 0 8px">✅ A IA terminou uma tarefa. <button type="button" class="admin-btn admin-btn-light admin-btn-small" onclick="location.reload()">Atualizar a página</button> (salve o que está preenchendo antes)</p>
                 <p id="ciaAgora" style="margin:4px 0 8px;font-size:15px"></p>
+                <form method="post" action="admin-consumo-ia.php" id="ciaRetomar" hidden style="margin:0 0 8px" onsubmit="return confirm('Retomar agora? Limpa as pausas e zera os contadores de hoje.');"><input type="hidden" name="acao" value="retomar"><input type="hidden" name="voltar" value="cadastro"><input type="hidden" name="concurso_id" value="<?php echo (int)$concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">▶ Retomar agora</button></form>
                 <details style="margin-bottom:8px"><summary class="admin-form-hint" style="cursor:pointer">O que são essas tarefas?</summary>
                     <ul class="admin-form-hint" style="margin:6px 0 0 18px;display:grid;gap:3px">
                         <li><strong>🤖 Aulas do Antigão (teoria):</strong> o assunto não tinha aula; a IA escreve a teoria mínima (texto da aula).</li>
@@ -1162,9 +1163,10 @@ $menuBarInclude = admin_cursos_get_menubar();
             var u = d.uso || {}, pr = d.prioridade || {}, fl = d.fila || {};
             var falta = function (t) { return ((fl[t] || {}).pendente || 0) + ((fl[t] || {}).erro || 0); };
             var vozFalta = falta('videoaula') * 8 + (pr.podcasts_pausados ? 0 : falta('podcast') * 4);
-            var linhaUso = function (rot, x) { x = x || {}; return '<div>' + rot + ': <strong>' + (x.hoje || 0) + '</strong> chamadas hoje' + (x.bloqueado ? ' · <span style="color:#b42318;font-weight:700">⛔ cota grátis de hoje esgotada (desde ' + x.bloqueado_em + ') · volta ' + esc(u.renova || '') + '</span>' : (x.limite ? ' · limite grátis observado ≈ <strong>' + x.limite + '/dia</strong>' : ' · ✅ ainda tem cota hoje')) + '</div>'; };
-            var prev = !vozFalta ? '' : u.voz && u.voz.limite ? '≈ <strong>' + Math.max(1, Math.ceil(vozFalta / u.voz.limite)) + ' dia(s)</strong> para terminar as videoaulas' + (pr.podcasts_pausados ? '' : ' e podcasts') + ' no plano grátis (' + vozFalta + ' falas na fila)' : (vozFalta ? vozFalta + ' falas de voz na fila; a previsão aparece quando o limite for medido' : '');
-            document.getElementById('ciaUso').innerHTML = '<strong>📊 Uso da IA grátis (Google) · renova ' + esc(u.renova || '') + '</strong>'
+            var pago = !!d.plano_pago;
+            var linhaUso = function (rot, x) { x = x || {}; if (pago) { return '<div>' + rot + ': <strong>' + (x.hoje || 0) + '</strong> chamadas hoje</div>'; } return '<div>' + rot + ': <strong>' + (x.hoje || 0) + '</strong> chamadas hoje' + (x.bloqueado ? ' · <span style="color:#b42318;font-weight:700">⛔ cota grátis de hoje esgotada (desde ' + x.bloqueado_em + ') · volta ' + esc(u.renova || '') + '</span>' : (x.limite ? ' · limite grátis observado ≈ <strong>' + x.limite + '/dia</strong>' : ' · ✅ ainda tem cota hoje')) + '</div>'; };
+            var prev = pago ? '' : !vozFalta ? '' : u.voz && u.voz.limite ? '≈ <strong>' + Math.max(1, Math.ceil(vozFalta / u.voz.limite)) + ' dia(s)</strong> para terminar as videoaulas' + (pr.podcasts_pausados ? '' : ' e podcasts') + ' no plano grátis (' + vozFalta + ' falas na fila)' : (vozFalta ? vozFalta + ' falas de voz na fila; a previsão aparece quando o limite for medido' : '');
+            document.getElementById('ciaUso').innerHTML = (pago ? '<strong>📊 Uso da IA hoje (plano pago · sem limite por dia; o controle é o limite mensal em R$)</strong>' : '<strong>📊 Uso da IA grátis (Google) · renova ' + esc(u.renova || '') + '</strong>')
                 + '<div class="admin-form-hint" style="display:grid;gap:2px;margin-top:4px">' + linhaUso('✍️ Texto (teorias, questões criadas, leituras)', u.texto) + linhaUso('🎙️ Voz (videoaulas e podcasts)', u.voz) + linhaUso('🔎 Pesquisa na internet (questões reais, provas)', u.busca) + (prev ? '<div>⏱️ ' + prev + '</div>' : '') + '</div>'
 ;
             if (!window.ciaPriIni) {
@@ -1177,9 +1179,10 @@ $menuBarInclude = admin_cursos_get_menubar();
                 }; });
             }
             document.getElementById('ciaAgora').innerHTML = (d.agora ? '⚙️ <strong>Agora:</strong> ' + esc(d.agora) + '…' : '')
-                + (d.pausa_voz ? '<br>⏸ <strong>Voz em pausa até ' + d.pausa_voz + '</strong>: o Google limita quantas falas grátis por dia. Videoaulas e podcasts continuam sozinhos depois; o resto segue normalmente.' : '')
-                + (d.pausa_busca ? '<br>⏸ <strong>Questões aguardando a pesquisa na internet (volta ' + d.pausa_busca + ')</strong>: a IA não cria questão antes de procurar as reais.' : '')
-                + (d.pausa_texto ? '<br>⏸ <strong>Texto em pausa até ' + d.pausa_texto + '</strong> (limite do Google): retoma sozinho.' : '');
+                + (d.pausa_voz ? '<br>⏸ <strong>Voz em pausa até ' + d.pausa_voz + '</strong>: ' + (pago ? 'o Google pediu para esperar um pouco; retoma sozinho.' : 'o Google limita quantas falas grátis por dia. Videoaulas e podcasts continuam sozinhos depois; o resto segue normalmente.') : '')
+                + (d.pausa_busca ? '<br>⏸ <strong>Pesquisa na internet em pausa até ' + d.pausa_busca + '</strong>: as questões continuam sendo criadas como inéditas; a busca de questões reais e o Radar voltam depois.' : '')
+                + (d.pausa_texto ? '<br>⏸ <strong>Texto em pausa até ' + d.pausa_texto + '</strong> (' + (pago ? 'o Google pediu para esperar um pouco' : 'limite do Google') + '): retoma sozinho.' : '');
+            document.getElementById('ciaRetomar').hidden = !(d.pausa_voz || d.pausa_busca || d.pausa_texto);
             var ativos = (d.ativos || 0) + (q.na_fila || 0) + filaPend;
             if (ativosAntes !== null && (d.ativos || 0) < ativosAntes) {
                 // Algo terminou: atualiza a página, MENOS se o mentor está preenchendo um formulário.

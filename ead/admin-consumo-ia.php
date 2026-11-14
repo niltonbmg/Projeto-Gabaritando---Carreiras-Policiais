@@ -21,8 +21,16 @@ if (($_POST['acao'] ?? '') === 'controle') {
     ia_controle_salvar(['ligados' => $lig, 'modo' => $modoNovo, 'teto' => ia_controle()['teto_manual']]);
     $msg = 'Controle salvo. Vale a partir da próxima tarefa.';
 }
+if (($_POST['acao'] ?? '') === 'retomar') {
+    // "Retomar agora": limpa as pausas de cota e zera os contadores de hoje (a fila volta a andar na próxima rodada do robô)
+    ia_retomar_agora(false);
+    $volta = ($_POST['voltar'] ?? '') === 'cadastro' ? 'admin-editais.php?concurso_id=' . (int)($_POST['concurso_id'] ?? 0) . '&ok_ia=1' : 'admin-consumo-ia.php?retomou=1#controle';
+    header('Location: ' . $volta);
+    exit;
+}
 if (($_POST['acao'] ?? '') === 'config') {
     $c = ia_consumo_config();
+    $eraPago = ($c['plano'] ?? 'gratis') === 'pago';
     $c['plano'] = ($_POST['plano'] ?? '') === 'pago' ? 'pago' : 'gratis';
     $c['dolar'] = max(0.01, (float)str_replace(',', '.', (string)($_POST['dolar'] ?? $c['dolar'])));
     $c['limite_mensal_brl'] = max(0, (float)str_replace(',', '.', (string)($_POST['limite'] ?? 0)));
@@ -33,6 +41,10 @@ if (($_POST['acao'] ?? '') === 'config') {
     }
     ia_consumo_salvar_config($c);
     $msg = 'Configuração salva. Vale para as próximas chamadas (o histórico mantém o custo da época).';
+    if ($c['plano'] === 'pago') {
+        ia_retomar_agora(true); // plano pago: esquece pausas e limites grátis aprendidos
+        $msg .= $eraPago ? '' : ' Plano pago ativo: as pausas e os limites grátis da chave anterior foram limpos.';
+    }
 }
 $cfg = ia_consumo_config();
 $dolar = (float)$cfg['dolar'];
@@ -114,13 +126,21 @@ $menuBarInclude = admin_cursos_get_menubar();
         } catch (Throwable $e) {
         }
         $modos = ['economico' => ['🐢 Econômico', 'Usa metade da cota grátis. Sobra folga.'], 'normal' => ['⚖️ Normal', 'Usa toda a cota grátis. Recomendado.'], 'maximo' => ['🚀 Máximo', 'Sem teto. Só faz sentido no plano pago (no grátis, o Google corta e o robô só pausa).']];
+        if ($cfg['plano'] === 'pago') { // plano pago: os modos não limitam por dia (o controle é o limite mensal em R$)
+            $modos = ['economico' => ['🐢 Econômico', 'No plano pago, não limita por dia.'], 'normal' => ['⚖️ Normal', 'No plano pago, não limita por dia.'], 'maximo' => ['🚀 Máximo', 'Recomendado no plano pago.']];
+        }
         ?>
         <section class="admin-panel" id="controle">
             <h2>🎚 Quanto a IA pode trabalhar por dia</h2>
+            <?php if (!empty($_GET['retomou'])): ?><div class="admin-alert admin-alert-success">▶ Pausas limpas e contadores de hoje zerados. A fila volta a andar na próxima rodada do robô (até 5 min).</div><?php endif; ?>
+            <?php if ($cfg['plano'] === 'pago'): $gMes = ia_consumo_mes_brl($pdo); $limM = (float)$cfg['limite_mensal_brl']; ?>
+                <p style="margin:4px 0 10px;padding:10px 12px;background:#ecfdf3;border:1px solid #abefc6;border-radius:10px">💳 <strong>Plano pago:</strong> sem limite por dia. Gasto do mês: <strong><?php echo ia_consumo_brl($gMes); ?></strong><?php echo $limM > 0 ? ' de ' . ia_consumo_brl($limM) . ' (' . (int)round($gMes * 100 / $limM) . '%)' : ' · sem limite mensal definido (defina abaixo para ter controle)'; ?>. Se o Google pedir para esperar (excesso por minuto), a IA para 1 minuto e segue.</p>
+            <?php endif; ?>
             <?php foreach (['texto', 'voz', 'busca'] as $c): $teto = (int)$ctl['teto'][$c]; ?>
                 <p style="margin:4px 0;font-size:15px"><?php echo $nomesC[$c]; ?>: hoje <strong><?php echo (int)$usoHoje[$c]['hoje']; ?></strong> de <?php echo $teto > 0 ? '<strong>~' . $teto . '</strong>' : 'sem teto'; ?> usados<?php echo $usoHoje[$c]['bloqueado'] ? ' · <span style="color:#b54708">o Google cortou às ' . admin_esc($usoHoje[$c]['bloqueado_em']) . '</span>' : ''; ?></p>
             <?php endforeach; ?>
-            <p style="margin:4px 0;font-size:13px;color:#4b5563">Renova às <?php echo admin_esc((string)$usoHoje['renova']); ?>.</p>
+            <?php if ($cfg['plano'] !== 'pago'): ?><p style="margin:4px 0;font-size:13px;color:#4b5563">Renova às <?php echo admin_esc((string)$usoHoje['renova']); ?>.</p><?php endif; ?>
+            <form method="post" style="margin:8px 0" onsubmit="return confirm('Retomar agora? Limpa as pausas e zera os contadores de hoje.');"><input type="hidden" name="acao" value="retomar"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">▶ Retomar agora</button> <small style="color:#4b5563">use se a IA estiver parada por pausa de limite (ex.: depois de trocar de chave ou de plano).</small></form>
             <?php if ($porTarefa): ?><p style="margin:10px 0 4px">📊 Gastou mais com: <strong><?php echo admin_esc($nomesT[$porTarefa[0]['acao']] ?? $porTarefa[0]['acao']); ?></strong> (<?php echo (int)$porTarefa[0]['n']; ?>)<?php foreach (array_slice($porTarefa, 1, 3) as $pt): ?> · <?php echo admin_esc($nomesT[$pt['acao']] ?? $pt['acao']); ?> (<?php echo (int)$pt['n']; ?>)<?php endforeach; ?></p><?php endif; ?>
             <?php foreach ($prev as $p): ?><p style="margin:2px 0">⏳ No ritmo atual, <?php echo admin_esc($p); ?>.</p><?php endforeach; ?>
             <form method="post" style="margin-top:14px">
@@ -130,7 +150,8 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <label style="border:2px solid <?php echo $ctl['modo'] === $m ? '#fbb928' : '#e5e7eb'; ?>;border-radius:12px;padding:12px;cursor:pointer;background:<?php echo $ctl['modo'] === $m ? '#fffbeb' : '#fff'; ?>"><input type="radio" name="modo" value="<?php echo $m; ?>" <?php echo $ctl['modo'] === $m ? 'checked' : ''; ?> onchange="this.form.submit()"> <strong><?php echo $tit; ?></strong><br><small style="color:#4b5563"><?php echo $desc; ?></small></label>
                 <?php endforeach; ?>
                 </div>
-                <p style="font-size:13px;color:#4b5563">A plataforma descobre sozinha o limite grátis do Google (e sobe aos poucos até achar). Nenhuma tarefa pode usar mais da metade da cota do dia, para uma não travar as outras. Tira-dúvidas do aluno, Desafio e redação nunca esperam.</p>
+                <?php if ($cfg['plano'] === 'pago'): ?><p style="font-size:13px;color:#4b5563">No plano pago os modos acima não limitam por dia: quem controla o gasto é o limite mensal em R$.</p><?php else: ?>
+                <p style="font-size:13px;color:#4b5563">A plataforma descobre sozinha o limite grátis do Google (e sobe aos poucos até achar). Nenhuma tarefa pode usar mais da metade da cota do dia, para uma não travar as outras. Tira-dúvidas do aluno, Desafio e redação nunca esperam.</p><?php endif; ?>
                 <details style="margin:8px 0"><summary style="cursor:pointer">Ver detalhes</summary>
                     <p style="font-size:13px"><?php foreach (['texto', 'voz', 'busca'] as $c): ?><?php echo $nomesC[$c]; ?>: limite grátis <?php echo $aprend[$c]['medido'] ? 'medido' : 'em teste'; ?> ~<?php echo (int)$aprend[$c]['limite']; ?>/dia · <?php endforeach; ?></p>
                     <p style="font-size:13px"><?php foreach ($porTarefa as $pt): ?><?php echo admin_esc($nomesT[$pt['acao']] ?? $pt['acao']); ?> (<?php echo $pt['cota']; ?>): <?php echo (int)$pt['n']; ?> · <?php endforeach; ?></p>
