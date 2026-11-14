@@ -740,7 +740,7 @@ if ($acaoAulas !== '') {
                 ':modulo_id' => $moduloId,
             ]);
             $videoUrlTipo = trim((string)($stmtTipoAula->fetchColumn() ?: ''));
-            if ($videoUrlTipo !== '' && aulas_youtube_id($videoUrlTipo) !== '') {
+            if (false && $videoUrlTipo !== '' && aulas_youtube_id($videoUrlTipo) !== '') { // marcação manual liberada: o aluno pode ter estudado pelo PDF ou pela videoaula do Antigão
                 $stmtConcluida = $pdoAjax->prepare("
                     SELECT assistido
                     FROM aulas_progresso
@@ -4011,8 +4011,8 @@ if ($travaMeta) {
                         type="button"
                         class="action-btn action-btn--wide<?php echo $aulaAtualAssistida ? ' is-watched' : ''; ?>"
                         id="marcarAssistido"
-                        data-video-required="<?php echo $videoRastreavel ? '1' : '0'; ?>"
-                        <?php echo (!$aulaAtual || $erroPagina !== '' || ($videoRastreavel && !$aulaAtualAssistida)) ? 'disabled' : ''; ?>><?php if ($aulaAtualAssistida): ?><i data-lucide="check"></i>Assistido<?php elseif ($videoRastreavel): ?><i data-lucide="play-circle"></i>Assista ao vídeo até o fim<?php else: ?>Marcar como assistido<?php endif; ?></button>
+                        data-video-required="0"
+                        <?php echo (!$aulaAtual || $erroPagina !== '' || $aulaAtualAssistida) ? 'disabled' : ''; ?>><?php if ($aulaAtualAssistida): ?><i data-lucide="check"></i>Assistido<?php else: ?><i data-lucide="check-circle"></i>Marcar como assistido<?php endif; ?></button>
                     <a href="<?php echo esc($linkAnterior !== '' ? $linkAnterior : '#'); ?>" class="action-btn action-btn--nav<?php echo $linkAnterior === '' ? ' is-disabled' : ''; ?>" aria-label="Aula anterior"><i data-lucide="chevron-left"></i>Anterior</a>
                     <a href="<?php echo esc($linkProximo !== '' ? $linkProximo : '#'); ?>" class="action-btn action-btn--nav<?php echo $linkProximo === '' ? ' is-disabled' : ''; ?>" aria-label="Próxima aula"><i data-lucide="chevron-right"></i>Próximo</a>
                 </div>
