@@ -188,7 +188,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $lista[] = ['cargo' => (string)($x['cargo'] ?? '')] + pe_normalizar($x);
             }
             pe_salvar($pdo, $concursoId, $lista, true);
-            ed_ir($concursoId, 'escritas', '✅ Provas escritas conferidas. A plataforma já se adapta: menu, cronograma e correção seguem o edital.');
+            $nPe = pe_criar_assuntos($pdo, $concursoId);
+            [$saPe] = job_sincronizar_concurso($pdo, $concursoId);
+            ed_ir($concursoId, 'escritas', '✅ Provas escritas conferidas. ' . ($nPe ? "$nPe assunto(s) de Redação/Discursiva entraram no conteúdo: veja no passo Aulas (para gerar as aulas, use \"A IA procura aulas pelo assunto\" ou \"A IA gera o que falta\"). " : '') . ($saPe ? "$saPe aula(s) já aproveitada(s) da plataforma. " : '') . 'Menu, cronograma e correção já seguem o edital.');
         }
         if ($acao === 'salvar_info') {
             $j = json_decode((string)($_POST['info'] ?? ''), true);
@@ -713,6 +715,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <?php endforeach; ?>
                     <?php if ($cargos): ?><button class="admin-btn admin-btn-primary" type="submit">✓ Está certo — confirmar provas escritas</button><?php else: ?><p>Cadastre os cargos no passo 1.</p><?php endif; ?>
                     </form>
+                    <p class="admin-form-hint" style="margin-top:10px">Ao confirmar, as matérias <strong>Redação</strong> e <strong>Prova discursiva</strong> entram no conteúdo programático (só dos cargos que têm), com os assuntos do treino. Elas aparecem no passo Aulas, no Plano-Mestre e no cronograma do aluno.</p>
                     <p style="margin-top:12px"><a class="admin-btn admin-btn-light" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=prova">Próximo: última prova ▶</a></p>
                 </section>
 

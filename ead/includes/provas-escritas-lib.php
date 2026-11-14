@@ -86,8 +86,8 @@ if (!function_exists('pe_vazio')) {
                 break;
             }
         }
-        if ($achado === null && count($lista) === 1) {
-            $achado = $lista[0];
+        if ($achado === null && count($lista) === 1 && pe_chave((string)($lista[0]['cargo'] ?? '')) === '') {
+            $achado = $lista[0]; // a IA não separou por cargo: vale para todos
         }
         if ($achado !== null) {
             return pe_normalizar($achado);
@@ -202,5 +202,88 @@ if (!function_exists('pe_vazio')) {
             $partes[] = 'eliminatória';
         }
         return implode(' · ', $partes);
+    }
+}
+
+if (!function_exists('pe_criar_assuntos')) {
+    /**
+     * Quando o mentor confirma: cria no conteúdo programático as matérias "Redação" e "Prova discursiva"
+     * (só para os cargos que têm), com os assuntos do treino. Assim entram no passo Aulas, no plano e no cronograma.
+     * Não duplica: roda de novo sem problema. Retorna quantos assuntos novos.
+     */
+    function pe_criar_assuntos(PDO $pdo, int $concursoId): int
+    {
+        $st = $pdo->prepare('SELECT edital_info FROM concursos WHERE id = :id');
+        $st->execute([':id' => $concursoId]);
+        $info = json_decode((string)$st->fetchColumn(), true) ?: [];
+        $cg = $pdo->prepare('SELECT id, nome FROM concurso_cargos WHERE concurso_id = :c ORDER BY id');
+        $cg->execute([':c' => $concursoId]);
+        $cargos = $cg->fetchAll(PDO::FETCH_ASSOC);
+        $com = ['redacao' => [], 'discursiva' => []];
+        $tipoRed = '';
+        $matDisc = [];
+        foreach ($cargos as $c) {
+            $p = pe_do_cargo($info, (string)$c['nome']);
+            if (($p['redacao']['tem'] ?? null) === true) {
+                $com['redacao'][] = (int)$c['id'];
+                $tipoRed = $tipoRed ?: (string)$p['redacao']['tipo'];
+            }
+            if (($p['discursiva']['tem'] ?? null) === true) {
+                $com['discursiva'][] = (int)$c['id'];
+                $matDisc = array_merge($matDisc, (array)$p['discursiva']['materias']);
+            }
+        }
+        $blocos = [];
+        if ($com['redacao']) {
+            $blocos[] = ['Redação', $com['redacao'], [
+                'Como a banca corrige a redação: critérios do edital',
+                'Estrutura do texto ' . ($tipoRed !== '' ? mb_strtolower($tipoRed) : 'dissertativo-argumentativo'),
+                'Introdução: contextualização e tese',
+                'Desenvolvimento: argumentos e repertório',
+                'Conclusão e proposta de intervenção',
+                'Coesão e coerência na redação',
+                'Erros de gramática que mais tiram pontos na redação',
+                'Temas prováveis: segurança pública e cidadania',
+            ]];
+        }
+        if ($com['discursiva']) {
+            $assuntosD = ['Como responder questão discursiva: comando, espelho e critérios', 'Estrutura da resposta e controle de linhas'];
+            foreach (array_unique(array_filter($matDisc)) as $m) {
+                $assuntosD[] = 'Discursiva de ' . $m;
+            }
+            $blocos[] = ['Prova discursiva', $com['discursiva'], $assuntosD];
+        }
+        $ordem = (int)$pdo->query('SELECT COALESCE(MAX(ordem), 0) FROM edital_itens WHERE concurso_id = ' . $concursoId)->fetchColumn();
+        $n = 0;
+        foreach ($blocos as [$materia, $ids, $assuntos]) {
+            $sm = $pdo->prepare('SELECT id FROM admin_materias WHERE nome = :n LIMIT 1');
+            $sm->execute([':n' => $materia]);
+            $mid = (int)$sm->fetchColumn();
+            if (!$mid) {
+                $pdo->prepare("INSERT INTO admin_materias (nome, status, ordem) VALUES (:n, 'ativo', 0)")->execute([':n' => $materia]);
+                $mid = (int)$pdo->lastInsertId();
+            }
+            // todos os cargos têm = vale para todos (cargos vazio); senão, só os ids desses cargos
+            $cargosTxt = count($ids) === count($cargos) ? '' : implode(',', $ids);
+            foreach ($assuntos as $i => $a) {
+                $st = $pdo->prepare('SELECT id FROM admin_materia_topicos WHERE materia_id = :m AND titulo = :t LIMIT 1');
+                $st->execute([':m' => $mid, ':t' => $a]);
+                $tid = (int)$st->fetchColumn();
+                if (!$tid) {
+                    $pdo->prepare("INSERT INTO admin_materia_topicos (materia_id, titulo, status, ordem) VALUES (:m, :t, 'ativo', :o)")->execute([':m' => $mid, ':t' => mb_substr($a, 0, 180), ':o' => $i + 1]);
+                    $tid = (int)$pdo->lastInsertId();
+                }
+                $ex = $pdo->prepare('SELECT id FROM edital_itens WHERE concurso_id = :c AND topico_id = :t');
+                $ex->execute([':c' => $concursoId, ':t' => $tid]);
+                if ($ex->fetchColumn()) {
+                    $pdo->prepare('UPDATE edital_itens SET cargos = :g WHERE concurso_id = :c AND topico_id = :t')->execute([':g' => $cargosTxt, ':c' => $concursoId, ':t' => $tid]);
+                    continue;
+                }
+                $pdo->prepare('INSERT INTO edital_itens (concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:c, :m, :t, :g, :o)')
+                    ->execute([':c' => $concursoId, ':m' => $mid, ':t' => $tid, ':g' => $cargosTxt, ':o' => ++$ordem]);
+                $n++;
+            }
+        }
+        return $n;
     }
 }
