@@ -313,6 +313,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             job_criar($pdo, $concursoId, 'conferir_conteudo', 'A IA confere se faltou assunto do edital no cadastro', ['texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 120000)]);
             ed_ir($concursoId, 'edital', '🤖 A IA está conferindo o edital inteiro contra o cadastro (1 pedido de texto). Os assuntos que faltarem aparecem aqui para você aprovar.');
         }
+        if ($acao === 'mapa_previa') {
+            $tx = [];
+            foreach ((array)($_POST['anexo'] ?? []) as $cid => $t) { $tx[(int)$cid] = mb_substr((string)$t, 0, 120000); }
+            hack_rascunho_set($pdo, $concursoId, 'mapa_textos', $tx);
+            ed_ir($concursoId, 'edital', '🗺 Mapa montado (sem IA). Confira o resumo e clique em "Usar este mapa".');
+        }
+        if ($acao === 'mapa_usar') {
+            $rm = mapa_usar($pdo, $concursoId);
+            ed_ir($concursoId, 'edital', "✅ Mapa em uso: {$rm['assuntos']} assuntos na ordem do edital ({$rm['reaproveitados']} já existiam, {$rm['novos']} novos, {$rm['sairam']} saíram)." . ($rm['aulas_movidas'] ? " {$rm['aulas_movidas']} aula(s) passaram para o assunto certo." : '') . ($rm['aulas_aproveitadas'] ? " {$rm['aulas_aproveitadas']} aula(s) aproveitadas de outros cursos." : '') . ' Próximo: no passo Aulas, "A IA procura aulas pelo assunto".');
+        }
+        if ($acao === 'mapa_desfazer') {
+            $nd = mapa_desfazer($pdo, $concursoId);
+            ed_ir($concursoId, 'edital', "↩ Mapa anterior de volta ($nd assuntos).");
+        }
         if ($acao === 'ligar_cadastro_ia') {
             require_once __DIR__ . '/includes/ia-consumo-lib.php';
             $ctlE = ia_controle();
@@ -738,6 +752,39 @@ $menuBarInclude = admin_cursos_get_menubar();
                     </form>
                 </section>
                 <?php endif; ?>
+                <?php $mapaTx = (array)hack_rascunho_get($pdo, $concursoId, 'mapa_textos', []); $mapaPrev = $mapaTx ? mapa_previa($pdo, $concursoId, $mapaTx) : []; $mapaBk = (bool)hack_rascunho_get($pdo, $concursoId, 'mapa_backup', []); ?>
+                <section class="admin-panel" id="mapa" style="border:2px solid #fbb928">
+                    <div class="admin-panel-title"><h2>🗺 Mapa do edital</h2><small>sem IA · na ordem do edital</small></div>
+                    <p class="admin-form-hint">1) Cole o anexo do conteúdo programático de cada cargo, como está no edital. 2) Clique em "Montar o mapa". 3) Confira o resumo e clique em "Usar este mapa". Aulas, questões e progresso dos alunos continuam ligados.</p>
+                    <form method="post"><input type="hidden" name="acao" value="mapa_previa"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+                        <?php foreach ($cargos as $cgx): ?>
+                            <label style="display:grid;gap:4px"><strong><?php echo admin_esc((string)$cgx['nome']); ?></strong>
+                                <textarea name="anexo[<?php echo (int)$cgx['id']; ?>]" rows="6" placeholder="LÍNGUA PORTUGUESA: 1. … 2. …&#10;MATEMÁTICA: 1. …"><?php echo admin_esc((string)($mapaTx[(int)$cgx['id']] ?? '')); ?></textarea></label>
+                        <?php endforeach; ?>
+                        </div>
+                        <button class="admin-btn admin-btn-light" type="submit" style="margin-top:8px">🗺 Montar o mapa</button>
+                    </form>
+                    <?php if ($mapaPrev): ?>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:14px">
+                        <?php foreach ($mapaPrev as $pv): ?>
+                        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px">
+                            <strong style="font-size:16px"><?php echo admin_esc($pv['cargo']); ?>: <?php echo (int)$pv['n_materias']; ?> matérias · <?php echo (int)$pv['n_assuntos']; ?> assuntos</strong>
+                            <div style="font-size:12px;color:#6b7280;margin:2px 0 6px"><?php echo (int)$pv['n_reaproveita']; ?> já existem (com aulas e questões) · <?php echo (int)$pv['n_assuntos'] - (int)$pv['n_reaproveita']; ?> novos</div>
+                            <?php foreach ($pv['materias'] as $pm): ?>
+                                <details><summary style="cursor:pointer"><?php echo admin_esc($pm['materia']); ?> <small>(<?php echo count($pm['assuntos']); ?>)</small></summary>
+                                    <ol style="margin:4px 0 6px 18px;font-size:13px"><?php foreach ($pm['assuntos'] as $pa): ?><li><?php echo admin_esc($pa['assunto']); ?><?php echo $pa['reaproveita'] ? '' : ' <small style="background:#fef3c7;border-radius:6px;padding:0 5px">novo</small>'; ?></li><?php endforeach; ?></ol>
+                                </details>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <form method="post" style="margin-top:12px" onsubmit="return confirm('Usar este mapa? O conteúdo do concurso passa a ser exatamente estes anexos. Dá para desfazer.');"><input type="hidden" name="acao" value="mapa_usar"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                        <button class="admin-btn admin-btn-primary" type="submit">✅ Usar este mapa</button></form>
+                    <?php endif; ?>
+                    <?php if ($mapaBk): ?><form method="post" style="margin-top:8px"><input type="hidden" name="acao" value="mapa_desfazer"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit" onclick="return confirm('Voltar ao mapa anterior?');">↩ Desfazer (voltar ao mapa anterior)</button></form><?php endif; ?>
+                </section>
+                <details class="admin-panel" style="padding:14px 18px"><summary style="cursor:pointer;font-weight:700">⚙️ Avançado: conferir com IA, comparar, editar assunto por assunto</summary>
                 <?php $faltando = (array)hack_rascunho_get($pdo, $concursoId, 'faltando', []); ?>
                 <section class="admin-panel" id="faltou">
                     <div class="admin-panel-title"><h2>🔍 Faltou algum assunto?</h2><small><?php echo count($itens); ?> assuntos cadastrados</small></div>
@@ -824,9 +871,10 @@ $menuBarInclude = admin_cursos_get_menubar();
                         </form>
                         </details>
                     <?php endforeach; ?>
-                    <a class="admin-btn admin-btn-primary" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=escritas">Próximo: provas escritas ▶</a>
                 </section>
                 <?php endif; ?>
+                </details>
+                <a class="admin-btn admin-btn-primary" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=escritas">Próximo: provas escritas ▶</a>
 
             <?php elseif ($aba === 'escritas'): $infoE = json_decode((string)($concurso['edital_info'] ?? ''), true) ?: []; $confE = !empty($infoE['provas_escritas_conferido']); ?>
                 <section class="admin-panel">

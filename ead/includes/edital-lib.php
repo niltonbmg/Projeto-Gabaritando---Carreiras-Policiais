@@ -536,7 +536,7 @@ if (!function_exists('edital_parse_texto')) {
             $corpo = trim(preg_replace('~\s+~u', ' ', substr($texto, $ini, $fim - $ini)));
             $corpo = preg_replace('~\s*(CONHECIMENTOS (GERAIS|ESPEC[IÍ]FICOS))\s*$~u', '', $corpo);
             // Numeração: "3." = assunto; "1.1." = subtópico do assunto de cima. Não confunde "9.455" (lei) nem "5.0" (versão).
-            preg_match_all('~(?<![\d.\p{L}])(\d{1,2})(?:\.(\d{1,2}))?\s*\.(?!\d)\s*~u', $corpo, $nm, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
+            preg_match_all('~(?<![\d\p{L}])(?<!\d\.)(\d{1,2})(?:\.(\d{1,2}))?\s*\.(?!\d)\s*~u', $corpo, $nm, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
             $itens = [];
             foreach ($nm as $k => $tok) {
                 $ini2 = $tok[0][1] + strlen($tok[0][0]);
@@ -652,5 +652,46 @@ if (!function_exists('edital_ordenar_aulas')) {
                 $up->execute([':o' => ++$n, ':id' => (int)$it['id']]);
             }
         }
+    }
+}
+
+if (!function_exists('edital_mesmo_assunto')) {
+    /** Mesmo assunto? Rigoroso: "Pai › filho" só bate com o mesmo filho (e pai parecido); uma palavra em comum não basta. */
+    function edital_mesmo_assunto(string $a, string $b): bool
+    {
+        $chave = static fn(string $t): string => trim(edital_normalizar(preg_replace('~\(.*?\)~u', '', $t)));
+        $palavras = static function (string $t) use ($chave): array {
+            $t = preg_replace('~\b(dos|das|do|da|de|e|a|o|os|as|em|no|na|para|com|sobre)\b~', ' ', $chave($t));
+            return array_values(array_unique(array_filter(explode(' ', $t), static fn($p) => strlen($p) >= 4)));
+        };
+        $parecido = static function (string $x0, string $y0) use ($chave, $palavras): bool {
+            if ($chave($x0) === '' || $chave($y0) === '') {
+                return false;
+            }
+            if ($chave($x0) === $chave($y0)) {
+                return true;
+            }
+            $x = $palavras($x0);
+            $y = $palavras($y0);
+            $c = count(array_intersect($x, $y));
+            return $x && $y && $c >= 2 && $c / max(count($x), count($y)) >= 0.75;
+        };
+        $partes = static function (string $t): array {
+            $p = array_map('trim', explode('›', $t));
+            return count($p) > 1 ? [implode(' › ', array_slice($p, 0, -1)), end($p)] : ['', $t];
+        };
+        [$pa, $fa] = $partes($a);
+        [$pb, $fb] = $partes($b);
+        if ($pa !== '' || $pb !== '') {
+            return $parecido($fa, $fb) && ($pa === '' || $pb === '' || $parecido($pa, $pb));
+        }
+        return $parecido($a, $b);
+    }
+
+    /** O pai de "Pai › filho" ('' se não tiver). */
+    function edital_pai(string $t): string
+    {
+        $p = array_map('trim', explode('›', $t));
+        return count($p) > 1 ? implode(' › ', array_slice($p, 0, -1)) : '';
     }
 }

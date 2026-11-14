@@ -35,6 +35,7 @@ $adminMenuGrupos = [
         ['label' => 'LGPD e privacidade', 'href' => 'admin-lgpd.php', 'icon' => 'shield-check', 'pages' => ['admin-lgpd.php', 'admin-lgpd']],
     ]],
     ['titulo' => 'Bastidores da IA', 'itens' => [
+        ['label' => 'Biblioteca de PDFs', 'href' => 'admin-pdfs.php', 'icon' => 'file-text', 'pages' => ['admin-pdfs.php', 'admin-pdfs']],
         ['label' => 'Revisão de aulas', 'href' => 'admin-revisao-aulas.php', 'icon' => 'scan-search', 'pages' => ['admin-revisao-aulas.php', 'admin-revisao-aulas']],
         ['label' => 'Padrão da plataforma', 'href' => 'admin-padrao.php', 'icon' => 'list-checks', 'pages' => ['admin-padrao.php', 'admin-padrao']],
         ['label' => 'Confirmar classificação', 'href' => 'admin-classificacao.php', 'icon' => 'tags', 'pages' => ['admin-classificacao.php', 'admin-classificacao']],
