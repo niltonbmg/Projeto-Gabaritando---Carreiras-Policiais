@@ -291,7 +291,8 @@ if (is_file($barraSuperiorPath)) {
 
     <?php if ($temPlano && !empty($cron['estado']['plano']['implicito'])): ?><div class="mc-alerta" role="status">📋 <strong>Plano inicial:</strong> seu mentor vai ajustar em breve. O que você fizer agora continua valendo.</div><?php endif; ?>
     <?php if (!$temPlano): ?>
-        <div class="mc-vazio">Seu plano de estudos ainda está sendo preparado pelo mentor. Quando ele aprovar, você monta seu cronograma aqui.</div>
+        <?php require_once __DIR__ . '/includes/meta-lib.php'; [$semTxt, $semLink, $semBt] = meta_motivo_sem_plano($pdo ?? db(), $usuarioId, (int)($cursoId ?? 0)); ?>
+        <div class="mc-vazio"><?php echo mc_e($semTxt); ?><?php if ($semLink !== ''): ?><br><a class="mc-abrir" style="display:inline-block;margin-top:12px" href="<?php echo mc_e($semLink); ?>"><?php echo mc_e($semBt); ?></a><?php endif; ?></div>
     <?php elseif ($mostrarForm): ?>
         <script>document.addEventListener('DOMContentLoaded',function(){var ins=document.querySelectorAll('.mc-rotina input'),out=document.getElementById('mcTotal');function calc(){var t=0;ins.forEach(function(i){var v=parseFloat(String(i.value).replace(',','.'))||0;t+=v;i.closest('.mc-rotina-dia').classList.toggle('folga',v<=0);});out.textContent='Total: '+String(t).replace('.',',')+' horas por semana';}ins.forEach(function(i){i.addEventListener('input',calc);});calc();});</script>
         <form class="mc-form" method="post">

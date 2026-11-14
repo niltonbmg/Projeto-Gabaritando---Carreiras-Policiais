@@ -136,8 +136,9 @@ if (!function_exists('curso_modulos_parse_duracao')) {
 if (!function_exists('curso_modulos_formata_tempo_modulo')) {
     function curso_modulos_formata_tempo_modulo(float $horas, int $totalAulas): string
     {
-        if ($horas > 0) {
-            return curso_modulos_formata_horas($horas);
+        if ($horas > 0) { // mesmo formato do topo do curso: 8h16, 45min
+            require_once __DIR__ . '/includes/curso-duracao-lib.php';
+            return curso_duracao_formatar((int)round($horas * 3600));
         }
 
         if ($totalAulas > 0) {
@@ -945,8 +946,21 @@ try {
     $stmtModulos->execute([':curso_id' => $cursoId]);
     $modulosBanco = $stmtModulos->fetchAll();
 
+    // Tempo de PDF por módulo (para o card somar igual ao topo: vídeo + PDF).
+    $pdfPorModulo = [];
+    try {
+        require_once __DIR__ . '/includes/curso-duracao-lib.php';
+        $stPdf = $pdo->prepare('SELECT modulo_id, pdf_duracao FROM admin_curso_aulas WHERE curso_id = :c');
+        $stPdf->execute([':c' => $cursoId]);
+        foreach ($stPdf->fetchAll() as $lp) {
+            $pdfPorModulo[(int)$lp['modulo_id']] = ($pdfPorModulo[(int)$lp['modulo_id']] ?? 0) + curso_duracao_segundos((string)($lp['pdf_duracao'] ?? '')) / 3600;
+        }
+    } catch (Throwable $e) {
+        // sem a coluna pdf_duracao: só o vídeo
+    }
+
     foreach ($modulosBanco as $modulo) {
-        $duracaoTotal = 0.0;
+        $duracaoTotal = (float)($pdfPorModulo[(int)$modulo['id']] ?? 0);
         $duracoes = explode('||', (string)($modulo['duracoes'] ?? ''));
         foreach ($duracoes as $duracao) {
             $duracaoTotal += curso_modulos_parse_duracao($duracao);

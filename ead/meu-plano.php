@@ -146,7 +146,8 @@ if (is_file($barraSuperiorPath)) {
     <?php if ($aviso !== ''): ?><div class="mp-alerta" role="status"><?php echo mp_e($aviso); ?></div><?php endif; ?>
 
     <?php if (!$estado['plano']): ?>
-        <div class="mp-vazio">Seu plano de estudos ainda está sendo preparado pelo mentor. Assim que ele aprovar, as tarefas aparecem aqui.</div>
+        <?php [$semTxt, $semLink, $semBt] = meta_motivo_sem_plano($pdo ?? db(), $usuarioId, $cursoId); ?>
+        <div class="mp-vazio"><?php echo mp_e($semTxt); ?><?php if ($semLink !== ''): ?><br><a class="btn btn-ouro" style="display:inline-block;margin-top:12px" href="<?php echo mp_e($semLink); ?>"><?php echo mp_e($semBt); ?></a><?php endif; ?></div>
     <?php else: ?>
         <?php if (!empty($estado['plano']['implicito'])): ?><div class="mp-alerta" role="status">📋 <strong>Plano inicial:</strong> seu mentor vai ajustar em breve. Pode estudar normalmente: o que você fizer agora continua valendo no plano ajustado.</div><?php endif; ?>
         <section class="mp-geral" aria-label="Seu progresso">

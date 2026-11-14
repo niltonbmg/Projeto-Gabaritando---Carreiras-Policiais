@@ -421,3 +421,44 @@ if (!function_exists('meta_desempenho_materias')) {
         return $lista;
     }
 }
+
+if (!function_exists('meta_motivo_sem_plano')) {
+    /**
+     * Por que o aluno ainda não tem plano, e o que fazer (no lugar de "o mentor está preparando").
+     * Retorna [texto, link, rótulo do botão] — link vazio quando não há ação para o aluno.
+     */
+    function meta_motivo_sem_plano(PDO $pdo, int $usuarioId, int $cursoId): array
+    {
+        $temCurso = false;
+        try {
+            $st = $pdo->prepare("SELECT 1 FROM usuario_cursos WHERE usuario_id = :u AND curso_id > 0 AND status IN ('ativo','pago','aprovado','liberado','matriculado') LIMIT 1");
+            $st->execute([':u' => $usuarioId]);
+            $temCurso = (bool)$st->fetchColumn();
+        } catch (Throwable $e) {
+        }
+        $admin = false;
+        try {
+            $st = $pdo->prepare('SELECT tipo FROM usuarios WHERE id = :u');
+            $st->execute([':u' => $usuarioId]);
+            $admin = in_array(mb_strtolower(trim((string)$st->fetchColumn())), ['admin', 'administrador', 'adm', 'master', 'superadmin'], true);
+        } catch (Throwable $e) {
+        }
+        if ($admin && !$temCurso) {
+            return ['Você está como admin, sem matrícula de aluno. Para ver o plano de um cargo, use "Ver como aluno" no Cadastro do concurso.', 'admin-editais.php', 'Abrir o Cadastro do concurso'];
+        }
+        $temCargo = false;
+        try {
+            $st = $pdo->prepare('SELECT 1 FROM aluno_concurso WHERE usuario_id = :u AND cargo_id IS NOT NULL AND cargo_id > 0');
+            $st->execute([':u' => $usuarioId]);
+            $temCargo = (bool)$st->fetchColumn();
+        } catch (Throwable $e) {
+        }
+        if (!$temCargo && $cursoId <= 0) {
+            return ['Escolha o seu concurso e o seu cargo: a plataforma monta o seu plano na hora.', 'meu-concurso.php', 'Escolher meu cargo'];
+        }
+        if (!$temCurso) {
+            return ['Seu acesso ao curso ainda não foi liberado. Assim que a matrícula for confirmada, o seu plano aparece aqui.', 'suporte.php', 'Falar com o suporte'];
+        }
+        return ['Seu plano de estudos ainda está sendo preparado pelo mentor. Assim que ele aprovar, as tarefas aparecem aqui.', '', ''];
+    }
+}
