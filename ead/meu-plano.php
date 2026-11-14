@@ -211,12 +211,11 @@ if (is_file($barraSuperiorPath)) {
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div class="mp-etapa <?php echo $naTeoria ? 'travada' : 'ativa'; ?>">
+                    <div class="mp-etapa ativa">
                         <div class="n">2</div>
                         <div style="flex:1;min-width:0">
                             <h3>Questões comentadas</h3>
-                            <?php if ($naTeoria): ?>
-                                <p>Abre quando você concluir a teoria.</p>
+                            <?php if (false): ?>
                             <?php else: ?>
                                 <p><?php echo $feitas; ?> de <?php echo $minQ; ?> para liberar o próximo assunto · <?php echo (int)$ni['percentual']; ?>% de acerto</p>
                                 <div class="barra" style="margin-top:8px" role="progressbar" aria-valuemin="0" aria-valuemax="<?php echo $minQ; ?>" aria-valuenow="<?php echo $feitas; ?>"><i style="width:<?php echo (int)round($feitas * 100 / max(1, $minQ)); ?>%"></i></div>

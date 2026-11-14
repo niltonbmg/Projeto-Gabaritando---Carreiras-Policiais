@@ -125,7 +125,7 @@ function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ,
         $acao .= '<form method="post"><input type="hidden" name="acao" value="feito_teoria"><input type="hidden" name="curso_id" value="' . $cursoId . '"><input type="hidden" name="item_id" value="' . $id . '">'
             . '<button class="mc-check" type="submit" ' . ($liberado ? '' : 'disabled') . ' aria-label="Marcar teoria como feita: ' . $titulo . '" title="' . ($liberado ? 'Marcar como feito' : 'Faça os assuntos anteriores primeiro') . '"></button></form>';
     } elseif ($t['tipo'] === 'questoes') {
-        $liberado = $id === $atualId && !empty($item['teoria_ok']);
+        $liberado = $id === $atualId; // questões abertas mesmo sem a aula
         $feitas = min($minQ, (int)$item['nivel_info']['resolvidas']);
         $acao .= $liberado ? '<a class="mc-abrir" href="banco-questoes.php?topico_id=' . (int)$item['topico_id'] . '" data-timer="' . $titulo . '">Resolver</a>' : '';
         $acao .= '<span class="mc-contador" title="Marca sozinho ao chegar em ' . $minQ . ' questões">' . $feitas . '/' . $minQ . '</span>';

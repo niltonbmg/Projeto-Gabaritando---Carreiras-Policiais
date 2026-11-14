@@ -641,6 +641,11 @@ try {
             $params[':concurso_passado_id'] = $concursoPassadoId;
         }
 
+        $materiaFiltro = trim((string)($_GET['materia'] ?? ''));
+        if ($topicoId <= 0 && $materiaFiltro !== '') { // só a matéria: todas as questões dos assuntos dela
+            $where[] = 'q.materia_topico_id IN (SELECT t2.id FROM admin_materia_topicos t2 JOIN admin_materias m2 ON m2.id = t2.materia_id WHERE m2.nome = :materia_nome)';
+            $params[':materia_nome'] = $materiaFiltro;
+        }
         if ($topicoId > 0) {
             $where[] = 'q.materia_topico_id = :topico_id';
             $params[':topico_id'] = $topicoId;
@@ -798,6 +803,14 @@ function bq_status_label(?string $status): string
         .bq-title{min-height:80px;background:var(--yellow);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-size:2rem;font-weight:700;letter-spacing:.02em}
         .bq-body{padding:24px 30px 28px;background:#fbfbfb;min-height:520px}
         .filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 26px}
+.bqf-acoes{display:flex;gap:8px;flex-wrap:wrap;width:100%}
+        .bqf-bt{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;border:1px solid #e5c56a;background:#fff;color:#111;font:inherit;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none}
+        .bqf-bt:hover{background:#fff7df}
+        .bqf-chips{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+        .bqf-chips:empty{display:none}
+        .bqf-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#111;color:#fbb928;font-size:.85rem;text-decoration:none;border:0;cursor:pointer;font:inherit}
+        .bqf-chip.salvo{background:#fff7df;color:#111;border:1px solid #e5c56a}
+        .bqf-chip i{font-style:normal;opacity:.7}
         .filters-label{font-size:1.02rem;color:#050505;margin-right:2px;white-space:nowrap}
         .select-wrap{position:relative;min-width:150px}
         .select-wrap.is-wide{min-width:265px}
@@ -902,11 +915,20 @@ function bq_status_label(?string $status): string
                         </select>
                     </label>
 
+                    <?php $matSel = (string)($_GET['materia'] ?? ''); if ($topicoId > 0) { foreach ($topicos as $tp0) { if ((int)$tp0['id'] === $topicoId) { $matSel = (string)$tp0['materia_nome']; } } } ?>
+                    <label class="select-wrap is-mid">
+                        <select class="filter-select" name="materia" id="materiaSelect" aria-label="Matéria">
+                            <option value="">Matéria</option>
+                            <?php foreach (array_unique(array_column($topicos, 'materia_nome')) as $mn): ?>
+                                <option value="<?php echo bq_esc((string)$mn); ?>" <?php echo $matSel === (string)$mn ? 'selected' : ''; ?>><?php echo bq_esc((string)$mn); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
                     <label class="select-wrap is-wide">
-                        <select class="filter-select" name="topico_id" id="topicoSelect" aria-label="Tópicos">
-                            <option value="0">Tópicos</option>
+                        <select class="filter-select" name="topico_id" id="topicoSelect" aria-label="Assunto">
+                            <option value="0">Assunto</option>
                             <?php foreach ($topicos as $topico): ?>
-                                <option value="<?php echo (int)$topico['id']; ?>" <?php echo $topicoId === (int)$topico['id'] ? 'selected' : ''; ?>><?php echo bq_esc($topico['materia_nome'] . ' - ' . $topico['titulo']); ?></option>
+                                <option data-materia="<?php echo bq_esc((string)$topico['materia_nome']); ?>" value="<?php echo (int)$topico['id']; ?>" <?php echo $topicoId === (int)$topico['id'] ? 'selected' : ''; ?>><?php echo bq_esc($topico['titulo']); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
@@ -942,13 +964,26 @@ function bq_status_label(?string $status): string
                     </label>
                     <input type="hidden" name="pagina" value="1">
                     <input type="hidden" name="por_pagina" value="<?php echo (int)$perPage; ?>">
+                    <div class="bqf-acoes">
+                        <a class="bqf-bt" href="banco-questoes.php">✕ Limpar filtros</a>
+                        <button type="button" class="bqf-bt" id="bqfSalvar">⭐ Salvar estes filtros</button>
+                    </div>
+                    <div class="bqf-chips" id="bqfAtivos"></div>
+                    <div class="bqf-chips" id="bqfSalvos"></div>
                 </form>
 
                 <?php if (!$questoes && $erroPagina === ''): ?>
                     <div class="empty-box">
                         <div>
-                            <h2>Nenhuma questão encontrada</h2>
-                            <p>Cadastre questões no painel administrativo, vincule ao acesso correto ou altere os filtros selecionados.</p>
+                            <?php if ($topicoId > 0 && $statusFiltro === '' && !$bancaId && !$ano && !$concursoPassadoId): ?>
+                            <h2>🤖 Questões deste assunto em preparação</h2>
+                            <p>O Antigão está separando questões de provas reais e criando as que faltarem. Elas aparecem aqui em breve.</p>
+                            <p><a class="bqf-bt" href="banco-questoes.php?materia=<?php echo urlencode($matSel); ?>">Ver as questões de <?php echo bq_esc($matSel); ?></a></p>
+                            <script>fetch('banco-questoes.php?ciclo_json=1&topico_id=<?php echo (int)$topicoId; ?>', {credentials: 'same-origin'}).catch(function () {});</script>
+                            <?php else: ?>
+                            <h2>Nenhuma questão com esses filtros</h2>
+                            <p>Tire algum filtro ou <a href="banco-questoes.php" style="color:#b7791f;font-weight:700">limpe todos</a>.</p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -1076,10 +1111,52 @@ function bq_status_label(?string $status): string
             const form = document.getElementById('formFiltros');
 
             if (form) {
+                const mat = document.getElementById('materiaSelect'), top = document.getElementById('topicoSelect');
+                // Assunto mostra só os da matéria escolhida
+                function filtrarAssuntos(){
+                    if (!mat || !top) return;
+                    Array.prototype.forEach.call(top.options, function(o){ if (o.value !== '0') o.hidden = !!mat.value && o.getAttribute('data-materia') !== mat.value; });
+                }
+                filtrarAssuntos();
                 form.querySelectorAll('select').forEach(function(select){
                     select.addEventListener('change', function(){
+                        if (select === mat && top) top.value = '0';
                         form.submit();
                     });
+                });
+                // Filtros ativos como etiquetas com ✕ (tira só aquele)
+                const ativos = document.getElementById('bqfAtivos');
+                form.querySelectorAll('select').forEach(function(sel){
+                    const v = sel.value; if (!v || v === '0') return;
+                    if (sel === mat && top && top.value !== '0') return;
+                    const a = document.createElement('a'); a.className = 'bqf-chip';
+                    const p = new URLSearchParams(location.search); p.delete(sel.name); p.delete('pagina'); if (sel === mat) p.delete('topico_id');
+                    a.href = 'banco-questoes.php?' + p.toString();
+                    a.innerHTML = (sel.getAttribute('aria-label') + ': ' + sel.options[sel.selectedIndex].text).replace(/</g, '&lt;') + ' <i>✕</i>';
+                    ativos.appendChild(a);
+                });
+                // Filtros salvos (neste navegador)
+                const CH = 'bq-filtros-salvos', salvos = document.getElementById('bqfSalvos');
+                function ler(){ try { return JSON.parse(localStorage.getItem(CH) || '[]'); } catch (e) { return []; } }
+                function gravar(l){ try { localStorage.setItem(CH, JSON.stringify(l)); } catch (e) {} }
+                function desenhar(){
+                    salvos.innerHTML = '';
+                    ler().forEach(function(f, k){
+                        const a = document.createElement('a'); a.className = 'bqf-chip salvo'; a.href = 'banco-questoes.php?' + f.q;
+                        a.textContent = '⭐ ' + f.nome + ' ';
+                        const x = document.createElement('i'); x.textContent = '✕'; x.title = 'Apagar';
+                        x.addEventListener('click', function(ev){ ev.preventDefault(); const l = ler(); l.splice(k, 1); gravar(l); desenhar(); });
+                        a.appendChild(x); salvos.appendChild(a);
+                    });
+                }
+                desenhar();
+                document.getElementById('bqfSalvar').addEventListener('click', function(){
+                    const p = new URLSearchParams(new FormData(form)); p.delete('pagina');
+                    Array.from(p.keys()).forEach(function(k){ if (p.get(k) === '' || p.get(k) === '0') p.delete(k); });
+                    if (!p.toString()) { alert('Escolha algum filtro antes de salvar.'); return; }
+                    const sugestao = (top && top.value !== '0') ? top.options[top.selectedIndex].text.slice(0, 40) : (mat && mat.value ? mat.value : 'Meu filtro');
+                    const nome = prompt('Nome para este filtro:', sugestao); if (!nome) return;
+                    const l = ler().filter(function(f){ return f.q !== p.toString(); }); l.unshift({nome: nome.slice(0, 40), q: p.toString()}); gravar(l.slice(0, 8)); desenhar();
                 });
             }
 

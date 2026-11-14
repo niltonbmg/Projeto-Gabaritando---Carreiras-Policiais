@@ -5,7 +5,7 @@
 // Regras (editáveis em meta_config):
 //   - O aluno segue os assuntos do Plano-Mestre na ordem.
 //   - Em cada assunto: 1) Teoria mínima  2) Questões comentadas.
-//   - O próximo assunto só abre quando o atual tem a teoria concluída e
+//   - O próximo assunto só abre quando o atual tem o mínimo de questões resolvidas (a teoria é recomendada) e
 //     pelo menos `min_questoes` (padrão 5) questões resolvidas.
 //   - Nível do assunto pelas questões resolvidas e % de acerto:
 //       1 Iniciante 5 · 2 Praticante 15 (60%) · 3 Avançado 30 (70%) · 4 Domínio 50 (80%).
@@ -262,7 +262,8 @@ if (!function_exists('meta_estado_aluno')) {
             $liberadoAdmin = !empty($l['liberado_por_admin_em']);
             // Assunto com menos questões no banco do que o mínimo: exige as que existem (ninguém fica preso).
             $minItem = min($minQ, max(0, (int)($l['disponiveis'] ?? $minQ)));
-            $cumprido = $liberadoAdmin || ($teoriaOk && (int)$l['resolvidas'] >= $minItem);
+            // Quem libera o próximo assunto são as questões; a aula é recomendada, não obrigatória.
+            $cumprido = $liberadoAdmin || (int)$l['resolvidas'] >= $minItem;
 
             if ($liberadoAdmin) {
                 // Exceção do mentor: o assunto fica aberto e conta como cumprido.

@@ -1230,9 +1230,9 @@ if ($travaMeta) {
     <h1 id="tvT"><?php echo $eT($travaMeta['assunto']); ?></h1>
     <?php if ($f): ?>
         <p><strong>Antigão:</strong> calma, combatente! Esta aula abre quando você fechar o assunto anterior da matéria: <strong><?php echo $eT($f['titulo']); ?></strong>.</p>
-        <p><?php echo $teoriaT ? '✅ Teoria concluída' : '📘 Falta a teoria'; ?> · ✅ <?php echo min($feitasT, $travaMeta['min']); ?> de <?php echo $travaMeta['min']; ?> questões</p>
+        <p>✅ <?php echo min($feitasT, $travaMeta['min']); ?> de <?php echo $travaMeta['min']; ?> questões resolvidas para liberar</p>
         <div class="tv-bar" role="progressbar" aria-valuenow="<?php echo min($feitasT, $travaMeta['min']); ?>" aria-valuemin="0" aria-valuemax="<?php echo $travaMeta['min']; ?>"><i style="width:<?php echo (int)round(min($feitasT, $travaMeta['min']) * 100 / max(1, $travaMeta['min'])); ?>%"></i></div>
-        <div><a class="tv-bt" href="<?php echo $eT($teoriaT ? $linkQT : $linkAulaT); ?>">▶ <?php echo $teoriaT ? 'Resolver as questões que faltam' : 'Ir para a aula de ' . $eT($f['titulo']); ?></a></div>
+        <div><a class="tv-bt" href="<?php echo $eT($linkQT); ?>">▶ Resolver as questões que faltam</a><?php if (!$teoriaT): ?> <a class="tv-bt l" href="<?php echo $eT($linkAulaT); ?>">Ver a aula antes (recomendado)</a><?php endif; ?></div>
     <?php else: ?>
         <p>Esta aula abre quando você cumprir o assunto anterior da matéria (teoria + <?php echo $travaMeta['min']; ?> questões).</p>
         <div><a class="tv-bt" href="meu-plano.php">▶ Ver minha missão</a></div>
@@ -6531,8 +6531,8 @@ if ($travaMeta) {
         if (ev.target.closest('[data-cq-fechar]')) { box.hidden = true; }
     });
     document.addEventListener('click', function (ev) { if (ev.target.closest('[data-cq-abrir]')) { abrir(); } });
-    // Aula já assistida e questões pendentes: oferece resolver aqui
-    if (c.assistida && (c.res || 0) < (c.min || 5) && c.disp !== 0) {
+    // Questões pendentes: oferece resolver aqui, mesmo sem ter assistido (as questões é que liberam o próximo assunto)
+    if ((c.res || 0) < (c.min || 5) && c.disp !== 0) {
         var acts = document.querySelector('.aula-actions');
         if (acts && !document.getElementById('cicloProximo')) {
             var b = document.createElement('div'); b.id = 'cicloProximo'; b.className = 'ciclo-prox';
