@@ -185,24 +185,20 @@ if (!function_exists('aulas_dup_bootstrap')) {
         $pdo->prepare('UPDATE admin_curso_aulas SET curso_id = :c, modulo_id = :m, atualizado_em = NOW() WHERE id = :a')->execute([':c' => $arqCurso, ':m' => $arqMod, ':a' => $saiId]);
     }
 
-    /** Simular (só lista) ou aplicar. $marcadas: ids das aulas que saem (vazio = todas da lista). */
-    function aulas_dup_executar(PDO $pdo, array $cursos, bool $aplicar, array $marcadas = []): array
+    /** Simular (só lista) ou aplicar. */
+    function aulas_dup_executar(PDO $pdo, array $cursos, bool $aplicar): array
     {
         $grupos = aulas_dup_grupos($pdo, $cursos);
         $res = ['grupos' => $grupos, 'unidas' => 0];
         if (!$aplicar) {
             return $res;
         }
-        $marcadas = array_flip(array_map('intval', $marcadas));
         aulas_dup_bootstrap($pdo); // fora da transação (CREATE TABLE fecha transação no MySQL)
         aulas_dup_arquivo($pdo);
         $pdo->beginTransaction();
         try {
             foreach ($grupos as $g) {
                 foreach ($g['saem'] as $s) {
-                    if ($marcadas && !isset($marcadas[(int)$s['id']])) {
-                        continue;
-                    }
                     aulas_dup_unir($pdo, (int)$s['id'], (int)$g['fica']['id']);
                     $res['unidas']++;
                 }
