@@ -670,13 +670,35 @@ if (!function_exists('job_bootstrap')) {
         foreach (edital_itens($pdo, $concursoId) as $it) {
             $cad[edital_normalizar((string)$it['materia'])][] = $it;
         }
-        $mesmo = static function (string $a, string $b) use ($chave): bool {
-            $x = $chave($a);
-            $y = $chave($b);
-            if ($x === '' || $y === '') {
+        // Comparação rigorosa: "Pai › filho" só bate com o MESMO filho (e pai parecido); palavra solta em comum não basta.
+        $palavras = static function (string $t) use ($chave): array {
+            $t = preg_replace('~\b(dos|das|do|da|de|e|a|o|os|as|em|no|na|para|com|sobre)\b~', ' ', $chave($t));
+            return array_values(array_unique(array_filter(explode(' ', $t), static fn($p) => strlen($p) >= 4)));
+        };
+        $parecido = static function (string $a, string $b) use ($chave, $palavras): bool {
+            if ($chave($a) === '' || $chave($b) === '') {
                 return false;
             }
-            return $x === $y || (mb_strlen($x) >= 12 && str_contains($y, $x)) || (mb_strlen($y) >= 12 && str_contains($x, $y)) || padrao_parecido($a, $b);
+            if ($chave($a) === $chave($b)) {
+                return true;
+            }
+            $x = $palavras($a);
+            $y = $palavras($b);
+            $c = count(array_intersect($x, $y));
+            return $x && $y && $c >= 2 && $c / max(count($x), count($y)) >= 0.75;
+        };
+        $partes = static function (string $t): array {
+            $p = array_map('trim', explode('›', $t));
+            return count($p) > 1 ? [implode(' › ', array_slice($p, 0, -1)), end($p)] : ['', $t];
+        };
+        $mesmo = static function (string $a, string $b) use ($parecido, $partes): bool {
+            [$pa, $fa] = $partes($a);
+            [$pb, $fb] = $partes($b);
+            if ($pa !== '' || $pb !== '') {
+                // subtópico: o filho tem de bater; se os dois têm pai, o pai também
+                return $parecido($fa, $fb) && ($pa === '' || $pb === '' || $parecido($pa, $pb));
+            }
+            return $parecido($a, $b);
         };
         $lista = [];
         $total = 0;
@@ -686,9 +708,7 @@ if (!function_exists('job_bootstrap')) {
                 $total++;
                 $achou = null;
                 foreach ($doCad as $it) {
-                    // subtópico "Pai › filho": compara com o filho e com o texto inteiro
-                    $filho = str_contains($a, ' › ') ? trim(substr($a, strrpos($a, '›') + 3)) : $a;
-                    if ($mesmo($a, (string)$it['assunto']) || ($filho !== $a && $mesmo($filho, (string)$it['assunto']))) {
+                    if ($mesmo($a, (string)$it['assunto'])) {
                         $achou = $it;
                         break;
                     }
