@@ -702,11 +702,20 @@ if (!function_exists('job_bootstrap')) {
         };
         $lista = [];
         $total = 0;
+        $ordemEdital = []; // ordem do edital colado: id do assunto existente ou "n:matéria|assunto" do novo
         foreach ($lido as $m) {
             $doCad = $cad[edital_normalizar($m['materia'])] ?? [];
             foreach ($m['assuntos'] as $a) {
                 $total++;
                 $achou = null;
+                [$paiA] = $partes($a);
+                if ($paiA !== '') { // o item "pai" cadastrado sozinho (ex.: "Constituição do Estado da Bahia") fica logo antes dos subtópicos dele
+                    foreach ($doCad as $it) {
+                        if (!str_contains((string)$it['assunto'], '›') && $parecido($paiA, (string)$it['assunto']) && !in_array((int)$it['id'], $ordemEdital, true)) {
+                            $ordemEdital[] = (int)$it['id'];
+                        }
+                    }
+                }
                 foreach ($doCad as $it) {
                     if ($mesmo($a, (string)$it['assunto'])) {
                         $achou = $it;
@@ -715,8 +724,10 @@ if (!function_exists('job_bootstrap')) {
                 }
                 if ($achou === null) {
                     $lista[] = ['materia' => $m['materia'], 'cargos' => [$cargo['nome']], 'assunto' => $a, 'tipo' => 'novo'];
+                    $ordemEdital[] = 'n:' . edital_normalizar($m['materia']) . '|' . edital_normalizar($a);
                     continue;
                 }
+                $ordemEdital[] = (int)$achou['id'];
                 $ids = array_filter(array_map('intval', explode(',', (string)$achou['cargos'])));
                 if ($ids && !in_array((int)$cargo['id'], $ids, true)) {
                     $lista[] = ['materia' => (string)$achou['materia'], 'cargos' => [$cargo['nome']], 'assunto' => (string)$achou['assunto'], 'tipo' => 'ligar', 'item_id' => (int)$achou['id'], 'cargo_id' => (int)$cargo['id']];
@@ -725,7 +736,30 @@ if (!function_exists('job_bootstrap')) {
         }
         $antes = array_values(array_filter((array)hack_rascunho_get($pdo, $concursoId, 'faltando', []), static fn($x) => !in_array($cargo['nome'], (array)($x['cargos'] ?? []), true)));
         hack_rascunho_set($pdo, $concursoId, 'faltando', array_merge($antes, $lista) ?: null);
+        hack_rascunho_set($pdo, $concursoId, 'ordem_edital', $ordemEdital);
+        job_aplicar_ordem_edital($pdo, $concursoId); // o que já existe já fica na ordem do edital
         return ['lidos' => $total, 'materias' => count($lido), 'novos' => count(array_filter($lista, static fn($x) => $x['tipo'] === 'novo')), 'ligar' => count(array_filter($lista, static fn($x) => $x['tipo'] === 'ligar'))];
+    }
+
+    /** Aplica a ordem do último edital colado aos assuntos e às aulas dos cursos do concurso. */
+    function job_aplicar_ordem_edital(PDO $pdo, int $concursoId): void
+    {
+        $ord = (array)hack_rascunho_get($pdo, $concursoId, 'ordem_edital', []);
+        if ($ord) {
+            $mapa = [];
+            foreach (edital_itens($pdo, $concursoId) as $it) {
+                $mapa['n:' . edital_normalizar((string)$it['materia']) . '|' . edital_normalizar((string)$it['assunto'])] = (int)$it['id'];
+            }
+            $ids = [];
+            foreach ($ord as $o) {
+                $id = is_int($o) ? $o : ($mapa[(string)$o] ?? 0);
+                if ($id) {
+                    $ids[] = $id;
+                }
+            }
+            edital_ordenar_itens($pdo, $concursoId, $ids);
+        }
+        edital_ordenar_aulas($pdo, $concursoId);
     }
 
     function job_parecidas_ia(PDO $pdo, int $concursoId): string
@@ -839,6 +873,7 @@ if (!function_exists('job_bootstrap')) {
             $tot[0] += $a;
             $tot[1] += $q;
         }
+        edital_ordenar_aulas($pdo, $concursoId); // aulas sempre na ordem do edital
         return $tot;
     }
 }

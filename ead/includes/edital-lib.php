@@ -575,3 +575,82 @@ if (!function_exists('edital_parse_texto')) {
         return $saida;
     }
 }
+
+if (!function_exists('edital_ordenar_aulas')) {
+    /**
+     * As aulas de cada módulo dos cursos do concurso seguem a ORDEM DO EDITAL (edital_itens.ordem do assunto).
+     * Aulas sem assunto do edital ficam depois, na ordem em que estavam. Partes do mesmo assunto mantêm a ordem entre si.
+     */
+    function edital_ordenar_aulas(PDO $pdo, int $concursoId): int
+    {
+        $pos = [];
+        $st = $pdo->prepare('SELECT topico_id, ordem FROM edital_itens WHERE concurso_id = :c');
+        $st->execute([':c' => $concursoId]);
+        foreach ($st->fetchAll(PDO::FETCH_KEY_PAIR) as $t => $o) {
+            $pos[(int)$t] = (int)$o;
+        }
+        $cg = $pdo->prepare('SELECT DISTINCT curso_id FROM concurso_cargos WHERE concurso_id = :c AND curso_id IS NOT NULL');
+        $cg->execute([':c' => $concursoId]);
+        $up = $pdo->prepare('UPDATE admin_curso_aulas SET ordem = :o WHERE id = :id');
+        $n = 0;
+        foreach ($cg->fetchAll(PDO::FETCH_COLUMN) as $curso) {
+            $au = $pdo->prepare('SELECT id, modulo_id, topico_id, ordem FROM admin_curso_aulas WHERE curso_id = :c ORDER BY modulo_id, ordem, id');
+            $au->execute([':c' => (int)$curso]);
+            $porMod = [];
+            foreach ($au->fetchAll(PDO::FETCH_ASSOC) as $k => $a) {
+                $a['_k'] = $k;
+                $porMod[(int)$a['modulo_id']][] = $a;
+            }
+            foreach ($porMod as $lista) {
+                usort($lista, static function ($x, $y) use ($pos) {
+                    $px = $pos[(int)$x['topico_id']] ?? PHP_INT_MAX;
+                    $py = $pos[(int)$y['topico_id']] ?? PHP_INT_MAX;
+                    return $px <=> $py ?: $x['_k'] <=> $y['_k'];
+                });
+                foreach ($lista as $i => $a) {
+                    if ((int)$a['ordem'] !== $i + 1) {
+                        $up->execute([':o' => $i + 1, ':id' => (int)$a['id']]);
+                        $n++;
+                    }
+                }
+            }
+        }
+        return $n;
+    }
+
+    /** Reordena os assuntos de cada matéria pela ordem em que aparecem no edital (lista de ids na ordem). */
+    function edital_ordenar_itens(PDO $pdo, int $concursoId, array $idsNaOrdem): void
+    {
+        $idsNaOrdem = array_values(array_unique(array_map('intval', $idsNaOrdem)));
+        if (!$idsNaOrdem) {
+            return;
+        }
+        $st = $pdo->prepare('SELECT id, materia_id, ordem FROM edital_itens WHERE concurso_id = :c ORDER BY ordem, id');
+        $st->execute([':c' => $concursoId]);
+        $porMat = [];
+        foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $it) {
+            $porMat[(int)$it['materia_id']][] = $it;
+        }
+        $rank = array_flip($idsNaOrdem);
+        $up = $pdo->prepare('UPDATE edital_itens SET ordem = :o WHERE id = :id');
+        // matérias ficam onde estavam (pela primeira posição); dentro de cada uma, a ordem do edital; numeração 1..N sem repetir
+        // matéria que está no texto colado segue a posição do edital; as outras ficam depois, na ordem que tinham
+        $chaveMat = static function (array $l) use ($rank): array {
+            $r = array_filter(array_map(static fn($x) => $rank[(int)$x['id']] ?? null, $l), static fn($v) => $v !== null);
+            return $r ? [0, min($r)] : [1, min(array_column($l, 'ordem'))];
+        };
+        $matsNoTexto = count(array_filter($porMat, static fn($l) => $chaveMat($l)[0] === 0));
+        if ($matsNoTexto >= 3) { // anexo inteiro colado: as matérias também seguem o edital
+            uasort($porMat, static fn($a, $b) => $chaveMat($a) <=> $chaveMat($b));
+        } else { // uma ou duas matérias: só reordena dentro delas, as matérias ficam onde estavam
+            uasort($porMat, static fn($a, $b) => min(array_column($a, 'ordem')) <=> min(array_column($b, 'ordem')));
+        }
+        $n = 0;
+        foreach ($porMat as $lista) {
+            usort($lista, static fn($a, $b) => ($rank[(int)$a['id']] ?? PHP_INT_MAX) <=> ($rank[(int)$b['id']] ?? PHP_INT_MAX) ?: (int)$a['ordem'] <=> (int)$b['ordem']);
+            foreach ($lista as $it) {
+                $up->execute([':o' => ++$n, ':id' => (int)$it['id']]);
+            }
+        }
+    }
+}

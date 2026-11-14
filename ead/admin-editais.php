@@ -345,6 +345,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             [$saE] = job_sincronizar_concurso($pdo, $concursoId);
+            edital_ordenar_aulas($pdo, $concursoId);
             ed_ir($concursoId, 'edital', "💾 Salvo: $alt assunto(s) com cargos ajustados, $ren renomeado(s), $rem removido(s)" . ($saE ? " · $saE aula(s) aproveitada(s) da plataforma" : '') . '. O passo Aulas já mostra assim.');
         }
         if ($acao === 'comparar_cargo') {
@@ -382,6 +383,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             $nF = edital_acrescentar($pdo, $concursoId, array_values($porMat));
+            job_aplicar_ordem_edital($pdo, $concursoId); // entra na posição do edital, não no fim
             hack_rascunho_set($pdo, $concursoId, 'faltando', $falt ? $falt : null);
             [$saF] = job_sincronizar_concurso($pdo, $concursoId);
             ed_ir($concursoId, 'edital', "✅ $nF assunto(s) acrescentado(s) e $nLig ligado(s) ao cargo" . ($saF ? " · $saF aula(s) já aproveitada(s) da plataforma" : '') . '. Eles aparecem no passo Aulas.');
@@ -409,6 +411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $n += job_clonar_aula($pdo, $a, $itemId, $cursoDest, $concursoId) ? 1 : 0;
                 }
             }
+            edital_ordenar_aulas($pdo, $concursoId);
             ed_ir($concursoId, 'aulas', "✅ $n aula(s) aproveitada(s) de outros cursos, com vídeo, PDF, teoria e videoaula prontos (sem gastar IA).");
         }
         if ($acao === 'sincronizar') {
@@ -434,6 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($acao === 'gerar_faltantes') {
             job_sincronizar_concurso($pdo, $concursoId); // aproveita o que já existe antes de gerar
             $n = hack_gerar_faltantes($pdo, $concursoId);
+            edital_ordenar_aulas($pdo, $concursoId);
             ed_ir($concursoId, 'aulas', $n . ' aula(s) do Antigão na fila: a IA escreve a teoria mínima e grava a videoaula. Quando a aula do professor chegar, é só cadastrar por cima.');
         }
 
