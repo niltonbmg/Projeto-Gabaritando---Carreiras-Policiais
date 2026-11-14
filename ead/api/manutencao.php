@@ -238,6 +238,11 @@ try {
             }
             man_ok(['controle' => ia_controle(), 'uso_hoje' => podcast_uso_resumo()]);
             // no break
+        case 'parecidas': // aulas parecidas de outros cursos para assuntos sem aula (só leitura, sem IA)
+            require_once __DIR__ . '/../includes/edital-jobs-lib.php';
+            $lp = job_aulas_parecidas($pdo, (int)($entrada['concurso_id'] ?? 0));
+            man_ok(['total' => count($lp), 'itens' => array_slice($lp, 0, 300)]);
+            // no break
         case 'titulos_edital': // GET = prévia; POST aplica (ids opcionais)
             $todos = padrao_titulos_edital($pdo, (int)($entrada['curso_id'] ?? 0));
             $lista = array_values(array_filter($todos, static fn($t) => $t['confere'])); // os divergentes só com ids explícitos

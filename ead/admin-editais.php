@@ -306,6 +306,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $n = job_aproveitar_entre_cargos($pdo, $concursoId, (int)($_POST['cargo_id'] ?? 0));
             ed_ir($concursoId, 'aulas', $n . ' aula(s) aproveitadas de outro cargo nos assuntos em comum (com vídeo, PDF, apostila, videoaula e podcast). Para o que é só deste cargo: "1. Procurar vídeos já gravados" e depois "3. A IA gera o que falta".');
         }
+        if ($acao === 'parecidas_ia') {
+            job_criar($pdo, $concursoId, 'parecidas_ia', 'A IA procura, pelo assunto, aulas prontas de outros cursos');
+            ed_ir($concursoId, 'aulas', '🤖 A IA está procurando, pelo assunto, aulas prontas para os assuntos sem aula (1 pedido por cargo). O resultado aparece aqui para você confirmar.');
+        }
+        if ($acao === 'aceitar_parecidas') {
+            $n = 0;
+            $stA = $pdo->prepare('SELECT * FROM admin_curso_aulas WHERE id = :id');
+            $escolhidas = ($_POST['par_um'] ?? '') !== '' ? [(string)$_POST['par_um']] : (($_POST['tudo'] ?? '') === '1' ? (array)($_POST['par_todas'] ?? []) : (array)($_POST['par'] ?? []));
+            foreach ($escolhidas as $v) {
+                [$aulaId, $itemId, $cursoDest] = array_map('intval', explode(':', (string)$v) + [0, 0, 0]);
+                $stA->execute([':id' => $aulaId]);
+                if (($a = $stA->fetch()) && $itemId && $cursoDest) {
+                    $n += job_clonar_aula($pdo, $a, $itemId, $cursoDest, $concursoId) ? 1 : 0;
+                }
+            }
+            ed_ir($concursoId, 'aulas', "✅ $n aula(s) aproveitada(s) de outros cursos, com vídeo, PDF, teoria e videoaula prontos (sem gastar IA).");
+        }
         if ($acao === 'sincronizar') {
             [$sa, $sq] = job_sincronizar_concurso($pdo, $concursoId);
             ed_ir($concursoId, (string)($_POST['volta'] ?? 'aulas'), "🔄 Sincronizado com a plataforma: $sa aula(s) e $sq questão(ões) aproveitadas dos mesmos assuntos.");
@@ -740,6 +757,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
                         <form method="post" onsubmit="return confirm('Refazer as videoaulas já prontas no formato novo (10 a 15 min, ritmo calmo)? As aulas do Antigão também têm a teoria refeita e podem virar mais de uma aula. Gasta cota de voz de novo.');"><input type="hidden" name="acao" value="refazer_formato"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit">🔁 Refazer videoaulas no formato novo</button></form>
                         <form method="post"><input type="hidden" name="acao" value="sincronizar"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit" title="Copia aulas e libera questões dos mesmos assuntos que já existem em qualquer curso">🔄 Sincronizar com a plataforma</button></form>
+                        <form method="post"><input type="hidden" name="acao" value="parecidas_ia"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit" title="A IA lê os assuntos sem aula e procura, pelo conteúdo, aulas prontas em todos os cursos (1 pedido de texto por cargo)">🤖 A IA procura aulas pelo assunto</button></form>
                         <form method="post"><input type="hidden" name="acao" value="sugerir_existentes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light" type="submit"><i data-lucide="search"></i>1. Procurar vídeos já gravados</button></form>
                         <form method="post" onsubmit="return confirm('A IA vai preparar a aula (teoria mínima + videoaula do Antigão) de todos os assuntos sem aula. Continuar?');"><input type="hidden" name="acao" value="gerar_faltantes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>3. A IA gera o que falta</button></form>
                         <a class="admin-btn admin-btn-light" style="margin-left:auto" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=questoes">Próximo: questões ▶</a>
@@ -753,6 +771,28 @@ $menuBarInclude = admin_cursos_get_menubar();
                                 <form method="post" style="margin:4px 0 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff8e6;border:1px solid #fbb928;border-radius:10px;padding:10px 12px"><input type="hidden" name="acao" value="aproveitar_cargos"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><input type="hidden" name="cargo_id" value="<?php echo (int)$an['cargo']['id']; ?>">
                                     <span>💡 <strong><?php echo $aprov; ?> assunto(s)</strong> deste cargo já têm aula em outro curso da plataforma (mesmo assunto, de qualquer cargo ou concurso).</span>
                                     <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">📋 Usar essas aulas aqui também</button></form>
+                            <?php endif; ?>
+                            <?php if (!isset($parecidas)) { $parecidas = []; try { foreach (job_aulas_parecidas($pdo, $concursoId) as $px) { $parecidas[$px['cargo_id']][] = $px; } } catch (Throwable $e) {} }
+                            $parC = $parecidas[(int)$an['cargo']['id']] ?? []; if ($parC): ?>
+                                <form method="post" style="margin:4px 0 10px;background:#f0f7ff;border:1px solid #93c5fd;border-radius:10px;padding:10px 12px">
+                                    <input type="hidden" name="acao" value="aceitar_parecidas"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                                    <p style="margin:0 0 6px">🤖 <strong>A IA achou aulas prontas pelo assunto</strong> para <?php echo count(array_unique(array_column($parC, 'item_id'))); ?> assunto(s) sem aula. Confira e desmarque o que não servir. Copiar não gasta IA: vídeo, PDF, teoria e videoaula vão prontos.</p>
+                                    <div style="max-height:320px;overflow:auto;font-size:13px">
+                                    <?php $ultimo = 0; foreach ($parC as $px): ?>
+                                        <?php if ($ultimo !== $px['item_id']): $ultimo = $px['item_id']; ?><div style="margin-top:8px;font-weight:700"><?php echo admin_esc($px['materia'] . ' › ' . $px['assunto']); ?></div><?php endif; ?>
+                                        <?php $vPar = (int)$px['aula_id'] . ':' . (int)$px['item_id'] . ':' . (int)$px['curso_destino']; ?>
+                                        <input type="hidden" name="par_todas[]" value="<?php echo $vPar; ?>">
+                                        <label style="display:flex;gap:8px;align-items:flex-start;padding:2px 0 2px 12px"><input type="checkbox" class="par-ck" name="par[]" value="<?php echo $vPar; ?>" <?php echo $px['nota'] >= 80 ? 'checked' : ''; ?>>
+                                            <button type="submit" name="par_um" value="<?php echo $vPar; ?>" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 8px;min-height:0" title="Concordar só com esta">✓ Usar esta</button>
+                                            <span><?php echo admin_esc($px['aula']); ?> <small style="color:#6b7280">· <?php echo admin_esc($px['curso']); ?> · confiança <?php echo (int)$px['nota']; ?>%<?php echo !empty($px['motivo']) ? ' · ' . admin_esc($px['motivo']) : ''; ?></small></span></label>
+                                    <?php endforeach; ?>
+                                    </div>
+                                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                                        <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" name="tudo" value="1" onclick="return confirm('Copiar TODAS as aulas sugeridas pela IA para este cargo?');">✅ Concordar com tudo</button>
+                                        <button class="admin-btn admin-btn-light admin-btn-small" type="submit">📋 Usar só as marcadas</button>
+                                        <label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" onclick="this.closest('form').querySelectorAll('.par-ck').forEach(c => c.checked = this.checked)"> marcar/desmarcar todas</label>
+                                    </div>
+                                </form>
                             <?php endif; ?>
                             <?php if (empty($an['cargo']['curso_id'])): ?>
                                 <p class="ed-falta">Este cargo ainda não tem curso, então não dá para cadastrar aulas. <a href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=concurso">Vá ao passo 1 e escolha "+ Criar curso novo para este cargo"</a>.</p>

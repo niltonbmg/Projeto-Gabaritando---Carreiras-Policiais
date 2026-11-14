@@ -151,6 +151,8 @@ if (!function_exists('job_bootstrap')) {
                 }
                 podcast_reconectar($pdo)->prepare('UPDATE concursos SET edital_info = :i WHERE id = :id')->execute([':i' => json_encode($info, JSON_UNESCAPED_UNICODE), ':id' => $c]);
                 return 'Informações do edital lidas.';
+            case 'parecidas_ia':
+                return job_parecidas_ia($pdo, $c);
             case 'ler_escritas':
                 require_once __DIR__ . '/provas-escritas-lib.php';
                 $lista = pe_ia_ler((string)($p['texto'] ?? ''), hack_pdf_base64($conc['edital_pdf'] ?? ''), $cargosNomes());
@@ -586,6 +588,89 @@ if (!function_exists('job_bootstrap')) {
             }
         }
         return $n;
+    }
+
+    /**
+     * A IA procura, PELO ASSUNTO, aulas prontas de outros cursos (vídeo ou PDF do professor) que sirvam aos assuntos
+     * do edital que ainda não têm aula. Ela entende o conteúdo (ex.: "Física: Leis de Newton" serve para
+     * "Ciências Naturais: dinâmica"), não só o nome igual. 1 pedido de texto por cargo. O mentor confirma antes de copiar.
+     */
+    function job_parecidas_ia(PDO $pdo, int $concursoId): string
+    {
+        $prontas = $pdo->query("SELECT a.id, a.curso_id, a.titulo, COALESCE(t.titulo,'') assunto, COALESCE(m.nome,'') materia, c.nome curso, a.video_url, a.pdf_arquivo
+                                  FROM admin_curso_aulas a JOIN admin_cursos c ON c.id = a.curso_id
+                                  LEFT JOIN admin_materia_topicos t ON t.id = a.topico_id LEFT JOIN admin_materias m ON m.id = a.materia_id
+                                 WHERE COALESCE(TRIM(a.video_url),'') <> '' OR COALESCE(TRIM(a.pdf_arquivo),'') <> '' ORDER BY a.id")->fetchAll(PDO::FETCH_ASSOC);
+        $porId = [];
+        $unicas = []; // a mesma aula copiada em vários cursos vai uma vez só para a IA
+        foreach ($prontas as $p) {
+            $porId[(int)$p['id']] = $p;
+            $k = mb_strtolower(trim((string)$p['titulo'])) . '|' . trim((string)$p['video_url']) . '|' . trim((string)$p['pdf_arquivo']);
+            $unicas[$k] = $unicas[$k] ?? $p;
+        }
+        $sug = [];
+        $chamadas = 0;
+        foreach (edital_andamento($pdo, $concursoId) as $an) {
+            $cursoDestino = (int)($an['cargo']['curso_id'] ?? 0);
+            $faltam = array_values(array_filter($an['itens'], static fn($it) => !$it['aulas']));
+            if (!$cursoDestino || !$faltam) {
+                continue;
+            }
+            $cand = array_values(array_filter($unicas, static fn($p) => (int)$p['curso_id'] !== $cursoDestino));
+            if (!$cand) {
+                continue;
+            }
+            $prompt = "Você organiza o Projeto Gabaritando (concursos policiais e militares). Para cada ASSUNTO DO EDITAL sem aula, encontre na lista de AULAS PRONTAS as que ensinam esse assunto, "
+                . "pelo CONTEÚDO (o nome pode ser diferente: ex.: \"Ciências Naturais › Dinâmica\" é servido por \"Física › Leis de Newton\"). Só indique quando a aula realmente cobrir o assunto; "
+                . "pode indicar várias aulas (partes) para o mesmo assunto, na ordem certa. Se nenhuma servir, não liste o assunto.\n"
+                . "Responda SOMENTE em JSON: {\"sugestoes\":[{\"item_id\":n,\"aulas\":[ids],\"confianca\":0-100,\"motivo\":\"curto\"}]}\n\n"
+                . "ASSUNTOS SEM AULA (" . $an['cargo']['nome'] . "): " . json_encode(array_map(static fn($it) => ['item_id' => (int)$it['id'], 'assunto' => $it['materia'] . ' › ' . $it['assunto']], $faltam), JSON_UNESCAPED_UNICODE) . "\n\n"
+                . "AULAS PRONTAS (id: matéria › assunto › título): " . implode("\n", array_map(static fn($p) => $p['id'] . ': ' . $p['materia'] . ' › ' . $p['assunto'] . ' › ' . $p['titulo'], $cand));
+            $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => mb_substr($prompt, 0, 120000)]]]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1]], 170);
+            $chamadas++;
+            $pdo = podcast_reconectar($pdo);
+            $j = edital_json_do_texto((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? '')) ?? [];
+            $itensOk = [];
+            foreach ($faltam as $it) {
+                $itensOk[(int)$it['id']] = $it;
+            }
+            foreach ((array)($j['sugestoes'] ?? []) as $sx) {
+                $iid = (int)($sx['item_id'] ?? 0);
+                if (!isset($itensOk[$iid]) || (int)($sx['confianca'] ?? 0) < 50) {
+                    continue;
+                }
+                foreach (array_slice((array)($sx['aulas'] ?? []), 0, 6) as $aid) {
+                    $aid = (int)$aid;
+                    if (!isset($porId[$aid]) || (int)$porId[$aid]['curso_id'] === $cursoDestino) {
+                        continue;
+                    }
+                    $sug[] = ['cargo' => (string)$an['cargo']['nome'], 'cargo_id' => (int)$an['cargo']['id'], 'curso_destino' => $cursoDestino, 'item_id' => $iid,
+                        'materia' => (string)$itensOk[$iid]['materia'], 'assunto' => (string)$itensOk[$iid]['assunto'], 'aula_id' => $aid, 'aula' => (string)$porId[$aid]['titulo'],
+                        'curso' => (string)$porId[$aid]['curso'], 'nota' => max(0, min(100, (int)$sx['confianca'])), 'motivo' => mb_substr((string)($sx['motivo'] ?? ''), 0, 200)];
+                }
+            }
+        }
+        hack_rascunho_set($pdo, $concursoId, 'parecidas', $sug);
+        $nAss = count(array_unique(array_map(static fn($x) => $x['cargo_id'] . ':' . $x['item_id'], $sug)));
+        return $chamadas ? "A IA achou aulas prontas para $nAss assunto(s) sem aula. Confira em Aulas de cada assunto." : 'Nenhum assunto sem aula para procurar.';
+    }
+
+    /** Sugestões da IA ainda válidas (some o que já ganhou aula). */
+    function job_aulas_parecidas(PDO $pdo, int $concursoId): array
+    {
+        $sug = hack_rascunho_get($pdo, $concursoId, 'parecidas', []);
+        if (!$sug) {
+            return [];
+        }
+        $semAula = [];
+        foreach (edital_andamento($pdo, $concursoId) as $an) {
+            foreach ($an['itens'] as $it) {
+                if (!$it['aulas']) {
+                    $semAula[(int)$an['cargo']['id'] . ':' . (int)$it['id']] = true;
+                }
+            }
+        }
+        return array_values(array_filter((array)$sug, static fn($x) => isset($semAula[(int)$x['cargo_id'] . ':' . (int)$x['item_id']])));
     }
 
     /**
