@@ -151,6 +151,8 @@ if (!function_exists('job_bootstrap')) {
                 }
                 podcast_reconectar($pdo)->prepare('UPDATE concursos SET edital_info = :i WHERE id = :id')->execute([':i' => json_encode($info, JSON_UNESCAPED_UNICODE), ':id' => $c]);
                 return 'Informações do edital lidas.';
+            case 'conferir_conteudo':
+                return job_conferir_conteudo($pdo, $c, (string)($p['texto'] ?? ''));
             case 'parecidas_ia':
                 return job_parecidas_ia($pdo, $c);
             case 'ler_escritas':
@@ -595,6 +597,56 @@ if (!function_exists('job_bootstrap')) {
      * do edital que ainda não têm aula. Ela entende o conteúdo (ex.: "Física: Leis de Newton" serve para
      * "Ciências Naturais: dinâmica"), não só o nome igual. 1 pedido de texto por cargo. O mentor confirma antes de copiar.
      */
+    function job_conferir_conteudo(PDO $pdo, int $concursoId, string $texto = ''): string
+    {
+        $st = $pdo->prepare('SELECT * FROM concursos WHERE id = :id');
+        $st->execute([':id' => $concursoId]);
+        $conc = $st->fetch();
+        $cg = $pdo->prepare('SELECT id, nome FROM concurso_cargos WHERE concurso_id = :c');
+        $cg->execute([':c' => $concursoId]);
+        $cargos = $cg->fetchAll(PDO::FETCH_KEY_PAIR);
+        $atual = [];
+        foreach (edital_itens($pdo, $concursoId) as $it) {
+            $atual[$it['materia']][] = $it['assunto'];
+        }
+        $pdf = hack_pdf_base64($conc['edital_pdf'] ?? '');
+        if ($pdf === '' && trim($texto) === '') {
+            throw new RuntimeException('Não há PDF do edital guardado. Envie o PDF no passo Edital.');
+        }
+        $prompt = "Você confere o CONTEÚDO PROGRAMÁTICO de um edital de concurso policial/militar para o Projeto Gabaritando.\n"
+            . "Abaixo está o que JÁ FOI CADASTRADO (matéria → assuntos). Compare com o edital (PDF/texto) item por item, em TODAS as matérias e anexos, e liste SOMENTE os assuntos do edital que FALTAM no cadastro "
+            . "(itens e subitens que não estão lá nem com outras palavras). Também liste matérias inteiras que faltam. Copie o texto do item como está no edital, sem numeração. Não invente.\n"
+            . "Cargos: " . json_encode(array_values($cargos), JSON_UNESCAPED_UNICODE) . ". Em \"cargos\", os nomes exatos quando a matéria for só de alguns cargos; senão [\"todos\"].\n"
+            . "Responda SOMENTE em JSON: {\"faltando\":[{\"materia\":\"nome da matéria (igual ao cadastro quando já existir)\",\"cargos\":[\"todos\"],\"assuntos\":[\"...\"]}],\"observacao\":\"1 frase\"}\n\n"
+            . "JÁ CADASTRADO: " . json_encode($atual, JSON_UNESCAPED_UNICODE) . "\n\n" . (trim($texto) !== '' ? "EDITAL (texto):\n" . mb_substr($texto, 0, 120000) : '');
+        $partes = [['text' => $prompt]];
+        if ($pdf !== '') {
+            $partes[] = ['inlineData' => ['mimeType' => 'application/pdf', 'data' => $pdf]];
+        }
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => $partes]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1, 'maxOutputTokens' => 32000]], 170);
+        $pdo = podcast_reconectar($pdo);
+        $j = edital_json_do_texto((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? '')) ?? [];
+        $ja = [];
+        foreach ($atual as $m => $as) {
+            foreach ($as as $a) {
+                $ja[edital_normalizar($m) . '|' . edital_normalizar($a)] = true;
+            }
+        }
+        $lista = [];
+        foreach ((array)($j['faltando'] ?? []) as $m) {
+            $mat = trim((string)($m['materia'] ?? ''));
+            foreach ((array)($m['assuntos'] ?? []) as $a) {
+                $a = trim((string)$a);
+                if ($mat === '' || $a === '' || isset($ja[edital_normalizar($mat) . '|' . edital_normalizar($a)])) {
+                    continue;
+                }
+                $lista[] = ['materia' => mb_substr($mat, 0, 180), 'cargos' => array_values(array_map('strval', (array)($m['cargos'] ?? ['todos']))), 'assunto' => mb_substr($a, 0, 180)];
+            }
+        }
+        hack_rascunho_set($pdo, $concursoId, 'faltando', $lista);
+        return $lista ? 'A IA encontrou ' . count($lista) . ' assunto(s) do edital que faltavam no cadastro. Confira no passo Edital.' : 'A IA conferiu: nenhum assunto do edital faltando.';
+    }
+
     function job_parecidas_ia(PDO $pdo, int $concursoId): string
     {
         $prontas = $pdo->query("SELECT a.id, a.curso_id, a.titulo, COALESCE(t.titulo,'') assunto, COALESCE(m.nome,'') materia, c.nome curso, a.video_url, a.pdf_arquivo

@@ -308,6 +308,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $n = job_aproveitar_entre_cargos($pdo, $concursoId, (int)($_POST['cargo_id'] ?? 0));
             ed_ir($concursoId, 'aulas', $n . ' aula(s) aproveitadas de outro cargo nos assuntos em comum (com vídeo, PDF, apostila, videoaula e podcast). Para o que é só deste cargo: "1. Procurar vídeos já gravados" e depois "3. A IA gera o que falta".');
         }
+        if ($acao === 'conferir_conteudo') {
+            job_criar($pdo, $concursoId, 'conferir_conteudo', 'A IA confere se faltou assunto do edital no cadastro', ['texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 120000)]);
+            ed_ir($concursoId, 'edital', '🤖 A IA está conferindo o edital inteiro contra o cadastro (1 pedido de texto). Os assuntos que faltarem aparecem aqui para você aprovar.');
+        }
+        if ($acao === 'aceitar_faltando') {
+            $falt = (array)hack_rascunho_get($pdo, $concursoId, 'faltando', []);
+            $matT = (string)($_POST['materia_toda'] ?? '');
+            $idx = ($_POST['um'] ?? '') !== '' ? [(int)$_POST['um']]
+                : ($matT !== '' ? array_keys(array_filter($falt, static fn($x) => $x['materia'] === $matT))
+                : (($_POST['tudo'] ?? '') === '1' ? array_keys($falt) : array_map('intval', (array)($_POST['f'] ?? []))));
+            $porMat = [];
+            foreach ($idx as $k) {
+                if (isset($falt[$k])) {
+                    $chM = $falt[$k]['materia'] . '|' . implode(';', $falt[$k]['cargos']);
+                    $porMat[$chM] = $porMat[$chM] ?? ['materia' => $falt[$k]['materia'], 'cargos' => $falt[$k]['cargos'], 'assuntos' => []];
+                    $porMat[$chM]['assuntos'][] = $falt[$k]['assunto'];
+                    unset($falt[$k]);
+                }
+            }
+            $nF = edital_acrescentar($pdo, $concursoId, array_values($porMat));
+            hack_rascunho_set($pdo, $concursoId, 'faltando', $falt ? $falt : null);
+            [$saF] = job_sincronizar_concurso($pdo, $concursoId);
+            ed_ir($concursoId, 'edital', "✅ $nF assunto(s) acrescentado(s) ao conteúdo programático" . ($saF ? " · $saF aula(s) já aproveitada(s) da plataforma" : '') . '. Eles aparecem no passo Aulas.');
+        }
+        if ($acao === 'descartar_faltando') {
+            $falt = (array)hack_rascunho_get($pdo, $concursoId, 'faltando', []);
+            unset($falt[(int)($_POST['um'] ?? -1)]);
+            hack_rascunho_set($pdo, $concursoId, 'faltando', $falt ? $falt : null);
+            ed_ir($concursoId, 'edital', 'Sugestão descartada.');
+        }
         if ($acao === 'parecidas_ia') {
             job_criar($pdo, $concursoId, 'parecidas_ia', 'A IA procura, pelo assunto, aulas prontas de outros cursos');
             ed_ir($concursoId, 'aulas', '🤖 A IA está procurando, pelo assunto, aulas prontas para os assuntos sem aula (1 pedido por cargo). O resultado aparece aqui para você confirmar.');
@@ -315,7 +345,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($acao === 'aceitar_parecidas') {
             $n = 0;
             $stA = $pdo->prepare('SELECT * FROM admin_curso_aulas WHERE id = :id');
-            $escolhidas = ($_POST['par_um'] ?? '') !== '' ? [(string)$_POST['par_um']] : (($_POST['tudo'] ?? '') === '1' ? (array)($_POST['par_todas'] ?? []) : (array)($_POST['par'] ?? []));
+            $escolhidas = ($_POST['par_um'] ?? '') !== '' ? [(string)$_POST['par_um']]
+                : (($_POST['par_materia'] ?? '') !== '' ? (array)($_POST['par_mat'][(string)$_POST['par_materia']] ?? [])
+                : (($_POST['tudo'] ?? '') === '1' ? (array)($_POST['par_todas'] ?? []) : (array)($_POST['par'] ?? [])));
             foreach ($escolhidas as $v) {
                 [$aulaId, $itemId, $cursoDest] = array_map('intval', explode(':', (string)$v) + [0, 0, 0]);
                 $stA->execute([':id' => $aulaId]);
@@ -641,6 +673,37 @@ $menuBarInclude = admin_cursos_get_menubar();
                     </form>
                 </section>
                 <?php endif; ?>
+                <?php $faltando = (array)hack_rascunho_get($pdo, $concursoId, 'faltando', []); ?>
+                <section class="admin-panel" id="faltou">
+                    <div class="admin-panel-title"><h2>🔍 Faltou algum assunto?</h2><small><?php echo count($itens); ?> assuntos cadastrados</small></div>
+                    <p class="admin-form-hint">A IA relê o edital inteiro (com os anexos) e compara item por item com o que está cadastrado. Ela só sugere: nada entra sem você concordar. 1 pedido de texto.</p>
+                    <form method="post" style="margin:6px 0 10px"><input type="hidden" name="acao" value="conferir_conteudo"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                        <?php if (empty($concurso['edital_pdf'])): ?><textarea name="texto" rows="3" style="width:100%" placeholder="Sem PDF guardado: cole aqui o conteúdo programático do edital"></textarea><?php endif; ?>
+                        <button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>A IA confere se faltou assunto</button></form>
+                    <?php if ($faltando): ?>
+                    <form method="post"><input type="hidden" name="acao" value="aceitar_faltando"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                        <p style="margin:0 0 6px"><strong><?php echo count($faltando); ?> assunto(s) do edital que faltam no cadastro:</strong></p>
+                        <div style="max-height:420px;overflow:auto;font-size:13px">
+                        <?php $ultM = ''; foreach ($faltando as $k => $fx): ?>
+                            <?php if ($ultM !== $fx['materia']): $ultM = $fx['materia']; ?><div style="margin-top:10px;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><?php echo admin_esc($fx['materia']); ?><?php $cgF = array_filter($fx['cargos'], static fn($c) => edital_normalizar((string)$c) !== 'todos'); echo $cgF ? ' <small style="color:#6b7280">(' . admin_esc(implode(', ', $cgF)) . ')</small>' : ''; ?>
+                                <button type="submit" name="materia_toda" value="<?php echo admin_esc($fx['materia']); ?>" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 10px;min-height:0">✅ Aprovar matéria inteira (<?php echo count(array_filter($faltando, static fn($x) => $x['materia'] === $fx['materia'])); ?>)</button></div><?php endif; ?>
+                            <div style="display:flex;gap:8px;align-items:center;padding:2px 0 2px 12px">
+                                <input type="checkbox" class="f-ck" name="f[]" value="<?php echo (int)$k; ?>" checked>
+                                <button type="submit" name="um" value="<?php echo (int)$k; ?>" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 8px;min-height:0">✓ Concordo</button>
+                                <button type="submit" name="acao" value="descartar_faltando" formnovalidate onclick="this.form.querySelector('[name=um_d]')" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 8px;min-height:0" data-um="<?php echo (int)$k; ?>">✕</button>
+                                <span><?php echo admin_esc($fx['assunto']); ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                            <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" name="tudo" value="1" onclick="return confirm('Aprovar TODOS os assuntos sugeridos, de todas as matérias?');">✅ Aprovar tudo (curso inteiro)</button>
+                            <button class="admin-btn admin-btn-light admin-btn-small" type="submit">📋 Só os marcados</button>
+                            <label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" checked onclick="this.closest('form').querySelectorAll('.f-ck').forEach(c => c.checked = this.checked)"> marcar/desmarcar todos</label>
+                        </div>
+                    </form>
+                    <script>document.querySelectorAll('#faltou [data-um]').forEach(function(b){b.addEventListener('click',function(){var h=document.createElement('input');h.type='hidden';h.name='um';h.value=b.getAttribute('data-um');b.form.appendChild(h);});});</script>
+                    <?php endif; ?>
+                </section>
                 <?php if (is_array($info)): ?>
                 <section class="admin-panel">
                     <div class="admin-panel-title"><h2>Informações do edital</h2></div>
@@ -781,17 +844,18 @@ $menuBarInclude = admin_cursos_get_menubar();
                                     <input type="hidden" name="acao" value="aceitar_parecidas"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
                                     <p style="margin:0 0 6px">🤖 <strong>A IA achou aulas prontas pelo assunto</strong> para <?php echo count(array_unique(array_column($parC, 'item_id'))); ?> assunto(s) sem aula. Confira e desmarque o que não servir. Copiar não gasta IA: vídeo, PDF, teoria e videoaula vão prontos.</p>
                                     <div style="max-height:320px;overflow:auto;font-size:13px">
-                                    <?php $ultimo = 0; foreach ($parC as $px): ?>
+                                    <?php $ultimo = 0; $ultMat = ''; foreach ($parC as $px): ?>
+                                        <?php if ($ultMat !== $px['materia']): $ultMat = $px['materia']; ?><div style="margin-top:10px;display:flex;gap:8px;align-items:center"><strong style="font-size:14px"><?php echo admin_esc($px['materia']); ?></strong><button type="submit" name="par_materia" value="<?php echo admin_esc($px['materia']); ?>" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 10px;min-height:0">✅ Aprovar matéria inteira</button></div><?php endif; ?>
                                         <?php if ($ultimo !== $px['item_id']): $ultimo = $px['item_id']; ?><div style="margin-top:8px;font-weight:700"><?php echo admin_esc($px['materia'] . ' › ' . $px['assunto']); ?></div><?php endif; ?>
                                         <?php $vPar = (int)$px['aula_id'] . ':' . (int)$px['item_id'] . ':' . (int)$px['curso_destino']; ?>
-                                        <input type="hidden" name="par_todas[]" value="<?php echo $vPar; ?>">
+                                        <input type="hidden" name="par_todas[]" value="<?php echo $vPar; ?>"><input type="hidden" name="par_mat[<?php echo admin_esc($px['materia']); ?>][]" value="<?php echo $vPar; ?>">
                                         <label style="display:flex;gap:8px;align-items:flex-start;padding:2px 0 2px 12px"><input type="checkbox" class="par-ck" name="par[]" value="<?php echo $vPar; ?>" <?php echo $px['nota'] >= 80 ? 'checked' : ''; ?>>
                                             <button type="submit" name="par_um" value="<?php echo $vPar; ?>" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 8px;min-height:0" title="Concordar só com esta">✓ Usar esta</button>
                                             <span><?php echo admin_esc($px['aula']); ?> <small style="color:#6b7280">· <?php echo admin_esc($px['curso']); ?> · confiança <?php echo (int)$px['nota']; ?>%<?php echo !empty($px['motivo']) ? ' · ' . admin_esc($px['motivo']) : ''; ?></small></span></label>
                                     <?php endforeach; ?>
                                     </div>
                                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-                                        <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" name="tudo" value="1" onclick="return confirm('Copiar TODAS as aulas sugeridas pela IA para este cargo?');">✅ Concordar com tudo</button>
+                                        <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" name="tudo" value="1" onclick="return confirm('Copiar TODAS as aulas sugeridas pela IA para este cargo?');">✅ Aprovar tudo (curso inteiro)</button>
                                         <button class="admin-btn admin-btn-light admin-btn-small" type="submit">📋 Usar só as marcadas</button>
                                         <label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" onclick="this.closest('form').querySelectorAll('.par-ck').forEach(c => c.checked = this.checked)"> marcar/desmarcar todas</label>
                                     </div>

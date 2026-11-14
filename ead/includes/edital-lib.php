@@ -61,14 +61,15 @@ if (!function_exists('edital_ia_ler')) {
             . "Leia o CONTEÚDO PROGRAMÁTICO e liste as matérias e, dentro de cada uma, os assuntos, na ordem do edital.\n"
             . "Cargos deste concurso: " . json_encode($cargos, JSON_UNESCAPED_UNICODE) . ".\n"
             . "Quando o edital separar conteúdo por cargo, informe em \"cargos\" os nomes exatos dos cargos daquela matéria; se valer para todos, use [\"todos\"].\n"
-            . "Assuntos curtos e claros (ex.: \"Crase\", \"Concordância verbal\"), sem numeração. Não invente nada que não esteja no texto.\n"
+            . "LISTE TODOS os itens e subitens do conteúdo de cada matéria, um a um, na ordem: NÃO resuma, NÃO junte itens, NÃO pule nenhum (se o edital tem 25 itens numa matéria, devolva 25). "
+            . "Use o texto do item do edital (pode encurtar só palavras repetidas), sem a numeração. Não invente nada que não esteja no texto. Leia o edital INTEIRO, inclusive anexos.\n"
             . "Responda SOMENTE em JSON: {\"materias\":[{\"materia\":\"...\",\"cargos\":[\"todos\"],\"assuntos\":[\"...\"]}]}\n\n"
-            . "CONTEÚDO PROGRAMÁTICO:\n" . mb_substr($texto, 0, 60000);
+            . "CONTEÚDO PROGRAMÁTICO:\n" . mb_substr($texto, 0, 120000);
         $partes = [['text' => $prompt]];
         if ($pdfBase64 !== '') {
             $partes[] = ['inlineData' => ['mimeType' => 'application/pdf', 'data' => $pdfBase64]];
         }
-        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => $partes]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1]], 140);
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => $partes]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1, 'maxOutputTokens' => 32000]], 170);
         $j = json_decode((string)($resp['candidates'][0]['content']['parts'][0]['text'] ?? ''), true);
         $lista = [];
         foreach ((array)($j['materias'] ?? []) as $m) {
@@ -99,7 +100,15 @@ if (!function_exists('edital_salvar')) {
      * Grava o edital confirmado. Reaproveita matérias e assuntos que já existem
      * com o mesmo nome (sem acento/maiúscula), cria os que faltam.
      */
-    function edital_salvar(PDO $pdo, int $concursoId, array $materias): int
+    /** Acrescenta assuntos ao conteúdo já cadastrado (depois dos atuais, sem mexer na ordem deles). */
+    function edital_acrescentar(PDO $pdo, int $concursoId, array $materias): int
+    {
+        $st = $pdo->prepare('SELECT COALESCE(MAX(ordem), 0) FROM edital_itens WHERE concurso_id = :c');
+        $st->execute([':c' => $concursoId]);
+        return edital_salvar($pdo, $concursoId, $materias, (int)$st->fetchColumn(), true);
+    }
+
+    function edital_salvar(PDO $pdo, int $concursoId, array $materias, int $ordemBase = 0, bool $soNovos = false): int
     {
         $cargosDb = $pdo->prepare('SELECT id, nome FROM concurso_cargos WHERE concurso_id = :c');
         $cargosDb->execute([':c' => $concursoId]);
@@ -114,9 +123,10 @@ if (!function_exists('edital_salvar')) {
         $insMat = $pdo->prepare("INSERT INTO admin_materias (nome, status, ordem) VALUES (:n, 'ativo', 0)");
         $selTop = $pdo->prepare('SELECT id, titulo FROM admin_materia_topicos WHERE materia_id = :m');
         $insTop = $pdo->prepare("INSERT INTO admin_materia_topicos (materia_id, titulo, status, ordem) VALUES (:m, :t, 'ativo', :o)");
-        $insItem = $pdo->prepare('INSERT INTO edital_itens (concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:c, :m, :t, :g, :o)
+        $insItem = $pdo->prepare($soNovos ? 'INSERT IGNORE INTO edital_itens (concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:c, :m, :t, :g, :o)'
+            : 'INSERT INTO edital_itens (concurso_id, materia_id, topico_id, cargos, ordem) VALUES (:c, :m, :t, :g, :o)
                                   ON DUPLICATE KEY UPDATE cargos = VALUES(cargos), ordem = VALUES(ordem)');
-        $ordem = 0;
+        $ordem = $ordemBase;
         $n = 0;
         foreach ($materias as $m) {
             $chave = edital_normalizar((string)$m['materia']);
