@@ -12,15 +12,26 @@ $pdo = admin_cursos_db();
 pag_bootstrap($pdo);
 $e = static fn($s): string => admin_esc((string)$s);
 $erro = '';
+$erroDetalhe = '';
 $ok = (string)($_GET['ok'] ?? '');
+$adminEmail = (string)((auth_admin_user() ?? [])['email'] ?? '');
 $produtoId = (int)($_GET['produto'] ?? $_POST['produto_id'] ?? 0);
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $acao = (string)($_POST['acao'] ?? '');
     try {
         if ($acao === 'conectar') {
-            $r = pag_conectar($pdo, (string)($_POST['chave'] ?? ''), (string)($_POST['modo'] ?? 'teste'));
-            header('Location: admin-pagamentos.php?passo=2&ok=' . rawurlencode('Conta conectada: ' . $r['nome'] . ' (' . $r['doc'] . '). A plataforma já ficou pronta para receber os avisos de pagamento.'));
+            $r = pag_conectar($pdo, (string)($_POST['chave'] ?? ''), (string)($_POST['modo'] ?? 'teste'), trim((string)($_POST['email'] ?? '')) ?: $adminEmail);
+            if ($r['aviso_ok']) {
+                header('Location: admin-pagamentos.php?passo=2&ok=' . rawurlencode('Conta conectada: ' . $r['nome'] . ' (' . $r['doc'] . '). Os avisos de pagamento estão ativos.'));
+                exit;
+            }
+            $erro = $r['aviso_erro'];
+            $erroDetalhe = $r['aviso_detalhe'];
+        }
+        if ($acao === 'ativar_aviso') {
+            pag_ativar_aviso($pdo, trim((string)($_POST['email'] ?? '')) ?: $adminEmail);
+            header('Location: admin-pagamentos.php?passo=2&ok=' . rawurlencode('Avisos de pagamento ativos. Agora é só criar o produto.'));
             exit;
         }
         if ($acao === 'salvar_produto') {
@@ -56,8 +67,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             header('Location: admin-pagamentos.php?passo=3&produto=' . $produtoId . '&ok=' . rawurlencode($acao === 'publicar' ? 'Venda publicada: o link já está funcionando.' : 'Venda pausada: o link mostra "vendas encerradas".'));
             exit;
         }
-    } catch (Throwable $ex) {
+    } catch (PagErro $ex) {
         $erro = $ex->getMessage();
+        $erroDetalhe = $ex->detalhe;
+    } catch (Throwable $ex) {
+        $erro = 'Algo deu errado. Tente de novo; se continuar, abra "ver detalhes" e envie ao suporte.';
+        $erroDetalhe = $ex->getMessage();
     }
 }
 
@@ -109,7 +124,7 @@ $menuBarInclude = admin_cursos_get_menubar();
     <main class="admin-dashboard-main">
         <section class="admin-page-header"><div class="admin-page-heading"><h1>💳 Receber pagamentos</h1><p>Venda seus cursos com Pix, cartão e boleto. O aluno paga e o curso é liberado sozinho, com o prazo de acesso certo.</p></div></section>
         <?php if ($ok !== ''): ?><div class="admin-alert admin-alert-success"><?php echo $e($ok); ?></div><?php endif; ?>
-        <?php if ($erro !== ''): ?><div class="admin-alert admin-alert-error"><?php echo $e($erro); ?></div><?php endif; ?>
+        <?php if ($erro !== ''): ?><div class="admin-alert admin-alert-error" style="display:block" role="alert"><?php echo $e($erro); ?><?php if ($erroDetalhe !== ''): ?><details style="margin-top:6px;font-weight:400"><summary style="cursor:pointer">ver detalhes</summary><code style="display:block;white-space:pre-wrap;font-size:12px;margin-top:4px"><?php echo $e($erroDetalhe); ?></code></details><?php endif; ?></div><?php endif; ?>
 
         <nav class="rp-passos" aria-label="Passos">
             <?php foreach ([1 => 'Conectar sua conta Asaas', 2 => 'Produto: curso e preço', 3 => 'Publicar e testar'] as $n => $t): $feito = $n === 1 ? $cfg['conectado'] : ($n === 2 ? (bool)$produtos : $feitos === 3); ?>
@@ -121,7 +136,18 @@ $menuBarInclude = admin_cursos_get_menubar();
         <?php if ($passo === 1): ?>
         <section class="admin-panel">
             <h2>1. Conectar sua conta Asaas</h2>
-            <?php if ($cfg['conectado']): ?><p class="rp-conta">✅ Conectado à conta <strong><?php echo $e($cfg['conta_nome']); ?></strong> (<?php echo $e($cfg['conta_doc']); ?>) · <?php echo $cfg['modo'] === 'real' ? '🟢 Modo real: cobranças de verdade' : '🧪 Modo teste: nenhum dinheiro de verdade'; ?></p><?php endif; ?>
+            <?php if ($cfg['conectado']): ?><p class="rp-conta">✅ Conectado à conta <strong><?php echo $e($cfg['conta_nome']); ?></strong> (<?php echo $e($cfg['conta_doc']); ?>) · <?php echo $cfg['modo'] === 'real' ? '🟢 Modo real: cobranças de verdade' : '🧪 Modo teste: nenhum dinheiro de verdade'; ?></p>
+                <?php if ($cfg['aviso_ok']): ?><p class="rp-conta" style="margin-top:6px">✅ Avisos de pagamento ativos: o curso é liberado sozinho quando o pagamento é confirmado.</p>
+                <?php else: ?>
+                <form method="post" style="margin-top:8px;background:#fff8e6;border:1px solid #fbb928;border-radius:12px;padding:12px 14px;display:grid;gap:8px">
+                    <input type="hidden" name="acao" value="ativar_aviso">
+                    <strong>⚠️ A chave foi validada, mas os avisos de pagamento ainda não estão ativos.</strong>
+                    <span class="rp-ajuda">Sem eles, a plataforma só descobre o pagamento quando o aluno está na página do pedido. Não precisa colar a chave de novo.</span>
+                    <label style="display:grid;gap:4px;font-weight:600;max-width:420px">E-mail para alertas do Asaas<input class="rp-chave" type="email" name="email" value="<?php echo $e($cfg['aviso_email'] ?? $adminEmail); ?>" placeholder="seu@email.com"></label>
+                    <button class="admin-btn admin-btn-primary" type="submit" style="justify-self:start">🔁 Tentar de novo</button>
+                </form>
+                <?php endif; ?>
+            <?php endif; ?>
             <ol class="rp-ajuda" style="margin:10px 0 14px 18px;line-height:1.7">
                 <li>Entre na sua conta do Asaas (para testar, use a conta de teste em <strong>sandbox.asaas.com</strong>).</li>
                 <li>Abra <strong>Integrações</strong> e clique em <strong>Gerar chave</strong>. Copie a chave inteira.</li>
@@ -135,6 +161,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                 </div>
                 <label style="display:grid;gap:4px;font-weight:600">Chave da sua conta Asaas
                     <input class="rp-chave" name="chave" type="password" autocomplete="off" placeholder="<?php echo $cfg['conectado'] ? 'Já guardada com segurança. Cole outra só se for trocar.' : 'Cole aqui a chave copiada do Asaas'; ?>"></label>
+                <label style="display:grid;gap:4px;font-weight:600">E-mail para alertas do Asaas<input class="rp-chave" type="email" name="email" value="<?php echo $e($cfg['aviso_email'] ?? $adminEmail); ?>" placeholder="seu@email.com"><small style="font-weight:400;color:#4b5563">O Asaas avisa neste e-mail se algum aviso de pagamento não chegar à plataforma.</small></label>
                 <p class="rp-ajuda">🔒 A chave fica guardada criptografada e nunca aparece de novo na tela.</p>
                 <button class="admin-btn admin-btn-primary" type="submit" style="justify-self:start">Testar e conectar</button>
             </form>

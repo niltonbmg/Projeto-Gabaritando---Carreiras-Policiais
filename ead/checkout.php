@@ -38,6 +38,10 @@ if (!$pedido && $aberto && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $novo = pag_criar_pedido($pdo, $prod, $_POST);
         header('Location: checkout.php?pedido=' . $novo['chave_publica']);
         exit;
+    } catch (PagErro $ex) {
+        // aluno não vê detalhe técnico do Asaas: só a orientação (o detalhe vai para o log)
+        error_log('checkout: ' . $ex->detalhe);
+        $erro = $ex->detalhe === '' ? $ex->getMessage() : 'Não conseguimos gerar o pagamento agora. Confira seus dados e tente de novo em instantes.';
     } catch (Throwable $ex) {
         $erro = $ex->getMessage();
     }

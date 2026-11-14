@@ -11,6 +11,20 @@ const PAG_STATUS_PAGO = ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'];
 const PAG_EVENTOS = ['PAYMENT_CREATED', 'PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED', 'PAYMENT_OVERDUE', 'PAYMENT_DELETED', 'PAYMENT_REFUNDED',
     'PAYMENT_PARTIALLY_REFUNDED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_CHARGEBACK_DISPUTE', 'PAYMENT_RESTORED'];
 
+if (!class_exists('PagErro')) {
+    /** Erro do pagamento: getMessage() é a frase para o mentor; $detalhe guarda o texto técnico (para "ver detalhes"). */
+    class PagErro extends RuntimeException
+    {
+        public string $detalhe = '';
+
+        public function __construct(string $amigavel, string $detalhe = '')
+        {
+            parent::__construct($amigavel);
+            $this->detalhe = $detalhe;
+        }
+    }
+}
+
 if (!function_exists('pag_bootstrap')) {
     function pag_bootstrap(PDO $pdo): void
     {
@@ -62,6 +76,11 @@ if (!function_exists('pag_bootstrap')) {
             KEY idx_convite_usuario (usuario_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         $pdo->exec("INSERT IGNORE INTO pagamento_config (id) VALUES (1)");
+        try {
+            $pdo->exec('ALTER TABLE pagamento_config ADD COLUMN aviso_email VARCHAR(190) NULL');
+        } catch (Throwable $e) {
+            // já existe
+        }
         gab_prazo_bootstrap($pdo);
     }
 
@@ -104,6 +123,7 @@ if (!function_exists('pag_bootstrap')) {
         $c = $pdo->query('SELECT * FROM pagamento_config WHERE id = 1')->fetch(PDO::FETCH_ASSOC) ?: [];
         $c['chave'] = pag_decifrar($c['modo'] === 'real' ? ($c['chave_real'] ?? '') : ($c['chave_teste'] ?? ''));
         $c['conectado'] = $c['chave'] !== '' && !empty($c['conta_nome']);
+        $c['aviso_ok'] = $c['conectado'] && !empty($c['aviso_id']) && !empty($c['aviso_senha']);
         return $c;
     }
 
@@ -131,15 +151,15 @@ if (!function_exists('pag_bootstrap')) {
         $cod = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         if ($resp === false || $cod === 0) {
-            throw new RuntimeException('Não consegui falar com o Asaas agora. Tente de novo em instantes.');
+            throw new PagErro('Não consegui falar com o Asaas agora. Tente de novo em instantes.', "$metodo $caminho: sem resposta");
         }
         $j = json_decode((string)$resp, true) ?: [];
+        $tec = "$metodo $caminho → HTTP $cod: " . mb_substr(implode(' | ', array_map(static fn($x) => ($x['code'] ?? '') . ' ' . ($x['description'] ?? ''), (array)($j['errors'] ?? []))) ?: (string)$resp, 0, 600);
         if ($cod === 401) {
-            throw new RuntimeException('O Asaas não aceitou a chave. Confira se copiou a chave inteira e se ela é do modo escolhido (teste ou real).');
+            throw new PagErro('O Asaas não aceitou a chave. Confira se copiou a chave inteira e se ela é do modo escolhido (teste ou real).', $tec);
         }
         if ($cod >= 400) {
-            $msg = (string)($j['errors'][0]['description'] ?? 'O Asaas recusou o pedido.');
-            throw new RuntimeException($msg);
+            throw new PagErro('O Asaas não aceitou este pedido. Tente de novo; se continuar, abra "ver detalhes" e envie ao suporte.', $tec);
         }
         return $j;
     }
@@ -167,10 +187,10 @@ if (!function_exists('pag_bootstrap')) {
     }
 
     /**
-     * Passo 1: testa a chave, guarda criptografada e registra sozinho o aviso de pagamento no Asaas.
-     * Retorna ['nome' => ..., 'doc' => mascarado].
+     * Passo 1: testa a chave e guarda criptografada (a conta fica conectada mesmo se o aviso falhar).
+     * Depois ativa o aviso de pagamento. Retorna ['nome', 'doc', 'aviso_ok', 'aviso_erro', 'aviso_detalhe'].
      */
-    function pag_conectar(PDO $pdo, string $chave, string $modo): array
+    function pag_conectar(PDO $pdo, string $chave, string $modo, string $emailMentor = ''): array
     {
         pag_bootstrap($pdo);
         $chave = trim($chave);
@@ -179,35 +199,69 @@ if (!function_exists('pag_bootstrap')) {
             $c = pag_config($pdo);
             $chave = pag_decifrar($modo === 'real' ? ($c['chave_real'] ?? '') : ($c['chave_teste'] ?? ''));
             if ($chave === '') {
-                throw new RuntimeException('Cole a chave da sua conta Asaas.');
+                throw new PagErro('Cole a chave da sua conta Asaas.');
             }
         }
         $conta = pag_asaas('GET', '/myAccount/commercialInfo/', null, $chave, $modo);
         $nome = (string)($conta['name'] ?? $conta['companyName'] ?? $conta['tradingName'] ?? '');
         $doc = (string)($conta['cpfCnpj'] ?? '');
         if ($nome === '') {
-            throw new RuntimeException('A chave funcionou, mas não consegui ler os dados da conta. Confira no Asaas se a conta está aprovada.');
+            throw new PagErro('A chave funcionou, mas não consegui ler os dados da conta. Confira no Asaas se a conta está aprovada.', json_encode($conta, JSON_UNESCAPED_UNICODE));
         }
-        // Aviso de pagamento: o Asaas avisa a plataforma quando o pagamento é confirmado, vence ou é estornado.
+        $col = $modo === 'real' ? 'chave_real' : 'chave_teste';
+        $pdo->prepare("UPDATE pagamento_config SET modo = :m, $col = :k, conta_nome = :n, conta_doc = :d, aviso_id = NULL, atualizado_em = NOW() WHERE id = 1")
+            ->execute([':m' => $modo, ':k' => pag_cifrar($chave), ':n' => mb_substr($nome, 0, 180), ':d' => pag_mascarar_doc($doc)]);
+        $email = filter_var((string)($conta['email'] ?? ''), FILTER_VALIDATE_EMAIL) ? (string)$conta['email'] : $emailMentor;
+        $r = ['nome' => $nome, 'doc' => pag_mascarar_doc($doc), 'aviso_ok' => false, 'aviso_erro' => '', 'aviso_detalhe' => ''];
+        try {
+            pag_ativar_aviso($pdo, $email);
+            $r['aviso_ok'] = true;
+        } catch (PagErro $e) {
+            $r['aviso_erro'] = $e->getMessage();
+            $r['aviso_detalhe'] = $e->detalhe;
+        }
+        return $r;
+    }
+
+    /**
+     * Ativa (ou refaz) o aviso de pagamento no Asaas com a chave já guardada: o Asaas avisa a plataforma quando o
+     * pagamento é confirmado, vence ou é estornado. $email recebe os alertas do Asaas se o aviso falhar.
+     */
+    function pag_ativar_aviso(PDO $pdo, string $email = ''): void
+    {
+        $cfg = pag_config($pdo);
+        if ($cfg['chave'] === '') {
+            throw new PagErro('Conecte a conta Asaas primeiro.');
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            try { // e-mail da própria conta Asaas
+                $email = (string)(pag_asaas('GET', '/myAccount/commercialInfo/', null, $cfg['chave'], $cfg['modo'])['email'] ?? '');
+            } catch (Throwable $e) {
+            }
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new PagErro('Para ativar os avisos de pagamento, o Asaas pede um e-mail para alertas. Informe o seu e-mail abaixo e tente de novo.', 'sem e-mail válido para o campo email do aviso');
+        }
         $senha = bin2hex(random_bytes(24));
         $url = pag_site_url() . '/api/pagamento-aviso.php';
+        $corpo = ['name' => 'Plataforma EAD - pagamentos', 'url' => $url, 'email' => $email, 'enabled' => true, 'interrupted' => false,
+            'apiVersion' => 3, 'authToken' => $senha, 'sendType' => 'SEQUENTIALLY', 'events' => PAG_EVENTOS];
         $existente = '';
         try {
-            foreach ((array)(pag_asaas('GET', '/webhooks', null, $chave, $modo)['data'] ?? []) as $w) {
+            foreach ((array)(pag_asaas('GET', '/webhooks', null, $cfg['chave'], $cfg['modo'])['data'] ?? []) as $w) {
                 if (($w['url'] ?? '') === $url) {
                     $existente = (string)($w['id'] ?? '');
                 }
             }
         } catch (Throwable $e) {
         }
-        $corpo = ['name' => 'Plataforma EAD - pagamentos', 'url' => $url, 'email' => '', 'enabled' => true, 'interrupted' => false,
-            'authToken' => $senha, 'sendType' => 'SEQUENTIALLY', 'events' => PAG_EVENTOS];
-        unset($corpo['email']);
-        $w = $existente !== '' ? pag_asaas('PUT', '/webhooks/' . $existente, $corpo, $chave, $modo) : pag_asaas('POST', '/webhooks', $corpo, $chave, $modo);
-        $col = $modo === 'real' ? 'chave_real' : 'chave_teste';
-        $pdo->prepare("UPDATE pagamento_config SET modo = :m, $col = :k, conta_nome = :n, conta_doc = :d, aviso_senha = :s, aviso_id = :w, aviso_url = :u, atualizado_em = NOW() WHERE id = 1")
-            ->execute([':m' => $modo, ':k' => pag_cifrar($chave), ':n' => mb_substr($nome, 0, 180), ':d' => pag_mascarar_doc($doc), ':s' => $senha, ':w' => (string)($w['id'] ?? $existente), ':u' => $url]);
-        return ['nome' => $nome, 'doc' => pag_mascarar_doc($doc)];
+        try {
+            $w = $existente !== '' ? pag_asaas('PUT', '/webhooks/' . $existente, $corpo, $cfg['chave'], $cfg['modo']) : pag_asaas('POST', '/webhooks', $corpo, $cfg['chave'], $cfg['modo']);
+        } catch (PagErro $e) {
+            throw new PagErro('A chave foi validada e a conta está conectada, mas não consegui ativar os avisos de pagamento no Asaas. Sem eles a liberação do curso fica mais lenta. Clique em "Tentar de novo".', $e->detalhe);
+        }
+        $pdo->prepare('UPDATE pagamento_config SET aviso_senha = :s, aviso_id = :w, aviso_url = :u, aviso_email = :e, atualizado_em = NOW() WHERE id = 1')
+            ->execute([':s' => $senha, ':w' => (string)($w['id'] ?? $existente), ':u' => $url, ':e' => mb_substr($email, 0, 190)]);
     }
 
     // ---------- produtos ----------
