@@ -50,6 +50,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $materia = (int)($_GET['materia'] ?? 0);
 $fm = $materia > 0 ? ' AND q.materia_id = ' . $materia : '';
+$topicoFc = (int)($_GET['topico'] ?? 0); // aberto pelo cronograma: direto no assunto
+$fm .= $topicoFc > 0 ? ' AND q.materia_topico_id = ' . $topicoFc : '';
 $cont = $pdo->prepare("SELECT SUM(f.proxima_em <= CURDATE() AND f.nivel < :max) hoje, SUM(f.nivel > 0 AND f.nivel < :max2) andamento, SUM(f.nivel >= :max3) dominadas
                          FROM flashcard_revisao f JOIN admin_banco_questoes q ON q.id = f.questao_id WHERE f.usuario_id = :u $fm");
 $cont->execute([':u' => $uid, ':max' => count(FC_INTERVALOS), ':max2' => count(FC_INTERVALOS), ':max3' => count(FC_INTERVALOS)]);

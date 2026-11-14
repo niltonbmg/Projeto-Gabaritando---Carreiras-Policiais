@@ -101,25 +101,6 @@ if (!function_exists('missao_link_aula')) {
             'frase' => 'Todos os assuntos liberados: agora é subir o nível até 50 questões em cada um.', 'faltam' => 0, 'feitas' => 0];
     }
 
-    /** Missão do dia: as tarefas de hoje do cronograma, na ordem, com o que já foi feito. */
-    function missao_do_dia(PDO $pdo, int $usuarioId, int $cursoId): array
-    {
-        $cron = meta_cronograma_montar($pdo, $usuarioId, $cursoId);
-        // Partes da mesma tarefa no mesmo dia viram uma linha só (minutos somados).
-        $tarefas = [];
-        foreach ($cron['agenda'][date('Y-m-d')] ?? [] as $t) {
-            $k = $t['tipo'] . ':' . (int)($t['item']['id'] ?? 0) . ':' . (int)($t['rodada'] ?? 0);
-            if (isset($tarefas[$k])) {
-                $tarefas[$k]['minutos'] += (int)$t['minutos'];
-            } else {
-                $tarefas[$k] = $t;
-            }
-        }
-        $tarefas = array_values($tarefas);
-        $proximo = missao_proximo_passo($pdo, $usuarioId, true);
-        return ['tarefas' => $tarefas, 'config' => $cron['config'], 'estado' => $cron['estado'], 'proximo' => $proximo];
-    }
-
     /** As 4 bolinhas do ciclo para o assunto da vez. */
     function missao_bolinhas(int $passo): string
     {

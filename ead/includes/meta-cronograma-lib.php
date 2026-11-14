@@ -22,6 +22,7 @@ const META_REVISOES_DIAS = [1, 7, 30];
 const META_REVISAO_MINUTOS = 20;
 const META_FRACAO_TEORIA = 0.4;
 const META_BLOCO_MIN = 60; // máximo de minutos seguidos da mesma matéria
+const META_MATERIAS_DIA = 3; // no máximo 3 matérias diferentes por dia
 
 if (!function_exists('meta_cronograma_bootstrap')) {
     function meta_cronograma_bootstrap(PDO $pdo): void
@@ -45,6 +46,10 @@ if (!function_exists('meta_cronograma_bootstrap')) {
         $col = $pdo->query("SHOW COLUMNS FROM meta_aluno_config LIKE 'dias_semana'")->fetch();
         if ($col && preg_match('/varchar\((\d+)\)/i', (string)$col['Type'], $m) && (int)$m[1] < 120) {
             $pdo->exec("ALTER TABLE meta_aluno_config MODIFY dias_semana VARCHAR(120) NOT NULL DEFAULT '1,2,3,4,5,6'");
+        }
+        // Ajustes do aluno: dificuldade por matéria (1-5), assuntos fora, assuntos marcados como feitos, minutos extras por assunto.
+        if (!$pdo->query("SHOW COLUMNS FROM meta_aluno_config LIKE 'ajustes'")->fetch()) {
+            $pdo->exec('ALTER TABLE meta_aluno_config ADD COLUMN ajustes TEXT NULL');
         }
         $pdo->exec("CREATE TABLE IF NOT EXISTS meta_aluno_revisoes (
             usuario_id BIGINT UNSIGNED NOT NULL,
@@ -121,6 +126,8 @@ if (!function_exists('meta_cronograma_config')) {
             $minutos = array_fill_keys([1, 2, 3, 4, 5, 6], 180);
         }
         $cfg['minutos'] = $minutos;
+        $aj = json_decode((string)($cfg['ajustes'] ?? ''), true);
+        $cfg['ajustes'] = ['dif' => (array)($aj['dif'] ?? []), 'fora' => (array)($aj['fora'] ?? []), 'feitos' => (array)($aj['feitos'] ?? []), 'extra' => (array)($aj['extra'] ?? [])];
         $cfg['dias'] = array_keys($minutos);
         $cfg['horas_semana'] = array_sum($minutos) / 60;
         return $cfg;
@@ -168,6 +175,21 @@ if (!function_exists('meta_cronograma_salvar_config')) {
     }
 }
 
+if (!function_exists('meta_cronograma_salvar_ajustes')) {
+    /** Grava os ajustes do aluno (Editar tópicos, Preciso de mais tempo, Marcar assunto como feito). */
+    function meta_cronograma_salvar_ajustes(PDO $pdo, int $usuarioId, int $cursoId, array $aj): void
+    {
+        $pdo->prepare('UPDATE meta_aluno_config SET ajustes = :a WHERE usuario_id = :u AND curso_id = :c')
+            ->execute([':a' => json_encode($aj), ':u' => $usuarioId, ':c' => $cursoId]);
+    }
+
+    /** Excluir cronograma: apaga só a rotina e os ajustes; aulas, questões e revisões feitas ficam guardadas. */
+    function meta_cronograma_excluir(PDO $pdo, int $usuarioId, int $cursoId): void
+    {
+        $pdo->prepare('DELETE FROM meta_aluno_config WHERE usuario_id = :u AND curso_id = :c')->execute([':u' => $usuarioId, ':c' => $cursoId]);
+    }
+}
+
 if (!function_exists('meta_cronograma_minutos_item')) {
     /** Minutos de teoria e de questões de um assunto, pelas horas do Plano-Mestre. */
     function meta_cronograma_minutos_item(array $item): array
@@ -184,14 +206,20 @@ if (!function_exists('meta_cronograma_minutos_item')) {
 
 if (!function_exists('meta_cronograma_tarefas_pendentes')) {
     /** Fila de tarefas que faltam, na ordem do plano. */
-    function meta_cronograma_tarefas_pendentes(array $estado): array
+    function meta_cronograma_tarefas_pendentes(array $estado, array $aj = []): array
     {
         $fila = [];
+        $fatorDif = [1 => 0.7, 2 => 0.85, 3 => 1.0, 4 => 1.2, 5 => 1.4];
         foreach ($estado['itens'] as $item) {
-            if ($item['etapa'] === META_ETAPA_CONCLUIDO) {
+            $tid = (string)(int)($item['topico_id'] ?? 0);
+            // Só entram assuntos com aula pronta; fora os que o aluno tirou ou marcou como feitos.
+            if ($item['etapa'] === META_ETAPA_CONCLUIDO || empty($item['aula_id']) || in_array($tid, array_map('strval', (array)($aj['fora'] ?? [])), true) || in_array($tid, array_map('strval', (array)($aj['feitos'] ?? [])), true)) {
                 continue;
             }
             $min = meta_cronograma_minutos_item($item);
+            $f = $fatorDif[(int)($aj['dif'][(string)(int)($item['materia_id'] ?? 0)] ?? 3)] ?? 1.0;
+            $min['teoria'] = meta_arred5($min['teoria'] * $f);
+            $min['questoes'] = meta_arred5($min['questoes'] * $f) + (int)($aj['extra'][$tid] ?? 0);
             if (!$item['teoria_ok']) {
                 $fila[] = ['tipo' => 'teoria', 'item' => $item, 'minutos' => $min['teoria']];
             }
@@ -207,7 +235,7 @@ if (!function_exists('meta_cronograma_revisoes')) {
     {
         $revisoes = [];
         foreach ($estado['itens'] as $item) {
-            if ($item['etapa'] !== META_ETAPA_CONCLUIDO || empty($item['teoria_concluida_em'])) {
+            if ($item['etapa'] !== META_ETAPA_CONCLUIDO || empty($item['teoria_concluida_em']) || empty($item['aula_id'])) {
                 continue;
             }
             if ((int)$item['nivel_info']['nivel'] >= 4) {
@@ -297,18 +325,28 @@ if (!function_exists('meta_cronograma_distribuir')) {
                 $livre -= $rev['minutos'];
             }
             $materiasHoje = [];
+            $materiasDia = [];
             while ($livre >= 15 && $filas) {
                 // Matéria mais "atrasada" em relação ao seu peso; evita repetir a mesma no dia.
                 $escolha = null;
                 foreach ($filas as $mid => $l) {
+                    if (count($materiasDia) >= META_MATERIAS_DIA && !isset($materiasDia[$mid])) {
+                        continue; // 2 a 3 matérias por dia
+                    }
                     $nota = $usado[$mid] / $peso[$mid] + (isset($materiasHoje[$mid]) ? 1e6 : 0);
                     if ($escolha === null || $nota < $escolhaNota) {
                         $escolha = $mid;
                         $escolhaNota = $nota;
                     }
                 }
+                if ($escolha === null) {
+                    break;
+                }
                 $t = $filas[$escolha][0];
                 $usar = (int)(floor(min($livre, $restanteTarefa[$escolha], META_BLOCO_MIN) / 5) * 5);
+                if ($usar >= 30 && $usar < $restanteTarefa[$escolha]) {
+                    $usar = (int)(floor($usar / 30) * 30); // blocos de 30 min ou 1 h
+                }
                 if ($usar < 5) {
                     break;
                 }
@@ -326,6 +364,7 @@ if (!function_exists('meta_cronograma_distribuir')) {
                 $usado[$escolha] += $usar;
                 $restanteTarefa[$escolha] -= $usar;
                 $materiasHoje[$escolha] = true;
+                $materiasDia[$escolha] = true;
                 if ($restanteTarefa[$escolha] <= 0) {
                     array_shift($filas[$escolha]);
                     if ($filas[$escolha]) {
@@ -334,7 +373,7 @@ if (!function_exists('meta_cronograma_distribuir')) {
                         unset($filas[$escolha]);
                     }
                 }
-                if (count($materiasHoje) >= count($filas) + (int)!isset($filas[$escolha])) {
+                if (count($materiasHoje) >= min(META_MATERIAS_DIA, count($filas) + (int)!isset($filas[$escolha]))) {
                     $materiasHoje = []; // todas as matérias já passaram hoje: pode repetir
                 }
             }
@@ -343,6 +382,22 @@ if (!function_exists('meta_cronograma_distribuir')) {
             }
             if ($fim !== null && $n > 45) {
                 break;
+            }
+        }
+        // Assunto dividido em vários dias: "Assunto 1", "Assunto 2"...
+        $partes = [];
+        foreach ($agenda as $d => $ts) {
+            foreach ($ts as $k => $t) {
+                if (in_array($t['tipo'], ['teoria', 'questoes'], true)) {
+                    $partes[$t['tipo'] . ':' . (int)$t['item']['id']][] = [$d, $k];
+                }
+            }
+        }
+        foreach ($partes as $lista) {
+            if (count($lista) > 1) {
+                foreach ($lista as $n => [$d, $k]) {
+                    $agenda[$d][$k]['parte'] = $n + 1;
+                }
             }
         }
         return ['agenda' => $agenda, 'fim' => $fim];
@@ -420,7 +475,7 @@ if (!function_exists('meta_cronograma_montar')) {
         if (pe_aluno_tem($pdo, $usuarioId, 'discursiva')) {
             $cfg['eventos'][] = ['tipo' => 'discursiva', 'dia' => 5, 'minutos' => 45, 'cada_semanas' => 1, 'titulo' => 'Treino de discursiva', 'rotulo' => 'Discursiva'];
         }
-        $fila = meta_cronograma_tarefas_pendentes($estado);
+        $fila = meta_cronograma_tarefas_pendentes($estado, $cfg['ajustes']);
         $real = meta_cronograma_distribuir($fila, $cfg, $hoje, $revisoes);
         if (is_file(__DIR__ . '/edital-hack-lib.php')) {
             require_once __DIR__ . '/edital-hack-lib.php';

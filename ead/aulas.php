@@ -6580,5 +6580,6 @@ if ($travaMeta) {
     }
 })();
 </script>
+<script>window.addEventListener("load",function(){if(location.hash==="#pdf"){var b=document.getElementById("abrirPdfAula");if(b){b.click();}}});</script>
 </body>
 </html>

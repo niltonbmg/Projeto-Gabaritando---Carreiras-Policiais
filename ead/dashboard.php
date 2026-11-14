@@ -800,6 +800,71 @@ try {
         </div>
     </section>
 
+    <?php
+    // Metas de hoje: os blocos do cronograma do dia (mesma fonte do Meu cronograma).
+    $metasHtml = '';
+    $metasTotal = 0;
+    $metasFeitas = 0;
+    $metasCurso = 0;
+    $metasSemCfg = false;
+    $metasDia = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['dia'] ?? '')) && (string)$_GET['dia'] >= date('Y-m-d') ? (string)$_GET['dia'] : date('Y-m-d');
+    try {
+        if (isset($pdo) && $pdo instanceof PDO && ($usuarioIdDashboard ?? 0) > 0) {
+            require_once __DIR__ . '/includes/meta-cronograma-lib.php';
+            require_once __DIR__ . '/includes/cronograma-cartao.php';
+            $metasCurso = meta_curso_do_aluno($pdo, $usuarioIdDashboard);
+            if ($metasCurso > 0) {
+                $cronD = meta_cronograma_montar($pdo, $usuarioIdDashboard, $metasCurso);
+                $metasSemCfg = $cronD['estado']['plano'] && !$cronD['config'];
+                $revD = meta_revisoes_feitas($pdo, $usuarioIdDashboard);
+                $nD = 0;
+                foreach ($cronD['agenda'][$metasDia] ?? [] as $tD) {
+                    $metasTotal++;
+                    $metasFeitas += mc_bloco_feito($tD, $revD) ? 1 : 0;
+                    $metasHtml .= mc_cartao($tD, ['cursoId' => $metasCurso, 'hoje' => date('Y-m-d'), 'data' => $metasDia, 'volta' => 'inicio', 'revFeitas' => $revD, 'minQ' => (int)($cronD['estado']['config']['min_questoes'] ?? 5), 'n' => ++$nD]);
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        $metasHtml = '';
+    }
+    ?>
+    <?php if ($metasCurso > 0): ?>
+    <?php echo mc_estilo_cartao(); ?>
+    <style>
+        .metas{max-width:1200px;margin:0 auto;padding:20px 16px 0;display:grid;gap:12px;--cor:#475569}
+        .metas-topo{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+        .metas h2{font-size:22px}
+        .metas-topo form{display:flex;gap:8px;flex-wrap:wrap}
+        .metas-topo input{background:#1e1e21;border:1px solid #2a2a2e;border-radius:8px;color:#f3f3f4;padding:8px;font:inherit;font-size:14px;color-scheme:dark}
+        .metas-prog{display:grid;gap:4px;font-size:13px;color:#a3a3ab}
+        .metas-prog div{height:8px;background:#1e1e21;border-radius:999px;overflow:hidden}.metas-prog i{display:block;height:100%;background:#3ccf7a}
+        .metas-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+        .metas-vazio{color:#a3a3ab;font-size:14px}
+        .metas a.metas-link{color:#fbb928;font-weight:700;font-size:14px}
+    </style>
+    <section class="metas" aria-label="Metas de hoje">
+        <div class="metas-topo">
+            <h2><?php echo $metasDia === date('Y-m-d') ? 'Metas de hoje' : 'Metas de ' . dashboard_esc(date('d/m', strtotime($metasDia))); ?></h2>
+            <form method="get" role="search">
+                <input type="date" name="dia" min="<?php echo date('Y-m-d'); ?>" value="<?php echo dashboard_esc($metasDia); ?>" onchange="this.form.submit()" aria-label="Trocar a data">
+                <input type="search" id="metasBusca" placeholder="Buscar meta" aria-label="Buscar meta">
+            </form>
+        </div>
+        <?php if ($metasSemCfg): ?>
+            <p class="metas-vazio">Monte seu cronograma em 1 minuto: <a class="metas-link" href="meu-cronograma.php">definir minha rotina</a>.</p>
+        <?php elseif ($metasTotal === 0): ?>
+            <p class="metas-vazio">Nada marcado para este dia. <a class="metas-link" href="meu-cronograma.php">Ver meu cronograma</a></p>
+        <?php else: ?>
+            <div class="metas-prog"><span>Progresso do dia: <?php echo $metasFeitas; ?> de <?php echo $metasTotal; ?></span><div><i style="width:<?php echo (int)round($metasFeitas * 100 / $metasTotal); ?>%"></i></div></div>
+            <div class="metas-lista" id="metasLista"><?php echo $metasHtml; ?></div>
+            <a class="metas-link" href="meu-cronograma.php">Ver semana e mês →</a>
+            <?php echo mc_script_janelas(); ?>
+            <script>document.getElementById('metasBusca').addEventListener('input',function(){var q=this.value.toLowerCase();document.querySelectorAll('#metasLista .mc-card').forEach(function(c){c.style.display=c.textContent.toLowerCase().indexOf(q)>=0?'':'none';});});</script>
+        <?php endif; ?>
+    </section>
+    <?php endif; ?>
+
     <!-- dashboard-fluxo: curso -> curso-modulos.php -> aulas -->
     <main class="section">
         <h2 class="section__title">Cursos</h2>

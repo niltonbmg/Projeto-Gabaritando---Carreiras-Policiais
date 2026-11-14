@@ -17,12 +17,20 @@ require_once __DIR__ . '/api/conexao.php';
 require_once __DIR__ . '/includes/meta-cronograma-lib.php';
 
 $usuarioId = auth_user_id();
+require_once __DIR__ . '/includes/cronograma-cartao.php';
 $erro = '';
 $aviso = '';
 $cron = null;
 $cursoId = 0;
 $editar = isset($_GET['editar']);
-$semana = max(0, min(52, (int)($_GET['semana'] ?? 0)));
+$topicos = isset($_GET['topicos']);
+$vista = in_array($_GET['vista'] ?? '', ['hoje', 'semana', 'mes'], true) ? $_GET['vista'] : 'semana';
+$hojeDt = new DateTimeImmutable('today');
+$hoje = $hojeDt->format('Y-m-d');
+$base = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['data'] ?? '')) ? new DateTimeImmutable((string)$_GET['data']) : $hojeDt;
+if ($base < $hojeDt) {
+    $base = $hojeDt; // o cronograma é sempre de hoje em diante (o que passou foi reorganizado)
+}
 
 try {
     $pdo = db();
@@ -31,7 +39,10 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $cursoId > 0) {
         $acao = (string)($_POST['acao'] ?? '');
-        $volta = 'meu-cronograma.php?curso_id=' . $cursoId . '&semana=' . $semana;
+        $volta = ($_POST['volta'] ?? '') === 'inicio' ? 'dashboard.php?ok=' : 'meu-cronograma.php?curso_id=' . $cursoId . '&ok=';
+        $cfgAtual = meta_cronograma_config($pdo, $usuarioId, $cursoId);
+        $aj = $cfgAtual['ajustes'] ?? ['dif' => [], 'fora' => [], 'feitos' => [], 'extra' => []];
+        $tid = (string)(int)($_POST['topico_id'] ?? 0);
         if ($acao === 'salvar_config') {
             meta_cronograma_salvar_config($pdo, $usuarioId, $cursoId, $_POST);
             header('Location: meu-cronograma.php?curso_id=' . $cursoId . '&ok=1');
@@ -39,12 +50,43 @@ try {
         }
         if ($acao === 'feito_teoria') {
             meta_concluir_teoria($pdo, $usuarioId, $cursoId, (int)($_POST['item_id'] ?? 0));
-            header('Location: ' . $volta . '&ok=teoria');
+            header('Location: ' . $volta . 'teoria');
             exit;
         }
         if ($acao === 'feito_revisao') {
             meta_concluir_revisao($pdo, $usuarioId, (int)($_POST['item_id'] ?? 0), (int)($_POST['rodada'] ?? 0));
-            header('Location: ' . $volta . '&ok=revisao');
+            header('Location: ' . $volta . 'revisao');
+            exit;
+        }
+        if ($cfgAtual && $acao === 'mais_tempo' && $tid !== '0') {
+            $aj['extra'][$tid] = min(240, (int)($aj['extra'][$tid] ?? 0) + 30);
+            meta_cronograma_salvar_ajustes($pdo, $usuarioId, $cursoId, $aj);
+            header('Location: ' . $volta . 'tempo');
+            exit;
+        }
+        if ($cfgAtual && $acao === 'assunto_feito' && $tid !== '0') {
+            $aj['feitos'] = array_values(array_unique(array_merge((array)$aj['feitos'], [$tid])));
+            meta_cronograma_salvar_ajustes($pdo, $usuarioId, $cursoId, $aj);
+            header('Location: ' . $volta . 'feito');
+            exit;
+        }
+        if ($cfgAtual && $acao === 'salvar_topicos') {
+            $aj['dif'] = array_map(static fn($v) => max(1, min(5, (int)$v)), (array)($_POST['dif'] ?? []));
+            $incl = array_map('strval', array_map('intval', (array)($_POST['incluir'] ?? [])));
+            $aj['fora'] = array_values(array_diff(array_map('strval', array_map('intval', (array)($_POST['todos'] ?? []))), $incl));
+            meta_cronograma_salvar_ajustes($pdo, $usuarioId, $cursoId, $aj);
+            header('Location: meu-cronograma.php?curso_id=' . $cursoId . '&ok=topicos');
+            exit;
+        }
+        if ($cfgAtual && $acao === 'recalcular') {
+            // Recomeça a contagem a partir de hoje: o atraso zera e tudo que falta é redistribuído.
+            $pdo->prepare('UPDATE meta_aluno_config SET data_inicio = CURDATE() WHERE usuario_id = :u AND curso_id = :c')->execute([':u' => $usuarioId, ':c' => $cursoId]);
+            header('Location: meu-cronograma.php?curso_id=' . $cursoId . '&ok=recalculado');
+            exit;
+        }
+        if ($acao === 'excluir') {
+            meta_cronograma_excluir($pdo, $usuarioId, $cursoId);
+            header('Location: meu-cronograma.php?curso_id=' . $cursoId . '&ok=excluido');
             exit;
         }
     }
@@ -53,101 +95,52 @@ try {
     }
     $avisos = [
         '1' => 'Cronograma montado. Ele se reorganiza sozinho conforme você estuda.',
-        'teoria' => 'Teoria marcada como feita. Agora são as questões.',
+        'teoria' => 'Aula marcada como feita. Agora são as questões.',
         'revisao' => 'Revisão feita.',
+        'tempo' => 'Mais 30 minutos para este assunto. O cronograma foi reorganizado.',
+        'feito' => 'Assunto marcado como feito: saiu do seu cronograma.',
+        'topicos' => 'Tópicos salvos. O cronograma foi reorganizado.',
+        'recalculado' => 'Cronograma recalculado a partir de hoje.',
+        'excluido' => 'Cronograma excluído. Suas aulas e questões continuam guardadas. Monte de novo quando quiser.',
     ];
     $aviso = $avisos[(string)($_GET['ok'] ?? '')] ?? '';
 } catch (Throwable $e) {
     $erro = $e->getMessage();
 }
 
-function mc_e(string $v): string
-{
-    return htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
-}
-
-function mc_min(int $m): string
-{
-    $h = intdiv($m, 60);
-    $r = $m % 60;
-    return $h > 0 ? ($h . 'h' . ($r > 0 ? sprintf('%02d', $r) : '')) : ($r . ' min');
-}
-
-/** Cor fixa por matéria, sempre com contraste para texto branco. */
-function mc_cor_materia(int $materiaId): string
-{
-    $paleta = ['#1f6feb', '#16a34a', '#b45309', '#9333ea', '#dc2626', '#0e7490', '#be185d', '#4d7c0f', '#7c3aed', '#c2410c', '#0f766e', '#475569'];
-    return $paleta[$materiaId > 0 ? $materiaId % count($paleta) : count($paleta) - 1];
-}
-
 $nomesDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 $nomesDiasLongos = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 $meses = ['', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-$rotulos = ['edital' => '🕵️ Edital', 'teoria' => '📘 Teoria mínima', 'questoes' => '✅ Questões', 'revisao' => '🔁 Revisão', 'simulado' => '📝 Simulado', 'redacao' => '✍️ Redação', 'discursiva' => '📝 Discursiva'];
 $cfg = $cron['config'] ?? null;
 $temPlano = $cron && $cron['estado']['plano'];
 $mostrarForm = $temPlano && (!$cfg || $editar);
-$hojeDt = new DateTimeImmutable('today');
-$hoje = $hojeDt->format('Y-m-d');
-$atualId = (int)($cron['estado']['atual']['id'] ?? 0);
 $minQ = (int)($cron['estado']['config']['min_questoes'] ?? 5);
+$revFeitas = $temPlano ? meta_revisoes_feitas($pdo, $usuarioId) : [];
 
-// Janela exibida: 7 dias a partir de hoje (ou das próximas semanas).
-$inicioSemana = $hojeDt->modify('+' . (7 * $semana) . ' day');
-$diasSemana = [];
-for ($d = 0; $d < 7; $d++) {
-    $diasSemana[] = $inicioSemana->modify('+' . $d . ' day');
+// Janela exibida: Hoje (1 dia), Semana (7 dias) ou Mês (35 dias), a partir da data escolhida.
+$nDias = ['hoje' => 1, 'semana' => 7, 'mes' => 35][$vista];
+$passo = ['hoje' => '+1 day', 'semana' => '+7 day', 'mes' => '+35 day'][$vista];
+$diasVista = [];
+for ($d = 0; $d < $nDias; $d++) {
+    $diasVista[] = $base->modify('+' . $d . ' day');
 }
-$fimSemana = end($diasSemana);
-$totalSemana = 0;
-foreach ($diasSemana as $dia) {
-    $totalSemana += array_sum(array_column($cron['agenda'][$dia->format('Y-m-d')] ?? [], 'minutos'));
-}
+$fimVista = end($diasVista);
+$anterior = $base->modify(str_replace('+', '-', $passo));
+$anterior = $anterior < $hojeDt ? $hojeDt : $anterior;
+$proxima = $base->modify($passo);
+$urlBase = 'meu-cronograma.php?curso_id=' . $cursoId . '&vista=' . $vista;
 
-/** Cartão de uma tarefa (igual no computador e no celular). */
-function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ, array $rotulos, string $data, string $hoje): string
-{
-    $item = $t['item'];
-    $cor = $t['tipo'] === 'edital' ? '#1f2937' : ($t['tipo'] === 'simulado' ? '#111827' : ($t['tipo'] === 'redacao' ? '#7c2d12' : mc_cor_materia((int)($item['materia_id'] ?? 0))));
-    $titulo = mc_e((string)$item['titulo']);
-    $materia = mc_e((string)($item['materia_nome'] ?? ''));
-    $etapa = mc_e(($rotulos[$t['tipo']] ?? '') . (!empty($t['rodada']) ? ' ' . (int)$t['rodada'] . 'ª' : '') . (!empty($t['parcial']) ? ' · parte' : ''));
-    $tempo = mc_min((int)$t['minutos']);
-    $id = (int)$item['id'];
-    $podeAgora = $data <= $hoje;
-
-    // Ação do cartão
-    $acao = '';
-    if ($t['tipo'] === 'teoria') {
-        $link = !empty($item['aula_id']) ? 'aulas.php?curso_id=' . (int)$item['aula_curso_id'] . '&modulo_id=' . (int)$item['aula_modulo_id'] . '&aula_id=' . (int)$item['aula_id'] : '';
-        $liberado = $id === $atualId;
-        $acao .= $link !== '' && $liberado ? '<a class="mc-abrir" href="' . mc_e($link) . '" data-timer="' . $titulo . '">Abrir aula</a>' : '';
-        $acao .= '<form method="post"><input type="hidden" name="acao" value="feito_teoria"><input type="hidden" name="curso_id" value="' . $cursoId . '"><input type="hidden" name="item_id" value="' . $id . '">'
-            . '<button class="mc-check" type="submit" ' . ($liberado ? '' : 'disabled') . ' aria-label="Marcar teoria como feita: ' . $titulo . '" title="' . ($liberado ? 'Marcar como feito' : 'Faça os assuntos anteriores primeiro') . '"></button></form>';
-    } elseif ($t['tipo'] === 'questoes') {
-        $liberado = $id === $atualId; // questões abertas mesmo sem a aula
-        $feitas = min($minQ, (int)$item['nivel_info']['resolvidas']);
-        $acao .= $liberado ? '<a class="mc-abrir" href="banco-questoes.php?topico_id=' . (int)$item['topico_id'] . '" data-timer="' . $titulo . '">Resolver</a>' : '';
-        $acao .= '<span class="mc-contador" title="Marca sozinho ao chegar em ' . $minQ . ' questões">' . $feitas . '/' . $minQ . '</span>';
-    } elseif ($t['tipo'] === 'edital') {
-        $acao .= '<a class="mc-abrir" href="meu-concurso.php" data-timer="' . $titulo . '">Abrir</a>';
-    } elseif ($t['tipo'] === 'discursiva') {
-        $acao .= '<a class="mc-abrir" href="discursiva.php" data-timer="' . $titulo . '">Treinar discursiva</a>';
-    } elseif ($t['tipo'] === 'simulado' || $t['tipo'] === 'redacao') {
-        $acao .= '<a class="mc-abrir" href="' . ($t['tipo'] === 'simulado' ? 'simulados.php' : 'redacoes.php') . '" data-timer="' . $titulo . '">' . ($t['tipo'] === 'simulado' ? 'Fazer simulado' : 'Escrever redação') . '</a>';
-    } else {
-        $acao .= $podeAgora && !empty($item['topico_id']) ? '<a class="mc-abrir" href="banco-questoes.php?topico_id=' . (int)$item['topico_id'] . '&revisao=' . $id . '-' . (int)$t['rodada'] . '" data-timer="' . $titulo . '">Revisar</a>' : '';
-        $acao .= '<form method="post"><input type="hidden" name="acao" value="feito_revisao"><input type="hidden" name="curso_id" value="' . $cursoId . '"><input type="hidden" name="item_id" value="' . $id . '"><input type="hidden" name="rodada" value="' . (int)$t['rodada'] . '">'
-            . '<button class="mc-check" type="submit" ' . ($podeAgora ? '' : 'disabled') . ' aria-label="Marcar revisão como feita: ' . $titulo . '" title="' . ($podeAgora ? 'Marcar como feito' : 'Disponível no dia da revisão') . '"></button></form>';
+// Progresso geral: assuntos concluídos do plano (com aula).
+$totItens = 0;
+$okItens = 0;
+foreach ($cron['estado']['itens'] ?? [] as $it) {
+    if (!empty($it['aula_id'])) {
+        $totItens++;
+        $okItens += $it['etapa'] === META_ETAPA_CONCLUIDO ? 1 : 0;
     }
-
-    return '<article class="mc-card mc-' . mc_e($t['tipo']) . '" style="--cor:' . $cor . '">'
-        . '<div class="mc-card-topo"><span class="mc-etapa">' . $etapa . '</span><span class="mc-tempo">' . $tempo . '</span></div>'
-        . '<strong class="mc-materia">' . $materia . '</strong>'
-        . '<span class="mc-assunto">' . $titulo . '</span>'
-        . '<div class="mc-acoes">' . $acao . '</div>'
-        . '</article>';
 }
+$pctGeral = $totItens ? (int)round($okItens * 100 / $totItens) : 0;
+$nBloco = 0;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -201,25 +194,27 @@ function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ,
         .mc-col .lista{display:grid;gap:8px;padding:8px;align-content:start}
         .mc-col .vazio{color:var(--suave);font-size:12px;text-align:center;padding:16px 4px}
         .mc-col footer{margin-top:auto;padding:8px;font-size:12px;color:var(--suave);text-align:center;border-top:1px solid var(--linha);font-variant-numeric:tabular-nums}
-        /* Cartão */
-        .mc-card{background:var(--cor);color:#fff;border-radius:10px;padding:10px;display:grid;gap:4px;min-width:0;position:relative}
-        .mc-card.mc-revisao{background:var(--card2);border:2px dashed var(--cor);color:var(--texto)}
-        .mc-card-topo{display:flex;justify-content:space-between;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-        .mc-etapa{background:rgba(0,0,0,.25);padding:2px 6px;border-radius:6px}
-        .mc-revisao .mc-etapa{background:transparent;color:var(--cor);padding:0;filter:brightness(1.6)}
-        .mc-tempo{font-variant-numeric:tabular-nums}
-        .mc-materia{font-size:12px;text-transform:uppercase;letter-spacing:.03em;overflow-wrap:anywhere}
-        .mc-assunto{font-size:14px;font-weight:500;overflow-wrap:anywhere}
-        .mc-acoes{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:4px}
-        .mc-acoes form{margin-left:auto}
-        .mc-abrir{font-size:12px;font-weight:700;color:inherit;background:rgba(0,0,0,.28);padding:6px 8px;border-radius:8px;text-decoration:none}
-        .mc-revisao .mc-abrir{background:var(--linha)}
-        .mc-check{width:26px;height:26px;border-radius:7px;border:2px solid #fff;background:rgba(255,255,255,.12);cursor:pointer}
-        .mc-revisao .mc-check{border-color:var(--texto)}
-        .mc-check:hover:not(:disabled){background:rgba(255,255,255,.35)}
-        .mc-check:disabled{opacity:.35;cursor:not-allowed}
-        .mc-contador{margin-left:auto;font-size:12px;font-weight:700;background:rgba(0,0,0,.28);padding:5px 8px;border-radius:8px;font-variant-numeric:tabular-nums}
-        .mc-check:focus-visible,.mc-abrir:focus-visible,.mc-nav a:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--ouro);outline-offset:2px}
+        .mc-engr{position:relative}
+        .mc-engr summary{list-style:none;cursor:pointer;width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--linha);border-radius:10px;font-size:20px}
+        .mc-engr summary::-webkit-details-marker{display:none}
+        .mc-engr div{position:absolute;right:0;top:46px;z-index:30;background:var(--card);border:1px solid var(--linha);border-radius:12px;padding:6px;display:grid;min-width:210px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+        .mc-engr a,.mc-engr button{display:block;text-align:left;padding:10px 12px;border-radius:8px;color:var(--texto);text-decoration:none;background:none;border:0;font:inherit;font-size:14px;cursor:pointer;width:100%}
+        .mc-engr a:hover,.mc-engr button:hover{background:var(--card2)}
+        .mc-engr form{margin:0}
+        .mc-prog{background:var(--card);border:1px solid var(--linha);border-radius:14px;padding:10px 14px;display:grid;gap:6px}
+        .mc-prog span{font-size:13px;color:var(--suave)}
+        .mc-barra{height:10px;background:var(--card2);border-radius:999px;overflow:hidden}.mc-barra i{display:block;height:100%;background:var(--ok)}
+        .mc-mes{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+        .mc-mes .mc-col{min-height:110px}
+        .mc-mes .mc-card-abrir{padding:4px 0 4px 6px}.mc-mes .mc-materia{display:none}.mc-mes .mc-assunto{font-size:11px}
+        .mc-mes .mc-check{width:18px;height:18px;font-size:11px}
+        .mc-semana-grade.um{grid-template-columns:minmax(0,520px)}
+        .mc-top{display:grid;gap:12px}
+        .mc-mat{background:var(--card);border:1px solid var(--linha);border-radius:14px;padding:14px;display:grid;gap:8px}
+        .mc-mat label{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+        .mc-mat input[type=range]{width:100%;accent-color:#fbb928}
+        .mc-mat input[type=checkbox]{accent-color:#fbb928;margin-top:3px}
+        .mc-nav input[type=date]{background:var(--card2);border:1px solid var(--linha);border-radius:8px;color:var(--texto);padding:6px;color-scheme:dark;font:inherit;font-size:13px}
         /* Formulário */
         .btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none}
         .btn-ouro{background:var(--ouro);color:#111}
@@ -252,6 +247,7 @@ function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ,
         /* Celular: lista por dia */
         @media(max-width:900px){
             .mc-semana-grade{grid-template-columns:1fr}
+            .mc-mes{grid-template-columns:1fr}.mc-mes .mc-col.semnada{display:none}.mc-mes .mc-materia{display:block}
             .mc-col{min-height:0}
             .mc-col header{display:flex;justify-content:space-between;align-items:baseline;text-align:left;padding:10px 14px}
             .mc-col header strong{font-size:16px}
@@ -264,6 +260,7 @@ function mc_cartao(array $t, int $cursoId, int $semana, int $atualId, int $minQ,
             .mc-rotina-dia{grid-template-columns:1fr auto;align-items:center;text-align:left}
         }
     </style>
+<?php echo mc_estilo_cartao(); ?>
 </head>
 <body>
 <?php
@@ -279,10 +276,17 @@ if (is_file($barraSuperiorPath)) {
             <p class="mc-sub">Montado para você pelo Método META. Se atrasar, ele se reorganiza sozinho a partir de hoje.</p>
         </div>
         <?php if ($temPlano && $cfg): ?>
-            <nav class="mc-abas" aria-label="Seções do cronograma">
-                <a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>" <?php echo $editar ? '' : 'aria-current="page"'; ?>>Minha semana</a>
-                <a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>&editar=1" <?php echo $editar ? 'aria-current="page"' : ''; ?>>Minha rotina</a>
+            <div style="display:flex;gap:8px;align-items:center">
+            <nav class="mc-abas" aria-label="Vista">
+                <?php foreach (['hoje' => 'Hoje', 'semana' => 'Semana', 'mes' => 'Mês'] as $v => $rot): ?><a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>&vista=<?php echo $v; ?>" <?php echo !$editar && !$topicos && $vista === $v ? 'aria-current="page"' : ''; ?>><?php echo $rot; ?></a><?php endforeach; ?>
             </nav>
+            <details class="mc-engr"><summary aria-label="Configurar cronograma">⚙</summary><div>
+                <a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>&topicos=1">Editar tópicos</a>
+                <a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>&editar=1">Editar rotina</a>
+                <form method="post"><input type="hidden" name="acao" value="recalcular"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>"><button type="submit">Recalcular</button></form>
+                <form method="post" onsubmit="return confirm('Excluir o cronograma? Suas aulas, questões e revisões feitas continuam guardadas; só a rotina e os ajustes são apagados.');"><input type="hidden" name="acao" value="excluir"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>"><button type="submit" style="color:var(--alerta)">Excluir cronograma</button></form>
+            </div></details>
+            </div>
         <?php endif; ?>
     </div>
 
@@ -293,6 +297,23 @@ if (is_file($barraSuperiorPath)) {
     <?php if (!$temPlano): ?>
         <?php require_once __DIR__ . '/includes/meta-lib.php'; [$semTxt, $semLink, $semBt] = meta_motivo_sem_plano($pdo ?? db(), $usuarioId, (int)($cursoId ?? 0)); ?>
         <div class="mc-vazio"><?php echo mc_e($semTxt); ?><?php if ($semLink !== ''): ?><br><a class="mc-abrir" style="display:inline-block;margin-top:12px" href="<?php echo mc_e($semLink); ?>"><?php echo mc_e($semBt); ?></a><?php endif; ?></div>
+    <?php elseif ($topicos && $cfg): ?>
+        <?php $porMat = []; foreach ($cron['estado']['itens'] as $it) { if (!empty($it['aula_id'])) { $porMat[(int)$it['materia_id']]['nome'] = (string)($it['materia_nome'] ?? ''); $porMat[(int)$it['materia_id']]['itens'][(int)$it['topico_id']] = (string)$it['titulo']; } } ?>
+        <form class="mc-top" method="post">
+            <input type="hidden" name="acao" value="salvar_topicos"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>">
+            <p class="mc-sub">Para cada matéria, diga sua dificuldade (mais difícil = mais tempo) e marque os assuntos que entram no seu cronograma. Só aparecem assuntos com aula pronta.</p>
+            <?php foreach ($porMat as $mid => $m): $dv = (int)($cfg['ajustes']['dif'][(string)$mid] ?? 3); ?>
+                <section class="mc-mat" style="border-left:4px solid <?php echo mc_cor_materia($mid); ?>">
+                    <strong><?php echo mc_e($m['nome']); ?></strong>
+                    <label style="display:grid;gap:4px">Sua dificuldade: <span><input type="range" name="dif[<?php echo $mid; ?>]" min="1" max="5" value="<?php echo $dv; ?>" aria-label="Dificuldade em <?php echo mc_e($m['nome']); ?>"></span><small class="mc-sub">fácil ← → difícil</small></label>
+                    <?php foreach ($m['itens'] as $tid => $tt): ?>
+                        <input type="hidden" name="todos[]" value="<?php echo $tid; ?>">
+                        <label><input type="checkbox" name="incluir[]" value="<?php echo $tid; ?>" <?php echo in_array((string)$tid, array_map('strval', $cfg['ajustes']['fora']), true) ? '' : 'checked'; ?>> <?php echo mc_e($tt); ?></label>
+                    <?php endforeach; ?>
+                </section>
+            <?php endforeach; ?>
+            <div><button class="btn btn-ouro" type="submit">Salvar e reorganizar</button> <a class="btn btn-linha" href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>">Cancelar</a></div>
+        </form>
     <?php elseif ($mostrarForm): ?>
         <script>document.addEventListener('DOMContentLoaded',function(){var ins=document.querySelectorAll('.mc-rotina input'),out=document.getElementById('mcTotal');function calc(){var t=0;ins.forEach(function(i){var v=parseFloat(String(i.value).replace(',','.'))||0;t+=v;i.closest('.mc-rotina-dia').classList.toggle('folga',v<=0);});out.textContent='Total: '+String(t).replace('.',',')+' horas por semana';}ins.forEach(function(i){i.addEventListener('input',calc);});calc();});</script>
         <form class="mc-form" method="post">
@@ -336,38 +357,40 @@ if (is_file($barraSuperiorPath)) {
         <?php $ajustes = array_filter((array)($cron['desempenho'] ?? []), static fn(array $d): bool => (float)$d['fator'] !== 1.0); if ($ajustes): ?>
             <div class="mc-alerta" role="note">📊 Ajustado pelo seu Ranking Individual: <?php echo mc_e(implode(' · ', array_map(static fn(array $d): string => $d['materia'] . ' ' . $d['pct'] . '% (' . ((float)$d['fator'] > 1 ? 'mais tempo' : 'manutenção') . ')', $ajustes))); ?>. <a href="desafio.php" style="color:inherit">Ver ranking</a></div>
         <?php endif; ?>
-        <nav class="mc-nav" aria-label="Trocar de semana">
-            <?php if ($semana > 0): ?><a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>&semana=<?php echo $semana - 1; ?>" aria-label="Semana anterior">‹</a><?php else: ?><span class="off" aria-hidden="true">‹</span><?php endif; ?>
+        <div class="mc-prog"><span>Progresso geral: <?php echo $okItens; ?> de <?php echo $totItens; ?> assuntos (<?php echo $pctGeral; ?>%)</span><div class="mc-barra"><i style="width:<?php echo $pctGeral; ?>%"></i></div></div>
+        <nav class="mc-nav" aria-label="Trocar de período">
+            <?php if ($base > $hojeDt): ?><a href="<?php echo $urlBase; ?>&data=<?php echo $anterior->format('Y-m-d'); ?>" aria-label="Anterior">‹</a><?php else: ?><span class="off" aria-hidden="true">‹</span><?php endif; ?>
             <div>
-                <strong><?php echo (int)$inicioSemana->format('d') . ' ' . $meses[(int)$inicioSemana->format('n')]; ?> – <?php echo (int)$fimSemana->format('d') . ' ' . $meses[(int)$fimSemana->format('n')]; ?></strong>
-                <small><?php echo $semana === 0 ? 'Próximos 7 dias' : ($semana === 1 ? 'Semana seguinte' : 'Daqui a ' . $semana . ' semanas'); ?> · <?php echo mc_min((int)$totalSemana); ?> de estudo</small>
+                <strong><?php echo (int)$base->format('d') . ' ' . $meses[(int)$base->format('n')]; ?><?php if ($nDias > 1): ?> – <?php echo (int)$fimVista->format('d') . ' ' . $meses[(int)$fimVista->format('n')]; ?><?php endif; ?></strong>
+                <form method="get" style="display:inline"><input type="hidden" name="curso_id" value="<?php echo $cursoId; ?>"><input type="hidden" name="vista" value="<?php echo $vista; ?>"><input type="date" name="data" min="<?php echo $hoje; ?>" value="<?php echo $base->format('Y-m-d'); ?>" onchange="this.form.submit()" aria-label="Ir para a data"></form>
             </div>
-            <?php if ($semana > 0): ?><a class="hoje-link" href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>">Hoje</a><?php endif; ?>
-            <a href="meu-cronograma.php?curso_id=<?php echo $cursoId; ?>&semana=<?php echo $semana + 1; ?>" aria-label="Próxima semana">›</a>
+            <?php if ($base > $hojeDt): ?><a class="hoje-link" href="<?php echo $urlBase; ?>">Hoje</a><?php endif; ?>
+            <a href="<?php echo $urlBase; ?>&data=<?php echo $proxima->format('Y-m-d'); ?>" aria-label="Próximo">›</a>
         </nav>
 
-        <section class="mc-semana-grade" aria-label="Semana">
-            <?php foreach ($diasSemana as $dia): ?>
+        <section class="<?php echo $vista === 'mes' ? 'mc-mes' : 'mc-semana-grade' . ($vista === 'hoje' ? ' um' : ''); ?>" aria-label="Agenda">
+            <?php foreach ($diasVista as $dia): ?>
                 <?php
                 $data = $dia->format('Y-m-d');
                 $tarefas = $cron['agenda'][$data] ?? [];
                 $estuda = in_array((int)$dia->format('w'), $cfg['dias'], true);
-                $classe = ($data === $hoje ? ' hoje' : '') . ($data < $hoje ? ' passado' : '') . (!$tarefas ? ' semnada' : '');
+                $classe = ($data === $hoje ? ' hoje' : '') . (!$tarefas ? ' semnada' : '');
                 ?>
                 <div class="mc-col<?php echo $classe; ?>">
                     <header><small><?php echo $data === $hoje ? 'Hoje' : $nomesDias[(int)$dia->format('w')]; ?></small><strong><?php echo (int)$dia->format('d'); ?><span class="mc-sub" style="font-size:13px"> <?php echo $meses[(int)$dia->format('n')]; ?></span></strong></header>
                     <div class="lista">
                         <?php if (!$tarefas): ?>
-                            <div class="vazio"><?php echo $data < $hoje ? '' : ($estuda ? 'Livre' : 'Descanso'); ?></div>
+                            <div class="vazio"><?php echo $estuda ? 'Livre' : 'Descanso'; ?></div>
                         <?php else: ?>
-                            <?php foreach ($tarefas as $t) { echo mc_cartao($t, $cursoId, $semana, $atualId, $minQ, $rotulos, $data, $hoje); } ?>
+                            <?php foreach ($tarefas as $t) { echo mc_cartao($t, ['cursoId' => $cursoId, 'hoje' => $hoje, 'data' => $data, 'volta' => 'cronograma', 'revFeitas' => $revFeitas, 'minQ' => $minQ, 'n' => ++$nBloco]); } ?>
                         <?php endif; ?>
                     </div>
-                    <?php if ($tarefas): ?><footer><?php echo mc_min((int)array_sum(array_column($tarefas, 'minutos'))); ?></footer><?php endif; ?>
+                    <?php if ($tarefas && $vista !== 'mes'): ?><footer><?php echo mc_min((int)array_sum(array_column($tarefas, 'minutos'))); ?></footer><?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </section>
-        <p class="mc-sub">A caixinha marca a etapa como feita. As questões marcam sozinhas quando você chega em <?php echo $minQ; ?> resolvidas.</p>
+        <?php echo mc_script_janelas(); ?>
+        <p class="mc-sub">Toque no bloco para ver os passos do assunto. A caixinha marca como concluído; as questões marcam sozinhas ao chegar no mínimo.</p>
 
         <div class="mc-timer" id="mcTimer" role="group" aria-label="Cronômetro de estudo">
             <div><strong id="mcTempo">00:00:00</strong><small id="mcTarefa">Cronômetro de estudo</small></div>
