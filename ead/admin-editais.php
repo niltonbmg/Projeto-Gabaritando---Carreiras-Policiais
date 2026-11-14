@@ -16,6 +16,7 @@ auth_admin_require_login();
 require_once __DIR__ . '/includes/admin-cursos-lib.php';
 require_once __DIR__ . '/includes/edital-jobs-lib.php';
 require_once __DIR__ . '/includes/provas-escritas-lib.php';
+require_once __DIR__ . '/includes/ia-consumo-lib.php';
 @set_time_limit(320);
 
 $pdo = admin_cursos_db();
@@ -311,6 +312,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($acao === 'conferir_conteudo') {
             job_criar($pdo, $concursoId, 'conferir_conteudo', 'A IA confere se faltou assunto do edital no cadastro', ['texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 120000)]);
             ed_ir($concursoId, 'edital', '🤖 A IA está conferindo o edital inteiro contra o cadastro (1 pedido de texto). Os assuntos que faltarem aparecem aqui para você aprovar.');
+        }
+        if ($acao === 'ligar_cadastro_ia') {
+            require_once __DIR__ . '/includes/ia-consumo-lib.php';
+            $ctlE = ia_controle();
+            $ctlE['ligados']['edital'] = true;
+            ia_controle_salvar(['ligados' => $ctlE['ligados'], 'modo' => $ctlE['modo'], 'teto' => $ctlE['teto_manual']]);
+            ed_ir($concursoId, (string)($_GET['aba'] ?? $_POST['aba'] ?? 'aulas'), '✅ Tarefas da IA do Cadastro ligadas. As que estão com ⏳ começam a andar assim que houver cota de texto (o robô roda a cada 5 minutos).');
         }
         if ($acao === 'editar_conteudo') {
             $nCargos = (int)$pdo->query('SELECT COUNT(*) FROM concurso_cargos WHERE concurso_id = ' . (int)$concursoId)->fetchColumn();
@@ -629,6 +637,13 @@ $menuBarInclude = admin_cursos_get_menubar();
 
             <section class="admin-panel" id="centralIA" data-concurso="<?php echo $concursoId; ?>" aria-live="polite">
                 <div class="admin-panel-title"><h2>🤖 Central da IA</h2><small id="ciaStatus">verificando…</small></div>
+                <?php if (!ia_controle_ligado('edital')): ?>
+                <form method="post" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px;padding:10px 12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px">
+                    <input type="hidden" name="acao" value="ligar_cadastro_ia"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                    <span>⛔ <strong>As tarefas da IA do Cadastro estão desligadas</strong> (em Consumo e controle da IA). Tudo com ⏳ deste concurso fica parado até ligar. Cada tarefa gasta só 1 ou 2 pedidos da cota grátis.</span>
+                    <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">Ligar agora</button>
+                </form>
+                <?php endif; ?>
                 <p id="ciaAtualizar" hidden class="admin-alert admin-alert-success" style="margin:0 0 8px">✅ A IA terminou uma tarefa. <button type="button" class="admin-btn admin-btn-light admin-btn-small" onclick="location.reload()">Atualizar a página</button> (salve o que está preenchendo antes)</p>
                 <p id="ciaAgora" style="margin:4px 0 8px;font-size:15px"></p>
                 <details style="margin-bottom:8px"><summary class="admin-form-hint" style="cursor:pointer">O que são essas tarefas?</summary>
