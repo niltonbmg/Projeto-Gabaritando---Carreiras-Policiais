@@ -4517,8 +4517,8 @@ if ($travaMeta) {
                 atualizarProgressoModuloVisual(100);
                 // Método META: terminou o vídeo do professor -> as questões do assunto abrem na própria tela do vídeo.
                 var cV = window.gabCiclo || {};
-                if (cV.topico && window.gabAbrirQuestoes && !cV.abriuNoFim) {
-                    cV.abriuNoFim = true; cV.assistida = true;
+                if (cV.topico && window.gabAbrirQuestoes && !cV.abriuNoFim && !window.gabCicloCarregando) {
+                    cV.abriuNoFim = true; cV.assistida = true; setTimeout(function () { cV.abriuNoFim = false; }, 5000);
                     setTimeout(function () { window.gabAbrirQuestoes(); }, 900);
                 }
             }
@@ -4887,8 +4887,8 @@ if ($travaMeta) {
                     }
                     // Método META: fim do vídeo -> questões do assunto na própria tela (ou o desempenho e "rumo às 50").
                     var cFim = window.gabCiclo || {};
-                    if (cFim.topico && window.gabAbrirQuestoes && !cFim.abriuNoFim) {
-                        cFim.abriuNoFim = true;
+                    if (cFim.topico && window.gabAbrirQuestoes && !cFim.abriuNoFim) { // toda vez que o vídeo termina
+                        cFim.abriuNoFim = true; setTimeout(function () { cFim.abriuNoFim = false; }, 5000);
                         setTimeout(function () { window.gabAbrirQuestoes(); }, 900);
                     }
                     return;
@@ -4926,7 +4926,9 @@ if ($travaMeta) {
                     atualizarResumoConteudo(duracaoPlayer);
                 }
                 if (videoConcluido) {
+                    window.gabCicloCarregando = true; // aula já concluída antes: só marca, não abre as questões ao carregar
                     marcarAulaConcluidaVisualmente();
+                    window.gabCicloCarregando = false;
                 } else {
                     const percentualInicial = duracaoConhecida > 0 ? (progressoContinuo / duracaoConhecida) * 100 : (Number(configVideo.percentual) || 0);
                     atualizarProgressoModuloVisual(percentualInicial);
