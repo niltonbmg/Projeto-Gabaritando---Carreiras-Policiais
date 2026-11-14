@@ -288,14 +288,15 @@ try {
 
         .hero{
             width:100%;
-            min-height: 540px;
             position:relative;
-            background:
-                linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.52)),
-                url('<?php echo htmlspecialchars($banner, ENT_QUOTES, 'UTF-8'); ?>') center center / cover no-repeat;
+            background:#000;
             display:flex;
             align-items:flex-end;
         }
+        /* A arte aparece inteira, na proporção dela (antes era fundo "cover" com altura fixa e cortava). */
+        .hero picture{display:block;width:100%}
+        .hero__img{display:block;width:100%;max-width:none;height:auto}
+        .hero__content{position:absolute!important;left:0;bottom:0}
 
         .hero::after{
             content:"";
@@ -642,8 +643,7 @@ try {
         }
 
         @media (max-width: 980px){            .hero{
-                min-height: 360px;
-                background-position: center;
+                min-height: 0;
             }
 
             .hero__content{
@@ -687,10 +687,7 @@ try {
         }
 
         @media (max-width: 640px){            .hero{
-                min-height: 220px;
-                background:
-                    linear-gradient(to bottom, rgba(0,0,0,.12), rgba(0,0,0,.52)),
-                    url('<?php echo htmlspecialchars($bannerMobile, ENT_QUOTES, 'UTF-8'); ?>') center center / cover no-repeat;
+                min-height: 0;
             }
 
             .hero__badge{
@@ -789,6 +786,10 @@ try {
     <?php if (is_file($barraSuperiorInclude)) { include $barraSuperiorInclude; } ?>
 
     <section class="hero">
+        <picture>
+            <source media="(max-width: 640px)" srcset="<?php echo htmlspecialchars($bannerMobile, ENT_QUOTES, 'UTF-8'); ?>">
+            <img class="hero__img" src="<?php echo htmlspecialchars($banner, ENT_QUOTES, 'UTF-8'); ?>" alt="Projeto Gabaritando: preparação completa para carreiras policiais">
+        </picture>
         <div class="hero__content">
             <div class="hero__badge">
                 <i data-lucide="shield-check"></i>
