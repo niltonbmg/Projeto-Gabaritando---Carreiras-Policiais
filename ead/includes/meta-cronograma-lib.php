@@ -349,6 +349,21 @@ if (!function_exists('meta_cronograma_distribuir')) {
     }
 }
 
+if (!function_exists('meta_tem_simulado')) {
+    /** Existe simulado ativo, com questões, para o curso do aluno (ou geral, sem curso)? */
+    function meta_tem_simulado(PDO $pdo, int $cursoId): bool
+    {
+        try {
+            $st = $pdo->prepare("SELECT 1 FROM admin_simulados s WHERE s.status = 'ativo' AND (s.curso_id IS NULL OR s.curso_id = 0 OR s.curso_id = :c)
+                                   AND EXISTS (SELECT 1 FROM admin_simulado_questoes q WHERE q.simulado_id = s.id) LIMIT 1");
+            $st->execute([':c' => $cursoId]);
+            return (bool)$st->fetchColumn();
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
 if (!function_exists('meta_cronograma_montar')) {
     /**
      * Cronograma do aluno a partir de hoje + diagnóstico de ritmo.
@@ -388,7 +403,14 @@ if (!function_exists('meta_cronograma_montar')) {
         }
         $cfgEv = meta_config($pdo);
         $cfg['eventos'] = [];
-        if (($cfgEv['simulado_min'] ?? 0) > 0) {
+        $temTeoria = false; // simulado nunca é a 1ª tarefa de quem ainda não fez nenhuma teoria
+        foreach ($estado['itens'] as $itT) {
+            if ((!empty($itT['aula_id']) && !empty($itT['teoria_ok'])) || (int)($itT['nivel_info']['resolvidas'] ?? 0) > 0) { // aula vista de verdade ou questões feitas
+                $temTeoria = true;
+                break;
+            }
+        }
+        if (($cfgEv['simulado_min'] ?? 0) > 0 && $temTeoria && meta_tem_simulado($pdo, $cursoId)) { // sem simulado cadastrado para o curso/cargo: a tarefa não aparece
             $cfg['eventos'][] = ['tipo' => 'simulado', 'dia' => $cfgEv['simulado_dia'] ?? 6, 'minutos' => $cfgEv['simulado_min'], 'cada_semanas' => $cfgEv['simulado_semanas'] ?? 1, 'titulo' => 'Simulado no tempo de prova', 'rotulo' => 'Simulado'];
         }
         require_once __DIR__ . '/provas-escritas-lib.php';

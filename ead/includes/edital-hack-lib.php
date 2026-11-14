@@ -397,6 +397,8 @@ if (!function_exists('hack_bootstrap')) {
     function hack_escolha_aluno(PDO $pdo, int $usuarioId): ?array
     {
         hack_bootstrap($pdo);
+        require_once __DIR__ . '/curso-acesso.php';
+        gab_cargo_alinhar($pdo, $usuarioId); // o cargo segue o curso comprado
         $st = $pdo->prepare('SELECT ac.*, c.nome AS concurso, c.situacao, c.base_edital, c.data_prova, cg.nome AS cargo, cg.curso_id
                                FROM aluno_concurso ac JOIN concursos c ON c.id = ac.concurso_id JOIN concurso_cargos cg ON cg.id = ac.cargo_id
                               WHERE ac.usuario_id = :u');

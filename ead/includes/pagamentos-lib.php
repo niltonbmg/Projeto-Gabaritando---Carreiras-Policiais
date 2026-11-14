@@ -474,6 +474,7 @@ if (!function_exists('pag_bootstrap')) {
         $pdo->prepare("INSERT INTO usuario_cursos (usuario_id, curso_id, status, origem, criado_em, data_fim) VALUES (:u, :c, 'liberado', 'compra', NOW(), :f)
                        ON DUPLICATE KEY UPDATE status = 'liberado', origem = 'compra', data_fim = CASE WHEN data_fim IS NULL AND status IN ('liberado','ativo','pago','aprovado','matriculado') THEN NULL ELSE VALUES(data_fim) END, atualizado_em = NOW()")
             ->execute([':u' => $uid, ':c' => (int)$pedido['curso_id'], ':f' => $fim]);
+        gab_cargo_alinhar($pdo, $uid, (int)$pedido['curso_id']); // cargo = cargo do curso comprado
         $ja = (string)($pedido['status'] ?? '') === 'pago';
         $pdo->prepare("UPDATE pedidos SET usuario_id = :u, status = 'pago', pago_em = COALESCE(pago_em, NOW()), atualizado_em = NOW() WHERE id = :id")->execute([':u' => $uid, ':id' => (int)$pedido['id']]);
         if (!$ja || empty($pedido['acesso_enviado_em'])) {

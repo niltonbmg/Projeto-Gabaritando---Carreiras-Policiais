@@ -356,6 +356,8 @@ if (!function_exists('meta_curso_do_aluno')) {
                                 ORDER BY (uc.curso_id = :pedido) DESC,
                                          EXISTS (SELECT 1 FROM meta_planos p WHERE p.curso_id = uc.curso_id AND p.status = 'aprovado') DESC,
                                          uc.id ASC LIMIT 1");
+        require_once __DIR__ . '/curso-acesso.php';
+        gab_cargo_alinhar($pdo, $usuarioId); // o cargo segue o curso comprado
         if ($cursoPedido <= 0) {
             // O cargo escolhido em "Meu concurso" define o curso (o edital é a base).
             try {

@@ -326,3 +326,55 @@ if (!function_exists('gab_prazo_bootstrap')) {
         exit;
     }
 }
+
+// ---------------- Cargo do aluno = cargo do curso comprado ----------------
+if (!function_exists('gab_cargo_alinhar')) {
+    /**
+     * O cargo do aluno ("Meu concurso") sempre segue o curso que ele comprou/tem liberado.
+     * Se o cargo atual aponta para um curso que ele não tem (ex.: comprou PM e está como BM), troca para
+     * o cargo do curso liberado (preferindo o mesmo concurso; com $cursoId, usa esse curso). Sem curso ligado a cargo, não mexe.
+     * Devolve o cargo_id final (0 se nada a fazer).
+     */
+    function gab_cargo_alinhar(PDO $pdo, int $usuarioId, int $cursoId = 0): int
+    {
+        static $feito = [];
+        $chave = $usuarioId . ':' . $cursoId;
+        if ($usuarioId <= 0 || isset($feito[$chave])) {
+            return $feito[$chave] ?? 0;
+        }
+        $feito[$chave] = 0;
+        try {
+            $st = $pdo->prepare("SELECT curso_id FROM usuario_cursos WHERE usuario_id = :u AND status IN ('ativo','pago','aprovado','liberado','matriculado')");
+            $st->execute([':u' => $usuarioId]);
+            $meus = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+            if ($cursoId > 0) {
+                $meus = in_array($cursoId, $meus, true) ? [$cursoId] : $meus;
+            }
+            if (!$meus) {
+                return 0;
+            }
+            $st = $pdo->prepare('SELECT ac.concurso_id, ac.cargo_id, cg.curso_id FROM aluno_concurso ac LEFT JOIN concurso_cargos cg ON cg.id = ac.cargo_id WHERE ac.usuario_id = :u');
+            $st->execute([':u' => $usuarioId]);
+            $atual = $st->fetch(PDO::FETCH_ASSOC) ?: null;
+            if ($atual && in_array((int)$atual['curso_id'], $meus, true) && ($cursoId <= 0 || (int)$atual['curso_id'] === $cursoId)) {
+                return $feito[$chave] = (int)$atual['cargo_id'];
+            }
+            $in = implode(',', $meus);
+            $st = $pdo->prepare("SELECT id, concurso_id FROM concurso_cargos WHERE curso_id IN ($in)
+                                  ORDER BY (concurso_id = :c) DESC, FIELD(curso_id, $in), id DESC LIMIT 1");
+            $st->execute([':c' => (int)($atual['concurso_id'] ?? 0)]);
+            $novo = $st->fetch(PDO::FETCH_ASSOC);
+            if (!$novo) {
+                return 0;
+            }
+            $pdo->prepare('INSERT INTO aluno_concurso (usuario_id, concurso_id, cargo_id) VALUES (:u, :c, :g) ON DUPLICATE KEY UPDATE concurso_id = VALUES(concurso_id), cargo_id = VALUES(cargo_id)')
+                ->execute([':u' => $usuarioId, ':c' => (int)$novo['concurso_id'], ':g' => (int)$novo['id']]);
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                unset($_SESSION['gab_missao_' . $usuarioId]);
+            }
+            return $feito[$chave] = (int)$novo['id'];
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
+}

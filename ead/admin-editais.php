@@ -323,6 +323,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rm = mapa_usar($pdo, $concursoId);
             ed_ir($concursoId, 'edital', "✅ Mapa em uso: {$rm['assuntos']} assuntos na ordem do edital ({$rm['reaproveitados']} casados com os que já existiam, {$rm['renomeados']} renomeados, {$rm['novos']} novos, {$rm['sairam']} saíram do edital)." . ($rm['aulas_aproveitadas'] ? " {$rm['aulas_aproveitadas']} aula(s) aproveitadas de outros cursos." : '') . ' Próximo: no passo Aulas, "A IA procura aulas pelo assunto".');
         }
+        if ($acao === 'aulas_dup_simular' || $acao === 'aulas_dup_aplicar') {
+            require_once __DIR__ . '/includes/aulas-unir-lib.php';
+            $rd = aulas_dup_executar($pdo, mapa_cursos($pdo, $concursoId), $acao === 'aulas_dup_aplicar', (array)($_POST['sai'] ?? []));
+            hack_rascunho_set($pdo, $concursoId, 'aulas_dup_previa', $acao === 'aulas_dup_simular' ? $rd['grupos'] : null);
+            $nSai = array_sum(array_map(static fn($g) => count($g['saem']), $rd['grupos']));
+            ed_ir($concursoId, 'aulas', $acao === 'aulas_dup_simular'
+                ? "🔍 Simulação pronta: {$nSai} aula(s) repetida(s) em " . count($rd['grupos']) . ' grupo(s). Nada foi alterado ainda: confira a lista abaixo.'
+                : "✅ {$rd['unidas']} aula(s) repetida(s) unida(s). O progresso e as anotações dos alunos passaram para a aula que ficou; a repetida foi escondida.");
+        }
         if ($acao === 'unificar_simular' || $acao === 'unificar_aplicar') {
             $ru = mapa_unificar($pdo, $concursoId, $acao === 'unificar_aplicar');
             hack_rascunho_set($pdo, $concursoId, 'unificar_previa', $acao === 'unificar_simular' ? $ru : null);
@@ -1006,6 +1015,23 @@ $menuBarInclude = admin_cursos_get_menubar();
                 $vaStatus = [];
                 try { foreach ($pdo->query("SELECT aula_id, status FROM aula_videoaulas") as $vr) { $vaStatus[(int)$vr['aula_id']] = (string)$vr['status']; } } catch (Throwable $e) {}
             ?>
+                <?php $dupPrev = (array)hack_rascunho_get($pdo, $concursoId, 'aulas_dup_previa', []); ?>
+                <section class="admin-panel">
+                    <div class="admin-panel-title"><h2>🧹 Unir aulas duplicadas</h2></div>
+                    <p class="admin-form-hint" style="margin:0 0 8px">Aulas repetidas no mesmo módulo (cópias do mapa do edital). Fica a que tem mais conteúdo e progresso; a outra passa o progresso e as anotações dos alunos e é escondida (não é apagada).</p>
+                    <form method="post" style="display:inline"><input type="hidden" name="acao" value="aulas_dup_simular"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-light admin-btn-small" type="submit">🔍 Simular (não muda nada)</button></form>
+                    <?php if ($dupPrev): ?>
+                    <form method="post" style="margin-top:8px" onsubmit="return confirm('Unir as aulas marcadas? O progresso dos alunos passa para a aula que fica.');"><input type="hidden" name="acao" value="aulas_dup_aplicar"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                        <div style="max-height:380px;overflow:auto"><table style="width:100%;font-size:13px;border-collapse:collapse"><tr><th style="text-align:left">Curso › módulo</th><th style="text-align:left">Fica</th><th style="text-align:left">Sai (escondida)</th></tr>
+                        <?php foreach ($dupPrev as $g): ?><tr style="border-top:1px solid #f0f1f3;vertical-align:top"><td><?php echo admin_esc($g['curso'] . ' › ' . $g['modulo']); ?></td>
+                            <td><strong><?php echo admin_esc((string)$g['fica']['titulo']); ?></strong><br><small><?php echo (int)$g['fica']['conteudo']; ?> pts de conteúdo · <?php echo (int)$g['fica']['progresso']; ?> aluno(s)</small></td>
+                            <td><?php foreach ($g['saem'] as $s): ?><label style="display:block"><input type="checkbox" name="sai[]" value="<?php echo (int)$s['id']; ?>" checked> <?php echo admin_esc((string)$s['titulo']); ?> <small>(<?php echo (int)$s['conteudo']; ?> pts · <?php echo (int)$s['progresso']; ?> aluno(s))</small></label><?php endforeach; ?></td></tr><?php endforeach; ?>
+                        </table></div>
+                        <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" style="margin-top:8px">✅ Unir agora (marcadas)</button>
+                        <small class="admin-form-hint">Desmarque o que não for repetido de verdade.</small>
+                    </form>
+                    <?php endif; ?>
+                </section>
                 <section class="admin-panel">
                     <div class="admin-panel-title"><h2>5. Aulas de cada assunto</h2></div>
                     <p style="margin:0 0 10px;padding:10px 12px;background:#fff8e6;border:1px solid #fbb928;border-radius:10px;font-size:14px">✏️ Falta matéria ou assunto em algum cargo? <a href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=edital#faltou" style="font-weight:700">Corrigir o conteúdo do edital (colar o anexo do cargo)</a></p>

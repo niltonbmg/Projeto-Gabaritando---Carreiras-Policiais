@@ -32,6 +32,8 @@ $cursoContextoQuery = $cursoContextoId > 0 ? '?curso_id=' . $cursoContextoId : '
 $linkMinhasAulas = 'dashboard.php';
 if ($usuarioLogado && function_exists('db')) {
     try {
+        require_once __DIR__ . '/curso-acesso.php';
+        gab_cargo_alinhar(db(), (int)($usuarioAtual['id'] ?? 0)); // o cargo segue o curso comprado
         $stMA = db()->prepare('SELECT cg.curso_id FROM aluno_concurso ac JOIN concurso_cargos cg ON cg.id = ac.cargo_id WHERE ac.usuario_id = :u AND cg.curso_id IS NOT NULL LIMIT 1');
         $stMA->execute([':u' => (int)($usuarioAtual['id'] ?? 0)]);
         if ($cursoMA = (int)$stMA->fetchColumn()) {

@@ -33,6 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'escolhe
         $pdo->prepare('INSERT INTO aluno_concurso (usuario_id, concurso_id, cargo_id) VALUES (:u, :c, :g) ON DUPLICATE KEY UPDATE concurso_id = VALUES(concurso_id), cargo_id = VALUES(cargo_id)')
             ->execute([':u' => $usuarioId, ':c' => $concId, ':g' => $cargoId]);
         unset($_SESSION['gab_missao_' . $usuarioId]);
+        require_once __DIR__ . '/includes/curso-acesso.php';
+        $final = gab_cargo_alinhar($pdo, $usuarioId); // não deixa ficar num cargo de curso que ele não comprou
+        if ($final > 0 && $final !== $cargoId) {
+            header('Location: meu-concurso.php?cargo=curso');
+            exit;
+        }
     }
     header('Location: meu-concurso.php');
     exit;
@@ -178,6 +184,7 @@ function mc2_v($v): string
 <body>
 <?php if (is_file(__DIR__ . '/includes/barra-superior.php')) { include_once __DIR__ . '/includes/barra-superior.php'; } ?>
 <main class="mcz">
+<?php if (($_GET['cargo'] ?? '') === 'curso'): ?><p style="background:#fff7e6;border:1px solid #f0c36d;border-radius:10px;padding:10px 14px;margin:0 0 12px">Seu cargo segue o curso que você comprou. Para estudar para outro cargo, fale com seu mentor.</p><?php endif; ?>
 <?php if (!empty($preview)): ?><div class="card" role="note" style="border-color:#fbb928">👁 <strong>Pré-visualização do mentor</strong>: é exatamente o que o aluno de <?php echo mc2_e($esc['cargo'] ?? ''); ?> vê. Nada aqui é salvo.</div><?php endif; ?>
 <?php if (!$esc): ?>
     <header><h1>🕵️ Escolha seu concurso</h1><p class="sub">Toque no cargo que você vai prestar. Seu curso, seu cronograma e tudo do edital passam a seguir esse cargo. Dá para trocar depois.</p></header>
