@@ -115,6 +115,22 @@ if ($usuarioLogado) {
                 }
             } catch (Throwable $e) {
             }
+            // Prazo de acesso: aviso faltando 15 dias (e mais forte faltando 3) e quando vence.
+            try {
+                $stPz = db()->prepare("SELECT uc.curso_id, uc.data_fim, c.nome, DATEDIFF(uc.data_fim, CURDATE()) dias FROM usuario_cursos uc JOIN admin_cursos c ON c.id = uc.curso_id
+                                        WHERE uc.usuario_id = :u AND uc.curso_id > 0 AND uc.data_fim IS NOT NULL AND uc.status IN ('ativo','pago','aprovado','liberado','concluido','matriculado')
+                                          AND uc.data_fim <= CURDATE() + INTERVAL 15 DAY AND uc.data_fim >= CURDATE() - INTERVAL 30 DAY");
+                $stPz->execute([':u' => (int)$usuarioAtual['id']]);
+                foreach ($stPz->fetchAll() as $pz) {
+                    $d = (int)$pz['dias'];
+                    $tit = $d < 0 ? '⛔ Seu acesso a ' . $pz['nome'] . ' venceu em ' . date('d/m', strtotime((string)$pz['data_fim']))
+                        : ($d <= 3 ? '⏳ Faltam ' . $d . ' dia(s): seu acesso a ' . $pz['nome'] . ' vence em ' . date('d/m', strtotime((string)$pz['data_fim']))
+                        : '📅 Seu acesso a ' . $pz['nome'] . ' vence em ' . date('d/m', strtotime((string)$pz['data_fim'])) . ' (faltam ' . $d . ' dias)');
+                    array_unshift($notificacoesTopbar, ['tipo' => 'prazo', 'referencia_id' => (int)$pz['curso_id'], 'titulo' => $tit, 'descricao' => 'Renove para não perder o ritmo: seu progresso fica guardado.', 'link' => 'curso-modulos.php?curso_id=' . (int)$pz['curso_id'], 'icone' => 'clock', 'lida' => false, 'tempo' => 'agora', 'data' => date('Y-m-d H:i:s')]);
+                    $totalNotificacoesNaoLidas++;
+                }
+            } catch (Throwable $e) {
+            }
             if ($tipoUsuarioAtual === REDACAO_PERFIL) {
                 array_unshift($menuItens, ['titulo' => '✍️ Fila de correção', 'link' => 'correcao-redacao.php', 'externo' => false]);
             }

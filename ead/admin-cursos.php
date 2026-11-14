@@ -19,6 +19,30 @@ try {
     $erro = 'Erro na conexão ou criação das tabelas: ' . $e->getMessage();
 }
 
+require_once __DIR__ . '/includes/curso-acesso.php';
+if ($pdo instanceof PDO) {
+    gab_prazo_bootstrap($pdo);
+}
+/** Grava o prazo de acesso padrão do curso (vitalício, X dias, X meses ou até uma data) e o link de renovação. */
+function admin_cursos_salvar_prazo(PDO $pdo, int $cursoId): void
+{
+    $tipo = in_array($_POST['acesso_tipo'] ?? '', ['vitalicio', 'dias', 'meses', 'data'], true) ? (string)$_POST['acesso_tipo'] : 'vitalicio';
+    $qtd = max(0, (int)($_POST['acesso_qtd'] ?? 0));
+    $data = preg_match('~^\d{4}-\d{2}-\d{2}$~', (string)($_POST['acesso_data'] ?? '')) ? (string)$_POST['acesso_data'] : null;
+    if (($tipo === 'dias' || $tipo === 'meses') && $qtd <= 0) {
+        throw new RuntimeException('Informe quantos ' . $tipo . ' de acesso.');
+    }
+    if ($tipo === 'data' && !$data) {
+        throw new RuntimeException('Informe a data final do acesso.');
+    }
+    $url = trim((string)($_POST['renovar_url'] ?? ''));
+    if ($url !== '' && !preg_match('~^https?://~i', $url)) {
+        throw new RuntimeException('O link de renovação precisa começar com http:// ou https://');
+    }
+    $pdo->prepare('UPDATE admin_cursos SET acesso_tipo = :t, acesso_qtd = :q, acesso_data = :d, renovar_url = :u WHERE id = :id')
+        ->execute([':t' => $tipo, ':q' => $qtd ?: null, ':d' => $tipo === 'data' ? $data : null, ':u' => $url !== '' ? mb_substr($url, 0, 500) : null, ':id' => $cursoId]);
+}
+
 if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $acao = (string)($_POST['acao'] ?? '');
 
@@ -54,6 +78,7 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':status' => $status,
                 ':ordem' => $ordem,
             ]);
+            admin_cursos_salvar_prazo($pdo, (int)$pdo->lastInsertId());
 
             admin_cursos_redirect('admin-cursos.php?sucesso=curso_criado');
         }
@@ -98,6 +123,7 @@ if ($pdo instanceof PDO && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':ordem' => $ordem,
                 ':id' => $cursoId,
             ]);
+            admin_cursos_salvar_prazo($pdo, $cursoId);
 
             admin_cursos_redirect('admin-cursos.php?sucesso=curso_atualizado');
         }
@@ -413,6 +439,28 @@ $menuBarInclude = admin_cursos_get_menubar();
                         <div class="admin-form-field">
                             <label>Horas em PDF</label>
                             <input type="text" name="horas_pdf" placeholder="Ex: 15" value="<?php echo $editando ? admin_esc((string)($cursoEditando['horas_pdf'] ?? '0')) : ''; ?>">
+                        </div>
+                        <?php $pz = $editando ? gab_prazo_regra($pdo, (int)$cursoEditando['id']) : ['tipo' => 'vitalicio', 'qtd' => 0, 'data' => '', 'renovar_url' => '']; ?>
+                        <div class="admin-form-field">
+                            <label for="acessoTipo">Prazo de acesso padrão</label>
+                            <select name="acesso_tipo" id="acessoTipo" onchange="document.getElementById('acessoQtdBox').style.display=(this.value==='dias'||this.value==='meses')?'':'none';document.getElementById('acessoDataBox').style.display=this.value==='data'?'':'none'">
+                                <option value="vitalicio" <?php echo $pz['tipo'] === 'vitalicio' ? 'selected' : ''; ?>>Vitalício</option>
+                                <option value="dias" <?php echo $pz['tipo'] === 'dias' ? 'selected' : ''; ?>>X dias a partir da matrícula</option>
+                                <option value="meses" <?php echo $pz['tipo'] === 'meses' ? 'selected' : ''; ?>>X meses a partir da matrícula</option>
+                                <option value="data" <?php echo $pz['tipo'] === 'data' ? 'selected' : ''; ?>>Até uma data fixa (ex.: data da prova + 30 dias)</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-field" id="acessoQtdBox" style="<?php echo in_array($pz['tipo'], ['dias', 'meses'], true) ? '' : 'display:none'; ?>">
+                            <label>Quantidade (dias ou meses)</label>
+                            <input type="number" min="1" name="acesso_qtd" value="<?php echo $pz['qtd'] ?: ''; ?>" placeholder="Ex: 12">
+                        </div>
+                        <div class="admin-form-field" id="acessoDataBox" style="<?php echo $pz['tipo'] === 'data' ? '' : 'display:none'; ?>">
+                            <label>Acesso até</label>
+                            <input type="date" name="acesso_data" value="<?php echo admin_esc($pz['data']); ?>">
+                        </div>
+                        <div class="admin-form-field">
+                            <label>Link "Renovar" (página de venda)</label>
+                            <input type="url" name="renovar_url" placeholder="https://..." value="<?php echo admin_esc($pz['renovar_url']); ?>">
                         </div>
                         <div class="admin-form-field">
                             <label>Ordem</label>

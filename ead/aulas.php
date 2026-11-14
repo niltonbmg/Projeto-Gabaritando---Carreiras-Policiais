@@ -608,6 +608,9 @@ if ($acaoAulas !== '') {
         if (function_exists('gab_usuario_tem_acesso_curso') && !gab_usuario_tem_acesso_curso($pdoAjax, $usuarioIdAjax, $cursoId)) {
             aulas_json(['ok' => false, 'mensagem' => 'Este curso não está liberado para o seu usuário.'], 403);
         }
+        if (function_exists('gab_prazo_situacao') && gab_prazo_situacao($pdoAjax, $usuarioIdAjax, $cursoId)['vencido']) {
+            aulas_json(['ok' => false, 'mensagem' => 'Seu acesso a este curso venceu. Renove para continuar.'], 403);
+        }
 
         if ($acaoAulas === 'salvar_video_progresso') {
             $posicaoRecebida = filter_var($_POST['posicao'] ?? 0, FILTER_VALIDATE_FLOAT);
@@ -956,6 +959,10 @@ try {
 
     if (function_exists('gab_usuario_tem_acesso_curso') && !gab_usuario_tem_acesso_curso($pdo, $usuarioId, $cursoId)) {
         throw new RuntimeException('Este curso não está liberado para o seu usuário.');
+    }
+    // Prazo de acesso: vencido = tela de renovação (progresso fica guardado).
+    if (function_exists('gab_prazo_situacao') && ($pzAcesso = gab_prazo_situacao($pdo, $usuarioId, $cursoId)) && $pzAcesso['vencido']) {
+        gab_prazo_tela_vencido($pdo, $cursoId, (string)$pzAcesso['data_fim']);
     }
 
     $stmtCurso = $pdo->prepare("

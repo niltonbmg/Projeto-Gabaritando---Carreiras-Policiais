@@ -916,6 +916,10 @@ try {
     if (function_exists('gab_usuario_tem_acesso_curso') && !gab_usuario_tem_acesso_curso($pdo, $usuarioId, $cursoId)) {
         throw new RuntimeException('Este curso não está liberado para o seu usuário.');
     }
+    // Prazo de acesso: vencido = tela de renovação (progresso fica guardado).
+    if (function_exists('gab_prazo_situacao') && ($pzAcesso = gab_prazo_situacao($pdo, $usuarioId, $cursoId)) && $pzAcesso['vencido']) {
+        gab_prazo_tela_vencido($pdo, $cursoId, (string)$pzAcesso['data_fim']);
+    }
 
     $cursoColumns = curso_modulos_columns($pdo, 'admin_cursos');
     $cursoSelect = ['id', 'nome', 'descricao', 'capa', 'horas_curso', 'horas_video', 'horas_pdf'];

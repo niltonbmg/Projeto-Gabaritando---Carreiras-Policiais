@@ -226,6 +226,13 @@ if (!function_exists('admin_usuarios_salvar_acessos')) {
                 origem = 'admin',
                 atualizado_em = NOW()");
 
+        // Prazo de acesso: quem já estava liberado mantém a data; matrícula nova recebe o padrão do curso.
+        require_once __DIR__ . '/includes/curso-acesso.php';
+        gab_prazo_bootstrap($pdo);
+        $stAntes = $pdo->prepare("SELECT curso_id FROM usuario_cursos WHERE usuario_id = ? AND status IN ('ativo','pago','aprovado','liberado','concluido','matriculado')");
+        $stAntes->execute([$usuarioId]);
+        $jaLiberados = array_fill_keys(array_map('intval', $stAntes->fetchAll(PDO::FETCH_COLUMN)), true);
+
         foreach ($todosCursos as $curso) {
             $cursoId = (int)($curso['id'] ?? 0);
             if ($cursoId <= 0) {
@@ -236,15 +243,48 @@ if (!function_exists('admin_usuarios_salvar_acessos')) {
                 ':curso_id' => $cursoId,
                 ':status' => isset($selecionados[$cursoId]) ? 'liberado' : 'inativo',
             ]);
+            if (isset($selecionados[$cursoId]) && !isset($jaLiberados[$cursoId])) {
+                $pdo->prepare('UPDATE usuario_cursos SET data_fim = NULL WHERE usuario_id = ? AND curso_id = ?')->execute([$usuarioId, $cursoId]);
+                gab_prazo_aplicar_padrao($pdo, $usuarioId, $cursoId);
+            }
+        }
+
+        // Ajuste individual no modal: data escolhida, +30, +90 ou vitalício.
+        $acoes = (array)($_POST['prazo_acao'] ?? []);
+        $datas = (array)($_POST['prazo_data'] ?? []);
+        $up = $pdo->prepare('UPDATE usuario_cursos SET data_fim = :f WHERE usuario_id = :u AND curso_id = :c');
+        foreach ($selecionados as $cursoId => $_) {
+            $acao = (string)($acoes[$cursoId] ?? '');
+            $stF = $pdo->prepare('SELECT data_fim FROM usuario_cursos WHERE usuario_id = ? AND curso_id = ?');
+            $stF->execute([$usuarioId, $cursoId]);
+            $atual = $stF->fetchColumn() ?: null;
+            $novo = $atual;
+            if ($acao === 'vitalicio') {
+                $novo = null;
+            } elseif ($acao === '+30' || $acao === '+90') {
+                $base = $atual && $atual >= date('Y-m-d') ? new DateTimeImmutable((string)$atual) : new DateTimeImmutable('today');
+                $novo = $base->modify($acao . ' days')->format('Y-m-d');
+            } elseif (preg_match('~^\d{4}-\d{2}-\d{2}$~', (string)($datas[$cursoId] ?? '')) && (string)$datas[$cursoId] !== (string)$atual) {
+                $novo = (string)$datas[$cursoId];
+            }
+            if ($novo !== $atual) {
+                $up->execute([':f' => $novo, ':u' => $usuarioId, ':c' => $cursoId]);
+            }
         }
     }
 }
 
 if (!function_exists('admin_usuarios_montar_where')) {
-    function admin_usuarios_montar_where(array $colunas, string $busca, string $status, string $tipo): array
+    function admin_usuarios_montar_where(array $colunas, string $busca, string $status, string $tipo, string $acesso = ''): array
     {
         $where = [];
         $params = [];
+        // Prazo de acesso: alunos com algum curso vencendo em 30 dias ou já vencido.
+        if ($acesso === 'vencendo') {
+            $where[] = "id IN (SELECT usuario_id FROM usuario_cursos WHERE(curso_id > 0) AND status IN ('ativo','pago','aprovado','liberado','concluido','matriculado') AND data_fim BETWEEN CURDATE() AND CURDATE() + INTERVAL 30 DAY)";
+        } elseif ($acesso === 'vencidos') {
+            $where[] = "id IN (SELECT usuario_id FROM usuario_cursos WHERE(curso_id > 0) AND status IN ('ativo','pago','aprovado','liberado','concluido','matriculado') AND data_fim < CURDATE())";
+        }
 
         if ($busca !== '') {
             $buscaWhere = [];
@@ -519,6 +559,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $busca = trim((string)($_GET['q'] ?? ''));
 $statusFiltro = trim((string)($_GET['status'] ?? ''));
 $tipoFiltro = trim((string)($_GET['tipo'] ?? ''));
+$acessoFiltro = in_array($_GET['acesso'] ?? '', ['vencendo', 'vencidos'], true) ? (string)$_GET['acesso'] : '';
 $pagina = max(1, (int)($_GET['pagina'] ?? 1));
 $porPagina = 12;
 
@@ -531,7 +572,9 @@ if (!in_array($tipoFiltro, $allowedTipos, true)) {
     $tipoFiltro = '';
 }
 
-[$whereSql, $params] = admin_usuarios_montar_where($colunas, $busca, $statusFiltro, $tipoFiltro);
+require_once __DIR__ . '/includes/curso-acesso.php';
+gab_prazo_bootstrap($pdo);
+[$whereSql, $params] = admin_usuarios_montar_where($colunas, $busca, $statusFiltro, $tipoFiltro, $acessoFiltro);
 $totalFiltrado = admin_usuarios_count($pdo, trim(str_replace(' WHERE ', '', $whereSql)), $params);
 $totalPaginas = max(1, (int)ceil($totalFiltrado / $porPagina));
 if ($pagina > $totalPaginas) {
@@ -568,12 +611,16 @@ $cursosDisponiveis = admin_usuarios_listar_cursos($pdo);
 $editarId = (int)($_GET['editar'] ?? 0);
 $usuarioEditar = null;
 $cursosSelecionadosEditar = [];
+$prazosEditar = [];
 if ($editarId > 0) {
     $stmtEditar = $pdo->prepare('SELECT * FROM usuarios WHERE id = ? LIMIT 1');
     $stmtEditar->execute([$editarId]);
     $usuarioEditar = $stmtEditar->fetch(PDO::FETCH_ASSOC) ?: null;
     if ($usuarioEditar) {
         $cursosSelecionadosEditar = admin_usuarios_cursos_selecionados($pdo, $editarId);
+        $stPz = $pdo->prepare('SELECT curso_id, data_fim FROM usuario_cursos WHERE usuario_id = ? AND curso_id > 0');
+        $stPz->execute([$editarId]);
+        $prazosEditar = $stPz->fetchAll(PDO::FETCH_KEY_PAIR);
         $totalConfiguracoesEditar = admin_usuarios_table_count($pdo, 'usuario_cursos', 'usuario_id = ?', [$editarId]);
         $tipoEditarAtual = mb_strtolower(trim((string)($usuarioEditar['tipo'] ?? 'cliente')), 'UTF-8');
         if ($totalConfiguracoesEditar === 0 || in_array($tipoEditarAtual, ['admin', 'administrador', 'adm', 'master', 'superadmin'], true)) {
@@ -660,7 +707,7 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
     <script src="https://unpkg.com/lucide@0.469.0"></script>
     <style>
         :root{--preto:#111111;--amarelo:#fdbd08;--amarelo-escuro:#d89d00;--fundo:#f3f4f6;--card:#fff;--texto:#1f2937;--muted:#667085;--borda:#e4e7ec;--sombra:0 10px 28px rgba(15,23,42,.08);--verde:#027a48;--vermelho:#b42318;}
-        *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;min-height:100%}body{font-family:'Ubuntu',Arial,sans-serif;background:var(--fundo);color:var(--texto)}a{text-decoration:none;color:inherit}button,input,select{font-family:inherit}.admin-dashboard-shell{width:100%;min-height:calc(100vh - 78px);display:flex;background:var(--fundo)}.admin-main{width:100%;min-width:0;padding:32px 36px 46px}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.page-head h1{font-size:1.75rem;line-height:1.1;color:#111827;margin-bottom:7px}.page-head p{color:var(--muted);font-weight:500}.btn{min-height:40px;border:0;border-radius:10px;background:var(--amarelo);color:#111827;font-weight:700;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap}.btn i,.btn svg{width:18px;height:18px;stroke-width:2.5}.btn:hover{filter:brightness(.97)}.btn-light{background:#fff;border:1px solid #d0d5dd;color:#344054}.btn-muted{background:#f8fafc;border:1px solid #d0d5dd;color:#344054}.btn-danger{background:#fff1f0;border:1px solid #fecdca;color:#b42318}.btn-small{min-height:34px;padding:0 10px;font-size:.82rem;border-radius:8px}.btn[disabled]{opacity:.45;cursor:not-allowed}.alert{border-radius:10px;padding:12px 14px;font-weight:700;margin-bottom:16px}.alert-ok{background:#ecfdf3;border:1px solid #abefc6;color:#027a48}.alert-erro{background:#fff1f0;border:1px solid #fecdca;color:#b42318}.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.stat-card{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(15,23,42,.05)}.stat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#667085;font-weight:700;font-size:.9rem}.stat-top i,.stat-top svg{color:var(--amarelo-escuro);width:21px;height:21px}.stat-number{font-size:1.8rem;font-weight:700;color:#111827;margin-top:12px}.panel{background:#fff;border:1px solid var(--borda);border-radius:14px;box-shadow:var(--sombra);padding:20px;margin-bottom:18px}.filters{display:grid;grid-template-columns:minmax(240px,1fr) 180px 160px auto;gap:12px;align-items:end}.field label{display:block;font-size:.87rem;font-weight:700;color:#344054;margin-bottom:7px}.input,.select{width:100%;height:42px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#111827;padding:0 13px;outline:none}.input:focus,.select:focus{border-color:var(--amarelo);box-shadow:0 0 0 3px rgba(253,189,8,.18)}.table-card{background:#fff;border:1px solid var(--borda);border-radius:14px;box-shadow:var(--sombra);overflow:hidden}.table-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid #eef0f3}.table-top h2{font-size:1.05rem;color:#111827}.table-top span{color:#667085;font-weight:700;font-size:.88rem}.table-scroll{width:100%;overflow-x:auto}.users-table{width:100%;border-collapse:collapse;min-width:1040px}.users-table th,.users-table td{padding:14px 16px;border-bottom:1px solid #eef0f3;text-align:left;vertical-align:middle}.users-table th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#667085;background:#f8fafc}.users-table td{font-size:.92rem;color:#344054}.users-table tr:last-child td{border-bottom:0}.user-main{display:flex;align-items:center;gap:12px;min-width:250px}.avatar{width:40px;height:40px;border-radius:999px;background:#fff7db;color:#b77900;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 40px}.user-name{font-weight:700;color:#111827}.user-email{font-size:.84rem;color:#667085;margin-top:3px}.badge{display:inline-flex;align-items:center;gap:6px;min-height:26px;border-radius:999px;padding:0 9px;font-size:.78rem;font-weight:700}.badge-ativo{background:#ecfdf3;color:#027a48}.badge-bloqueado{background:#fff1f0;color:#b42318}.badge-inativo{background:#f2f4f7;color:#475467}.badge-admin{background:#fff7db;color:#b77900}.badge-cliente{background:#eff8ff;color:#175cd3}.actions{display:flex;align-items:center;gap:7px;flex-wrap:nowrap}.actions form{display:inline-flex}.empty{padding:38px;text-align:center;color:#667085;font-weight:700}.pagination{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px}.pagination a,.pagination span{min-width:38px;height:38px;border-radius:8px;border:1px solid #d0d5dd;display:flex;align-items:center;justify-content:center;background:#fff;font-weight:700;color:#344054}.pagination .active{background:var(--amarelo);border-color:var(--amarelo);color:#111827}.modal-back{position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.modal{width:min(720px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 22px 70px rgba(0,0,0,.28);padding:24px}.modal h2{font-size:1.22rem;margin-bottom:8px;color:#111827}.modal p{color:#667085;font-size:.92rem;line-height:1.45;margin-bottom:18px}.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.info-line{border:1px solid #eef0f3;background:#f8fafc;border-radius:10px;padding:12px}.info-line span{display:block;font-size:.78rem;font-weight:700;color:#667085;margin-bottom:5px}.info-line strong{display:block;color:#111827;word-break:break-word}.modal-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:18px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.metric{background:#fff7db;border:1px solid #f8d66d;border-radius:10px;padding:12px}.metric span{display:block;color:#8a6100;font-size:.76rem;font-weight:700}.metric strong{display:block;color:#111827;font-size:1.2rem;margin-top:4px}@media(max-width:1024px){.admin-dashboard-shell{flex-direction:column}.admin-main{padding:26px 18px 40px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:1fr 1fr}}@media(max-width:640px){.admin-main{padding:20px 12px 32px}.page-head{display:grid}.stats-grid,.filters,.modal-grid,.metrics{grid-template-columns:1fr}.panel{padding:16px}.table-top{display:grid}.modal-actions{display:grid}.modal-actions .btn{width:100%}}
+        *{box-sizing:border-box;margin:0;padding:0}html,body{width:100%;min-height:100%}body{font-family:'Ubuntu',Arial,sans-serif;background:var(--fundo);color:var(--texto)}a{text-decoration:none;color:inherit}button,input,select{font-family:inherit}.admin-dashboard-shell{width:100%;min-height:calc(100vh - 78px);display:flex;background:var(--fundo)}.admin-main{width:100%;min-width:0;padding:32px 36px 46px}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.page-head h1{font-size:1.75rem;line-height:1.1;color:#111827;margin-bottom:7px}.page-head p{color:var(--muted);font-weight:500}.btn{min-height:40px;border:0;border-radius:10px;background:var(--amarelo);color:#111827;font-weight:700;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap}.btn i,.btn svg{width:18px;height:18px;stroke-width:2.5}.btn:hover{filter:brightness(.97)}.btn-light{background:#fff;border:1px solid #d0d5dd;color:#344054}.btn-muted{background:#f8fafc;border:1px solid #d0d5dd;color:#344054}.btn-danger{background:#fff1f0;border:1px solid #fecdca;color:#b42318}.btn-small{min-height:34px;padding:0 10px;font-size:.82rem;border-radius:8px}.btn[disabled]{opacity:.45;cursor:not-allowed}.alert{border-radius:10px;padding:12px 14px;font-weight:700;margin-bottom:16px}.alert-ok{background:#ecfdf3;border:1px solid #abefc6;color:#027a48}.alert-erro{background:#fff1f0;border:1px solid #fecdca;color:#b42318}.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.stat-card{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(15,23,42,.05)}.stat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#667085;font-weight:700;font-size:.9rem}.stat-top i,.stat-top svg{color:var(--amarelo-escuro);width:21px;height:21px}.stat-number{font-size:1.8rem;font-weight:700;color:#111827;margin-top:12px}.panel{background:#fff;border:1px solid var(--borda);border-radius:14px;box-shadow:var(--sombra);padding:20px;margin-bottom:18px}.filters{display:grid;grid-template-columns:minmax(240px,1fr) 170px 150px 190px auto;gap:12px;align-items:end}.field label{display:block;font-size:.87rem;font-weight:700;color:#344054;margin-bottom:7px}.input,.select{width:100%;height:42px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#111827;padding:0 13px;outline:none}.input:focus,.select:focus{border-color:var(--amarelo);box-shadow:0 0 0 3px rgba(253,189,8,.18)}.table-card{background:#fff;border:1px solid var(--borda);border-radius:14px;box-shadow:var(--sombra);overflow:hidden}.table-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid #eef0f3}.table-top h2{font-size:1.05rem;color:#111827}.table-top span{color:#667085;font-weight:700;font-size:.88rem}.table-scroll{width:100%;overflow-x:auto}.users-table{width:100%;border-collapse:collapse;min-width:1040px}.users-table th,.users-table td{padding:14px 16px;border-bottom:1px solid #eef0f3;text-align:left;vertical-align:middle}.users-table th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#667085;background:#f8fafc}.users-table td{font-size:.92rem;color:#344054}.users-table tr:last-child td{border-bottom:0}.user-main{display:flex;align-items:center;gap:12px;min-width:250px}.avatar{width:40px;height:40px;border-radius:999px;background:#fff7db;color:#b77900;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 40px}.user-name{font-weight:700;color:#111827}.user-email{font-size:.84rem;color:#667085;margin-top:3px}.badge{display:inline-flex;align-items:center;gap:6px;min-height:26px;border-radius:999px;padding:0 9px;font-size:.78rem;font-weight:700}.badge-ativo{background:#ecfdf3;color:#027a48}.badge-bloqueado{background:#fff1f0;color:#b42318}.badge-inativo{background:#f2f4f7;color:#475467}.badge-admin{background:#fff7db;color:#b77900}.badge-cliente{background:#eff8ff;color:#175cd3}.actions{display:flex;align-items:center;gap:7px;flex-wrap:nowrap}.actions form{display:inline-flex}.empty{padding:38px;text-align:center;color:#667085;font-weight:700}.pagination{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px}.pagination a,.pagination span{min-width:38px;height:38px;border-radius:8px;border:1px solid #d0d5dd;display:flex;align-items:center;justify-content:center;background:#fff;font-weight:700;color:#344054}.pagination .active{background:var(--amarelo);border-color:var(--amarelo);color:#111827}.modal-back{position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.modal{width:min(720px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#fff;border-radius:16px;box-shadow:0 22px 70px rgba(0,0,0,.28);padding:24px}.modal h2{font-size:1.22rem;margin-bottom:8px;color:#111827}.modal p{color:#667085;font-size:.92rem;line-height:1.45;margin-bottom:18px}.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.info-line{border:1px solid #eef0f3;background:#f8fafc;border-radius:10px;padding:12px}.info-line span{display:block;font-size:.78rem;font-weight:700;color:#667085;margin-bottom:5px}.info-line strong{display:block;color:#111827;word-break:break-word}.modal-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:18px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.metric{background:#fff7db;border:1px solid #f8d66d;border-radius:10px;padding:12px}.metric span{display:block;color:#8a6100;font-size:.76rem;font-weight:700}.metric strong{display:block;color:#111827;font-size:1.2rem;margin-top:4px}@media(max-width:1024px){.admin-dashboard-shell{flex-direction:column}.admin-main{padding:26px 18px 40px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:1fr 1fr}}@media(max-width:640px){.admin-main{padding:20px 12px 32px}.page-head{display:grid}.stats-grid,.filters,.modal-grid,.metrics{grid-template-columns:1fr}.panel{padding:16px}.table-top{display:grid}.modal-actions{display:grid}.modal-actions .btn{width:100%}}
     
         .modal-wide{width:min(920px,100%)}
         .access-section{margin-top:18px;border:1px solid #e4e7ec;border-radius:14px;overflow:hidden;background:#fff}
@@ -678,6 +725,7 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
         .course-access-copy{min-width:0}
         .course-access-name{display:block;font-size:.9rem;font-weight:700;color:#111827;line-height:1.25}
         .course-access-status{display:block;font-size:.75rem;color:#667085;margin-top:4px}
+        .course-prazo{display:flex;gap:6px;margin-top:6px}.course-prazo input,.course-prazo select{font:inherit;font-size:.8rem;padding:5px 6px;border:1px solid #e4e7ec;border-radius:8px;min-width:0;flex:1}
         .access-empty{grid-column:1/-1;padding:18px;text-align:center;color:#667085;font-weight:700}
         .detail-courses{margin-top:14px;border:1px solid #e4e7ec;border-radius:12px;padding:14px}
         .detail-courses h3{font-size:.95rem;margin-bottom:10px;color:#111827}
@@ -717,6 +765,7 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
                     <div class="field"><label for="q">Buscar</label><input class="input" id="q" name="q" type="search" value="<?php echo admin_usuarios_e($busca); ?>" placeholder="Nome, e-mail ou telefone"></div>
                     <div class="field"><label for="status">Status</label><select class="select" id="status" name="status"><option value="">Todos</option><option value="ativo" <?php echo $statusFiltro === 'ativo' ? 'selected' : ''; ?>>Ativo</option><option value="bloqueado" <?php echo $statusFiltro === 'bloqueado' ? 'selected' : ''; ?>>Bloqueado</option><option value="inativo" <?php echo $statusFiltro === 'inativo' ? 'selected' : ''; ?>>Inativo</option></select></div>
                     <div class="field"><label for="tipo">Tipo</label><select class="select" id="tipo" name="tipo"><option value="">Todos</option><option value="cliente" <?php echo $tipoFiltro === 'cliente' ? 'selected' : ''; ?>>Cliente</option><option value="admin" <?php echo $tipoFiltro === 'admin' ? 'selected' : ''; ?>>Admin</option><option value="professor_redacao" <?php echo $tipoFiltro === 'professor_redacao' ? 'selected' : ''; ?>>Professor de redação</option></select></div>
+                    <div class="field"><label for="acesso">Acesso</label><select class="select" id="acesso" name="acesso"><option value="">Todos</option><option value="vencendo" <?php echo $acessoFiltro === 'vencendo' ? 'selected' : ''; ?>>Vencendo em 30 dias</option><option value="vencidos" <?php echo $acessoFiltro === 'vencidos' ? 'selected' : ''; ?>>Vencidos</option></select></div>
                     <button class="btn" type="submit"><i data-lucide="search"></i>Filtrar</button>
                 </form>
             </section>
@@ -859,14 +908,28 @@ $menuBarInclude = __DIR__ . '/includes/menu-bar.php';
                             <div class="access-empty">Nenhum curso cadastrado.</div>
                         <?php else: ?>
                             <?php foreach ($cursosDisponiveis as $curso): ?>
-                                <?php $cursoMarcado = in_array((int)$curso['id'], $cursosSelecionadosEditar, true); ?>
+                                <?php $cursoMarcado = in_array((int)$curso['id'], $cursosSelecionadosEditar, true);
+                                $cidP = (int)$curso['id']; $fimP = $prazosEditar[$cidP] ?? null; $padraoP = gab_prazo_data_padrao($pdo, $cidP);
+                                $vencidoP = $fimP && $fimP < date('Y-m-d'); ?>
+                                <div class="course-access-cell">
                                 <label class="course-access-item">
-                                    <input type="checkbox" name="cursos[]" value="<?php echo (int)$curso['id']; ?>" <?php echo $cursoMarcado ? 'checked' : ''; ?>>
+                                    <input type="checkbox" name="cursos[]" value="<?php echo $cidP; ?>" <?php echo $cursoMarcado ? 'checked' : ''; ?>>
                                     <span class="course-access-copy">
                                         <span class="course-access-name"><?php echo admin_usuarios_e($curso['nome'] ?? 'Curso'); ?></span>
                                         <span class="course-access-status"><?php echo ($curso['status'] ?? 'ativo') === 'ativo' ? 'Curso ativo' : 'Curso inativo'; ?></span>
+                                        <span class="course-access-status" style="<?php echo $vencidoP ? 'color:#b42318;font-weight:700' : ''; ?>">
+                                            <?php if ($cursoMarcado): ?><?php echo $fimP ? ($vencidoP ? 'venceu em ' : 'acesso até ') . date('d/m/Y', strtotime((string)$fimP)) : 'acesso vitalício'; ?>
+                                            <?php else: ?>ao liberar: <?php echo $padraoP ? 'até ' . date('d/m/Y', strtotime($padraoP)) : 'vitalício'; ?><?php endif; ?>
+                                        </span>
                                     </span>
                                 </label>
+                                <?php if ($cursoMarcado): ?>
+                                <div class="course-prazo">
+                                    <input type="date" name="prazo_data[<?php echo $cidP; ?>]" value="<?php echo admin_usuarios_e((string)$fimP); ?>" aria-label="Acesso até">
+                                    <select name="prazo_acao[<?php echo $cidP; ?>]" aria-label="Ajustar prazo"><option value="">manter / data ao lado</option><option value="+30">+30 dias</option><option value="+90">+90 dias</option><option value="vitalicio">vitalício</option></select>
+                                </div>
+                                <?php endif; ?>
+                                </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>

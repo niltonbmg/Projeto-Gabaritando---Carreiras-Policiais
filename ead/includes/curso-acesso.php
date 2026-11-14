@@ -208,3 +208,121 @@ if (!function_exists('gab_curso_acesso_sql')) {
         return [' AND ' . $coluna . ' IN (' . implode(',', $placeholders) . ')', $params];
     }
 }
+
+// ---------------- Prazo de acesso (Sprint 2A) ----------------
+// usuario_cursos.data_fim: último dia de acesso (NULL = vitalício).
+// admin_cursos: acesso_tipo (vitalicio | dias | meses | data), acesso_qtd, acesso_data, renovar_url.
+if (!function_exists('gab_prazo_bootstrap')) {
+    function gab_prazo_bootstrap(PDO $pdo): void
+    {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
+        gab_curso_acesso_bootstrap($pdo);
+        $cols = static function (string $t) use ($pdo): array {
+            try {
+                return array_map('strtolower', array_column($pdo->query("SHOW COLUMNS FROM `$t`")->fetchAll(PDO::FETCH_ASSOC), 'Field'));
+            } catch (Throwable $e) {
+                return [];
+            }
+        };
+        if (!in_array('data_fim', $cols('usuario_cursos'), true)) {
+            $pdo->exec('ALTER TABLE usuario_cursos ADD COLUMN data_fim DATE NULL DEFAULT NULL');
+        }
+        $c = $cols('admin_cursos');
+        if ($c) {
+            foreach (['acesso_tipo' => "VARCHAR(10) NOT NULL DEFAULT 'vitalicio'", 'acesso_qtd' => 'INT UNSIGNED NULL', 'acesso_data' => 'DATE NULL', 'renovar_url' => 'VARCHAR(500) NULL'] as $col => $def) {
+                if (!in_array($col, $c, true)) {
+                    $pdo->exec("ALTER TABLE admin_cursos ADD COLUMN `$col` $def");
+                }
+            }
+        }
+    }
+
+    /** Regra padrão do curso. */
+    function gab_prazo_regra(PDO $pdo, int $cursoId): array
+    {
+        gab_prazo_bootstrap($pdo);
+        $st = $pdo->prepare('SELECT acesso_tipo, acesso_qtd, acesso_data, renovar_url FROM admin_cursos WHERE id = :id');
+        $st->execute([':id' => $cursoId]);
+        $r = $st->fetch(PDO::FETCH_ASSOC) ?: [];
+        $tipo = in_array($r['acesso_tipo'] ?? '', ['vitalicio', 'dias', 'meses', 'data'], true) ? $r['acesso_tipo'] : 'vitalicio';
+        return ['tipo' => $tipo, 'qtd' => (int)($r['acesso_qtd'] ?? 0), 'data' => (string)($r['acesso_data'] ?? ''), 'renovar_url' => trim((string)($r['renovar_url'] ?? ''))];
+    }
+
+    /** Último dia de acesso pela regra do curso, a partir da matrícula (Y-m-d) ou NULL = vitalício. */
+    function gab_prazo_data_padrao(PDO $pdo, int $cursoId, ?string $inicio = null): ?string
+    {
+        $r = gab_prazo_regra($pdo, $cursoId);
+        $base = new DateTimeImmutable($inicio ?: 'today');
+        if ($r['tipo'] === 'dias' && $r['qtd'] > 0) {
+            return $base->modify('+' . $r['qtd'] . ' days')->format('Y-m-d');
+        }
+        if ($r['tipo'] === 'meses' && $r['qtd'] > 0) {
+            return $base->modify('+' . $r['qtd'] . ' months')->format('Y-m-d');
+        }
+        if ($r['tipo'] === 'data' && $r['data'] !== '') {
+            return $r['data'];
+        }
+        return null;
+    }
+
+    /** Situação do acesso: ['data_fim' => ?Y-m-d, 'vencido' => bool, 'dias' => ?int restantes]. Admin nunca vence. */
+    function gab_prazo_situacao(PDO $pdo, int $usuarioId, int $cursoId): array
+    {
+        $vazio = ['data_fim' => null, 'vencido' => false, 'dias' => null];
+        if ($usuarioId <= 0 || $cursoId <= 0 || gab_curso_acesso_usuario_admin($pdo, $usuarioId)) {
+            return $vazio;
+        }
+        try {
+            gab_prazo_bootstrap($pdo);
+            $st = $pdo->prepare('SELECT data_fim FROM usuario_cursos WHERE usuario_id = :u AND curso_id = :c');
+            $st->execute([':u' => $usuarioId, ':c' => $cursoId]);
+            $fim = $st->fetchColumn();
+            if (!$fim) {
+                return $vazio;
+            }
+            $dias = (int)(new DateTimeImmutable('today'))->diff(new DateTimeImmutable((string)$fim))->format('%r%a');
+            return ['data_fim' => (string)$fim, 'vencido' => $dias < 0, 'dias' => $dias];
+        } catch (Throwable $e) {
+            return $vazio;
+        }
+    }
+
+    /** Matrícula nova: aplica a data padrão do curso (se ainda não tiver data). */
+    function gab_prazo_aplicar_padrao(PDO $pdo, int $usuarioId, int $cursoId): void
+    {
+        gab_prazo_bootstrap($pdo);
+        $fim = gab_prazo_data_padrao($pdo, $cursoId);
+        $pdo->prepare('UPDATE usuario_cursos SET data_fim = :f WHERE usuario_id = :u AND curso_id = :c AND data_fim IS NULL')
+            ->execute([':f' => $fim, ':u' => $usuarioId, ':c' => $cursoId]);
+    }
+
+    /** Tela "Seu acesso venceu": painel e progresso continuam guardados. Encerra a página. */
+    function gab_prazo_tela_vencido(PDO $pdo, int $cursoId, string $dataFim, string $nomeCurso = ''): void
+    {
+        $r = gab_prazo_regra($pdo, $cursoId);
+        $e = static fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+        if ($nomeCurso === '') {
+            $stN = $pdo->prepare('SELECT nome FROM admin_cursos WHERE id = :id');
+            $stN->execute([':id' => $cursoId]);
+            $nomeCurso = (string)$stN->fetchColumn();
+        }
+        http_response_code(403);
+        ?><!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Acesso vencido | Projeto Gabaritando</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0c0c0d;color:#f3f3f4;font-family:'Ubuntu',system-ui,sans-serif}.pv{max-width:560px;margin:48px auto;padding:0 16px}.pv-c{background:#161618;border:1px solid #4a3a10;border-radius:18px;padding:26px;display:grid;gap:14px;text-align:center}.pv-c h1{margin:0;font-size:24px}.pv-c p{margin:0;color:#c9c9cf;line-height:1.55}.pv-bt{display:inline-block;border-radius:12px;padding:12px 18px;background:#fbb928;color:#111;font-weight:700;text-decoration:none;margin:4px}.pv-bt.l{background:transparent;color:#f3f3f4;border:1px solid #2a2a2e}</style></head><body>
+<?php if (is_file(__DIR__ . '/barra-superior.php')) { include __DIR__ . '/barra-superior.php'; } ?>
+<main class="pv"><section class="pv-c" aria-labelledby="pvT">
+    <div style="font-size:44px" aria-hidden="true">⏳</div>
+    <h1 id="pvT">Seu acesso venceu em <?php echo $e(date('d/m/Y', strtotime($dataFim))); ?></h1>
+    <p><?php echo $nomeCurso !== '' ? 'Curso: <strong>' . $e($nomeCurso) . '</strong>. ' : ''; ?>Seu progresso, suas questões e suas anotações continuam guardados: ao renovar, você continua de onde parou.</p>
+    <div><?php if ($r['renovar_url'] !== ''): ?><a class="pv-bt" href="<?php echo $e($r['renovar_url']); ?>" target="_blank" rel="noopener">Renovar meu acesso</a><?php endif; ?>
+        <a class="pv-bt <?php echo $r['renovar_url'] !== '' ? 'l' : ''; ?>" href="suporte.php">Falar com o suporte</a>
+        <a class="pv-bt l" href="dashboard.php">Voltar ao painel</a></div>
+</section></main></body></html><?php
+        exit;
+    }
+}
