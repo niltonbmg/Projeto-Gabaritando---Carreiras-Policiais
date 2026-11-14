@@ -647,6 +647,67 @@ if (!function_exists('job_bootstrap')) {
         return $lista ? 'A IA encontrou ' . count($lista) . ' assunto(s) do edital que faltavam no cadastro. Confira no passo Edital.' : 'A IA conferiu: nenhum assunto do edital faltando.';
     }
 
+    /**
+     * SEM IA: o mentor cola o conteúdo programático de UM cargo (do anexo do edital) e a plataforma compara com o cadastro.
+     * Sugere: assunto novo (não existe) ou "ligar" (o assunto existe no concurso, mas não está ligado a este cargo).
+     * Os subtópicos ("1.1.") viram assuntos próprios ("Constituição Federal › Dos princípios fundamentais").
+     */
+    function job_comparar_cargo(PDO $pdo, int $concursoId, int $cargoId, string $texto): array
+    {
+        require_once __DIR__ . '/padrao-lib.php';
+        $cg = $pdo->prepare('SELECT id, nome FROM concurso_cargos WHERE id = :id AND concurso_id = :c');
+        $cg->execute([':id' => $cargoId, ':c' => $concursoId]);
+        $cargo = $cg->fetch(PDO::FETCH_ASSOC);
+        if (!$cargo) {
+            throw new RuntimeException('Escolha o cargo.');
+        }
+        $lido = edital_parse_texto($texto);
+        if (!$lido) {
+            throw new RuntimeException('Não reconheci matérias no texto. Cole a partir do nome da matéria em maiúsculas seguido de dois-pontos (ex.: "LÍNGUA PORTUGUESA:").');
+        }
+        $chave = static fn(string $t): string => edital_normalizar(preg_replace('~\(.*?\)~u', '', $t));
+        $cad = []; // matéria normalizada -> itens
+        foreach (edital_itens($pdo, $concursoId) as $it) {
+            $cad[edital_normalizar((string)$it['materia'])][] = $it;
+        }
+        $mesmo = static function (string $a, string $b) use ($chave): bool {
+            $x = $chave($a);
+            $y = $chave($b);
+            if ($x === '' || $y === '') {
+                return false;
+            }
+            return $x === $y || (mb_strlen($x) >= 12 && str_contains($y, $x)) || (mb_strlen($y) >= 12 && str_contains($x, $y)) || padrao_parecido($a, $b);
+        };
+        $lista = [];
+        $total = 0;
+        foreach ($lido as $m) {
+            $doCad = $cad[edital_normalizar($m['materia'])] ?? [];
+            foreach ($m['assuntos'] as $a) {
+                $total++;
+                $achou = null;
+                foreach ($doCad as $it) {
+                    // subtópico "Pai › filho": compara com o filho e com o texto inteiro
+                    $filho = str_contains($a, ' › ') ? trim(substr($a, strrpos($a, '›') + 3)) : $a;
+                    if ($mesmo($a, (string)$it['assunto']) || ($filho !== $a && $mesmo($filho, (string)$it['assunto']))) {
+                        $achou = $it;
+                        break;
+                    }
+                }
+                if ($achou === null) {
+                    $lista[] = ['materia' => $m['materia'], 'cargos' => [$cargo['nome']], 'assunto' => $a, 'tipo' => 'novo'];
+                    continue;
+                }
+                $ids = array_filter(array_map('intval', explode(',', (string)$achou['cargos'])));
+                if ($ids && !in_array((int)$cargo['id'], $ids, true)) {
+                    $lista[] = ['materia' => (string)$achou['materia'], 'cargos' => [$cargo['nome']], 'assunto' => (string)$achou['assunto'], 'tipo' => 'ligar', 'item_id' => (int)$achou['id'], 'cargo_id' => (int)$cargo['id']];
+                }
+            }
+        }
+        $antes = array_values(array_filter((array)hack_rascunho_get($pdo, $concursoId, 'faltando', []), static fn($x) => !in_array($cargo['nome'], (array)($x['cargos'] ?? []), true)));
+        hack_rascunho_set($pdo, $concursoId, 'faltando', array_merge($antes, $lista) ?: null);
+        return ['lidos' => $total, 'materias' => count($lido), 'novos' => count(array_filter($lista, static fn($x) => $x['tipo'] === 'novo')), 'ligar' => count(array_filter($lista, static fn($x) => $x['tipo'] === 'ligar'))];
+    }
+
     function job_parecidas_ia(PDO $pdo, int $concursoId): string
     {
         $prontas = $pdo->query("SELECT a.id, a.curso_id, a.titulo, COALESCE(t.titulo,'') assunto, COALESCE(m.nome,'') materia, c.nome curso, a.video_url, a.pdf_arquivo

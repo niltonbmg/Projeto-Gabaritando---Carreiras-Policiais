@@ -312,6 +312,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             job_criar($pdo, $concursoId, 'conferir_conteudo', 'A IA confere se faltou assunto do edital no cadastro', ['texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 120000)]);
             ed_ir($concursoId, 'edital', '🤖 A IA está conferindo o edital inteiro contra o cadastro (1 pedido de texto). Os assuntos que faltarem aparecem aqui para você aprovar.');
         }
+        if ($acao === 'comparar_cargo') {
+            $rc = job_comparar_cargo($pdo, $concursoId, (int)($_POST['cargo_id'] ?? 0), (string)($_POST['texto'] ?? ''));
+            ed_ir($concursoId, 'edital', "Li {$rc['materias']} matéria(s) e {$rc['lidos']} assunto(s) do texto colado (sem IA). Faltam {$rc['novos']} assunto(s) novo(s) e {$rc['ligar']} assunto(s) que existem mas não estão ligados a este cargo. Confira abaixo.");
+        }
         if ($acao === 'aceitar_faltando') {
             $falt = (array)hack_rascunho_get($pdo, $concursoId, 'faltando', []);
             $matT = (string)($_POST['materia_toda'] ?? '');
@@ -319,7 +323,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 : ($matT !== '' ? array_keys(array_filter($falt, static fn($x) => $x['materia'] === $matT))
                 : (($_POST['tudo'] ?? '') === '1' ? array_keys($falt) : array_map('intval', (array)($_POST['f'] ?? []))));
             $porMat = [];
+            $nLig = 0;
             foreach ($idx as $k) {
+                if (isset($falt[$k]) && ($falt[$k]['tipo'] ?? '') === 'ligar') { // assunto já existe: só liga ao cargo
+                    $stL = $pdo->prepare('SELECT cargos FROM edital_itens WHERE id = :id AND concurso_id = :c');
+                    $stL->execute([':id' => (int)$falt[$k]['item_id'], ':c' => $concursoId]);
+                    $ids = array_filter(array_map('intval', explode(',', (string)$stL->fetchColumn())));
+                    if ($ids) {
+                        $ids[] = (int)$falt[$k]['cargo_id'];
+                        $nCargos = (int)$pdo->query('SELECT COUNT(*) FROM concurso_cargos WHERE concurso_id = ' . (int)$concursoId)->fetchColumn();
+                        $ids = array_values(array_unique($ids));
+                        $pdo->prepare('UPDATE edital_itens SET cargos = :g WHERE id = :id')->execute([':g' => count($ids) >= $nCargos ? '' : implode(',', $ids), ':id' => (int)$falt[$k]['item_id']]);
+                    }
+                    $nLig++;
+                    unset($falt[$k]);
+                    continue;
+                }
                 if (isset($falt[$k])) {
                     $chM = $falt[$k]['materia'] . '|' . implode(';', $falt[$k]['cargos']);
                     $porMat[$chM] = $porMat[$chM] ?? ['materia' => $falt[$k]['materia'], 'cargos' => $falt[$k]['cargos'], 'assuntos' => []];
@@ -330,7 +349,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nF = edital_acrescentar($pdo, $concursoId, array_values($porMat));
             hack_rascunho_set($pdo, $concursoId, 'faltando', $falt ? $falt : null);
             [$saF] = job_sincronizar_concurso($pdo, $concursoId);
-            ed_ir($concursoId, 'edital', "✅ $nF assunto(s) acrescentado(s) ao conteúdo programático" . ($saF ? " · $saF aula(s) já aproveitada(s) da plataforma" : '') . '. Eles aparecem no passo Aulas.');
+            ed_ir($concursoId, 'edital', "✅ $nF assunto(s) acrescentado(s) e $nLig ligado(s) ao cargo" . ($saF ? " · $saF aula(s) já aproveitada(s) da plataforma" : '') . '. Eles aparecem no passo Aulas.');
         }
         if ($acao === 'descartar_faltando') {
             $falt = (array)hack_rascunho_get($pdo, $concursoId, 'faltando', []);
@@ -680,6 +699,14 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <form method="post" style="margin:6px 0 10px"><input type="hidden" name="acao" value="conferir_conteudo"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
                         <?php if (empty($concurso['edital_pdf'])): ?><textarea name="texto" rows="3" style="width:100%" placeholder="Sem PDF guardado: cole aqui o conteúdo programático do edital"></textarea><?php endif; ?>
                         <button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>A IA confere se faltou assunto</button></form>
+                    <details style="margin:4px 0 12px" <?php echo $faltando ? '' : 'open'; ?>><summary style="cursor:pointer;font-weight:700">📋 Colar o conteúdo de um cargo e comparar (sem IA, exato)</summary>
+                        <form method="post" style="margin-top:8px;display:grid;gap:8px"><input type="hidden" name="acao" value="comparar_cargo"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
+                            <label>Cargo: <select name="cargo_id"><?php foreach ($cargos as $cgx): ?><option value="<?php echo (int)$cgx['id']; ?>"><?php echo admin_esc((string)$cgx['nome']); ?></option><?php endforeach; ?></select></label>
+                            <textarea name="texto" rows="6" style="width:100%" placeholder="Cole aqui o anexo do conteúdo programático deste cargo, do jeito que está no edital (LÍNGUA PORTUGUESA: 1. … 2. …)" required></textarea>
+                            <small class="admin-form-hint">A plataforma lê os nomes das matérias em maiúsculas e a numeração. "1.1." vira subtópico do item de cima. Mostra o que falta para este cargo; nada muda sem você aprovar.</small>
+                            <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" style="justify-self:start">Comparar com o cadastro</button>
+                        </form>
+                    </details>
                     <?php if ($faltando): ?>
                     <form method="post"><input type="hidden" name="acao" value="aceitar_faltando"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
                         <p style="margin:0 0 6px"><strong><?php echo count($faltando); ?> assunto(s) do edital que faltam no cadastro:</strong></p>
@@ -691,7 +718,7 @@ $menuBarInclude = admin_cursos_get_menubar();
                                 <input type="checkbox" class="f-ck" name="f[]" value="<?php echo (int)$k; ?>" checked>
                                 <button type="submit" name="um" value="<?php echo (int)$k; ?>" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 8px;min-height:0">✓ Concordo</button>
                                 <button type="submit" name="acao" value="descartar_faltando" formnovalidate onclick="this.form.querySelector('[name=um_d]')" class="admin-btn admin-btn-light admin-btn-small" style="padding:2px 8px;min-height:0" data-um="<?php echo (int)$k; ?>">✕</button>
-                                <span><?php echo admin_esc($fx['assunto']); ?></span>
+                                <span><?php echo ($fx['tipo'] ?? '') === 'ligar' ? '<small style="background:#e0f2fe;color:#075985;border-radius:6px;padding:1px 6px">ligar ao ' . admin_esc(implode(', ', (array)$fx['cargos'])) . '</small> ' : (!empty($fx['cargos']) && edital_normalizar((string)$fx['cargos'][0]) !== 'todos' ? '<small style="background:#fef3c7;border-radius:6px;padding:1px 6px">novo · ' . admin_esc(implode(', ', (array)$fx['cargos'])) . '</small> ' : ''); ?><?php echo admin_esc($fx['assunto']); ?></span>
                             </div>
                         <?php endforeach; ?>
                         </div>

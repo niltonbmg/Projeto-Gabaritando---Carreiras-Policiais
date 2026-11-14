@@ -513,3 +513,65 @@ if (!function_exists('edital_sugerir_plano')) {
         return $planoId;
     }
 }
+
+if (!function_exists('edital_parse_texto')) {
+    /**
+     * Lê o conteúdo programático colado do edital, sem IA: "MATÉRIA:" em maiúsculas abre a matéria;
+     * "1. … 2. …" separa os assuntos (os subitens "1.1." ficam dentro do assunto). Retorna [['materia','assuntos'=>[]]].
+     */
+    function edital_parse_texto(string $texto): array
+    {
+        $texto = str_replace(["\r\n", "\r"], "\n", $texto);
+        $up = 'A-ZÁÀÂÃÉÊÍÓÔÕÚÇ';
+        preg_match_all('~(?<![\p{L}])([' . $up . '][' . $up . ' ,\-–]{3,}):~u', $texto, $m, PREG_OFFSET_CAPTURE);
+        $saida = [];
+        $n = count($m[1]);
+        for ($i = 0; $i < $n; $i++) {
+            $nome = trim(preg_replace('~^.*\b(CONHECIMENTOS (GERAIS|ESPEC[IÍ]FICOS)|ANEXO [IVX]+)\b~u', '', $m[1][$i][0]), " -–,");
+            if (mb_strlen($nome) < 4) {
+                continue;
+            }
+            $ini = $m[0][$i][1] + strlen($m[0][$i][0]);
+            $fim = $i + 1 < $n ? $m[0][$i + 1][1] : strlen($texto);
+            $corpo = trim(preg_replace('~\s+~u', ' ', substr($texto, $ini, $fim - $ini)));
+            $corpo = preg_replace('~\s*(CONHECIMENTOS (GERAIS|ESPEC[IÍ]FICOS))\s*$~u', '', $corpo);
+            // Numeração: "3." = assunto; "1.1." = subtópico do assunto de cima. Não confunde "9.455" (lei) nem "5.0" (versão).
+            preg_match_all('~(?<![\d.\p{L}])(\d{1,2})(?:\.(\d{1,2}))?\s*\.(?!\d)\s*~u', $corpo, $nm, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
+            $itens = [];
+            foreach ($nm as $k => $tok) {
+                $ini2 = $tok[0][1] + strlen($tok[0][0]);
+                $fim2 = isset($nm[$k + 1]) ? $nm[$k + 1][0][1] : strlen($corpo);
+                $txt = trim(substr($corpo, $ini2, $fim2 - $ini2), " .;");
+                if ($txt === '') {
+                    continue;
+                }
+                if (isset($tok[2]) && $tok[2][0] !== '' && $itens) {
+                    $itens[count($itens) - 1]['subs'][] = $txt; // subtópico do assunto de cima
+                } else {
+                    $itens[] = ['txt' => $txt, 'subs' => []];
+                }
+            }
+            if (!$itens && $corpo !== '') {
+                $itens[] = ['txt' => trim($corpo, ' .;'), 'subs' => []];
+            }
+            $assuntos = [];
+            foreach ($itens as $it) {
+                if (!$it['subs']) {
+                    $assuntos[] = mb_substr($it['txt'], 0, 180);
+                    continue;
+                }
+                $pai = trim(preg_replace('~[:.]\s*$~u', '', $it['txt']));
+                $pai = preg_replace('~^Constitui[çc][ãa]o da Rep[úu]blica Federativa do Brasil$~iu', 'Constituição Federal', $pai);
+                foreach ($it['subs'] as $sub) {
+                    $assuntos[] = mb_substr($pai . ' › ' . $sub, 0, 180);
+                }
+            }
+            if ($assuntos) {
+                $nomeBonito = mb_convert_case(mb_strtolower($nome), MB_CASE_TITLE);
+                $nomeBonito = preg_replace_callback('~\b(De|Da|Do|Das|Dos|E)\b~u', static fn($x) => mb_strtolower($x[1]), $nomeBonito);
+                $saida[] = ['materia' => $nomeBonito, 'assuntos' => $assuntos];
+            }
+        }
+        return $saida;
+    }
+}
