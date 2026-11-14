@@ -1,0 +1,66 @@
+# Projeto Gabaritando - /ead
+# Redireciona /ead/ para /ead/login e mantém URLs sem .php sem quebrar POST de formulários.
+
+Options -Indexes
+
+# Segurança/LGPD: arquivos ocultos (.env, .git, .ia-uso.json...), backups e logs nunca são servidos.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(sql|sql\.gz|zip|tar|gz|bak|log|ini|sh)$">
+    Require all denied
+</FilesMatch>
+RedirectMatch 404 /\.git
+RewriteEngine On
+RewriteBase /ead/
+
+
+# Corrige URLs antigas/erradas como /ead/ead/admin-dashboard
+RewriteCond %{REQUEST_URI} ^/ead/(?:ead/)+?$ [NC]
+RewriteRule ^(?:ead/)+?$ /ead/ [R=302,L,NE]
+
+RewriteCond %{REQUEST_URI} ^/ead/(?:ead/)+(.+)$ [NC]
+RewriteRule ^(?:ead/)+(.+)$ /ead/$1 [R=302,L,NE]
+
+# Se acessar exatamente /ead ou /ead/, manda para o login
+RewriteCond %{REQUEST_URI} ^/ead/?$
+RewriteRule ^$ /ead/login [R=302,L]
+
+# Remove .php da URL apenas em GET/HEAD. Não redireciona POST para não perder cadastro/login.
+RewriteCond %{REQUEST_METHOD} !POST [NC]
+RewriteCond %{THE_REQUEST} \s/+ead/([^\s?]+)\.php[?\s] [NC]
+RewriteRule ^(.+)\.php$ /ead/$1 [R=302,L]
+
+# Permite acessar /login, /cadastro, /api/processa_cadastro etc carregando o .php interno
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L,QSA]
+
+# Mantém arquivos reais funcionando normalmente: css, js, imagens, uploads etc.
+
+# ---- Desempenho: compressão e cache no navegador (a 2ª visita quase não baixa nada) ----
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType text/javascript "access plus 7 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/x-icon "access plus 30 days"
+    ExpiresByType font/woff2 "access plus 90 days"
+    ExpiresByType audio/mpeg "access plus 30 days"
+    ExpiresByType audio/wav "access plus 30 days"
+</IfModule>
+
+# ---- Segurança: cabeçalhos de proteção ----
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), payment=()"
+</IfModule>
