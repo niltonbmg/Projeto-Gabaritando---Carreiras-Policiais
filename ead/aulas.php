@@ -4739,12 +4739,13 @@ if ($travaMeta) {
                 mostrarControles();
             }
 
-            function atualizarSom(){
+            function atualizarSom(mudoAgora){
                 if (!pronto || !player) {
                     return;
                 }
 
-                const mudo = typeof player.isMuted === 'function' ? player.isMuted() : false;
+                // O YouTube só informa "mudo" um instante depois: quem acabou de clicar manda o estado novo.
+                const mudo = typeof mudoAgora === 'boolean' ? mudoAgora : (typeof player.isMuted === 'function' ? player.isMuted() : false);
                 const volume = mudo ? 0 : (Number(player.getVolume ? player.getVolume() : 100) || 0);
 
                 if (controleVolume) {
@@ -4769,7 +4770,8 @@ if ($travaMeta) {
                 const mudo = typeof player.isMuted === 'function' ? player.isMuted() : false;
                 const volume = Number(player.getVolume ? player.getVolume() : 100) || 0;
 
-                if (mudo || volume === 0) {
+                const ficaMudo = !(mudo || volume === 0);
+                if (!ficaMudo) {
                     player.unMute();
                     player.setVolume(Math.max(1, ultimoVolume || 100));
                 } else {
@@ -4777,7 +4779,7 @@ if ($travaMeta) {
                     player.mute();
                 }
 
-                atualizarSom();
+                atualizarSom(ficaMudo);
                 mostrarControles();
             }
 
@@ -5073,7 +5075,7 @@ if ($travaMeta) {
                     if (volume === 0) {
                         player.mute();
                     }
-                    atualizarSom();
+                    atualizarSom(volume === 0);
                     mostrarControles();
                 });
             }
