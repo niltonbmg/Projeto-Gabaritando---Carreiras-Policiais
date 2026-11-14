@@ -28,6 +28,15 @@ if (!function_exists('aulas_dup_bootstrap')) {
         return preg_match('~\b(?:parte|aula|pt\.?)\s*(\d{1,2})\b~iu', $titulo, $m) ? (int)$m[1] : 0;
     }
 
+    /** Título comparável: tira só a numeração inicial ("7.", "7.1."), acentos, maiúsculas e espaços extras. O resto (01, 02, Parte 2) tem que bater. */
+    function aulas_dup_chave(string $titulo): string
+    {
+        $t = preg_replace('~^\s*\d{1,3}(\.\d{1,3})*\.?\s*[-–)]?\s*~u', '', $titulo);
+        $t = mb_strtolower((string)$t, 'UTF-8');
+        $t = strtr($t, ['á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'é' => 'e', 'ê' => 'e', 'è' => 'e', 'í' => 'i', 'ì' => 'i', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ò' => 'o', 'ú' => 'u', 'ù' => 'u', 'ü' => 'u', 'ç' => 'c']);
+        return trim((string)preg_replace('~\s+~u', ' ', $t));
+    }
+
     /** Pontos de conteúdo da aula (vídeo, PDF, material, videoaula/podcast da IA, descrição). */
     function aulas_dup_conteudo(PDO $pdo, array $a): int
     {
@@ -94,12 +103,7 @@ if (!function_exists('aulas_dup_bootstrap')) {
                 for ($j = $i + 1; $j < $n; $j++) {
                     $a = $lista[$i];
                     $b = $lista[$j];
-                    if (aulas_dup_parte((string)$a['titulo']) !== aulas_dup_parte((string)$b['titulo'])) {
-                        continue;
-                    }
-                    $s = edital_score_casar((string)$a['titulo'], (string)$b['titulo']);
-                    $mesmoAssunto = (int)$a['topico_id'] > 0 && (int)$a['topico_id'] === (int)$b['topico_id'];
-                    if ($s >= 0.999 || ($mesmoAssunto && $s >= 0.7)) {
+                    if (aulas_dup_chave((string)$a['titulo']) === aulas_dup_chave((string)$b['titulo'])) { // só título igual: na dúvida, não une
                         $pai[$raiz($j)] = $raiz($i);
                     }
                 }
