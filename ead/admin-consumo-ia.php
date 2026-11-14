@@ -21,6 +21,12 @@ if (($_POST['acao'] ?? '') === 'controle') {
     ia_controle_salvar(['ligados' => $lig, 'modo' => $modoNovo, 'teto' => ia_controle()['teto_manual']]);
     $msg = 'Controle salvo. Vale a partir da próxima tarefa.';
 }
+if (($_POST['acao'] ?? '') === 'politica_questoes') {
+    $modoQ = in_array($_POST['ineditas'] ?? '', ['nunca', 'completar', 'livre'], true) ? $_POST['ineditas'] : 'completar';
+    ia_controle_salvar(['ineditas' => $modoQ, 'ineditas_pct' => max(5, min(90, (int)($_POST['ineditas_pct'] ?? 30)))]);
+    header('Location: admin-consumo-ia.php?questoes=1#questoes');
+    exit;
+}
 if (($_POST['acao'] ?? '') === 'retomar') {
     // "Retomar agora": limpa as pausas de cota e zera os contadores de hoje (a fila volta a andar na próxima rodada do robô)
     ia_retomar_agora(false);
@@ -130,6 +136,21 @@ $menuBarInclude = admin_cursos_get_menubar();
             $modos = ['economico' => ['🐢 Econômico', 'No plano pago, não limita por dia.'], 'normal' => ['⚖️ Normal', 'No plano pago, não limita por dia.'], 'maximo' => ['🚀 Máximo', 'Recomendado no plano pago.']];
         }
         ?>
+        <?php $polQ = ia_politica_ineditas(); ?>
+        <section class="admin-panel" id="questoes">
+            <h2>❓ Questões: reais primeiro</h2>
+            <?php if (!empty($_GET['questoes'])): ?><div class="admin-alert admin-alert-success">Política de questões salva. Vale para as próximas buscas.</div><?php endif; ?>
+            <p style="font-size:14px;color:#4b5563;margin:0 0 10px">A IA sempre pesquisa primeiro questões <strong>reais</strong> de provas: mesma banca, depois bancas e cargos parecidos, depois cargos policiais e militares. Se a pesquisa estiver em pausa, o assunto espera. Inédita (criada pela IA) entra <strong>em revisão</strong> e só aparece ao aluno depois que você aprovar.</p>
+            <form method="post" style="display:grid;gap:8px">
+                <input type="hidden" name="acao" value="politica_questoes">
+                <label><input type="radio" name="ineditas" value="nunca" <?php echo $polQ['modo'] === 'nunca' ? 'checked' : ''; ?>> <strong>Nunca criar inéditas</strong>: só questões reais.</label>
+                <label><input type="radio" name="ineditas" value="completar" <?php echo $polQ['modo'] === 'completar' ? 'checked' : ''; ?>> <strong>Só para completar</strong>: quando o assunto ficar com menos de 10 reais, até <input type="number" name="ineditas_pct" min="5" max="90" value="<?php echo (int)$polQ['pct']; ?>" style="width:64px">% do total do assunto. <small>(recomendado: 30%)</small></label>
+                <label><input type="radio" name="ineditas" value="livre" <?php echo $polQ['modo'] === 'livre' ? 'checked' : ''; ?>> <strong>Livre</strong>: completa até 10 por assunto com inéditas (gasta mais).</label>
+                <button class="admin-btn admin-btn-primary admin-btn-small" type="submit" style="justify-self:start">Salvar política</button>
+            </form>
+            <p style="margin-top:8px"><a href="admin-revisao-questoes.php">📝 Revisão de questões (inéditas e importadas)</a></p>
+        </section>
+
         <section class="admin-panel" id="controle">
             <h2>🎚 Quanto a IA pode trabalhar por dia</h2>
             <?php if (!empty($_GET['retomou'])): ?><div class="admin-alert admin-alert-success">▶ Pausas limpas e contadores de hoje zerados. A fila volta a andar na próxima rodada do robô (até 5 min).</div><?php endif; ?>

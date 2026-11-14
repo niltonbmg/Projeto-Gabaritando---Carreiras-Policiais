@@ -409,7 +409,21 @@ if (!function_exists('ia_consumo_bootstrap')) {
 
     function ia_controle_salvar(array $c): void
     {
+        // mescla com o que já está salvo (ex.: a política de questões inéditas não some ao salvar o modo)
+        $antes = json_decode((string)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-controle.json'), true);
+        $c = array_replace(is_array($antes) ? $antes : [], $c);
         @file_put_contents(dirname(__DIR__) . '/uploads/.ia-controle.json', json_encode($c, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+
+    /**
+     * Política de questões inéditas (diretriz: questões REAIS primeiro; inédita só como complemento).
+     * nunca | completar (até X% do total do assunto e só se houver menos de 10 reais) | livre.
+     */
+    function ia_politica_ineditas(): array
+    {
+        $c = json_decode((string)@file_get_contents(dirname(__DIR__) . '/uploads/.ia-controle.json'), true) ?: [];
+        $modo = in_array($c['ineditas'] ?? '', ['nunca', 'completar', 'livre'], true) ? $c['ineditas'] : 'completar';
+        return ['modo' => $modo, 'pct' => max(5, min(90, (int)($c['ineditas_pct'] ?? 30)))];
     }
 
     function ia_controle_ligado(string $tipo): bool

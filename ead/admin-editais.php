@@ -458,22 +458,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 5 · Questões
         if ($acao === 'enviar_questoes') {
             $arq = '';
+            $planilha = '';
             if (!empty($_FILES['arquivo']['tmp_name']) && is_uploaded_file($_FILES['arquivo']['tmp_name'])) {
+                $ext = strtolower(pathinfo((string)$_FILES['arquivo']['name'], PATHINFO_EXTENSION));
+                if (!in_array($ext, ['pdf', 'csv', 'xlsx'], true)) { throw new RuntimeException('Envie PDF, planilha .xlsx ou .csv.'); }
+                if ((int)$_FILES['arquivo']['size'] > 20 * 1024 * 1024) { throw new RuntimeException('Arquivo acima de 20 MB.'); }
+                // Racionalidade: o mesmo arquivo não é lido de novo (já gastou IA).
+                $hashArq = sha1_file($_FILES['arquivo']['tmp_name']);
+                $importados = (array)hack_rascunho_get($pdo, $concursoId, 'importados', []);
+                if (isset($importados[$hashArq])) { throw new RuntimeException('Esse arquivo já foi enviado em ' . $importados[$hashArq] . '. As questões dele já estão no banco (ou em revisão).'); }
                 $dir = __DIR__ . '/uploads/provas';
                 if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
-                $arq = 'uploads/provas/questoes-' . $concursoId . '-' . substr(sha1((string)microtime(true)), 0, 8) . '.pdf';
-                move_uploaded_file($_FILES['arquivo']['tmp_name'], __DIR__ . '/' . $arq);
+                $dest = 'uploads/provas/questoes-' . $concursoId . '-' . substr($hashArq, 0, 10) . '.' . $ext;
+                move_uploaded_file($_FILES['arquivo']['tmp_name'], __DIR__ . '/' . $dest);
+                if ($ext === 'pdf') { $arq = $dest; } else {
+                    $planilha = $dest;
+                    if (!hack_planilha_linhas(__DIR__ . '/' . $dest, $dest)) { throw new RuntimeException('Não encontrei questões na planilha: a primeira linha deve ter os títulos das colunas (ex.: Enunciado, A, B, C, D, E, Gabarito, Banca, Ano, Assunto).'); }
+                }
+                $importados[$hashArq] = date('d/m/Y H:i');
+                hack_rascunho_set($pdo, $concursoId, 'importados', $importados);
             }
-            job_criar($pdo, $concursoId, 'enviar_questoes', 'Separando por assunto as questões enviadas', ['arquivo' => $arq, 'texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 60000)]);
-            ed_ir($concursoId, 'questoes', '🤖 A IA está lendo as questões enviadas e separando por assunto.');
+            job_criar($pdo, $concursoId, 'enviar_questoes', 'Separando por assunto as questões enviadas', ['arquivo' => $arq, 'planilha' => $planilha, 'texto' => mb_substr(trim((string)($_POST['texto'] ?? '')), 0, 60000)]);
+            ed_ir($concursoId, 'questoes', '🤖 A IA está lendo as questões enviadas e separando por assunto. Tudo entra EM REVISÃO (o aluno só vê depois de você aprovar em Revisão de questões).');
         }
         if ($acao === 'completar_questoes') {
             job_sincronizar_concurso($pdo, $concursoId); // libera as questões que já existem nos mesmos assuntos
             $n = 0;
+            hack_questoes_bootstrap($pdo);
+            $recentes = $pdo->query('SELECT topico_id FROM questoes_busca WHERE buscado_em > NOW() - INTERVAL 30 DAY')->fetchAll(PDO::FETCH_COLUMN);
+            $pulados = 0;
             foreach (hack_questoes_situacao($pdo, $concursoId)['itens'] as $it) {
-                if ($it['questoes'] < 10) { ia_fila_adicionar($pdo, 'questoes', (int)$it['id']); $n++; }
+                if ($it['questoes'] >= 10) { continue; }
+                if (in_array((int)$it['topico_id'], array_map('intval', $recentes), true) && ia_politica_ineditas()['modo'] !== 'livre') { $pulados++; continue; } // já pesquisado: não gasta de novo
+                ia_fila_adicionar($pdo, 'questoes', (int)$it['id']); $n++;
             }
-            ed_ir($concursoId, 'questoes', $n . ' assunto(s) na fila: a IA pesquisa questões reais na internet e, se não achar, cria no nível da prova.');
+            ed_ir($concursoId, 'questoes', $n . ' assunto(s) na fila: a IA pesquisa questões REAIS de provas (mesma banca primeiro). Inéditas só como complemento, conforme a política em Consumo da IA, e entram em revisão.' . ($pulados ? " $pulados assunto(s) já pesquisados nos últimos 30 dias foram pulados (sem gastar de novo)." : ''));
         }
         if ($acao === 'questoes_item') {
             ia_fila_adicionar($pdo, 'questoes', (int)($_POST['item_id'] ?? 0));
@@ -1075,10 +1094,12 @@ $menuBarInclude = admin_cursos_get_menubar();
                     <div class="ed-barra" style="height:10px;margin-bottom:12px"><i style="width:<?php echo $pctQ; ?>%"></i></div>
                     <p class="admin-form-hint" style="margin-bottom:10px">O jeito mais simples: clique no botão amarelo. A IA faz assunto por assunto: <strong>pesquisa questões reais</strong> de provas anteriores (mesma banca primeiro) e, se não achar 10, <strong>cria no nível da prova</strong>. O andamento aparece na Central da IA, acima. Pode fechar a página: ela continua.</p>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                        <form method="post"><input type="hidden" name="acao" value="completar_questoes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>Completar todos os assuntos com a IA</button></form>
+                        <?php $faltamQ = count(array_filter($qs['itens'], static fn($x) => $x['questoes'] < 10)); $estQ = $faltamQ ? ia_consumo_estimar($pdo, 'questoes', $faltamQ) : null; ?>
+                        <form method="post" onsubmit="return confirm(<?php echo admin_esc(json_encode($estQ ? 'Buscar questões para ' . $faltamQ . ' assunto(s)? Estimativa: ' . ia_consumo_brl($estQ['brl_min']) . ' a ' . ia_consumo_brl($estQ['brl_max']) . ' (' . $estQ['chamadas_busca'] . ' pesquisas). Assuntos já pesquisados nos últimos 30 dias são pulados.' : 'Nenhum assunto precisa de questões.', JSON_UNESCAPED_UNICODE)); ?>);"><input type="hidden" name="acao" value="completar_questoes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>"><button class="admin-btn admin-btn-primary" type="submit"><i data-lucide="sparkles"></i>Completar todos os assuntos com a IA</button></form>
                         <details><summary class="admin-btn admin-btn-light" style="list-style:none;cursor:pointer">📤 Tenho questões para enviar</summary>
                             <form method="post" enctype="multipart/form-data" style="display:grid;gap:6px;margin-top:8px;min-width:300px"><input type="hidden" name="acao" value="enviar_questoes"><input type="hidden" name="concurso_id" value="<?php echo $concursoId; ?>">
-                                <label class="admin-form-hint">PDF (prova ou lista): <input type="file" name="arquivo" accept="application/pdf"></label><textarea name="texto" rows="3" placeholder="ou cole as questões aqui" aria-label="Questões em texto"></textarea>
+                                <label class="admin-form-hint">PDF da prova/caderno, ou planilha da plataforma antiga (.xlsx/.csv com títulos na 1ª linha): <input type="file" name="arquivo" accept="application/pdf,.csv,.xlsx"></label>
+                                <small class="admin-form-hint">Custo: ~1 pedido de texto por PDF (até ~60 questões) ou por 30 linhas de planilha. O mesmo arquivo não é lido duas vezes. Tudo entra <strong>em revisão</strong>.</small><textarea name="texto" rows="3" placeholder="ou cole as questões aqui" aria-label="Questões em texto"></textarea>
                                 <button class="admin-btn admin-btn-primary admin-btn-small" type="submit">Enviar: a IA separa por assunto</button></form></details>
                         <a class="admin-btn admin-btn-light" style="margin-left:auto" href="admin-editais.php?concurso_id=<?php echo $concursoId; ?>&aba=plano">Próximo: Plano-Mestre ▶</a>
                     </div>

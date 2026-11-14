@@ -184,8 +184,16 @@ if (!function_exists('job_bootstrap')) {
             case 'sugerir_existentes':
                 return job_sugerir_existentes($pdo, $c, (int)($p['lote'] ?? 0));
             case 'enviar_questoes':
+                if (!empty($p['planilha'])) { // planilha: lotes de 30 linhas por pedido à IA (só separa por assunto)
+                    $linhas = hack_planilha_linhas(dirname(__DIR__) . '/' . $p['planilha'], (string)$p['planilha']);
+                    $n = 0;
+                    foreach (array_chunk($linhas, 30) as $lote) {
+                        $n += hack_questoes_enviadas(podcast_reconectar($pdo), $c, implode("\n", $lote), '');
+                    }
+                    return $n . ' questão(ões) da planilha separadas por assunto. Estão EM REVISÃO: aprove em Revisão de questões.';
+                }
                 $n = hack_questoes_enviadas($pdo, $c, (string)($p['texto'] ?? ''), hack_pdf_base64((string)($p['arquivo'] ?? '')));
-                return $n . ' questão(ões) separadas por assunto e gravadas no banco.';
+                return $n . ' questão(ões) separadas por assunto. Estão EM REVISÃO: aprove em Revisão de questões.';
             case 'plano':
                 $provas = job_provas($conc);
                 $pv = $provas[(string)$p['cargo_id']] ?? null;

@@ -511,8 +511,44 @@ if (!function_exists('hack_bootstrap')) {
     }
 
     /** Grava questões no banco, ligadas ao assunto e liberadas para os cursos dos cargos. */
+    /** Questões: status "em revisão", origem (real/gerada/enviada) e alerta da conferência; registro das buscas. */
+    function hack_questoes_bootstrap(PDO $pdo): void
+    {
+        require_once __DIR__ . '/schema-cache.php';
+        if (gab_schema_ok(__FUNCTION__, __FILE__)) {
+            return;
+        }
+        try {
+            $tipo = (string)($pdo->query("SHOW COLUMNS FROM admin_banco_questoes LIKE 'status'")->fetch(PDO::FETCH_ASSOC)['Type'] ?? '');
+            if ($tipo !== '' && !str_contains($tipo, 'revisao')) {
+                $pdo->exec("ALTER TABLE admin_banco_questoes MODIFY status ENUM('ativo','inativo','revisao') NOT NULL DEFAULT 'ativo'");
+            }
+            $cols = array_column($pdo->query('SHOW COLUMNS FROM admin_banco_questoes')->fetchAll(PDO::FETCH_ASSOC), 'Field');
+            if (!in_array('origem_tipo', $cols, true)) {
+                $pdo->exec("ALTER TABLE admin_banco_questoes ADD COLUMN origem_tipo VARCHAR(10) NULL");
+            }
+            if (!in_array('revisao_alerta', $cols, true)) {
+                $pdo->exec("ALTER TABLE admin_banco_questoes ADD COLUMN revisao_alerta VARCHAR(200) NULL");
+            }
+        } catch (Throwable $e) {
+            error_log('hack_questoes_bootstrap: ' . $e->getMessage());
+        }
+        $pdo->exec("CREATE TABLE IF NOT EXISTS questoes_busca (topico_id INT UNSIGNED NOT NULL PRIMARY KEY, buscado_em DATETIME NOT NULL, reais_achadas INT UNSIGNED NOT NULL DEFAULT 0) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /** Texto para comparar questões repetidas (sem acento, pontuação e espaços). */
+    function hack_chave_texto(string $t): string
+    {
+        $t = mb_strtolower(strip_tags($t));
+        $t = strtr($t, ['á' => 'a', 'à' => 'a', 'â' => 'a', 'ã' => 'a', 'é' => 'e', 'ê' => 'e', 'í' => 'i', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ú' => 'u', 'ç' => 'c']);
+        return mb_substr(preg_replace('~[^a-z0-9]+~', '', $t), 0, 160);
+    }
+
     function hack_gravar_questoes(PDO $pdo, array $item, array $questoes, ?int $bancaId, string $origem): int
     {
+        hack_questoes_bootstrap($pdo);
+        // Real (achada em prova) entra ativa; inédita e enviada/importada entram EM REVISÃO (o aluno não vê até o admin aprovar).
+        $statusNovo = $origem === 'real' ? 'ativo' : 'revisao';
         $cursos = hack_cursos_do_item($pdo, $item);
         $bancaRef = $bancaId;
         if (!$bancaId) {
@@ -524,11 +560,18 @@ if (!function_exists('hack_bootstrap')) {
             }
         }
         $n = 0;
-        $insQ = $pdo->prepare("INSERT INTO admin_banco_questoes (curso_id, banca_id, materia_id, materia_topico_id, ano, enunciado, explicacao, dificuldade, status, ordem, criado_em)
-                               VALUES (:c, :b, :m, :t, :a, :e, :x, :d, 'ativo', 0, NOW())");
+        $insQ = $pdo->prepare("INSERT INTO admin_banco_questoes (curso_id, banca_id, materia_id, materia_topico_id, ano, enunciado, explicacao, dificuldade, status, origem_tipo, revisao_alerta, ordem, criado_em)
+                               VALUES (:c, :b, :m, :t, :a, :e, :x, :d, :s, :o, :al, 0, NOW())");
         $insO = $pdo->prepare('INSERT INTO admin_banco_questao_opcoes (questao_id, letra, texto, correta, ordem, criado_em) VALUES (:q, :l, :t, :c, :o, NOW())');
         $insA = $pdo->prepare('INSERT IGNORE INTO admin_banco_questao_acessos (questao_id, curso_id) VALUES (:q, :c)');
-        $dup = $pdo->prepare('SELECT id FROM admin_banco_questoes WHERE materia_topico_id = :t AND LEFT(enunciado, 180) = LEFT(:e, 180) LIMIT 1');
+        // Repetida = mesmo texto em QUALQUER assunto (compara o começo do enunciado sem acento/pontuação)
+        static $chaves = null;
+        if ($chaves === null) {
+            $chaves = [];
+            foreach ($pdo->query('SELECT enunciado FROM admin_banco_questoes') as $rq) {
+                $chaves[hack_chave_texto((string)$rq['enunciado'])] = true;
+            }
+        }
         require_once __DIR__ . '/texto-limpo-lib.php';
         foreach ($questoes as $q) {
             $enun = gab_sem_latex(trim((string)($q['enunciado'] ?? '')));
@@ -537,9 +580,16 @@ if (!function_exists('hack_bootstrap')) {
             if ($enun === '' || count($alts) < 2 || !isset($alts[$cor])) {
                 continue;
             }
-            $dup->execute([':t' => (int)$item['topico_id'], ':e' => $enun]);
-            if ($dup->fetchColumn()) {
+            $kTexto = hack_chave_texto($enun);
+            if ($kTexto === '' || isset($chaves[$kTexto])) {
                 continue;
+            }
+            $chaves[$kTexto] = true;
+            // Conferência (sem chamada extra): alerta da própria IA + alternativas repetidas = possível 2 respostas
+            $alerta = mb_substr(trim((string)($q['alerta'] ?? '')), 0, 200);
+            $normAlts = array_map('hack_chave_texto', $alts);
+            if (count(array_unique($normAlts)) < count($normAlts)) {
+                $alerta = $alerta ?: 'Alternativas repetidas: pode haver 2 respostas';
             }
             $fonte = trim((string)($q['fonte'] ?? ''));
             $exp = gab_sem_latex(trim((string)($q['comentario'] ?? '')));
@@ -547,7 +597,8 @@ if (!function_exists('hack_bootstrap')) {
             $dif = in_array($q['dificuldade'] ?? '', ['facil', 'medio', 'dificil'], true) ? $q['dificuldade'] : 'medio';
             // Gerada: não é da banca nem de um ano de prova. Vai na "banca" "Antigão · estilo X", sem ano.
             $insQ->execute([':c' => $cursos[0] ?? null, ':b' => $origem === 'gerada' ? hack_banca_estilo($pdo, $bancaRef) : $bancaId, ':m' => (int)$item['materia_id'], ':t' => (int)$item['topico_id'],
-                ':a' => $origem === 'gerada' ? null : (((int)($q['ano'] ?? 0)) ?: null), ':e' => mb_substr($enun, 0, 6000), ':x' => mb_substr($exp, 0, 6000), ':d' => $dif]);
+                ':a' => $origem === 'gerada' ? null : (((int)($q['ano'] ?? 0)) ?: null), ':e' => mb_substr($enun, 0, 6000), ':x' => mb_substr($exp, 0, 6000), ':d' => $dif,
+                ':s' => $statusNovo, ':o' => $origem, ':al' => $alerta !== '' ? $alerta : null]);
             $qid = (int)$pdo->lastInsertId();
             foreach ($alts as $k => $alt) {
                 $insO->execute([':q' => $qid, ':l' => chr(65 + $k), ':t' => mb_substr($alt, 0, 3000), ':c' => $k === $cor ? 1 : 0, ':o' => $k + 1]);
@@ -585,11 +636,28 @@ if (!function_exists('hack_bootstrap')) {
         if (!$it) {
             throw new RuntimeException('Assunto do edital não encontrado.');
         }
-        $ja = $pdo->prepare("SELECT COUNT(*) FROM admin_banco_questoes WHERE materia_topico_id = :t AND status = 'ativo'");
+        hack_questoes_bootstrap($pdo);
+        // Contagem do assunto: reais (achadas em prova ou enviadas) e inéditas, ativas ou em revisão.
+        $ja = $pdo->prepare("SELECT SUM(COALESCE(origem_tipo, '') <> 'gerada' AND explicacao NOT LIKE '%Questão inédita%') reais, SUM(COALESCE(origem_tipo, '') = 'gerada' OR explicacao LIKE '%Questão inédita%') geradas
+                               FROM admin_banco_questoes WHERE materia_topico_id = :t AND status IN ('ativo','revisao')");
         $ja->execute([':t' => (int)$it['topico_id']]);
-        $falta = $meta - (int)$ja->fetchColumn();
+        $cnt = $ja->fetch(PDO::FETCH_ASSOC) ?: [];
+        $reaisJa = (int)($cnt['reais'] ?? 0);
+        $geradasJa = (int)($cnt['geradas'] ?? 0);
+        $falta = $meta - $reaisJa - $geradasJa;
         if ($falta <= 0) {
             return [0, 0];
+        }
+        // Racionalidade: o mesmo assunto não é pesquisado de novo antes de 30 dias.
+        $stB = $pdo->prepare('SELECT buscado_em > NOW() - INTERVAL 30 DAY FROM questoes_busca WHERE topico_id = :t');
+        $stB->execute([':t' => (int)$it['topico_id']]);
+        $buscouRecente = (bool)$stB->fetchColumn();
+        // Pesquisa pausada (cota do Google): a tarefa ESPERA. Não cria inédita no lugar da busca de reais.
+        if (!$buscouRecente && function_exists('ia_fila_pausa_busca') && ia_fila_pausa_busca()) {
+            $ex = new GeminiCotaException('Pesquisa na internet em pausa: o assunto espera para buscar questões reais primeiro. [cota:busca]');
+            $ex->tipo = 'busca';
+            $ex->diario = true;
+            throw $ex;
         }
         $banca = $it['banca'] ?: 'a banca do concurso';
         $base = "Concurso: {$it['concurso']} · Banca: $banca · Matéria: {$it['materia']} · Assunto: {$it['assunto']}.\n";
@@ -610,9 +678,8 @@ if (!function_exists('hack_bootstrap')) {
             "provas de concursos públicos de nível médio da área de segurança pública e, por último, de nível médio em geral",
         ];
         $reais = 0;
-        // Pesquisa na internet pausada (cota do Google): não espera o dia seguinte, cria inéditas agora.
-        if (function_exists('ia_fila_pausa_busca') && ia_fila_pausa_busca()) {
-            $rodadas = [];
+        if ($buscouRecente) {
+            $rodadas = []; // já pesquisado nos últimos 30 dias: não gasta pesquisa de novo
         }
         foreach ($rodadas as $onde) {
             $resta = $falta - $reais;
@@ -627,22 +694,33 @@ if (!function_exists('hack_bootstrap')) {
                 $reais += hack_gravar_questoes($pdo, $it, array_slice(hack_questoes_json($resp), 0, $resta), $it['banca_id'] ? (int)$it['banca_id'] : null, 'real');
             } catch (RuntimeException $e) {
                 if ($e instanceof GeminiCotaException || str_contains($e->getMessage(), '(429)')) {
-                    if (function_exists('gemini_cota_pausar')) {
-                        gemini_cota_pausar($e, 'busca'); // registra a pausa da pesquisa (as próximas já vão direto para as inéditas)
-                    }
-                    if (($e->tipo ?? 'busca') !== 'busca') {
-                        throw $e; // acabou o TEXTO: aí sim o assunto espera
-                    }
-                    break; // acabou só a pesquisa: segue para criar as inéditas
+                    throw $e; // sem pesquisa: o assunto espera (as reais que já vieram ficam gravadas)
                 }
                 $pdo = podcast_reconectar($pdo);
             }
         }
-        $geradas = 0;
-        if ($reais < $falta) {
+        if ($rodadas) {
+            $pdo->prepare('INSERT INTO questoes_busca (topico_id, buscado_em, reais_achadas) VALUES (:t, NOW(), :r) ON DUPLICATE KEY UPDATE buscado_em = NOW(), reais_achadas = VALUES(reais_achadas)')
+                ->execute([':t' => (int)$it['topico_id'], ':r' => $reais]);
+        }
+        // Inéditas: só como complemento (política em Consumo da IA). "completar": só se ficou com menos de 10 reais,
+        // e no máximo X% do total do assunto (padrão 30%). Entram EM REVISÃO.
+        $pol = function_exists('ia_politica_ineditas') ? ia_politica_ineditas() : ['modo' => 'completar', 'pct' => 30];
+        $reaisTot = $reaisJa + $reais;
+        $n = 0;
+        if ($pol['modo'] === 'livre') {
             $n = $falta - $reais;
+        } elseif ($pol['modo'] === 'completar' && $reaisTot < $meta) {
+            $p = $pol['pct'] / 100;
+            $maxGeradas = (int)floor($p * $reaisTot / max(0.01, 1 - $p)); // inéditas / (reais + inéditas) <= p
+            $n = min($falta - $reais, $maxGeradas - $geradasJa);
+        }
+        $geradas = 0;
+        if ($n > 0) {
             $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => [['text' => "Você é elaborador de provas da banca $banca, especialista no cargo ($cargosTxt). Crie $n questões INÉDITAS de múltipla escolha, no MESMO nível e estilo da prova deste cargo, com situações do dia a dia da profissão quando o assunto permitir.\n" . $base
                 . "Regras: 5 alternativas (A a E) plausíveis, só uma correta, cobrindo pegadinhas clássicas do assunto; misture fácil, médio e difícil (30/50/20); conteúdo correto e atual; comentário didático.\n"
+                . "Ao final, CONFIRA cada questão como revisor de banca: se mais de uma alternativa puder ser defendida, ou se houver dúvida no gabarito, escreva o motivo no campo \"alerta\" (curto); se estiver tudo certo, deixe \"alerta\" vazio.\n"
+                . "Cada questão leva também o campo \"alerta\": \"\".\n"
                 . "Responda SOMENTE em JSON: " . HACK_FORMATO_Q]]]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.6]], 150);
             $pdo = podcast_reconectar($pdo);
             $geradas = hack_gravar_questoes($pdo, $it, hack_questoes_json($resp), $it['banca_id'] ? (int)$it['banca_id'] : null, 'gerada');
@@ -651,6 +729,93 @@ if (!function_exists('hack_bootstrap')) {
     }
 
     /** Questões enviadas pelo mentor (texto ou PDF): a IA separa por assunto do edital e grava. */
+    /**
+     * Lê planilha (CSV ou XLSX) de questões da plataforma antiga, sem IA. Devolve as linhas como texto
+     * ("Coluna: valor | ...") para a IA separar por assunto em lotes. Primeira linha = cabeçalho.
+     */
+    function hack_planilha_linhas(string $caminho, string $nomeOriginal): array
+    {
+        $ext = strtolower(pathinfo($nomeOriginal, PATHINFO_EXTENSION));
+        $linhas = [];
+        if ($ext === 'csv' || $ext === 'txt') {
+            $txt = (string)file_get_contents($caminho);
+            if (!mb_check_encoding($txt, 'UTF-8')) {
+                $txt = mb_convert_encoding($txt, 'UTF-8', 'Windows-1252');
+            }
+            $txt = preg_replace('~^\xEF\xBB\xBF~', '', $txt);
+            $sep = substr_count(strtok($txt, "\n") ?: '', ';') > substr_count(strtok($txt, "\n") ?: '', ',') ? ';' : ',';
+            $fh = fopen('php://memory', 'r+');
+            fwrite($fh, $txt);
+            rewind($fh);
+            while (($row = fgetcsv($fh, 0, $sep, '"', '\\')) !== false) {
+                $linhas[] = $row;
+            }
+            fclose($fh);
+        } elseif ($ext === 'xlsx') {
+            $z = new ZipArchive();
+            if ($z->open($caminho) !== true) {
+                throw new RuntimeException('Não consegui abrir a planilha. Salve como .xlsx ou .csv e tente de novo.');
+            }
+            $shared = [];
+            if (($xs = $z->getFromName('xl/sharedStrings.xml')) !== false) {
+                $sx = simplexml_load_string($xs);
+                foreach ($sx->si as $si) {
+                    $t = '';
+                    foreach ($si->xpath('.//*[local-name()="t"]') as $tn) {
+                        $t .= (string)$tn;
+                    }
+                    $shared[] = $t;
+                }
+            }
+            $sheet = $z->getFromName('xl/worksheets/sheet1.xml');
+            $z->close();
+            if ($sheet === false) {
+                throw new RuntimeException('A planilha não tem a primeira aba com dados.');
+            }
+            $sx = simplexml_load_string($sheet);
+            foreach ($sx->sheetData->row as $row) {
+                $l = [];
+                foreach ($row->c as $c) {
+                    $ref = preg_replace('~\d+~', '', (string)$c['r']);
+                    $col = 0;
+                    foreach (str_split($ref) as $ch) {
+                        $col = $col * 26 + (ord($ch) - 64);
+                    }
+                    $v = (string)$c->v;
+                    if ((string)$c['t'] === 's') {
+                        $v = $shared[(int)$v] ?? '';
+                    } elseif ((string)$c['t'] === 'inlineStr') {
+                        $v = (string)$c->is->t;
+                    }
+                    $l[$col - 1] = $v;
+                }
+                if ($l) {
+                    ksort($l);
+                    $linhas[] = array_replace(array_fill(0, max(array_keys($l)) + 1, ''), $l);
+                }
+            }
+        } else {
+            throw new RuntimeException('Envie PDF, planilha .xlsx ou .csv.');
+        }
+        $linhas = array_values(array_filter($linhas, static fn($r) => trim(implode('', $r)) !== ''));
+        if (count($linhas) < 2) {
+            return [];
+        }
+        $cab = array_map(static fn($c) => trim((string)$c), array_shift($linhas));
+        $saida = [];
+        foreach ($linhas as $i => $r) {
+            $partes = [];
+            foreach ($r as $k => $v) {
+                $v = trim((string)$v);
+                if ($v !== '') {
+                    $partes[] = ($cab[$k] ?? ('Coluna ' . ($k + 1))) . ': ' . $v;
+                }
+            }
+            $saida[] = 'Questão ' . ($i + 1) . ' — ' . implode(' | ', $partes);
+        }
+        return $saida;
+    }
+
     function hack_questoes_enviadas(PDO $pdo, int $concursoId, string $texto, string $pdfBase64): int
     {
         $itens = edital_itens($pdo, $concursoId);
@@ -659,14 +824,15 @@ if (!function_exists('hack_bootstrap')) {
         }
         $lista = array_map(static fn($i) => ['id' => (int)$i['id'], 'assunto' => $i['materia'] . ' › ' . $i['assunto']], $itens);
         $prompt = "Extraia TODAS as questões objetivas do material (texto e/ou PDF), com o gabarito (se houver gabarito no fim do material, use-o; se não houver, resolva com cuidado).\n"
-            . "Para cada questão, diga a qual assunto do edital ela pertence (edital_item_id da lista) e escreva um comentário didático.\n"
-            . "Responda SOMENTE em JSON: {\"questoes\":[{\"edital_item_id\":n,\"enunciado\":\"\",\"alternativas\":[\"\"],\"correta\":0,\"comentario\":\"\",\"dificuldade\":\"medio\",\"ano\":null,\"fonte\":\"\"}]}\n\n"
+            . "Para cada questão, diga a qual assunto do edital ela pertence (edital_item_id da lista; se nenhum servir, use 0) e escreva um comentário didático. Traga a banca, o órgão e o ano da prova em \"fonte\" e o ano em \"ano\" quando aparecerem.\n"
+            . "Se o gabarito não estiver no material e você precisou resolver, ou se mais de uma alternativa puder ser defendida, explique no campo \"alerta\" (curto); senão deixe vazio.\n"
+            . "Responda SOMENTE em JSON: {\"questoes\":[{\"edital_item_id\":n,\"enunciado\":\"\",\"alternativas\":[\"\"],\"correta\":0,\"comentario\":\"\",\"dificuldade\":\"medio\",\"ano\":null,\"fonte\":\"\",\"alerta\":\"\"}]}\n\n"
             . "ASSUNTOS DO EDITAL: " . json_encode($lista, JSON_UNESCAPED_UNICODE) . "\n\nMATERIAL:\n" . mb_substr($texto, 0, 60000);
         $partes = [['text' => $prompt]];
         if ($pdfBase64 !== '') {
             $partes[] = ['inlineData' => ['mimeType' => 'application/pdf', 'data' => $pdfBase64]];
         }
-        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => $partes]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1]], 170);
+        $resp = podcast_gemini(PODCAST_MODELO_TEXTO, ['contents' => [['parts' => $partes]], 'generationConfig' => ['responseMimeType' => 'application/json', 'temperature' => 0.1, 'maxOutputTokens' => 32000]], 170);
         $pdo = podcast_reconectar($pdo);
         $porItem = [];
         foreach (hack_questoes_json($resp) as $q) {
