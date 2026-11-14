@@ -74,8 +74,24 @@ if (!function_exists('meta_revisoes_feitas')) {
         $stmt = $pdo->prepare('SELECT plano_item_id, rodada FROM meta_aluno_revisoes WHERE usuario_id = :u');
         $stmt->execute([':u' => $usuarioId]);
         $feitas = [];
+        $implicitas = [];
         foreach ($stmt->fetchAll() as $r) {
             $feitas[(int)$r['plano_item_id'] . ':' . (int)$r['rodada']] = true;
+            if ((int)$r['plano_item_id'] >= 3000000000) {
+                $implicitas[(int)$r['plano_item_id'] - 3000000000][] = (int)$r['rodada'];
+            }
+        }
+        // Revisões feitas no plano inicial (ids 3.000.000.000 + aula) continuam valendo quando o Plano-Mestre é aprovado.
+        if ($implicitas) {
+            try {
+                $st = $pdo->query('SELECT i.id, i.aula_id FROM meta_plano_itens i JOIN meta_planos p ON p.id = i.plano_id AND p.status = \'aprovado\' WHERE i.aula_id IN (' . implode(',', array_map('intval', array_keys($implicitas))) . ')');
+                foreach ($st->fetchAll() as $it) {
+                    foreach ($implicitas[(int)$it['aula_id']] ?? [] as $rod) {
+                        $feitas[(int)$it['id'] . ':' . $rod] = true;
+                    }
+                }
+            } catch (Throwable $e) {
+            }
         }
         return $feitas;
     }

@@ -35,6 +35,17 @@ $hojeQtd = static function () use ($pdo, $uid): int {
     return (int)$st->fetchColumn();
 };
 $erro = '';
+$perguntaVolta = ''; // a pergunta volta para o campo quando a IA falha
+// Cota de texto da IA pausada (limite do Google) ou teto do dia atingido: avisa antes e não deixa perguntar.
+require_once __DIR__ . '/includes/ia-fila-lib.php';
+$pausaAte = ia_fila_pausa_texto();
+if (!$pausaAte) {
+    $tetoTx = (int)(ia_controle()['teto']['texto'] ?? 0);
+    $usoTx = function_exists('podcast_uso_resumo') ? podcast_uso_resumo() : [];
+    if ($tetoTx > 0 && (int)($usoTx['texto']['hoje'] ?? 0) >= $tetoTx) {
+        $pausaAte = (int)($usoTx['renova_ts'] ?? 0) ?: time() + 3600;
+    }
+}
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $pergunta = trim(mb_substr((string)($_POST['pergunta'] ?? ''), 0, 1200));
@@ -47,10 +58,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $erro = 'Escreva sua dúvida.';
     } elseif ($hojeQtd() >= ANTIGAO_LIMITE_DIA) {
         $erro = 'Você já fez ' . ANTIGAO_LIMITE_DIA . ' perguntas hoje. Amanhã tem mais! Enquanto isso, poste no fórum de dúvidas: o mentor responde.';
+    } elseif ($pausaAte) {
+        $erro = 'O Antigão está descansando até ' . date('H:i', $pausaAte) . ' (limite do dia da IA). Poste sua dúvida no fórum: o mentor responde.';
+        $perguntaVolta = $pergunta;
     } elseif (!ia_controle_ligado('duvidas')) {
         $erro = 'O Antigão está em manutenção agora. Poste sua dúvida no fórum: o mentor responde.';
     } else {
         $pdo->prepare("INSERT INTO antigao_conversas (usuario_id, quem, texto) VALUES (:u, 'aluno', :t)")->execute([':u' => $uid, ':t' => $pergunta]);
+        $idPergunta = (int)$pdo->lastInsertId();
         // Contexto: o concurso do aluno, matérias onde mais erra e as últimas mensagens (nada de nome/e-mail).
         $fracas = '';
         try {
@@ -71,18 +86,25 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             . ($fracas !== '' ? "Matérias em que ele mais erra: $fracas.\n" : '')
             . "Regras: responda a dúvida de estudo com explicação curta, exemplo e uma pegadinha de prova quando couber. Seja fiel à lei e ao conteúdo consagrado; se não tiver certeza, diga e sugira confirmar com o mentor no fórum. "
             . "Nada de inventar datas do concurso: para novidades, mande ver o Radar em Meu concurso. Assuntos fora de estudo/concurso/rotina de estudo: recuse com gentileza. Termine, quando fizer sentido, com o próximo passo do método (questões do assunto, Missão do dia, Flashcards). Até 250 palavras.";
+        $resp = '';
         try {
             ia_consumo_inicio('duvidas', $uid);
             $r = podcast_gemini(PODCAST_MODELO_TEXTO, ['systemInstruction' => ['parts' => [['text' => $sistema]]], 'contents' => $conteudo, 'generationConfig' => ['temperature' => 0.5, 'maxOutputTokens' => 900]], 50);
             $resp = trim((string)($r['candidates'][0]['content']['parts'][0]['text'] ?? ''));
-            require_once __DIR__ . '/includes/texto-limpo-lib.php';
-            $resp = gab_sem_latex($resp !== '' ? $resp : 'Combatente, não consegui responder agora. Tenta de novo em instantes ou posta no fórum.');
         } catch (Throwable $e) {
-            $resp = 'Combatente, o Antigão está sem fôlego agora (limite do dia da IA). Poste sua dúvida no fórum de dúvidas que o mentor responde. Amanhã eu volto!';
+            $resp = '';
         }
-        $pdo->prepare("INSERT INTO antigao_conversas (usuario_id, quem, texto) VALUES (:u, 'antigao', :t)")->execute([':u' => $uid, ':t' => $resp]);
-        header('Location: antigao.php#fim');
-        exit;
+        if ($resp === '') {
+            // Falhou: a pergunta sai do histórico e NÃO conta no limite do dia; volta para o campo para tentar de novo.
+            $pdo->prepare('DELETE FROM antigao_conversas WHERE id = :id AND usuario_id = :u')->execute([':id' => $idPergunta, ':u' => $uid]);
+            $erro = 'O Antigão não conseguiu responder agora (não contou no seu limite). Tente de novo em instantes ou poste no fórum: o mentor responde.';
+            $perguntaVolta = $pergunta;
+        } else {
+            require_once __DIR__ . '/includes/texto-limpo-lib.php';
+            $pdo->prepare("INSERT INTO antigao_conversas (usuario_id, quem, texto) VALUES (:u, 'antigao', :t)")->execute([':u' => $uid, ':t' => gab_sem_latex($resp)]);
+            header('Location: antigao.php#fim');
+            exit;
+        }
     }
 }
 $msgs = $pdo->prepare('SELECT quem, texto, criado_em FROM antigao_conversas WHERE usuario_id = :u ORDER BY id DESC LIMIT 40');
@@ -132,9 +154,10 @@ $restam = max(0, ANTIGAO_LIMITE_DIA - $hojeQtd());
     <?php endforeach; ?>
     <span id="fim"></span>
     <?php if ($erro !== ''): ?><div class="erro"><?php echo ant_e($erro); ?></div><?php endif; ?>
+    <?php if ($pausaAte): ?><div class="erro" role="status">⏸ O Antigão está descansando até <?php echo date('H:i', $pausaAte); ?> (limite do dia da IA). Enquanto isso, poste sua dúvida no <a href="forum-duvidas.php" style="color:var(--ouro)">fórum de dúvidas</a>: o mentor responde.</div><?php endif; ?>
     <form method="post" class="envio" onsubmit="this.querySelector('.bt').disabled=true;this.querySelector('.bt').textContent='O Antigão está pensando…'">
-        <textarea name="pergunta" maxlength="1200" placeholder="Ex.: Por que não tem crase em 'a partir de'?" required></textarea>
-        <div class="linha"><button class="bt" type="submit">Perguntar ao Antigão</button><span class="sub"><?php echo $restam; ?> pergunta(s) restante(s) hoje</span></div>
+        <textarea name="pergunta" maxlength="1200" placeholder="<?php echo $pausaAte ? 'Volta às ' . date('H:i', $pausaAte) : "Ex.: Por que não tem crase em 'a partir de'?"; ?>" required <?php echo $pausaAte ? 'disabled' : ''; ?>><?php echo ant_e($perguntaVolta); ?></textarea>
+        <div class="linha"><button class="bt" type="submit" <?php echo $pausaAte ? 'disabled' : ''; ?>>Perguntar ao Antigão</button><span class="sub"><?php echo $restam; ?> pergunta(s) restante(s) hoje</span></div>
     </form>
     <?php if ($msgs): ?><form method="post" onsubmit="return confirm('Apagar toda a conversa?');"><input type="hidden" name="acao" value="limpar"><button class="link" type="submit">Apagar minha conversa</button></form><?php endif; ?>
     <p class="sub" style="font-size:12px">🔒 Sua pergunta é respondida por inteligência artificial (Google), sem seu nome ou e-mail. Não escreva dados pessoais. <a href="privacidade.php" style="color:var(--ouro)">Privacidade</a>.</p>

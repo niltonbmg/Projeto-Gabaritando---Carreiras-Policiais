@@ -277,7 +277,9 @@ if (!function_exists('podcast_uso_registrar')) {
         $dia = podcast_uso_dia();
         $d = array_slice($d, -6, null, true); // guarda só a última semana
         $u = &$d[$dia][$tipo];
-        $u['ok'] = ($u['ok'] ?? 0) + ($codigo === 429 ? 0 : 1);
+        // Só conta o que deu certo: tentativa com erro (modelo sem suporte, 404, 500…) não gasta a cota do dia.
+        // Assim cada pesquisa conta 1 vez, mesmo que o fallback tenha passado por vários modelos.
+        $u['ok'] = ($u['ok'] ?? 0) + ($codigo > 0 && $codigo < 400 ? 1 : 0);
         if ($codigo === 429) {
             $u['bloqueios'] = ($u['bloqueios'] ?? 0) + 1;
             if (!isset($u['limite_observado']) && $u['ok'] > 0) {

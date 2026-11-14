@@ -196,7 +196,9 @@ try {
         }
 
         $infosCurso = [];
-        $horasCurso = dashboard_formata_horas($curso['horas_curso'] ?? 0);
+        // Carga horária real: soma da duração das aulas (vídeo + PDF), não o campo manual "horas do curso".
+        require_once __DIR__ . '/includes/curso-duracao-lib.php';
+        $horasCurso = curso_duracao_formatar(curso_duracao_real($pdo, (int)$curso['id'])['total']);
 
         if ($horasCurso !== '') {
             $infosCurso[] = $horasCurso . ' de curso';

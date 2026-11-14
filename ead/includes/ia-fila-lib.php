@@ -92,7 +92,7 @@ if (!function_exists('ia_fila_processar_um')) {
         $pri = ia_prioridade();
         $semVoz = $pausa ? " AND tipo NOT IN ('videoaula','podcast')" : ($pri['podcasts_pausados'] ? " AND tipo <> 'podcast'" : '');
         if (ia_fila_pausa_busca()) {
-            $semVoz .= " AND tipo NOT IN ('questoes','radar')"; // sem pesquisa na internet, questões esperam (não criamos antes de buscar as reais)
+            $semVoz .= " AND tipo <> 'radar'"; // sem pesquisa na internet: o Radar espera; as questões seguem criando inéditas
         }
         // Controle rígido: tipos desligados pelo mentor nunca rodam (nem quando uma tarefa encadeia outra).
         require_once __DIR__ . '/ia-consumo-lib.php';

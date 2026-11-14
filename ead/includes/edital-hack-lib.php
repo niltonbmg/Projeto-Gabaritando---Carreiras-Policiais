@@ -610,6 +610,10 @@ if (!function_exists('hack_bootstrap')) {
             "provas de concursos públicos de nível médio da área de segurança pública e, por último, de nível médio em geral",
         ];
         $reais = 0;
+        // Pesquisa na internet pausada (cota do Google): não espera o dia seguinte, cria inéditas agora.
+        if (function_exists('ia_fila_pausa_busca') && ia_fila_pausa_busca()) {
+            $rodadas = [];
+        }
         foreach ($rodadas as $onde) {
             $resta = $falta - $reais;
             if ($resta <= 0) {
@@ -623,7 +627,13 @@ if (!function_exists('hack_bootstrap')) {
                 $reais += hack_gravar_questoes($pdo, $it, array_slice(hack_questoes_json($resp), 0, $resta), $it['banca_id'] ? (int)$it['banca_id'] : null, 'real');
             } catch (RuntimeException $e) {
                 if ($e instanceof GeminiCotaException || str_contains($e->getMessage(), '(429)')) {
-                    throw $e; // sem cota de pesquisa: o assunto espera; nada é criado antes de procurar as reais
+                    if (function_exists('gemini_cota_pausar')) {
+                        gemini_cota_pausar($e, 'busca'); // registra a pausa da pesquisa (as próximas já vão direto para as inéditas)
+                    }
+                    if (($e->tipo ?? 'busca') !== 'busca') {
+                        throw $e; // acabou o TEXTO: aí sim o assunto espera
+                    }
+                    break; // acabou só a pesquisa: segue para criar as inéditas
                 }
                 $pdo = podcast_reconectar($pdo);
             }

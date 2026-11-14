@@ -148,6 +148,7 @@ if (is_file($barraSuperiorPath)) {
     <?php if (!$estado['plano']): ?>
         <div class="mp-vazio">Seu plano de estudos ainda está sendo preparado pelo mentor. Assim que ele aprovar, as tarefas aparecem aqui.</div>
     <?php else: ?>
+        <?php if (!empty($estado['plano']['implicito'])): ?><div class="mp-alerta" role="status">📋 <strong>Plano inicial:</strong> seu mentor vai ajustar em breve. Pode estudar normalmente: o que você fizer agora continua valendo no plano ajustado.</div><?php endif; ?>
         <section class="mp-geral" aria-label="Seu progresso">
             <div><span>Nível geral</span><strong><?php echo number_format((float)$estado['nivel_geral'], 1, ',', ''); ?></strong></div>
             <div><span>Assuntos liberados</span><strong><?php echo (int)$estado['concluidos']; ?>/<?php echo $total; ?></strong></div>

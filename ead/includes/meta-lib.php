@@ -345,13 +345,17 @@ if (!function_exists('meta_liberar_excecao')) {
 }
 
 if (!function_exists('meta_curso_do_aluno')) {
-    /** Primeiro curso ativo do aluno que tenha plano aprovado (ou o pedido, se for dele). */
+    /**
+     * Curso do ciclo do aluno: o pedido (ou o do cargo escolhido em "Meu concurso"); senão, o primeiro com plano aprovado;
+     * senão, o primeiro curso ativo. Sem Plano-Mestre aprovado, meta_estado_aluno usa o plano inicial (ordem das aulas).
+     */
     function meta_curso_do_aluno(PDO $pdo, int $usuarioId, int $cursoPedido = 0): int
     {
         $stmt = $pdo->prepare("SELECT uc.curso_id FROM usuario_cursos uc
-                                 JOIN meta_planos p ON p.curso_id = uc.curso_id AND p.status = 'aprovado'
                                 WHERE uc.usuario_id = :u AND uc.status IN ('ativo','pago','aprovado','liberado','matriculado')
-                                ORDER BY (uc.curso_id = :pedido) DESC, uc.id ASC LIMIT 1");
+                                ORDER BY (uc.curso_id = :pedido) DESC,
+                                         EXISTS (SELECT 1 FROM meta_planos p WHERE p.curso_id = uc.curso_id AND p.status = 'aprovado') DESC,
+                                         uc.id ASC LIMIT 1");
         if ($cursoPedido <= 0) {
             // O cargo escolhido em "Meu concurso" define o curso (o edital é a base).
             try {

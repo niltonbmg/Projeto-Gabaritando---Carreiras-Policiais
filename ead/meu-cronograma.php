@@ -289,6 +289,7 @@ if (is_file($barraSuperiorPath)) {
     <?php if ($erro !== ''): ?><div class="mc-alerta erro" role="alert"><?php echo mc_e($erro); ?></div><?php endif; ?>
     <?php if ($aviso !== ''): ?><div class="mc-alerta ok" role="status"><?php echo mc_e($aviso); ?></div><?php endif; ?>
 
+    <?php if ($temPlano && !empty($cron['estado']['plano']['implicito'])): ?><div class="mc-alerta" role="status">📋 <strong>Plano inicial:</strong> seu mentor vai ajustar em breve. O que você fizer agora continua valendo.</div><?php endif; ?>
     <?php if (!$temPlano): ?>
         <div class="mc-vazio">Seu plano de estudos ainda está sendo preparado pelo mentor. Quando ele aprovar, você monta seu cronograma aqui.</div>
     <?php elseif ($mostrarForm): ?>

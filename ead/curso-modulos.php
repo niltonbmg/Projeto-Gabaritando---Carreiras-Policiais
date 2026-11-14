@@ -101,6 +101,9 @@ if (!function_exists('curso_modulos_formata_horas')) {
 if (!function_exists('curso_modulos_parse_duracao')) {
     function curso_modulos_parse_duracao($valor): float
     {
+        // "28:30" é 28 min 30 s (antes virava 28 horas): mesma leitura da carga horária real.
+        require_once __DIR__ . '/includes/curso-duracao-lib.php';
+        return curso_duracao_segundos((string)$valor) / 3600;
         $texto = trim(mb_strtolower((string)$valor, 'UTF-8'));
         if ($texto === '') {
             return 0.0;
@@ -994,9 +997,12 @@ if ($capaCursoMobile === '') {
     $capaCursoMobile = $capaCursoDesktop;
 }
 
-$horasCurso = curso_modulos_formata_horas($curso['horas_curso'] ?? 0);
-$horasVideo = curso_modulos_formata_horas($curso['horas_video'] ?? 0);
-$horasPdf = curso_modulos_formata_horas($curso['horas_pdf'] ?? 0);
+// Carga horária real: soma da duração das aulas (vídeo + PDF), não os campos manuais do cadastro do curso.
+require_once __DIR__ . '/includes/curso-duracao-lib.php';
+$durReal = curso_duracao_real($pdo, (int)$curso['id']);
+$horasCurso = curso_duracao_formatar($durReal['total']);
+$horasVideo = curso_duracao_formatar($durReal['video']);
+$horasPdf = curso_duracao_formatar($durReal['pdf']);
 
 $conteudosCurso = [
     [
